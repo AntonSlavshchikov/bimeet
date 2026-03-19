@@ -1,0 +1,98 @@
+package handler
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+
+	"meetup/internal/middleware"
+)
+
+type Router struct {
+	auth         *AuthHandler
+	event        *EventHandler
+	collection   *CollectionHandler
+	poll         *PollHandler
+	item         *ItemHandler
+	carpool      *CarpoolHandler
+	notification *NotificationHandler
+	jwtSecret    string
+}
+
+func NewRouter(
+	auth *AuthHandler,
+	event *EventHandler,
+	collection *CollectionHandler,
+	poll *PollHandler,
+	item *ItemHandler,
+	carpool *CarpoolHandler,
+	notification *NotificationHandler,
+	jwtSecret string,
+) http.Handler {
+	r := chi.NewRouter()
+
+	// Global middleware
+	r.Use(middleware.Logging)
+	r.Use(middleware.CORS())
+
+	// Public routes
+	r.Route("/api/auth", func(r chi.Router) {
+		r.Post("/register", auth.Register)
+		r.Post("/login", auth.Login)
+	})
+
+	// Public invite link (GET only)
+	r.Get("/api/events/invite/{token}", event.GetByInviteToken)
+
+	// Protected routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.Auth(jwtSecret))
+
+		// Join by invite token (POST requires auth)
+		r.Post("/api/events/invite/{token}", event.JoinByInviteToken)
+
+		// Events
+		r.Route("/api/events", func(r chi.Router) {
+			r.Get("/", event.List)
+			r.Post("/", event.Create)
+
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", event.GetByID)
+				r.Put("/", event.Update)
+				r.Delete("/", event.Delete)
+
+				// Participants
+				r.Post("/participants", event.InviteParticipant)
+				r.Patch("/participants/{userId}", event.UpdateParticipantStatus)
+
+				// Collections
+				r.Get("/collections", collection.List)
+				r.Post("/collections", collection.Create)
+				r.Get("/collections/summary", collection.Summary)
+				r.Delete("/collections/{collectionId}", collection.Delete)
+				r.Patch("/collections/{collectionId}/contribute", collection.ToggleContribution)
+
+				// Polls
+				r.Get("/polls", poll.List)
+				r.Post("/polls", poll.Create)
+				r.Post("/polls/{pollId}/vote", poll.Vote)
+
+				// Items
+				r.Get("/items", item.List)
+				r.Post("/items", item.Create)
+				r.Patch("/items/{itemId}", item.UpdateAssignment)
+
+				// Carpools
+				r.Get("/carpools", carpool.List)
+				r.Post("/carpools", carpool.Create)
+				r.Post("/carpools/{carpoolId}/join", carpool.Join)
+			})
+		})
+
+		// Notifications
+		r.Get("/api/notifications", notification.List)
+		r.Patch("/api/notifications/{id}/read", notification.MarkRead)
+	})
+
+	return r
+}
