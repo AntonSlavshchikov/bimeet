@@ -12,6 +12,13 @@ type Config struct {
 	DSN         string
 	JWTSecret   string
 	JWTExpHours int
+	// SMTP (optional — if SMTPHost is empty, emails are logged but not sent)
+	SMTPHost    string
+	SMTPPort    string
+	SMTPUser    string
+	SMTPPass    string
+	SMTPFrom    string
+	FrontendURL string
 }
 
 func Load() Config {
@@ -30,10 +37,25 @@ func Load() Config {
 		port = "8080"
 	}
 
+	smtpPort := os.Getenv("SMTP_PORT")
+	if smtpPort == "" {
+		smtpPort = "587"
+	}
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173"
+	}
+
 	return Config{
 		Port:        port,
 		DSN:         os.Getenv("DSN"),
 		JWTSecret:   os.Getenv("JWT_SECRET"),
 		JWTExpHours: expHours,
+		SMTPHost:    os.Getenv("SMTP_HOST"),
+		SMTPPort:    smtpPort,
+		SMTPUser:    os.Getenv("SMTP_USER"),
+		SMTPPass:    os.Getenv("SMTP_PASS"),
+		SMTPFrom:    os.Getenv("SMTP_FROM"),
+		FrontendURL: frontendURL,
 	}
 }

@@ -65,6 +65,14 @@ func (s *CollectionService) Delete(ctx context.Context, eventID, collectionID, u
 		return fmt.Errorf("collection does not belong to this event")
 	}
 
+	paidCount, err := s.collectionRepo.CountPaidContributions(ctx, collectionID)
+	if err != nil {
+		return fmt.Errorf("cannot check contributions: %w", err)
+	}
+	if paidCount > 0 {
+		return fmt.Errorf("cannot delete collection with paid contributions")
+	}
+
 	return s.collectionRepo.Delete(ctx, collectionID)
 }
 

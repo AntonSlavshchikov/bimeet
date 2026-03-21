@@ -21,12 +21,12 @@ func NewEventRepository(pool *pgxpool.Pool) *EventRepository {
 func (r *EventRepository) Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO events (title, description, date_start, date_end, location, organizer_id)
-		 VALUES ($1, $2, $3, $4, $5, $6)
-		 RETURNING id, title, description, date_start, date_end, location, organizer_id, invite_token, created_at, updated_at`,
-		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, organizerID,
+		`INSERT INTO events (title, description, date_start, date_end, location, category, dress_code, organizer_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at`,
+		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, organizerID,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("create event: %w", err)
 	}
@@ -36,11 +36,11 @@ func (r *EventRepository) Create(ctx context.Context, req model.CreateEventReque
 func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, organizer_id, invite_token, created_at, updated_at
+		`SELECT id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at
 		 FROM events WHERE id=$1`,
 		id,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by id: %w", err)
 	}
@@ -50,11 +50,11 @@ func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (model.Even
 func (r *EventRepository) GetByInviteToken(ctx context.Context, token uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, organizer_id, invite_token, created_at, updated_at
+		`SELECT id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at
 		 FROM events WHERE invite_token=$1`,
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by invite token: %w", err)
 	}
@@ -64,7 +64,7 @@ func (r *EventRepository) GetByInviteToken(ctx context.Context, token uuid.UUID)
 func (r *EventRepository) ListForUser(ctx context.Context, userID uuid.UUID) ([]model.Event, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.organizer_id, e.invite_token, e.created_at, e.updated_at
+		        e.category, e.dress_code, e.organizer_id, e.invite_token, e.created_at, e.updated_at
 		 FROM events e
 		 LEFT JOIN event_participants ep ON ep.event_id = e.id AND ep.user_id = $1
 		 WHERE e.organizer_id = $1 OR ep.user_id = $1
@@ -80,7 +80,7 @@ func (r *EventRepository) ListForUser(ctx context.Context, userID uuid.UUID) ([]
 	for rows.Next() {
 		var e model.Event
 		if err := rows.Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-			&e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt); err != nil {
+			&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan event: %w", err)
 		}
 		events = append(events, e)
@@ -97,12 +97,14 @@ func (r *EventRepository) Update(ctx context.Context, id uuid.UUID, req model.Up
 		   date_start  = COALESCE($4, date_start),
 		   date_end    = COALESCE($5, date_end),
 		   location    = COALESCE($6, location),
+		   category    = COALESCE($7, category),
+		   dress_code  = COALESCE($8, dress_code),
 		   updated_at  = NOW()
 		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, organizer_id, invite_token, created_at, updated_at`,
-		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location,
+		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at`,
+		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("update event: %w", err)
 	}
@@ -184,7 +186,11 @@ func (r *EventRepository) ListParticipants(ctx context.Context, eventID uuid.UUI
 func (r *EventRepository) CountConfirmedParticipants(ctx context.Context, eventID uuid.UUID) (int, error) {
 	var count int
 	err := r.pool.QueryRow(ctx,
-		`SELECT COUNT(*) FROM event_participants WHERE event_id=$1 AND status='confirmed'`,
+		`SELECT COUNT(*) FROM (
+			SELECT organizer_id AS user_id FROM events WHERE id=$1
+			UNION
+			SELECT user_id FROM event_participants WHERE event_id=$1 AND status='confirmed'
+		) t`,
 		eventID,
 	).Scan(&count)
 	if err != nil {
@@ -236,6 +242,7 @@ func (r *EventRepository) GetDetail(ctx context.Context, eventID, userID uuid.UU
 	var orgID uuid.UUID
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
+		        e.category, e.dress_code,
 		        e.organizer_id, u.name, u.email,
 		        e.invite_token, e.created_at, e.updated_at
 		 FROM events e
@@ -244,6 +251,7 @@ func (r *EventRepository) GetDetail(ctx context.Context, eventID, userID uuid.UU
 		eventID,
 	).Scan(
 		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location,
+		&detail.Category, &detail.DressCode,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
 		&detail.InviteToken, &detail.CreatedAt, &detail.UpdatedAt,
 	)
@@ -477,7 +485,29 @@ func (r *EventRepository) GetDetail(ctx context.Context, eventID, userID uuid.UU
 		}
 	}
 
-	// 7. Change log with changedBy user info
+	// 7. Links (for business events)
+	linkRows, err := r.pool.Query(ctx,
+		`SELECT id, title, url, created_by, created_at FROM event_links WHERE event_id = $1 ORDER BY created_at`,
+		eventID,
+	)
+	if err != nil {
+		return model.EventDetail{}, fmt.Errorf("list links detail: %w", err)
+	}
+	detail.Links = []model.EventLinkInfo{}
+	for linkRows.Next() {
+		var l model.EventLinkInfo
+		if err := linkRows.Scan(&l.ID, &l.Title, &l.URL, &l.CreatedBy, &l.CreatedAt); err != nil {
+			linkRows.Close()
+			return model.EventDetail{}, fmt.Errorf("scan link detail: %w", err)
+		}
+		detail.Links = append(detail.Links, l)
+	}
+	linkRows.Close()
+	if err := linkRows.Err(); err != nil {
+		return model.EventDetail{}, err
+	}
+
+	// 8. Change log with changedBy user info
 	clRows, err := r.pool.Query(ctx,
 		`SELECT cl.id, cl.changed_by, u.name, u.email, cl.field_name, cl.old_value, cl.new_value, cl.changed_at
 		 FROM event_change_logs cl
@@ -509,6 +539,7 @@ func (r *EventRepository) GetDetail(ctx context.Context, eventID, userID uuid.UU
 func (r *EventRepository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
+		        e.category, e.dress_code,
 		        e.organizer_id, ou.name, ou.email,
 		        e.invite_token, e.created_at,
 		        COALESCE(ep2.status, '') AS my_status
@@ -530,6 +561,7 @@ func (r *EventRepository) ListForUserEnriched(ctx context.Context, userID uuid.U
 		var e model.EventListItem
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
+			&e.Category, &e.DressCode,
 			&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
 			&e.InviteToken, &e.CreatedAt, &e.MyStatus,
 		); err != nil {

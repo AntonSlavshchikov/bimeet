@@ -15,6 +15,7 @@ type Router struct {
 	poll         *PollHandler
 	item         *ItemHandler
 	carpool      *CarpoolHandler
+	link         *EventLinkHandler
 	notification *NotificationHandler
 	jwtSecret    string
 }
@@ -26,6 +27,7 @@ func NewRouter(
 	poll *PollHandler,
 	item *ItemHandler,
 	carpool *CarpoolHandler,
+	link *EventLinkHandler,
 	notification *NotificationHandler,
 	jwtSecret string,
 ) http.Handler {
@@ -64,6 +66,7 @@ func NewRouter(
 				// Participants
 				r.Post("/participants", event.InviteParticipant)
 				r.Patch("/participants/{userId}", event.UpdateParticipantStatus)
+				r.Get("/participants/pending", event.ListPendingInvitations)
 
 				// Collections
 				r.Get("/collections", collection.List)
@@ -86,6 +89,11 @@ func NewRouter(
 				r.Get("/carpools", carpool.List)
 				r.Post("/carpools", carpool.Create)
 				r.Post("/carpools/{carpoolId}/join", carpool.Join)
+
+				// Links
+				r.Get("/links", link.List)
+				r.Post("/links", link.Create)
+				r.Delete("/links/{linkId}", link.Delete)
 			})
 		})
 

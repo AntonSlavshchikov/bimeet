@@ -14,16 +14,29 @@ import (
 )
 
 type AuthService struct {
-	userRepo  *repository.UserRepository
-	jwtSecret string
-	jwtExpH   int
+	userRepo    *repository.UserRepository
+	pendingRepo *repository.PendingInvitationRepository
+	eventRepo   *repository.EventRepository
+	notifRepo   *repository.NotificationRepository
+	jwtSecret   string
+	jwtExpH     int
 }
 
-func NewAuthService(userRepo *repository.UserRepository, jwtSecret string, jwtExpHours int) *AuthService {
+func NewAuthService(
+	userRepo *repository.UserRepository,
+	pendingRepo *repository.PendingInvitationRepository,
+	eventRepo *repository.EventRepository,
+	notifRepo *repository.NotificationRepository,
+	jwtSecret string,
+	jwtExpHours int,
+) *AuthService {
 	return &AuthService{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
-		jwtExpH:   jwtExpHours,
+		userRepo:    userRepo,
+		pendingRepo: pendingRepo,
+		eventRepo:   eventRepo,
+		notifRepo:   notifRepo,
+		jwtSecret:   jwtSecret,
+		jwtExpH:     jwtExpHours,
 	}
 }
 
@@ -40,6 +53,23 @@ func (s *AuthService) Register(ctx context.Context, req model.RegisterRequest) (
 	user, err := s.userRepo.Create(ctx, req.Name, req.Email, string(hash))
 	if err != nil {
 		return model.AuthResponse{}, fmt.Errorf("create user: %w", err)
+	}
+
+	// Convert any pending invitations for this email into real participant records
+	pending, _ := s.pendingRepo.GetByEmail(ctx, user.Email)
+	for _, inv := range pending {
+		event, err := s.eventRepo.GetByID(ctx, inv.EventID)
+		if err != nil {
+			continue
+		}
+		_, _ = s.eventRepo.AddParticipant(ctx, inv.EventID, user.ID, "invited")
+		go func(eventID uuid.UUID, title string) {
+			_, _ = s.notifRepo.Create(context.Background(), user.ID, &eventID, "event_invite",
+				fmt.Sprintf("Вас пригласили на встречу «%s»", title))
+		}(inv.EventID, event.Title)
+	}
+	if len(pending) > 0 {
+		_ = s.pendingRepo.DeleteByEmail(ctx, user.Email)
 	}
 
 	token, err := s.generateToken(user.ID)

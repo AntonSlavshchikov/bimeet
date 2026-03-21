@@ -15,17 +15,23 @@ type EventService struct {
 	eventRepo        *repository.EventRepository
 	userRepo         *repository.UserRepository
 	notificationRepo *repository.NotificationRepository
+	pendingRepo      *repository.PendingInvitationRepository
+	mailer           *Mailer
 }
 
 func NewEventService(
 	eventRepo *repository.EventRepository,
 	userRepo *repository.UserRepository,
 	notificationRepo *repository.NotificationRepository,
+	pendingRepo *repository.PendingInvitationRepository,
+	mailer *Mailer,
 ) *EventService {
 	return &EventService{
 		eventRepo:        eventRepo,
 		userRepo:         userRepo,
 		notificationRepo: notificationRepo,
+		pendingRepo:      pendingRepo,
+		mailer:           mailer,
 	}
 }
 
@@ -43,6 +49,12 @@ func (s *EventService) Create(ctx context.Context, req model.CreateEventRequest,
 	if req.DateEnd.Before(req.DateStart) {
 		return model.Event{}, fmt.Errorf("date_end must be after date_start")
 	}
+	if req.Category == "" {
+		req.Category = "ordinary"
+	}
+	if req.Category != "ordinary" && req.Category != "business" {
+		return model.Event{}, fmt.Errorf("category must be ordinary or business")
+	}
 	return s.eventRepo.Create(ctx, req, organizerID)
 }
 
@@ -54,18 +66,32 @@ func (s *EventService) GetByInviteToken(ctx context.Context, token uuid.UUID) (m
 	return s.eventRepo.GetByInviteToken(ctx, token)
 }
 
-func (s *EventService) JoinByInviteToken(ctx context.Context, token, userID uuid.UUID) (model.EventParticipant, error) {
+func (s *EventService) JoinByInviteToken(ctx context.Context, token, userID uuid.UUID, req model.JoinByInviteTokenRequest) (model.EventParticipant, error) {
 	event, err := s.eventRepo.GetByInviteToken(ctx, token)
 	if err != nil {
 		return model.EventParticipant{}, fmt.Errorf("event not found")
 	}
 
-	// If already organizer, return error
 	if event.OrganizerID == userID {
 		return model.EventParticipant{}, fmt.Errorf("you are the organizer of this event")
 	}
 
-	p, err := s.eventRepo.AddParticipant(ctx, event.ID, userID, "confirmed")
+	action := req.Action
+	if action == "" {
+		action = "join"
+	}
+
+	var status string
+	switch action {
+	case "join":
+		status = "confirmed"
+	case "decline":
+		status = "declined"
+	default:
+		return model.EventParticipant{}, fmt.Errorf("action must be join or decline")
+	}
+
+	p, err := s.eventRepo.AddParticipant(ctx, event.ID, userID, status)
 	if err != nil {
 		return model.EventParticipant{}, err
 	}
@@ -90,6 +116,10 @@ func (s *EventService) Update(ctx context.Context, id, userID uuid.UUID, req mod
 		changed  bool
 	}
 
+	if req.Category != nil && *req.Category != "ordinary" && *req.Category != "business" {
+		return model.Event{}, fmt.Errorf("category must be ordinary or business")
+	}
+
 	changes := []fieldChange{
 		{name: "title", oldVal: event.Title, newVal: func() string {
 			if req.Title != nil { return *req.Title }; return event.Title
@@ -106,6 +136,9 @@ func (s *EventService) Update(ctx context.Context, id, userID uuid.UUID, req mod
 		{name: "date_end", oldVal: event.DateEnd.String(), newVal: func() string {
 			if req.DateEnd != nil { return req.DateEnd.String() }; return event.DateEnd.String()
 		}(), changed: req.DateEnd != nil && !req.DateEnd.Equal(event.DateEnd)},
+		{name: "category", oldVal: event.Category, newVal: func() string {
+			if req.Category != nil { return *req.Category }; return event.Category
+		}(), changed: req.Category != nil && *req.Category != event.Category},
 	}
 
 	updated, err := s.eventRepo.Update(ctx, id, req)
@@ -151,27 +184,53 @@ func (s *EventService) Delete(ctx context.Context, id, userID uuid.UUID) error {
 
 // ─── Participants ─────────────────────────────────────────────────────────
 
-func (s *EventService) InviteParticipant(ctx context.Context, eventID, organizerID uuid.UUID, req model.InviteParticipantRequest) (model.EventParticipant, error) {
+func (s *EventService) ListPendingInvitations(ctx context.Context, eventID, callerID uuid.UUID) ([]model.PendingInvitation, error) {
 	event, err := s.eventRepo.GetByID(ctx, eventID)
 	if err != nil {
-		return model.EventParticipant{}, fmt.Errorf("event not found")
+		return nil, fmt.Errorf("event not found")
+	}
+	if event.OrganizerID != callerID {
+		return nil, fmt.Errorf("forbidden")
+	}
+	return s.pendingRepo.GetByEvent(ctx, eventID)
+}
+
+func (s *EventService) InviteParticipant(ctx context.Context, eventID, organizerID uuid.UUID, req model.InviteParticipantRequest) (model.InviteParticipantResponse, error) {
+	event, err := s.eventRepo.GetByID(ctx, eventID)
+	if err != nil {
+		return model.InviteParticipantResponse{}, fmt.Errorf("event not found")
 	}
 	if event.OrganizerID != organizerID {
-		return model.EventParticipant{}, fmt.Errorf("forbidden")
+		return model.InviteParticipantResponse{}, fmt.Errorf("forbidden")
+	}
+
+	organizer, err := s.userRepo.GetByID(ctx, organizerID)
+	if err != nil {
+		return model.InviteParticipantResponse{}, fmt.Errorf("organizer not found")
 	}
 
 	user, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return model.EventParticipant{}, fmt.Errorf("user not found")
+		// User not found — create pending invitation and send email
+		if pendingErr := s.pendingRepo.Create(ctx, eventID, organizerID, req.Email); pendingErr != nil {
+			return model.InviteParticipantResponse{}, fmt.Errorf("failed to create pending invitation: %w", pendingErr)
+		}
+		go func() {
+			_ = s.mailer.SendInvite(req.Email, event.Title, organizer.Name, event.InviteToken.String())
+		}()
+		return model.InviteParticipantResponse{
+			Status:  "pending",
+			Message: "invitation sent to email",
+		}, nil
 	}
 
 	if user.ID == organizerID {
-		return model.EventParticipant{}, fmt.Errorf("cannot invite yourself")
+		return model.InviteParticipantResponse{}, fmt.Errorf("cannot invite yourself")
 	}
 
 	p, err := s.eventRepo.AddParticipant(ctx, eventID, user.ID, "invited")
 	if err != nil {
-		return model.EventParticipant{}, err
+		return model.InviteParticipantResponse{}, err
 	}
 
 	// Create notification for invited user
@@ -180,7 +239,11 @@ func (s *EventService) InviteParticipant(ctx context.Context, eventID, organizer
 			fmt.Sprintf("You have been invited to event '%s'", event.Title))
 	}()
 
-	return p, nil
+	return model.InviteParticipantResponse{
+		Status:      "invited",
+		Message:     "user invited",
+		Participant: &p,
+	}, nil
 }
 
 func (s *EventService) UpdateParticipantStatus(ctx context.Context, eventID, targetUserID, callerID uuid.UUID, req model.UpdateParticipantStatusRequest) (model.EventParticipant, error) {

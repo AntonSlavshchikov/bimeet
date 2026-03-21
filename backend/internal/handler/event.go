@@ -123,11 +123,19 @@ func (h *EventHandler) JoinByInviteToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	participant, err := h.eventService.JoinByInviteToken(r.Context(), token, userID)
+	var req model.JoinByInviteTokenRequest
+	// Body is optional — ignore parse errors (empty body = join)
+	_ = ParseJSON(r, &req)
+
+	participant, err := h.eventService.JoinByInviteToken(r.Context(), token, userID, req)
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "organizer") {
 			Error(w, http.StatusConflict, msg)
+			return
+		}
+		if strings.Contains(msg, "action") {
+			Error(w, http.StatusBadRequest, msg)
 			return
 		}
 		Error(w, http.StatusNotFound, "event not found")
@@ -204,6 +212,30 @@ func (h *EventHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *EventHandler) ListPendingInvitations(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	eventID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+	pending, err := h.eventService.ListPendingInvitations(r.Context(), eventID, userID)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "forbidden") {
+			Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		Error(w, http.StatusNotFound, msg)
+		return
+	}
+	JSON(w, http.StatusOK, pending)
+}
+
 func (h *EventHandler) InviteParticipant(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -223,7 +255,7 @@ func (h *EventHandler) InviteParticipant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	participant, err := h.eventService.InviteParticipant(r.Context(), eventID, userID, req)
+	resp, err := h.eventService.InviteParticipant(r.Context(), eventID, userID, req)
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "forbidden") {
@@ -238,7 +270,11 @@ func (h *EventHandler) InviteParticipant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	JSON(w, http.StatusCreated, participant)
+	if resp.Status == "pending" {
+		JSON(w, http.StatusAccepted, resp)
+		return
+	}
+	JSON(w, http.StatusCreated, resp)
 }
 
 func (h *EventHandler) UpdateParticipantStatus(w http.ResponseWriter, r *http.Request) {

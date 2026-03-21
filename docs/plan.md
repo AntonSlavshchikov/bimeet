@@ -247,3 +247,229 @@ PATCH  /api/notifications/:id/read
 4. Этап 4 — Координация участников
 5. Этап 5 — Уведомления
 6. Этап 6 — Финальная сводка и дополнения
+7. Этап 7 — Категории встреч и дресс-код
+8. Этап 8 — Редизайн (Web-first)
+
+---
+
+## Этап 7 — Категории встреч и дресс-код
+
+### Идея
+
+Каждое событие получает **категорию**, которая определяет его тип и набор доступных вкладок.
+Две категории:
+
+| Категория | Описание | Примеры |
+|---|---|---|
+| `ordinary` | Обычная встреча — досуг, праздники, выезды | День рождения, пикник, вечеринка |
+| `business` | Деловая встреча — рабочий контекст | Совещание, онлайн-созвон, переговоры |
+
+Категория выбирается при создании события и влияет на отображаемые вкладки.
+
+---
+
+### Вкладки по категориям
+
+| Вкладка | Обычная | Деловая |
+|---|---|---|
+| Участники | ✅ | ✅ |
+| Сбор средств | ✅ | ❌ |
+| Опросы | ✅ | ✅ |
+| Вещи | ✅ | ❌ |
+| Попутчики | ✅ | ❌ |
+| Ссылки | ❌ | ✅ |
+
+**Вкладка «Ссылки»** (только для деловых встреч) — список ссылок, относящихся к встрече. Каждая ссылка имеет название и URL. Можно добавлять несколько: ссылка на онлайн-звонок, повестка, презентация, полезные материалы и т.д. Организатор управляет списком, участники видят и переходят по ссылкам.
+
+---
+
+### Дресс-код
+
+Для обеих категорий можно опционально указать дресс-код.
+Поле необязательное — если не заполнено, не отображается.
+
+Примеры значений: `Деловой`, `Smart casual`, `Свободный`, `Белый верх — чёрный низ` и т.д.
+Свободный текст (без enum) — организатор пишет сам.
+
+---
+
+### Доменные изменения
+
+#### Event (расширение существующей модели)
+- `category` — `enum('ordinary', 'business')`, обязательное, по умолчанию `ordinary`
+- `dress_code` — `string`, необязательное, nullable
+
+#### EventLink (новая сущность, только для деловых встреч)
+- `id`
+- `event_id`
+- `title` — название ссылки (например: «Zoom-звонок», «Повестка встречи»)
+- `url` — сама ссылка
+- `created_by`
+- `created_at`
+
+---
+
+### Backend
+
+- [ ] Добавить поля `category` и `dress_code` в модель Event и миграцию
+- [ ] Добавить сущность EventLink: модель, миграция
+- [ ] CRUD для EventLink: `GET/POST /api/events/:id/links`, `DELETE /api/events/:id/links/:linkId`
+- [ ] Валидация: EventLink можно создавать только для события с `category = business`
+
+### Frontend
+
+- [ ] Добавить выбор категории в форму создания/редактирования события (radio или select: Обычная / Деловая)
+- [ ] Добавить поле «Дресс-код» в форму (необязательное, текстовое)
+- [ ] Отображать дресс-код в карточке события (если указан)
+- [ ] Фильтровать вкладки на странице события в зависимости от `category`
+- [ ] Реализовать вкладку «Ссылки»: список ссылок с названием и URL, кнопка добавления (только для организатора), кликабельные ссылки для всех участников
+
+---
+
+## Этап 8 — Редизайн (Web-first)
+
+### Контекст
+
+Приложение должно быть полноценным web-приложением с хорошим использованием широкого экрана. Приоритет — desktop; mobile остаётся работоспособным через адаптивные паттерны. Data layer (API, query hooks, entity types) и backend не меняются.
+
+---
+
+### Layout Shell
+
+Текущий layout (sticky navbar + `Container maxW`) заменяется на flex-shell с боковой панелью.
+
+**Новая структура:**
+```
+<Box minH="100vh" display="flex">
+  <Sidebar />               ← 240px, только lg+, фиксированный
+  <Box flex={1}>
+    <TopBar />              ← 48px: гамбургер (mobile) + переключатель темы
+    <Box as="main" p={6}>
+      {children}
+    </Box>
+  </Box>
+</Box>
+```
+
+| Элемент | Desktop (lg+) | Mobile (base/md) |
+|---|---|---|
+| Sidebar | Фиксированная боковая панель 240px | Скрыта |
+| Drawer | — | Открывается гамбургером, содержимое = Sidebar |
+| BottomNav | Скрыта | `position="fixed" bottom={0}`, иконки маршрутов |
+| TopBar | Только переключатель темы | Гамбургер + переключатель темы |
+
+**Sidebar содержит:**
+- Логотип + название приложения
+- Навигация: «Встречи» (FiCalendar) → `/events`
+- Снизу: аватар пользователя + имя + email + кнопка «Выйти» (пользовательское меню уходит из navbar)
+
+---
+
+### Theme — новые semantic tokens
+
+Добавить в `app/styles/theme.ts`:
+
+```ts
+sidebarBg:     { default: '#FFFFFF',                   _dark: '#13141F' }
+sidebarBorder: { default: 'rgba(15,23,42,0.08)',        _dark: 'rgba(255,255,255,0.07)' }
+navActiveBg:   { default: '#EEF2FF',                   _dark: 'rgba(99,102,241,0.15)' }
+navActiveText: { default: '#3730A3',                   _dark: '#A5B4FC' }
+```
+
+---
+
+### Страница: Список событий
+
+**Новый header:**
+```
+[Встречи]  ←→  [🔍 Поиск... (lg+)]  [⊞⊟ Вид]  [+ Создать]
+```
+
+- **Поиск**: локальный `useState<string>('')`, фильтр по title + location. На mobile — сворачиваемая строка под заголовком (`Collapse`).
+- **View toggle** (`useState<'grid'|'list'>`): переключает между сеткой карточек и компактным списком.
+- **EventListRow** (новый компонент): строка 64px — цветная точка + название + категория + дата + место + аватары + стрелка.
+
+---
+
+### Страница: Детальная страница события
+
+Двухпанельный layout:
+
+```tsx
+<Grid templateColumns={{ base: '1fr', lg: '320px 1fr' }} gap={6} alignItems="flex-start">
+  {/* Левая панель — sticky */}
+  <Box position={{ lg: 'sticky' }} top="80px">
+    <EventInfoPanel />          {/* заголовок, мета, меню организатора */}
+    <ParticipantsSummaryPanel mt={4} />   {/* счётчики + AvatarGroup */}
+  </Box>
+  {/* Правая панель — вкладки */}
+  <EventTabsPanel />
+</Grid>
+```
+
+**EventInfoPanel** — вынести из hero-card: заголовок + описание (3 строки + «Подробнее») + мета-данные (дата, место, тип, дресс-код) + меню организатора.
+
+**ParticipantsSummaryPanel** — мини-виджет: бейджи confirmed/invited/declined + AvatarGroup (max 6). Быстрый обзор без перехода во вкладку.
+
+Кнопка «Назад» убирается — навигация через sidebar.
+
+---
+
+### Страница: Форма события
+
+- `maxW`: `600px` → `860px`
+- Два столбца на `md+` (`SimpleGrid columns={{ base: 1, md: 2 }}`):
+  - Левый: Тип встречи + Название + Описание
+  - Правый: Начало + Конец + Место + Дресс-код
+- Sticky submit bar снизу карточки
+
+---
+
+### Новые файлы
+
+| Файл | Назначение |
+|---|---|
+| `widgets/layout/Sidebar.tsx` | Sidebar (desktop) + содержимое Drawer (mobile) |
+| `widgets/layout/BottomNav.tsx` | Нижняя навигация для mobile |
+| `widgets/event-detail/EventInfoPanel.tsx` | Левая панель на странице события |
+| `widgets/event-detail/ParticipantsSummaryPanel.tsx` | Мини-виджет участников |
+| `widgets/event-card/EventListRow.tsx` | Строка в list-режиме |
+
+### Изменяемые файлы
+
+| Файл | Изменение |
+|---|---|
+| `app/styles/theme.ts` | +4 semantic token |
+| `widgets/layout/index.tsx` | Полная переработка shell |
+| `pages/events-list/index.tsx` | Поиск + view toggle + EventListRow |
+| `pages/event-detail/index.tsx` | Grid двухпанельный layout |
+| `pages/event-form/index.tsx` | Wider maxW, two-col, sticky footer |
+
+### Не меняется
+
+Все feature-компоненты вкладок (ParticipantsTab, CollectionsTab, PollsTab, ItemsTab, CarpoolTab, LinksTab), router, entities, queries, API hooks, backend.
+
+---
+
+### Чеклист реализации
+
+**Layout:**
+- [ ] Добавить 4 semantic token в `theme.ts`
+- [ ] Создать `widgets/layout/Sidebar.tsx`
+- [ ] Создать `widgets/layout/BottomNav.tsx`
+- [ ] Переписать `widgets/layout/index.tsx` (flex shell, TopBar, Drawer)
+
+**Events List:**
+- [ ] Поиск (desktop input + mobile Collapse)
+- [ ] View toggle (`grid` / `list`)
+- [ ] Создать `widgets/event-card/EventListRow.tsx`
+
+**Event Detail:**
+- [ ] Создать `widgets/event-detail/EventInfoPanel.tsx`
+- [ ] Создать `widgets/event-detail/ParticipantsSummaryPanel.tsx`
+- [ ] Переписать `pages/event-detail/index.tsx` на двухпанельный Grid
+
+**Event Form:**
+- [ ] Расширить `maxW` до 860px
+- [ ] Два столбца на `md+`
+- [ ] Sticky submit bar

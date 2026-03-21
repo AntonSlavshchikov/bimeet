@@ -42,15 +42,26 @@ func main() {
 	pollRepo := repository.NewPollRepository(pool)
 	itemRepo := repository.NewItemRepository(pool)
 	carpoolRepo := repository.NewCarpoolRepository(pool)
+	linkRepo := repository.NewEventLinkRepository(pool)
 	notificationRepo := repository.NewNotificationRepository(pool)
+	pendingRepo := repository.NewPendingInvitationRepository(pool)
 
 	// Services
-	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpHours)
-	eventSvc := service.NewEventService(eventRepo, userRepo, notificationRepo)
+	mailer := service.NewMailer(service.MailerConfig{
+		Host:        cfg.SMTPHost,
+		Port:        cfg.SMTPPort,
+		User:        cfg.SMTPUser,
+		Pass:        cfg.SMTPPass,
+		From:        cfg.SMTPFrom,
+		FrontendURL: cfg.FrontendURL,
+	})
+	authSvc := service.NewAuthService(userRepo, pendingRepo, eventRepo, notificationRepo, cfg.JWTSecret, cfg.JWTExpHours)
+	eventSvc := service.NewEventService(eventRepo, userRepo, notificationRepo, pendingRepo, mailer)
 	collectionSvc := service.NewCollectionService(collectionRepo, eventRepo)
 	pollSvc := service.NewPollService(pollRepo, eventRepo)
 	itemSvc := service.NewItemService(itemRepo, eventRepo)
 	carpoolSvc := service.NewCarpoolService(carpoolRepo, eventRepo)
+	linkSvc := service.NewEventLinkService(linkRepo, eventRepo)
 	notificationSvc := service.NewNotificationService(notificationRepo)
 
 	// Handlers
@@ -60,6 +71,7 @@ func main() {
 	pollH := handler.NewPollHandler(pollSvc)
 	itemH := handler.NewItemHandler(itemSvc)
 	carpoolH := handler.NewCarpoolHandler(carpoolSvc)
+	linkH := handler.NewEventLinkHandler(linkSvc)
 	notificationH := handler.NewNotificationHandler(notificationSvc)
 
 	// Router
@@ -70,6 +82,7 @@ func main() {
 		pollH,
 		itemH,
 		carpoolH,
+		linkH,
 		notificationH,
 		cfg.JWTSecret,
 	)

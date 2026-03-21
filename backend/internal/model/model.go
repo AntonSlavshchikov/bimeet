@@ -16,6 +16,14 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+type PendingInvitation struct {
+	ID        uuid.UUID `json:"id"`
+	EventID   uuid.UUID `json:"event_id"`
+	Email     string    `json:"email"`
+	InvitedBy uuid.UUID `json:"invited_by"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Event struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
@@ -23,10 +31,21 @@ type Event struct {
 	DateStart   time.Time `json:"date_start"`
 	DateEnd     time.Time `json:"date_end"`
 	Location    string    `json:"location"`
+	Category    string    `json:"category"` // ordinary | business
+	DressCode   *string   `json:"dress_code,omitempty"`
 	OrganizerID uuid.UUID `json:"organizer_id"`
 	InviteToken uuid.UUID `json:"invite_token"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type EventLink struct {
+	ID        uuid.UUID `json:"id"`
+	EventID   uuid.UUID `json:"event_id"`
+	Title     string    `json:"title"`
+	URL       string    `json:"url"`
+	CreatedBy uuid.UUID `json:"created_by"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type EventParticipant struct {
@@ -138,6 +157,8 @@ type CreateEventRequest struct {
 	DateStart   time.Time `json:"date_start"`
 	DateEnd     time.Time `json:"date_end"`
 	Location    string    `json:"location"`
+	Category    string    `json:"category"` // ordinary | business; defaults to ordinary
+	DressCode   *string   `json:"dress_code,omitempty"`
 }
 
 type UpdateEventRequest struct {
@@ -146,10 +167,27 @@ type UpdateEventRequest struct {
 	DateStart   *time.Time `json:"date_start,omitempty"`
 	DateEnd     *time.Time `json:"date_end,omitempty"`
 	Location    *string    `json:"location,omitempty"`
+	Category    *string    `json:"category,omitempty"`
+	DressCode   *string    `json:"dress_code,omitempty"`
+}
+
+type CreateEventLinkRequest struct {
+	Title string `json:"title"`
+	URL   string `json:"url"`
 }
 
 type InviteParticipantRequest struct {
 	Email string `json:"email"`
+}
+
+type InviteParticipantResponse struct {
+	Status    string          `json:"status"` // "invited" | "pending"
+	Message   string          `json:"message"`
+	Participant *EventParticipant `json:"participant,omitempty"`
+}
+
+type JoinByInviteTokenRequest struct {
+	Action string `json:"action"` // "join" | "decline"; defaults to "join"
 }
 
 type UpdateParticipantStatusRequest struct {
@@ -258,6 +296,14 @@ type CarpoolInfo struct {
 	Passengers     []UserInfo `json:"passengers"`
 }
 
+type EventLinkInfo struct {
+	ID        uuid.UUID `json:"id"`
+	Title     string    `json:"title"`
+	URL       string    `json:"url"`
+	CreatedBy uuid.UUID `json:"created_by"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type ChangeLogInfo struct {
 	ID        uuid.UUID `json:"id"`
 	ChangedBy UserInfo  `json:"changed_by"`
@@ -274,6 +320,8 @@ type EventDetail struct {
 	DateStart    time.Time         `json:"date_start"`
 	DateEnd      time.Time         `json:"date_end"`
 	Location     string            `json:"location"`
+	Category     string            `json:"category"`
+	DressCode    *string           `json:"dress_code,omitempty"`
 	Organizer    UserInfo          `json:"organizer"`
 	InviteToken  uuid.UUID         `json:"invite_token"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -283,6 +331,7 @@ type EventDetail struct {
 	Polls        []PollInfo        `json:"polls"`
 	Items        []ItemInfo        `json:"items"`
 	Carpools     []CarpoolInfo     `json:"carpools"`
+	Links        []EventLinkInfo   `json:"links"`
 	ChangeLog    []ChangeLogInfo   `json:"change_log"`
 }
 
@@ -293,6 +342,8 @@ type EventListItem struct {
 	DateStart    time.Time         `json:"date_start"`
 	DateEnd      time.Time         `json:"date_end"`
 	Location     string            `json:"location"`
+	Category     string            `json:"category"`
+	DressCode    *string           `json:"dress_code,omitempty"`
 	Organizer    UserInfo          `json:"organizer"`
 	InviteToken  uuid.UUID         `json:"invite_token"`
 	CreatedAt    time.Time         `json:"created_at"`
