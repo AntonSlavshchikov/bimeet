@@ -14,7 +14,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi'
 import { apiFetch } from '@/shared/api/client'
 import { useAuth } from '@/features/auth/model/AuthContext'
-import type { Event } from '@/entities/event/model/types'
+import type { InviteEventInfo } from '@/entities/event/model/types'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 
 export default function InvitePage() {
@@ -23,40 +23,30 @@ export default function InvitePage() {
   const navigate = useNavigate()
   const toast = useToast()
 
-  const [event, setEvent] = useState<Event | null>(null)
+  const [event, setEvent] = useState<InviteEventInfo | null>(null)
   const [loading, setLoading] = useState(true)
-  const [acting, setActing] = useState(false)
+  const [joining, setJoining] = useState(false)
 
   useEffect(() => {
-    apiFetch<Event>(`/api/events/invite/${token}`)
+    apiFetch<InviteEventInfo>(`/api/events/invite/${token}`)
       .then(setEvent)
       .catch(() => setEvent(null))
       .finally(() => setLoading(false))
   }, [token])
 
-  async function handleAction(action: 'join' | 'decline') {
-    if (!user) {
-      navigate(`/register?redirect=/invite/${token}`)
-      return
-    }
-    setActing(true)
+  async function handleJoin() {
+    setJoining(true)
     try {
-      await apiFetch(`/api/events/invite/${token}`, {
+      const participant = await apiFetch<{ event_id: string }>(`/api/events/invite/${token}`, {
         method: 'POST',
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action: 'join' }),
       })
-      if (action === 'join') {
-        toast({ title: 'Вы присоединились к встрече', status: 'success', duration: 2000 })
-        navigate(`/events/${event!.id}`)
-      } else {
-        toast({ title: 'Приглашение отклонено', status: 'info', duration: 2000 })
-        navigate('/events')
-      }
+      navigate(`/events/${participant.event_id}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Ошибка'
       toast({ title: msg, status: 'error', duration: 3000 })
     } finally {
-      setActing(false)
+      setJoining(false)
     }
   }
 
@@ -79,11 +69,6 @@ export default function InvitePage() {
       </Box>
     )
   }
-
-  const confirmedCount = event.participants.filter(p => p.status === 'confirmed').length
-  const myParticipant = user ? event.participants.find(p => p.user.id === user.id) : null
-  const alreadyJoined = myParticipant?.status === 'confirmed'
-  const alreadyDeclined = myParticipant?.status === 'declined'
 
   return (
     <Box minH="100vh" bg="pageBg" display="flex" alignItems="center" justifyContent="center" p={4}>
@@ -134,43 +119,29 @@ export default function InvitePage() {
                 </HStack>
                 <HStack spacing={2}>
                   <Icon as={FiUsers} color="brand.400" boxSize={4} />
-                  <Text fontSize="sm" color="dimText">{confirmedCount} подтвердили участие</Text>
+                  <Text fontSize="sm" color="dimText">{event.confirmed_count} подтвердили участие</Text>
                 </HStack>
               </VStack>
 
-              <Text fontSize="xs" color="faintText">
-                Организатор: <Text as="span" fontWeight="600">{event.organizer.name}</Text>
-              </Text>
+              {event.organizer && (
+                <Text fontSize="xs" color="faintText">
+                  Организатор: <Text as="span" fontWeight="600">{event.organizer.name}</Text>
+                </Text>
+              )}
 
-              {alreadyJoined ? (
-                <Button as={Link} to={`/events/${event.id}`} colorScheme="blue" w="full">
-                  Открыть встречу
+              {user ? (
+                <Button colorScheme="blue" w="full" onClick={handleJoin} isLoading={joining}>
+                  Перейти к встрече
                 </Button>
-              ) : alreadyDeclined ? (
+              ) : (
                 <VStack spacing={2}>
-                  <Text fontSize="sm" color="faintText" textAlign="center">Вы отклонили это приглашение</Text>
-                  <Button colorScheme="blue" variant="outline" w="full" onClick={() => handleAction('join')} isLoading={acting}>
-                    Всё-таки приму участие
-                  </Button>
-                </VStack>
-              ) : !user ? (
-                <VStack spacing={2}>
-                  <Button colorScheme="blue" w="full" as={Link} to={`/register?redirect=/invite/${token}`}>
+                  <Button colorScheme="blue" w="full" as={Link} to={`/register?token=${token}`}>
                     Зарегистрироваться и принять
                   </Button>
-                  <Button colorScheme="blue" variant="outline" w="full" as={Link} to={`/login?redirect=/invite/${token}`}>
+                  <Button colorScheme="blue" variant="outline" w="full" as={Link} to={`/login?token=${token}`}>
                     Войти
                   </Button>
                 </VStack>
-              ) : (
-                <HStack spacing={2}>
-                  <Button colorScheme="blue" flex={1} onClick={() => handleAction('join')} isLoading={acting}>
-                    Принять
-                  </Button>
-                  <Button colorScheme="gray" variant="outline" flex={1} onClick={() => handleAction('decline')} isLoading={acting}>
-                    Отклонить
-                  </Button>
-                </HStack>
               )}
             </VStack>
           </Box>

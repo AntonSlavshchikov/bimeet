@@ -133,18 +133,7 @@ export default function LinksTab({ event }: { event: Event }) {
             _hover={{ borderColor: 'brand.200', bg: 'navActiveBg' }}
             transition="all 0.15s"
           >
-            <Box
-              w="32px"
-              h="32px"
-              borderRadius="lg"
-              bg="navActiveBg"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              flexShrink={0}
-            >
-              <Icon as={FiLink} color="brand.500" boxSize={3.5} />
-            </Box>
+            <Icon as={FiLink} color="brand.400" boxSize={3.5} flexShrink={0} />
             <Box flex={1} minW={0}>
               <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1}>
                 {link.title}

@@ -15,9 +15,9 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { useState } from 'react'
-import { FiPlus, FiLink, FiMail } from 'react-icons/fi'
+import { FiPlus, FiLink } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
-import { useInviteParticipant, useUpdateParticipantStatus, usePendingInvitations } from '@/features/participants/model/hooks'
+import { useInviteParticipant, useUpdateParticipantStatus } from '@/features/participants/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
 
 const statusLabel = { invited: 'Приглашён', confirmed: 'Идёт', declined: 'Не идёт' }
@@ -38,7 +38,6 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   const invite = useInviteParticipant(event.id)
 
   const isOrganizer = event.organizer.id === user?.id
-  const { data: pendingInvitations = [] } = usePendingInvitations(event.id, isOrganizer)
   const myParticipant = event.participants.find(p => p.user.id === user?.id)
 
   const confirmed = event.participants.filter(p => p.status === 'confirmed').length
@@ -48,11 +47,8 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   function handleInvite() {
     if (!email.trim()) return
     invite.mutate(email.trim(), {
-      onSuccess: (resp) => {
-        const title = resp?.status === 'pending'
-          ? 'Приглашение отправлено на email'
-          : 'Приглашение отправлено'
-        toast({ title, status: 'success', duration: 2000 })
+      onSuccess: () => {
+        toast({ title: 'Приглашение отправлено', status: 'success', duration: 2000 })
         setEmail('')
         onToggle()
       },
@@ -156,9 +152,6 @@ export default function ParticipantsTab({ event }: { event: Event }) {
       <HStack spacing={2} flexWrap="wrap">
         <Badge colorScheme="green" variant="subtle" px={2.5} py={1}>{confirmed} идут</Badge>
         <Badge colorScheme="yellow" variant="subtle" px={2.5} py={1}>{invited} приглашены</Badge>
-        {isOrganizer && pendingInvitations.length > 0 && (
-          <Badge colorScheme="orange" variant="subtle" px={2.5} py={1}>{pendingInvitations.length} ждут регистрации</Badge>
-        )}
         {declined > 0 && (
           <Badge colorScheme="red" variant="subtle" px={2.5} py={1}>{declined} отказались</Badge>
         )}
@@ -195,22 +188,6 @@ export default function ParticipantsTab({ event }: { event: Event }) {
           </HStack>
         ))}
 
-        {isOrganizer && pendingInvitations.map(p => (
-          <HStack key={p.id} justify="space-between" p={3} borderRadius="lg" bg="subtleBg" opacity={0.7}>
-            <HStack spacing={3} minW={0} flex={1}>
-              <Box
-                w="32px" h="32px" borderRadius="full"
-                bg="subtleBg" border="1px dashed" borderColor="subtleBorder"
-                display="flex" alignItems="center" justifyContent="center"
-                flexShrink={0}
-              >
-                <Icon as={FiMail} boxSize={3.5} color="faintText" />
-              </Box>
-              <Text fontSize="sm" color="dimText" noOfLines={1}>{p.email}</Text>
-            </HStack>
-            <Badge colorScheme="orange" variant="subtle" flexShrink={0}>ждёт регистрации</Badge>
-          </HStack>
-        ))}
       </VStack>
     </VStack>
   )

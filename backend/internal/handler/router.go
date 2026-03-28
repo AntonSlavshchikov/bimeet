@@ -5,31 +5,27 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	authhandler         "meetup/internal/handler/auth"
+	carpoolhandler      "meetup/internal/handler/carpool"
+	collectionhandler   "meetup/internal/handler/collection"
+	eventhandler        "meetup/internal/handler/event"
+	eventlinkhandler    "meetup/internal/handler/eventlink"
+	itemhandler         "meetup/internal/handler/item"
+	notificationhandler "meetup/internal/handler/notification"
+	pollhandler         "meetup/internal/handler/poll"
 	"meetup/internal/middleware"
 )
 
-type Router struct {
-	auth         *AuthHandler
-	event        *EventHandler
-	collection   *CollectionHandler
-	poll         *PollHandler
-	item         *ItemHandler
-	carpool      *CarpoolHandler
-	link         *EventLinkHandler
-	notification *NotificationHandler
-	jwtSecret    string
-}
-
 func NewRouter(
-	auth *AuthHandler,
-	event *EventHandler,
-	collection *CollectionHandler,
-	poll *PollHandler,
-	item *ItemHandler,
-	carpool *CarpoolHandler,
-	link *EventLinkHandler,
-	notification *NotificationHandler,
-	jwtSecret string,
+	auth         *authhandler.Handler,
+	event        *eventhandler.Handler,
+	collection   *collectionhandler.Handler,
+	poll         *pollhandler.Handler,
+	item         *itemhandler.Handler,
+	carpool      *carpoolhandler.Handler,
+	link         *eventlinkhandler.Handler,
+	notification *notificationhandler.Handler,
+	jwtSecret    string,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -66,7 +62,6 @@ func NewRouter(
 				// Participants
 				r.Post("/participants", event.InviteParticipant)
 				r.Patch("/participants/{userId}", event.UpdateParticipantStatus)
-				r.Get("/participants/pending", event.ListPendingInvitations)
 
 				// Collections
 				r.Get("/collections", collection.List)

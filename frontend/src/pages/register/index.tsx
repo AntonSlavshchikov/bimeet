@@ -12,13 +12,16 @@ import {
   HStack,
 } from '@chakra-ui/react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { apiFetch } from '@/shared/api/client'
 
 export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const [searchParams] = useSearchParams()
+  const inviteToken = searchParams.get('token')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,12 +35,25 @@ export default function RegisterPage() {
     }
     setLoading(true)
     const ok = await register(name, email, password)
-    setLoading(false)
-    if (ok) {
-      navigate('/events')
-    } else {
+    if (!ok) {
+      setLoading(false)
       toast({ title: 'Ошибка регистрации', status: 'error', duration: 3000 })
+      return
     }
+    if (inviteToken) {
+      try {
+        const participant = await apiFetch<{ event_id: string }>(`/api/events/invite/${inviteToken}`, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'join' }),
+        })
+        navigate(`/events/${participant.event_id}`)
+      } catch {
+        navigate('/events')
+      }
+    } else {
+      navigate('/events')
+    }
+    setLoading(false)
   }
 
   return (
@@ -137,7 +153,7 @@ export default function RegisterPage() {
                   Уже есть аккаунт?{' '}
                   <ChakraLink
                     as={Link}
-                    to="/login"
+                    to={inviteToken ? `/login?token=${inviteToken}` : '/login'}
                     color="brand.600"
                     fontWeight="600"
                     _hover={{ textDecoration: 'none', color: 'brand.700' }}

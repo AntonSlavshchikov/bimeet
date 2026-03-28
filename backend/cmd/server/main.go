@@ -12,8 +12,31 @@ import (
 	"meetup/internal/config"
 	"meetup/internal/db"
 	"meetup/internal/handler"
-	"meetup/internal/repository"
-	"meetup/internal/service"
+	authhandler         "meetup/internal/handler/auth"
+	carpoolhandler      "meetup/internal/handler/carpool"
+	collectionhandler   "meetup/internal/handler/collection"
+	eventhandler        "meetup/internal/handler/event"
+	eventlinkhandler    "meetup/internal/handler/eventlink"
+	itemhandler         "meetup/internal/handler/item"
+	notificationhandler "meetup/internal/handler/notification"
+	pollhandler         "meetup/internal/handler/poll"
+	carpoolrepo         "meetup/internal/repository/carpool"
+	collectionrepo      "meetup/internal/repository/collection"
+	eventrepo           "meetup/internal/repository/event"
+	eventlinkrepo       "meetup/internal/repository/eventlink"
+	itemrepo            "meetup/internal/repository/item"
+	notificationrepo    "meetup/internal/repository/notification"
+	pollrepo            "meetup/internal/repository/poll"
+	userrepo            "meetup/internal/repository/user"
+	authsvc             "meetup/internal/service/auth"
+	carpoolsvc          "meetup/internal/service/carpool"
+	collectionsvc       "meetup/internal/service/collection"
+	eventsvc            "meetup/internal/service/event"
+	eventlinksvc        "meetup/internal/service/eventlink"
+	itemsvc             "meetup/internal/service/item"
+	"meetup/internal/service/mailer"
+	notificationsvc     "meetup/internal/service/notification"
+	pollsvc             "meetup/internal/service/poll"
 )
 
 func main() {
@@ -36,18 +59,17 @@ func main() {
 	db.Migrate(ctx, pool)
 
 	// Repositories
-	userRepo := repository.NewUserRepository(pool)
-	eventRepo := repository.NewEventRepository(pool)
-	collectionRepo := repository.NewCollectionRepository(pool)
-	pollRepo := repository.NewPollRepository(pool)
-	itemRepo := repository.NewItemRepository(pool)
-	carpoolRepo := repository.NewCarpoolRepository(pool)
-	linkRepo := repository.NewEventLinkRepository(pool)
-	notificationRepo := repository.NewNotificationRepository(pool)
-	pendingRepo := repository.NewPendingInvitationRepository(pool)
+	userRepo         := userrepo.New(pool)
+	eventRepo        := eventrepo.New(pool)
+	collectionRepo   := collectionrepo.New(pool)
+	pollRepo         := pollrepo.New(pool)
+	itemRepo         := itemrepo.New(pool)
+	carpoolRepo      := carpoolrepo.New(pool)
+	linkRepo         := eventlinkrepo.New(pool)
+	notificationRepo := notificationrepo.New(pool)
 
 	// Services
-	mailer := service.NewMailer(service.MailerConfig{
+	m            := mailer.New(mailer.Config{
 		Host:        cfg.SMTPHost,
 		Port:        cfg.SMTPPort,
 		User:        cfg.SMTPUser,
@@ -55,24 +77,24 @@ func main() {
 		From:        cfg.SMTPFrom,
 		FrontendURL: cfg.FrontendURL,
 	})
-	authSvc := service.NewAuthService(userRepo, pendingRepo, eventRepo, notificationRepo, cfg.JWTSecret, cfg.JWTExpHours)
-	eventSvc := service.NewEventService(eventRepo, userRepo, notificationRepo, pendingRepo, mailer)
-	collectionSvc := service.NewCollectionService(collectionRepo, eventRepo)
-	pollSvc := service.NewPollService(pollRepo, eventRepo)
-	itemSvc := service.NewItemService(itemRepo, eventRepo)
-	carpoolSvc := service.NewCarpoolService(carpoolRepo, eventRepo)
-	linkSvc := service.NewEventLinkService(linkRepo, eventRepo)
-	notificationSvc := service.NewNotificationService(notificationRepo)
+	authSvc         := authsvc.New(userRepo, cfg.JWTSecret, cfg.JWTExpHours)
+	eventSvc        := eventsvc.New(eventRepo, userRepo, notificationRepo, m)
+	collectionSvc   := collectionsvc.New(collectionRepo, eventRepo)
+	pollSvc         := pollsvc.New(pollRepo, eventRepo)
+	itemSvc         := itemsvc.New(itemRepo, eventRepo)
+	carpoolSvc      := carpoolsvc.New(carpoolRepo, eventRepo)
+	linkSvc         := eventlinksvc.New(linkRepo, eventRepo)
+	notificationSvc := notificationsvc.New(notificationRepo)
 
 	// Handlers
-	authH := handler.NewAuthHandler(authSvc)
-	eventH := handler.NewEventHandler(eventSvc)
-	collectionH := handler.NewCollectionHandler(collectionSvc)
-	pollH := handler.NewPollHandler(pollSvc)
-	itemH := handler.NewItemHandler(itemSvc)
-	carpoolH := handler.NewCarpoolHandler(carpoolSvc)
-	linkH := handler.NewEventLinkHandler(linkSvc)
-	notificationH := handler.NewNotificationHandler(notificationSvc)
+	authH         := authhandler.New(authSvc)
+	eventH        := eventhandler.New(eventSvc)
+	collectionH   := collectionhandler.New(collectionSvc)
+	pollH         := pollhandler.New(pollSvc)
+	itemH         := itemhandler.New(itemSvc)
+	carpoolH      := carpoolhandler.New(carpoolSvc)
+	linkH         := eventlinkhandler.New(linkSvc)
+	notificationH := notificationhandler.New(notificationSvc)
 
 	// Router
 	router := handler.NewRouter(

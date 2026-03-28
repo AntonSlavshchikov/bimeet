@@ -473,3 +473,181 @@ navActiveText: { default: '#3730A3',                   _dark: '#A5B4FC' }
 - [ ] Расширить `maxW` до 860px
 - [ ] Два столбца на `md+`
 - [ ] Sticky submit bar
+
+---
+
+## Этап 9 — Уведомления
+
+### Что уже есть
+
+| Слой | Готово |
+|---|---|
+| Таблица `notifications` в БД | ✅ |
+| `GET /api/notifications` | ✅ |
+| `PATCH /api/notifications/{id}/read` | ✅ |
+| Создание уведомлений при инвайте и изменении события | ✅ |
+| `Notification` тип на фронтенде | ✅ |
+| `notificationsApi.list()` и `markRead()` | ✅ |
+
+### Что нужно добавить
+
+#### Backend
+
+Три новых эндпоинта:
+
+| Метод | Путь | Действие |
+|---|---|---|
+| `POST` | `/api/notifications/read-all` | Отметить все как прочитанные |
+| `DELETE` | `/api/notifications/{id}` | Удалить одно уведомление |
+| `DELETE` | `/api/notifications` | Удалить все уведомления |
+
+- [ ] Добавить методы в `backend/internal/repository/notification.go`: `MarkAllRead(userID)`, `Delete(id, userID)`, `DeleteAll(userID)`
+- [ ] Добавить методы в `backend/internal/service/notification.go`
+- [ ] Добавить хендлеры в `backend/internal/handler/notification.go`
+- [ ] Зарегистрировать маршруты в `backend/internal/handler/router.go`
+
+#### Frontend
+
+**Новые файлы:**
+
+| Файл | Назначение |
+|---|---|
+| `entities/notification/queries/index.ts` | `useNotifications()` — TanStack Query хук с polling (30s) |
+| `features/notifications/model/hooks.ts` | Mutation хуки: `useMarkRead`, `useMarkAllRead`, `useDeleteNotification`, `useDeleteAllNotifications` |
+| `features/notifications/ui/NotificationCenter.tsx` | Колокольчик + Popover с панелью уведомлений |
+
+**Изменяемые файлы:**
+
+| Файл | Изменение |
+|---|---|
+| `entities/notification/api/index.ts` | Добавить `markAllRead()`, `deleteOne(id)`, `deleteAll()` |
+| `widgets/layout/index.tsx` | Добавить `<NotificationCenter />` в TopBar |
+
+#### Поведение NotificationCenter
+
+- Иконка `FiBell` в топбаре
+- Badge с числом непрочитанных (скрыт если 0, показывает `99+` при переполнении)
+- Клик → Popover с панелью:
+  - Заголовок «Уведомления» + кнопки «Прочитать все» / «Удалить все»
+  - Список уведомлений: текст + время + dot-индикатор непрочитанного
+  - Кнопки на каждом элементе: ✓ (прочитать) + ✕ (удалить)
+  - Empty state: «Нет уведомлений»
+- Polling каждые 30 секунд через `refetchInterval`
+
+### Чеклист реализации
+
+**Backend:**
+- [ ] `MarkAllRead(ctx, userID)` в репозитории
+- [ ] `Delete(ctx, id, userID)` в репозитории
+- [ ] `DeleteAll(ctx, userID)` в репозитории
+- [ ] Сервисные методы + хендлеры + роуты
+
+**Frontend:**
+- [ ] `entities/notification/queries/index.ts` — `notificationKeys`, `useNotifications()`
+- [ ] `entities/notification/api/index.ts` — дополнить 3 методами
+- [ ] `features/notifications/model/hooks.ts` — 4 mutation хука
+- [ ] `features/notifications/ui/NotificationCenter.tsx` — компонент
+- [ ] `widgets/layout/index.tsx` — встроить в TopBar
+
+---
+
+## Этап 10 — Завершение и удаление встречи
+
+### Контекст
+
+Сейчас жизненный цикл встречи никак явно не прослеживается — единственный индикатор завершённости это дата. Нужно дать организатору возможность явно завершить встречу и удалить её. Удаление на бэкенде уже реализовано (`DELETE /api/events/:id`), но не подключено в UI.
+
+### Backend
+
+#### Миграция `004_event_status`
+Добавить колонку `status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed'))` в таблицу `events`.
+
+#### Изменения в коде
+
+| Файл | Изменение |
+|---|---|
+| `internal/model/model.go` | Добавить `Status string \`json:"status"\`` в `Event`, `EventDetail`, `EventListItem` |
+| `internal/repository/event.go` | Добавить `e.status` в SELECT; новый метод `Complete(ctx, id)` |
+| `internal/service/event.go` | Новый метод `Complete(ctx, id, userID)`: проверка организатора + UPDATE + async уведомления участникам |
+| `internal/handler/event.go` | Новый хендлер `Complete` → `204 No Content` |
+| `internal/handler/router.go` | Маршрут `POST /api/events/{id}/complete` |
+
+### Frontend
+
+| Файл | Изменение |
+|---|---|
+| `entities/event/model/types.ts` | `status: 'active' \| 'completed'` в `Event` и `EventListItem` |
+| `features/event-manage/api/index.ts` | Метод `complete(id)` → `POST /api/events/{id}/complete` |
+| `features/event-manage/model/hooks.ts` | Хук `useCompleteEvent(id)` |
+| `widgets/event-detail/EventInfoPanel.tsx` | Меню организатора: «Завершить» (только если `active`) + «Удалить» — оба с `AlertDialog`; badge «Завершена» под заголовком |
+| `widgets/event-card` | Визуальный индикатор завершённости (badge/приглушённый стиль) |
+
+### Чеклист реализации
+
+**Backend:**
+- [ ] Создать `004_event_status.up.sql` и `004_event_status.down.sql`
+- [ ] Добавить `Status` в модели `Event`, `EventDetail`, `EventListItem`
+- [ ] Добавить `e.status` в SELECT-запросы репозитория
+- [ ] Метод `EventRepository.Complete(ctx, id)`
+- [ ] Метод `EventService.Complete(ctx, id, userID)` + уведомления
+- [ ] Хендлер `EventHandler.Complete`
+- [ ] Маршрут `POST /api/events/{id}/complete`
+
+**Frontend:**
+- [ ] Добавить `status` в типы
+- [ ] API-метод `complete`
+- [ ] Хук `useCompleteEvent`
+- [ ] `EventInfoPanel`: пункты «Завершить» и «Удалить» + badge статуса
+- [ ] `event-card`: индикатор завершённости в списке
+
+---
+
+## Этап 11 — Рефакторинг архитектуры backend
+
+### Что сделано
+
+Полный рефакторинг структуры backend для улучшения тестируемости и соответствия идиоматическому Go.
+
+#### Разбивка по папкам
+
+Каждый домен вынесен в отдельный подпакет:
+
+| Уровень | Было | Стало |
+|---|---|---|
+| Handler | `internal/handler/event.go` | `internal/handler/event/handler.go` |
+| Service | `internal/service/event.go` | `internal/service/event/service.go` |
+| Repository | `internal/repository/event.go` | `internal/repository/event/repository.go` |
+
+Пакеты именуются с суффиксом (`eventhandler`, `eventsvc`, `eventrepo`), чтобы не было конфликтов при импорте.
+
+`router.go` остался в `internal/handler/` (пакет `handler`) как центральное звено.
+
+#### Интерфейсы в потребляющем пакете (идиоматичный Go)
+
+Каждый пакет определяет **только те методы**, которые он реально использует:
+
+```
+handler/event/interfaces.go   → EventService { List, Create, GetByID, ... }
+service/event/interfaces.go   → EventRepo, UserRepo, NotificationRepo, Mailer
+```
+
+Конкретный `*eventrepo.Repository` удовлетворяет 7 разным `EventRepo`-интерфейсам одновременно.
+
+#### Тесты с go.uber.org/mock
+
+- Добавлен `go.uber.org/mock` (fork `golang/mock`)
+- `//go:generate mockgen ...` директивы в каждом `interfaces.go`
+- Моки генерируются в `mock/mock.go` рядом с интерфейсом: `go generate ./...`
+- Покрытие: `service/event` (11 тестов) + `handler/event` (11 тестов)
+
+### Чеклист
+
+- [x] Разбить handlers по подпапкам
+- [x] Разбить services по подпапкам
+- [x] Разбить repositories по подпапкам
+- [x] Все зависимости через интерфейсы
+- [x] Обновить `cmd/server/main.go`
+- [x] Удалить старые flat-файлы
+- [x] Добавить `go.uber.org/mock` + `//go:generate` директивы
+- [x] Написать unit-тесты для `service/event`
+- [x] Написать unit-тесты для `handler/event`

@@ -12,13 +12,16 @@ import {
   HStack,
 } from '@chakra-ui/react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { apiFetch } from '@/shared/api/client'
 
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const [searchParams] = useSearchParams()
+  const inviteToken = searchParams.get('token')
   const [email, setEmail] = useState('andrey@example.com')
   const [password, setPassword] = useState('password')
   const [loading, setLoading] = useState(false)
@@ -27,12 +30,25 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     const ok = await login(email, password)
-    setLoading(false)
-    if (ok) {
-      navigate('/events')
-    } else {
+    if (!ok) {
+      setLoading(false)
       toast({ title: 'Ошибка входа', status: 'error', duration: 3000 })
+      return
     }
+    if (inviteToken) {
+      try {
+        const participant = await apiFetch<{ event_id: string }>(`/api/events/invite/${inviteToken}`, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'join' }),
+        })
+        navigate(`/events/${participant.event_id}`)
+      } catch {
+        navigate('/events')
+      }
+    } else {
+      navigate('/events')
+    }
+    setLoading(false)
   }
 
   return (
@@ -129,7 +145,7 @@ export default function LoginPage() {
                   Нет аккаунта?{' '}
                   <ChakraLink
                     as={Link}
-                    to="/register"
+                    to={inviteToken ? `/register?token=${inviteToken}` : '/register'}
                     color="brand.600"
                     fontWeight="600"
                     _hover={{ textDecoration: 'none', color: 'brand.700' }}

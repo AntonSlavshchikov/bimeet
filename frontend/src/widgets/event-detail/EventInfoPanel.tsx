@@ -128,15 +128,11 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
           {sameDay ? (
             <>
               <HStack spacing={2.5}>
-                <Box w="26px" h="26px" borderRadius="lg" bg="brand.50" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-                  <Icon as={FiCalendar} color="brand.500" boxSize={3.5} />
-                </Box>
+                <Icon as={FiCalendar} color="brand.400" boxSize={3.5} flexShrink={0} />
                 <Text fontSize="sm" color="dimText" fontWeight="500">{formatDate(event.date_start)}</Text>
               </HStack>
               <HStack spacing={2.5}>
-                <Box w="26px" h="26px" borderRadius="lg" bg="brand.50" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-                  <Icon as={FiClock} color="brand.500" boxSize={3.5} />
-                </Box>
+                <Icon as={FiClock} color="brand.400" boxSize={3.5} flexShrink={0} />
                 <Text fontSize="sm" color="dimText" fontWeight="500">
                   {formatTime(event.date_start)} — {formatTime(event.date_end)}
                 </Text>
@@ -144,9 +140,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
             </>
           ) : (
             <HStack spacing={2.5}>
-              <Box w="26px" h="26px" borderRadius="lg" bg="brand.50" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-                <Icon as={FiCalendar} color="brand.500" boxSize={3.5} />
-              </Box>
+              <Icon as={FiCalendar} color="brand.400" boxSize={3.5} flexShrink={0} />
               <Text fontSize="sm" color="dimText" fontWeight="500">
                 {formatDate(event.date_start)}, {formatTime(event.date_start)} — {formatDate(event.date_end)}, {formatTime(event.date_end)}
               </Text>
@@ -154,26 +148,20 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
           )}
 
           <HStack spacing={2.5}>
-            <Box w="26px" h="26px" borderRadius="lg" bg="brand.50" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-              <Icon as={FiMapPin} color="brand.500" boxSize={3.5} />
-            </Box>
+            <Icon as={FiMapPin} color="brand.400" boxSize={3.5} flexShrink={0} />
             <Text fontSize="sm" color="dimText" fontWeight="500">{event.location}</Text>
           </HStack>
 
           {event.dress_code && (
             <HStack spacing={2.5}>
-              <Box w="26px" h="26px" borderRadius="lg" bg="brand.50" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-                <Icon as={FiTag} color="brand.500" boxSize={3.5} />
-              </Box>
+              <Icon as={FiTag} color="brand.400" boxSize={3.5} flexShrink={0} />
               <Text fontSize="sm" color="dimText" fontWeight="500">Дресс-код: {event.dress_code}</Text>
             </HStack>
           )}
 
           {event.category === 'business' && (
             <HStack spacing={2.5}>
-              <Box w="26px" h="26px" borderRadius="lg" bg="brand.50" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-                <Icon as={FiBriefcase} color="brand.500" boxSize={3.5} />
-              </Box>
+              <Icon as={FiBriefcase} color="brand.400" boxSize={3.5} flexShrink={0} />
               <Badge colorScheme="blue" variant="subtle" borderRadius="md" fontSize="xs">
                 Деловая встреча
               </Badge>

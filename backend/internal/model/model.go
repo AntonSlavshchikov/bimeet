@@ -16,14 +16,6 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-type PendingInvitation struct {
-	ID        uuid.UUID `json:"id"`
-	EventID   uuid.UUID `json:"event_id"`
-	Email     string    `json:"email"`
-	InvitedBy uuid.UUID `json:"invited_by"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
 type Event struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
@@ -180,12 +172,6 @@ type InviteParticipantRequest struct {
 	Email string `json:"email"`
 }
 
-type InviteParticipantResponse struct {
-	Status    string          `json:"status"` // "invited" | "pending"
-	Message   string          `json:"message"`
-	Participant *EventParticipant `json:"participant,omitempty"`
-}
-
 type JoinByInviteTokenRequest struct {
 	Action string `json:"action"` // "join" | "decline"; defaults to "join"
 }
@@ -240,6 +226,19 @@ type CreateCarpoolRequest struct {
 }
 
 // ─── Enriched API response types ───────────────────────────────────────────
+
+type InviteEventInfo struct {
+	ID             uuid.UUID `json:"id"`
+	Title          string    `json:"title"`
+	Description    string    `json:"description"`
+	DateStart      time.Time `json:"date_start"`
+	DateEnd        time.Time `json:"date_end"`
+	Location       string    `json:"location"`
+	Category       string    `json:"category"`
+	DressCode      *string   `json:"dress_code,omitempty"`
+	Organizer      UserInfo  `json:"organizer"`
+	ConfirmedCount int       `json:"confirmed_count"`
+}
 
 type UserInfo struct {
 	ID    uuid.UUID `json:"id"`

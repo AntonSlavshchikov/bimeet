@@ -63,6 +63,19 @@ export interface EventListItem {
   participants: Array<{ id: string; user: { id: string; name: string; email: string }; status: string }>
 }
 
+export interface InviteEventInfo {
+  id: string
+  title: string
+  description: string
+  date_start: string
+  date_end: string
+  location: string
+  category: EventCategory
+  dress_code?: string
+  organizer: { id: string; name: string; email: string }
+  confirmed_count: number
+}
+
 export interface CreateEventData {
   title: string
   description: string
