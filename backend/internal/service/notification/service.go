@@ -31,3 +31,22 @@ func (s *Service) MarkRead(ctx context.Context, notifID, userID uuid.UUID) (mode
 	}
 	return s.notificationRepo.MarkRead(ctx, notifID)
 }
+
+func (s *Service) MarkAllRead(ctx context.Context, userID uuid.UUID) error {
+	return s.notificationRepo.MarkAllRead(ctx, userID)
+}
+
+func (s *Service) Delete(ctx context.Context, notifID, userID uuid.UUID) error {
+	n, err := s.notificationRepo.GetByID(ctx, notifID)
+	if err != nil {
+		return fmt.Errorf("notification not found")
+	}
+	if n.UserID != userID {
+		return fmt.Errorf("forbidden")
+	}
+	return s.notificationRepo.Delete(ctx, notifID)
+}
+
+func (s *Service) DeleteAll(ctx context.Context, userID uuid.UUID) error {
+	return s.notificationRepo.DeleteAll(ctx, userID)
+}

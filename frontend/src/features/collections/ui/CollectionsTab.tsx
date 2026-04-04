@@ -19,6 +19,7 @@ import {
   Progress,
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiTrash2, FiPlus, FiCheck, FiPocket } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
 import {
@@ -30,6 +31,7 @@ import { useAuth } from '@/features/auth/model/AuthContext'
 
 export default function CollectionsTab({ event }: { event: Event }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const { isOpen, onToggle } = useDisclosure()
   const [newTitle, setNewTitle] = useState('')
   const [newAmount, setNewAmount] = useState('')
@@ -39,6 +41,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
   const toggleContribution = useToggleContribution(event.id)
 
   const isOrganizer = event.organizer.id === user?.id
+  const isCompleted = event.status === 'completed'
 
   // Confirmed participants + organizer (если организатор не является участником)
   const confirmedParticipants = event.participants.filter(p => p.status === 'confirmed')
@@ -79,7 +82,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
             border="1px solid" borderColor="subtleBorder"
             borderLeft="3px solid" borderLeftColor="purple.400"
           >
-            <Text fontSize="xs" color="dimText" fontWeight="500" mb={0.5}>Всего собрать</Text>
+            <Text fontSize="xs" color="dimText" fontWeight="500" mb={0.5}>{t('collections.totalLabel')}</Text>
             <Text fontSize="lg" fontWeight="700" color="mainText" letterSpacing="-0.5px">
               {totalTarget.toLocaleString('ru-RU')} ₽
             </Text>
@@ -90,11 +93,11 @@ export default function CollectionsTab({ event }: { event: Event }) {
             border="1px solid" borderColor="subtleBorder"
             borderLeft="3px solid" borderLeftColor="brand.400"
           >
-            <Text fontSize="xs" color="dimText" fontWeight="500" mb={0.5}>С каждого</Text>
+            <Text fontSize="xs" color="dimText" fontWeight="500" mb={0.5}>{t('collections.perPersonLabel')}</Text>
             <Text fontSize="lg" fontWeight="700" color="mainText" letterSpacing="-0.5px">
               {perPersonTotal.toLocaleString('ru-RU')} ₽
             </Text>
-            <Text fontSize="xs" color="dimText">{confirmedParticipants.length} участников</Text>
+            <Text fontSize="xs" color="dimText">{t('collections.participantsCount', { count: confirmedParticipants.length })}</Text>
           </Box>
           <Box
             p={3.5} borderRadius="xl"
@@ -102,11 +105,11 @@ export default function CollectionsTab({ event }: { event: Event }) {
             border="1px solid" borderColor="subtleBorder"
             borderLeft="3px solid" borderLeftColor="green.400"
           >
-            <Text fontSize="xs" color="dimText" fontWeight="500" mb={0.5}>Скинулись</Text>
+            <Text fontSize="xs" color="dimText" fontWeight="500" mb={0.5}>{t('collections.contributedLabel')}</Text>
             <Text fontSize="lg" fontWeight="700" color="mainText" letterSpacing="-0.5px">
               {collectedPct}%
             </Text>
-            <Text fontSize="xs" color="dimText">{totalPaidCount} из {totalSlots}</Text>
+            <Text fontSize="xs" color="dimText">{totalPaidCount}/{totalSlots}</Text>
           </Box>
         </Grid>
       )}
@@ -114,7 +117,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
       {totalSlots > 0 && (
         <Box>
           <HStack justify="space-between" mb={1.5}>
-            <Text fontSize="xs" color="faintText" fontWeight="500">Общий прогресс</Text>
+            <Text fontSize="xs" color="faintText" fontWeight="500">{t('collections.progressLabel')}</Text>
             <Text fontSize="xs" color="brand.600" fontWeight="600">{collectedPct}%</Text>
           </HStack>
           <Progress value={collectedPct} borderRadius="full" size="xs" colorScheme="purple" />
@@ -123,9 +126,9 @@ export default function CollectionsTab({ event }: { event: Event }) {
 
       <HStack justify="space-between">
         <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          Сборы
+          {t('collections.sectionTitle')}
         </Text>
-        {isOrganizer && (
+        {isOrganizer && !isCompleted && (
           <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
             Добавить
           </Button>
@@ -136,29 +139,29 @@ export default function CollectionsTab({ event }: { event: Event }) {
         <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
           <VStack spacing={3}>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">Название сбора</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('collections.fieldTitle')}</FormLabel>
               <Input
                 size="sm"
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
-                placeholder="Например: Торт"
+                placeholder={t('collections.fieldTitlePlaceholder')}
                 autoFocus
               />
             </FormControl>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">Целевая сумма (₽)</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('collections.fieldAmount')}</FormLabel>
               <NumberInput size="sm" value={newAmount} onChange={setNewAmount} min={1}>
                 <NumberInputField placeholder="0" />
               </NumberInput>
               {newAmount && confirmedParticipants.length > 0 && (
                 <Text fontSize="xs" color="dimText" mt={1}>
-                  По {Math.ceil(Number(newAmount) / confirmedParticipants.length).toLocaleString('ru-RU')} ₽ с каждого
+                  {t('collections.perPersonHint', { amount: Math.ceil(Number(newAmount) / confirmedParticipants.length).toLocaleString('ru-RU') })}
                 </Text>
               )}
             </FormControl>
             <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={onToggle}>Отмена</Button>
-              <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addCollection.isPending}>Создать</Button>
+              <Button size="sm" variant="ghost" onClick={onToggle}>{t('common.cancel')}</Button>
+              <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addCollection.isPending}>{t('common.create')}</Button>
             </HStack>
           </VStack>
         </Box>
@@ -167,7 +170,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
       {event.collections.length === 0 && (
         <Box textAlign="center" py={10}>
           <Icon as={FiPocket} boxSize={8} color="faintText" mb={2} />
-          <Text fontSize="sm" color="dimText">Сборов пока нет</Text>
+          <Text fontSize="sm" color="dimText">{t('collections.empty')}</Text>
         </Box>
       )}
 
@@ -199,11 +202,11 @@ export default function CollectionsTab({ event }: { event: Event }) {
                   <Text fontWeight="500" fontSize="sm" noOfLines={1}>{collection.title}</Text>
                   <HStack spacing={1.5} mt={0.5}>
                     <Text fontSize="xs" color="dimText">
-                      {collection.target_amount.toLocaleString('ru-RU')} ₽ всего
+                      {t('collections.totalAmount', { amount: collection.target_amount.toLocaleString('ru-RU') })}
                     </Text>
                     <Text fontSize="xs" color="faintText">·</Text>
                     <Text fontSize="xs" color="brand.600" fontWeight="600">
-                      {shareAmount.toLocaleString('ru-RU')} ₽ с вас
+                      {t('collections.perYou', { amount: shareAmount.toLocaleString('ru-RU') })}
                     </Text>
                   </HStack>
                 </Box>
@@ -216,14 +219,14 @@ export default function CollectionsTab({ event }: { event: Event }) {
                       {paidCount}/{contributors.length}
                     </Text>
                   </Box>
-                  {isOrganizer && (
+                  {isOrganizer && !isCompleted && (
                     <Tooltip
-                      label={paidCount > 0 ? 'Нельзя удалить: есть взносы' : ''}
+                      label={paidCount > 0 ? t('collections.deleteTooltip') : ''}
                       isDisabled={paidCount === 0}
                       borderRadius="lg"
                     >
                       <IconButton
-                        aria-label="Удалить сбор"
+                        aria-label={t('collections.deleteButton')}
                         icon={<FiTrash2 />}
                         size="sm"
                         variant="ghost"
@@ -252,14 +255,14 @@ export default function CollectionsTab({ event }: { event: Event }) {
                     return (
                       <Tooltip
                         key={p.user.id}
-                        label={`${p.user.name}: ${paid ? 'скинулся' : 'ещё нет'}`}
+                        label={paid ? t('collections.contributedTooltip_paid', { name: p.user.name }) : t('collections.contributedTooltip_notPaid', { name: p.user.name })}
                         borderRadius="lg"
                       >
                         <Box
                           position="relative"
-                          cursor={p.user.id === user?.id ? 'pointer' : 'default'}
+                          cursor={p.user.id === user?.id && !isCompleted ? 'pointer' : 'default'}
                           onClick={() => {
-                            if (p.user.id === user?.id) toggleContribution.mutate(collection.id)
+                            if (p.user.id === user?.id && !isCompleted) toggleContribution.mutate(collection.id)
                           }}
                         >
                           <Avatar
@@ -289,7 +292,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
                 </HStack>
               )}
 
-              {user && contributors.find(p => p.user.id === user.id) && (
+              {user && contributors.find(p => p.user.id === user.id) && !isCompleted && (
                 <Button
                   size="sm"
                   w="full"
@@ -299,7 +302,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
                   onClick={() => toggleContribution.mutate(collection.id)}
                   isLoading={toggleContribution.isPending}
                 >
-                  {myContribution?.paid ? 'Скинулся' : 'Я скинулся'}
+                  {myContribution?.paid ? t('collections.buttonContributed') : t('collections.buttonContribute')}
                 </Button>
               )}
             </Box>

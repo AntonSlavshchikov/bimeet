@@ -10,6 +10,7 @@ import {
   Badge,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi'
 import type { EventListItem } from '@/entities/event/model/types'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
@@ -36,18 +37,13 @@ const statusScheme = {
   declined:  'red',
 } as const
 
-const statusLabel = {
-  invited:   'Приглашён',
-  confirmed: 'Иду',
-  declined:  'Не иду',
-}
-
 interface EventCardProps {
   event: EventListItem
   myStatus?: string
 }
 
 export default function EventCard({ event, myStatus }: EventCardProps) {
+  const { t } = useTranslation()
   const confirmedCount = event.participants.filter(p => p.status === 'confirmed').length
   const gradient = getGradient(event.id, event.category)
   const statusKey = myStatus as keyof typeof statusScheme | undefined
@@ -76,17 +72,29 @@ export default function EventCard({ event, myStatus }: EventCardProps) {
         <VStack align="stretch" spacing={4}>
           <HStack justify="space-between" align="flex-start">
             <Box flex={1} mr={2}>
-              <Text
-                fontSize="10px"
-                fontWeight="600"
-                color={event.category === 'business' ? 'brand.700' : 'brand.500'}
-                textTransform="uppercase"
-                letterSpacing="0.1em"
-                mb={1}
+              <HStack mb={1} spacing={1.5} flexWrap="wrap">
+                <Text
+                  fontSize="10px"
+                  fontWeight="600"
+                  color={event.category === 'business' ? 'brand.700' : 'brand.500'}
+                  textTransform="uppercase"
+                  letterSpacing="0.1em"
+                >
+                  {event.category === 'business' ? t('eventCard.categoryBusiness') : t('eventCard.categoryOrdinary')}
+                </Text>
+                {event.status === 'completed' && (
+                  <Badge colorScheme="gray" variant="subtle" fontSize="9px" borderRadius="md">
+                    {t('eventCard.statusCompleted')}
+                  </Badge>
+                )}
+              </HStack>
+              <Heading
+                size="sm"
+                noOfLines={2}
+                letterSpacing="-0.2px"
+                lineHeight="1.3"
+                opacity={event.status === 'completed' ? 0.6 : 1}
               >
-                {event.category === 'business' ? 'Деловая' : 'Обычная'}
-              </Text>
-              <Heading size="sm" noOfLines={2} letterSpacing="-0.2px" lineHeight="1.3">
                 {event.title}
               </Heading>
             </Box>
@@ -97,7 +105,7 @@ export default function EventCard({ event, myStatus }: EventCardProps) {
                 flexShrink={0}
                 alignSelf="flex-start"
               >
-                {statusLabel[statusKey]}
+                {t(`eventCard.status${statusKey.charAt(0).toUpperCase()}${statusKey.slice(1)}`)}
               </Badge>
             )}
           </HStack>

@@ -22,6 +22,7 @@ import {
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiCalendar, FiGrid, FiList, FiPlus, FiSearch } from 'react-icons/fi'
 import { useEvents } from '@/entities/event/queries'
 import { useAuth } from '@/features/auth/model/AuthContext'
@@ -32,6 +33,7 @@ import type { EventListItem } from '@/entities/event/model/types'
 type ViewMode = 'grid' | 'list'
 
 function EmptyState({ onAction, label, isSearch }: { onAction?: string; label: string; isSearch?: boolean }) {
+  const { t } = useTranslation()
   return (
     <Box
       textAlign="center"
@@ -58,7 +60,7 @@ function EmptyState({ onAction, label, isSearch }: { onAction?: string; label: s
       <Text fontWeight="600" color="dimText" mb={1}>{label}</Text>
       {onAction && (
         <Button as={Link} to={onAction} colorScheme="blue" mt={4} size="sm">
-          Создать встречу
+          {t('events.emptyCreateButton')}
         </Button>
       )}
     </Box>
@@ -96,6 +98,7 @@ function EventsList({ events, myId }: { events: EventListItem[]; myId?: string }
 export default function EventsListPage() {
   const events = useEvents()
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const { isOpen: isSearchOpen, onToggle: onSearchToggle } = useDisclosure()
@@ -123,7 +126,7 @@ export default function EventsListPage() {
     <Box>
       {/* Header */}
       <HStack justify="space-between" mb={4} align="center" gap={3}>
-        <Heading size="lg" flexShrink={0}>Встречи</Heading>
+        <Heading size="lg" flexShrink={0}>{t('events.title')}</Heading>
 
         <HStack spacing={2} flexWrap="wrap" justify="flex-end">
           {/* Search — desktop only */}
@@ -132,7 +135,7 @@ export default function EventsListPage() {
               <Icon as={FiSearch} color="faintText" boxSize={3.5} />
             </InputLeftElement>
             <Input
-              placeholder="Поиск встреч..."
+              placeholder={t('events.searchPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               borderRadius="10px"
@@ -142,7 +145,7 @@ export default function EventsListPage() {
 
           {/* Search toggle — mobile */}
           <IconButton
-            aria-label="Поиск"
+            aria-label={t('events.search')}
             icon={<FiSearch size={15} />}
             variant="outline"
             size="sm"
@@ -156,7 +159,7 @@ export default function EventsListPage() {
           {/* View toggle */}
           <ButtonGroup size="sm" isAttached variant="outline">
             <IconButton
-              aria-label="Карточки"
+              aria-label={t('events.viewGrid')}
               icon={<FiGrid size={14} />}
               onClick={() => setViewMode('grid')}
               borderRadius="10px 0 0 10px"
@@ -165,7 +168,7 @@ export default function EventsListPage() {
               bg={viewMode === 'grid' ? 'navActiveBg' : undefined}
             />
             <IconButton
-              aria-label="Список"
+              aria-label={t('events.viewList')}
               icon={<FiList size={14} />}
               onClick={() => setViewMode('list')}
               borderRadius="0 10px 10px 0"
@@ -176,7 +179,7 @@ export default function EventsListPage() {
           </ButtonGroup>
 
           <Button as={Link} to="/events/new" colorScheme="blue" leftIcon={<FiPlus />} size="sm">
-            Создать
+            {t('events.createEvent')}
           </Button>
         </HStack>
       </HStack>
@@ -189,7 +192,7 @@ export default function EventsListPage() {
               <Icon as={FiSearch} color="faintText" boxSize={3.5} />
             </InputLeftElement>
             <Input
-              placeholder="Поиск встреч..."
+              placeholder={t('events.searchPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               borderRadius="10px"
@@ -206,7 +209,7 @@ export default function EventsListPage() {
             pb={3} px={4} fontSize="sm" fontWeight="500" color="faintText"
             _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
           >
-            Организую
+            {t('events.tabOrganizing')}
             <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
               {myEvents.length}
             </Box>
@@ -215,7 +218,7 @@ export default function EventsListPage() {
             pb={3} px={4} fontSize="sm" fontWeight="500" color="faintText"
             _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
           >
-            Участвую
+            {t('events.tabAttending')}
             <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
               {invitedEvents.length}
             </Box>
@@ -226,8 +229,8 @@ export default function EventsListPage() {
           <TabPanel px={0} pt={0}>
             {filteredMy.length === 0 ? (
               hasSearch
-                ? <EmptyState label={`Ничего не найдено по запросу «${search}»`} isSearch />
-                : <EmptyState onAction="/events/new" label="У вас нет организуемых встреч" />
+                ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
+                : <EmptyState onAction="/events/new" label={t('events.emptyNoOrganized')} />
             ) : (
               viewMode === 'grid'
                 ? <EventsGrid events={filteredMy} myId={user?.id} />
@@ -237,8 +240,8 @@ export default function EventsListPage() {
           <TabPanel px={0} pt={0}>
             {filteredInvited.length === 0 ? (
               hasSearch
-                ? <EmptyState label={`Ничего не найдено по запросу «${search}»`} isSearch />
-                : <EmptyState label="Нет активных приглашений" />
+                ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
+                : <EmptyState label={t('events.emptyNoInvited')} />
             ) : (
               viewMode === 'grid'
                 ? <EventsGrid events={filteredInvited} myId={user?.id} />

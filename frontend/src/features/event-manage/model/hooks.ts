@@ -29,3 +29,14 @@ export function useDeleteEvent() {
     onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
   })
 }
+
+export function useCompleteEvent(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => eventMutationsApi.complete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(id) })
+    },
+  })
+}

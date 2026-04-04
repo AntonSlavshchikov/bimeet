@@ -33,6 +33,7 @@ export interface Event {
   location: string
   category: EventCategory
   dress_code?: string
+  status: 'active' | 'completed'
   organizer: User
   invite_token: string
   created_at: string
@@ -56,6 +57,7 @@ export interface EventListItem {
   location: string
   category: EventCategory
   dress_code?: string
+  status: 'active' | 'completed'
   organizer: { id: string; name: string; email: string }
   invite_token: string
   created_at: string

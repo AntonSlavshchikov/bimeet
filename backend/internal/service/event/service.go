@@ -194,6 +194,34 @@ func (s *Service) Delete(ctx context.Context, id, userID uuid.UUID) error {
 	return s.eventRepo.Delete(ctx, id)
 }
 
+func (s *Service) Complete(ctx context.Context, id, userID uuid.UUID) error {
+	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("event not found")
+	}
+	if event.OrganizerID != userID {
+		return fmt.Errorf("forbidden")
+	}
+	if err := s.eventRepo.Complete(ctx, id); err != nil {
+		return err
+	}
+	go func() {
+		bgCtx := context.Background()
+		participants, err := s.eventRepo.ListParticipants(bgCtx, id)
+		if err != nil {
+			return
+		}
+		for _, p := range participants {
+			if p.UserID == userID {
+				continue
+			}
+			_, _ = s.notificationRepo.Create(bgCtx, p.UserID, &id, "event_completed",
+				fmt.Sprintf("Event '%s' has been completed", event.Title))
+		}
+	}()
+	return nil
+}
+
 // ─── Participants ─────────────────────────────────────────────────────────
 
 func (s *Service) InviteParticipant(ctx context.Context, eventID, organizerID uuid.UUID, req model.InviteParticipantRequest) (model.EventParticipant, error) {

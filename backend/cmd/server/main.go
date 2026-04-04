@@ -20,6 +20,7 @@ import (
 	itemhandler         "meetup/internal/handler/item"
 	notificationhandler "meetup/internal/handler/notification"
 	pollhandler         "meetup/internal/handler/poll"
+	profilehandler      "meetup/internal/handler/profile"
 	carpoolrepo         "meetup/internal/repository/carpool"
 	collectionrepo      "meetup/internal/repository/collection"
 	eventrepo           "meetup/internal/repository/event"
@@ -37,6 +38,8 @@ import (
 	"meetup/internal/service/mailer"
 	notificationsvc     "meetup/internal/service/notification"
 	pollsvc             "meetup/internal/service/poll"
+	profilesvc          "meetup/internal/service/profile"
+	"meetup/internal/reminder"
 )
 
 func main() {
@@ -55,7 +58,8 @@ func main() {
 	}
 	defer pool.Close()
 
-	ctx := context.Background()
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
 	db.Migrate(ctx, pool)
 
 	// Repositories
@@ -85,6 +89,7 @@ func main() {
 	carpoolSvc      := carpoolsvc.New(carpoolRepo, eventRepo)
 	linkSvc         := eventlinksvc.New(linkRepo, eventRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
+	profileSvc      := profilesvc.New(userRepo)
 
 	// Handlers
 	authH         := authhandler.New(authSvc)
@@ -95,6 +100,11 @@ func main() {
 	carpoolH      := carpoolhandler.New(carpoolSvc)
 	linkH         := eventlinkhandler.New(linkSvc)
 	notificationH := notificationhandler.New(notificationSvc)
+	profileH      := profilehandler.New(profileSvc)
+
+	// Reminder scheduler
+	reminderRunner := reminder.New(eventRepo, notificationRepo, time.Hour)
+	go reminderRunner.Start(ctx)
 
 	// Router
 	router := handler.NewRouter(
@@ -106,6 +116,7 @@ func main() {
 		carpoolH,
 		linkH,
 		notificationH,
+		profileH,
 		cfg.JWTSecret,
 	)
 
@@ -129,6 +140,7 @@ func main() {
 	}()
 
 	<-quit
+	stop() // cancel context → stops reminder runner
 	log.Println("shutting down server...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

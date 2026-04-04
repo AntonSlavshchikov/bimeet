@@ -13,6 +13,7 @@ import (
 	itemhandler         "meetup/internal/handler/item"
 	notificationhandler "meetup/internal/handler/notification"
 	pollhandler         "meetup/internal/handler/poll"
+	profilehandler      "meetup/internal/handler/profile"
 	"meetup/internal/middleware"
 )
 
@@ -25,6 +26,7 @@ func NewRouter(
 	carpool      *carpoolhandler.Handler,
 	link         *eventlinkhandler.Handler,
 	notification *notificationhandler.Handler,
+	profile      *profilehandler.Handler,
 	jwtSecret    string,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -58,6 +60,7 @@ func NewRouter(
 				r.Get("/", event.GetByID)
 				r.Put("/", event.Update)
 				r.Delete("/", event.Delete)
+				r.Post("/complete", event.Complete)
 
 				// Participants
 				r.Post("/participants", event.InviteParticipant)
@@ -95,6 +98,14 @@ func NewRouter(
 		// Notifications
 		r.Get("/api/notifications", notification.List)
 		r.Patch("/api/notifications/{id}/read", notification.MarkRead)
+		r.Post("/api/notifications/read-all", notification.MarkAllRead)
+		r.Delete("/api/notifications/{id}", notification.Delete)
+		r.Delete("/api/notifications", notification.DeleteAll)
+
+		// Profile
+		r.Get("/api/auth/me", profile.GetMe)
+		r.Put("/api/auth/me", profile.UpdateMe)
+		r.Get("/api/auth/me/stats", profile.GetStats)
 	})
 
 	return r

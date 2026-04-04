@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Drawer,
   DrawerBody,
   DrawerContent,
@@ -12,11 +13,34 @@ import {
 } from '@chakra-ui/react'
 import { FiMenu, FiSun, FiMoon } from 'react-icons/fi'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import SidebarContent from './Sidebar'
 import BottomNav from './BottomNav'
+import NotificationCenter from '@/features/notifications/ui/NotificationCenter'
+
+function LanguageToggle() {
+  const { i18n } = useTranslation()
+  const isRu = i18n.language === 'ru'
+  const hoverBg = useColorModeValue('rgba(15,23,42,0.05)', 'rgba(255,255,255,0.07)')
+  return (
+    <Button
+      size="xs"
+      variant="ghost"
+      fontWeight="600"
+      fontSize="xs"
+      color="dimText"
+      borderRadius="8px"
+      _hover={{ color: 'mainText', bg: hoverBg }}
+      onClick={() => i18n.changeLanguage(isRu ? 'en' : 'ru')}
+    >
+      {isRu ? 'EN' : 'RU'}
+    </Button>
+  )
+}
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { colorMode, toggleColorMode } = useColorMode()
+  const { t } = useTranslation()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const topBarBg = useColorModeValue('rgba(255,255,255,0.85)', 'rgba(19,20,31,0.90)')
   const toggleHoverBg = useColorModeValue('rgba(15,23,42,0.05)', 'rgba(255,255,255,0.07)')
@@ -65,7 +89,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         >
           {/* Hamburger — mobile only */}
           <IconButton
-            aria-label="Открыть меню"
+            aria-label={t('layout.openMenu')}
             icon={<FiMenu size={18} />}
             variant="ghost"
             size="sm"
@@ -77,9 +101,13 @@ export default function Layout({ children }: { children: ReactNode }) {
             mr="auto"
           />
 
-          <Tooltip label={colorMode === 'light' ? 'Тёмная тема' : 'Светлая тема'} borderRadius="lg">
+          <NotificationCenter />
+
+          <LanguageToggle />
+
+          <Tooltip label={colorMode === 'light' ? t('layout.darkTheme') : t('layout.lightTheme')} borderRadius="lg">
             <IconButton
-              aria-label="Переключить тему"
+              aria-label={t('layout.toggleTheme')}
               icon={colorMode === 'light' ? <FiMoon size={15} /> : <FiSun size={15} />}
               variant="ghost"
               size="sm"

@@ -78,3 +78,30 @@ func (r *Repository) MarkRead(ctx context.Context, id uuid.UUID) (model.Notifica
 	}
 	return n, nil
 }
+
+func (r *Repository) MarkAllRead(ctx context.Context, userID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE notifications SET is_read=TRUE WHERE user_id=$1`,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("mark all notifications read: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM notifications WHERE id=$1`, id)
+	if err != nil {
+		return fmt.Errorf("delete notification: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) DeleteAll(ctx context.Context, userID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM notifications WHERE user_id=$1`, userID)
+	if err != nil {
+		return fmt.Errorf("delete all notifications: %w", err)
+	}
+	return nil
+}

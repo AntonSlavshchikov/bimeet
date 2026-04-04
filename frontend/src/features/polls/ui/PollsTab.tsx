@@ -14,6 +14,7 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiPlus, FiTrash2, FiBarChart2 } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
 import { useAddPoll, useVote } from '@/features/polls/model/hooks'
@@ -21,6 +22,7 @@ import { useAuth } from '@/features/auth/model/AuthContext'
 
 export default function PollsTab({ event }: { event: Event }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const { isOpen, onToggle } = useDisclosure()
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
@@ -49,15 +51,17 @@ export default function PollsTab({ event }: { event: Event }) {
     })
   }
 
+  const isCompleted = event.status === 'completed'
+
   return (
     <VStack align="stretch" spacing={4}>
       <HStack justify="space-between">
         <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          Опросы
+          {t('polls.sectionTitle')}
         </Text>
-        {isOrganizer && (
+        {isOrganizer && !isCompleted && (
           <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
-            Новый опрос
+            {t('polls.newPoll')}
           </Button>
         )}
       </HStack>
@@ -66,16 +70,16 @@ export default function PollsTab({ event }: { event: Event }) {
         <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
           <VStack spacing={3}>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">Вопрос</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('polls.fieldQuestion')}</FormLabel>
               <Input
                 size="sm"
                 value={question}
                 onChange={e => setQuestion(e.target.value)}
-                placeholder="Например: Что приготовить на мангале?"
+                placeholder={t('polls.fieldQuestionPlaceholder')}
               />
             </FormControl>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">Варианты ответов</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('polls.fieldOptions')}</FormLabel>
               <VStack spacing={2}>
                 {options.map((opt, i) => (
                   <HStack key={i} w="full">
@@ -83,11 +87,11 @@ export default function PollsTab({ event }: { event: Event }) {
                       size="sm"
                       value={opt}
                       onChange={e => setOptions(o => o.map((v, idx) => idx === i ? e.target.value : v))}
-                      placeholder={`Вариант ${i + 1}`}
+                      placeholder={t('polls.optionPlaceholder', { number: i + 1 })}
                     />
                     {options.length > 2 && (
                       <IconButton
-                        aria-label="Удалить"
+                        aria-label={t('polls.deleteOption')}
                         icon={<FiTrash2 />}
                         size="sm"
                         variant="ghost"
@@ -105,13 +109,13 @@ export default function PollsTab({ event }: { event: Event }) {
                   onClick={handleAddOption}
                   px={0}
                 >
-                  + Добавить вариант
+                  {t('polls.addOption')}
                 </Button>
               </VStack>
             </FormControl>
             <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={onToggle}>Отмена</Button>
-              <Button size="sm" colorScheme="blue" onClick={handleCreate} isLoading={addPoll.isPending}>Создать</Button>
+              <Button size="sm" variant="ghost" onClick={onToggle}>{t('common.cancel')}</Button>
+              <Button size="sm" colorScheme="blue" onClick={handleCreate} isLoading={addPoll.isPending}>{t('common.create')}</Button>
             </HStack>
           </VStack>
         </Box>
@@ -120,7 +124,7 @@ export default function PollsTab({ event }: { event: Event }) {
       {event.polls.length === 0 && (
         <Box textAlign="center" py={10} color="faintText">
           <Icon as={FiBarChart2} boxSize={8} mb={2} />
-          <Text fontSize="sm" color="dimText">Опросов пока нет</Text>
+          <Text fontSize="sm" color="dimText">{t('polls.empty')}</Text>
         </Box>
       )}
 
@@ -150,9 +154,9 @@ export default function PollsTab({ event }: { event: Event }) {
                     border="1px solid"
                     borderColor={isMyVote ? 'brand.200' : 'subtleBorder'}
                     bg={isMyVote ? 'navActiveBg' : 'subtleBg'}
-                    cursor="pointer"
-                    onClick={() => user && castVote.mutate({ pollId: poll.id, optionId: option.id })}
-                    _hover={{ borderColor: isMyVote ? 'brand.300' : 'defaultBorder' }}
+                    cursor={isCompleted ? 'default' : 'pointer'}
+                    onClick={() => !isCompleted && user && castVote.mutate({ pollId: poll.id, optionId: option.id })}
+                    _hover={isCompleted ? {} : { borderColor: isMyVote ? 'brand.300' : 'defaultBorder' }}
                     transition="all 0.15s"
                   >
                     <HStack justify="space-between" mb={1.5}>
@@ -179,7 +183,7 @@ export default function PollsTab({ event }: { event: Event }) {
                 )
               })}
             </VStack>
-            <Text fontSize="xs" color="dimText" mt={2}>Всего голосов: {totalVotes}</Text>
+            <Text fontSize="xs" color="dimText" mt={2}>{t('polls.totalVotes', { count: totalVotes })}</Text>
           </Box>
         )
       })}

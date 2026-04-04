@@ -9,7 +9,8 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
-import { FiCalendar, FiLogOut } from 'react-icons/fi'
+import { FiCalendar, FiLogOut, FiUser } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 
 interface NavItemProps {
@@ -54,6 +55,7 @@ interface SidebarContentProps {
 export default function SidebarContent({ onClose }: SidebarContentProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const logoutHoverBg = useColorModeValue('red.50', 'rgba(254,202,202,0.08)')
 
   function handleLogout() {
@@ -96,14 +98,25 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
 
       {/* Navigation */}
       <VStack align="stretch" spacing={0.5} px={3} pt={3} flex={1}>
-        <NavItem to="/events" icon={FiCalendar} label="Встречи" onClick={onClose} />
+        <NavItem to="/events" icon={FiCalendar} label={t('nav.events')} onClick={onClose} />
+        <NavItem to="/profile" icon={FiUser} label={t('nav.profile')} onClick={onClose} />
       </VStack>
 
       {/* User section */}
       {user && (
         <Box px={3} pb={4}>
           <Divider borderColor="sidebarBorder" mb={3} />
-          <Box px={3} py={2} mb={1}>
+          <Box
+            as={Link}
+            to="/profile"
+            onClick={onClose}
+            px={3}
+            py={2}
+            mb={1}
+            borderRadius="10px"
+            _hover={{ bg: 'subtleBg' }}
+            transition="background 0.15s"
+          >
             <HStack spacing={2.5}>
               <Avatar size="sm" name={user.name} bg="brand.600" color="white" fontWeight="600" flexShrink={0} />
               <Box minW={0}>
@@ -128,7 +141,7 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
             onClick={handleLogout}
           >
             <Icon as={FiLogOut} boxSize={4} />
-            Выйти
+            {t('common.logout', 'Выйти')}
           </Box>
         </Box>
       )}

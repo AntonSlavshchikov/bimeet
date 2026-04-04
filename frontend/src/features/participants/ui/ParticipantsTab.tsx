@@ -15,12 +15,13 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiPlus, FiLink } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
 import { useInviteParticipant, useUpdateParticipantStatus } from '@/features/participants/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
 
-const statusLabel = { invited: 'Приглашён', confirmed: 'Идёт', declined: 'Не идёт' }
+// statusLabel is now handled via t() in the component
 
 const statusScheme = {
   invited:   'yellow',
@@ -31,6 +32,7 @@ const statusScheme = {
 export default function ParticipantsTab({ event }: { event: Event }) {
   const { user } = useAuth()
   const toast = useToast()
+  const { t } = useTranslation()
   const { isOpen, onToggle } = useDisclosure()
   const [email, setEmail] = useState('')
 
@@ -48,12 +50,12 @@ export default function ParticipantsTab({ event }: { event: Event }) {
     if (!email.trim()) return
     invite.mutate(email.trim(), {
       onSuccess: () => {
-        toast({ title: 'Приглашение отправлено', status: 'success', duration: 2000 })
+        toast({ title: t('participants.inviteSent'), status: 'success', duration: 2000 })
         setEmail('')
         onToggle()
       },
       onError: (err) => {
-        toast({ title: 'Ошибка', description: err.message, status: 'error', duration: 3000 })
+        toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 })
       },
     })
   }
@@ -61,15 +63,17 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   function handleCopyLink() {
     const link = `${window.location.origin}/invite/${event.invite_token}`
     navigator.clipboard.writeText(link).then(() => {
-      toast({ title: 'Ссылка скопирована', status: 'success', duration: 2000 })
+      toast({ title: t('participants.linkCopied'), status: 'success', duration: 2000 })
     })
   }
 
+  const isCompleted = event.status === 'completed'
+
   return (
     <VStack align="stretch" spacing={4}>
-      {myParticipant && !isOrganizer && (
+      {myParticipant && !isOrganizer && !isCompleted && (
         <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
-          <Text fontSize="sm" fontWeight="500" color="dimText" mb={3}>Ваш статус</Text>
+          <Text fontSize="sm" fontWeight="500" color="dimText" mb={3}>{t('participants.myStatusTitle')}</Text>
           <HStack spacing={2}>
             <Button
               flex={1}
@@ -79,7 +83,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
               onClick={() => user && updateStatus.mutate({ userId: user.id, status: 'confirmed' })}
               isLoading={updateStatus.isPending}
             >
-              Иду
+              {t('participants.going')}
             </Button>
             <Button
               flex={1}
@@ -89,13 +93,13 @@ export default function ParticipantsTab({ event }: { event: Event }) {
               onClick={() => user && updateStatus.mutate({ userId: user.id, status: 'declined' })}
               isLoading={updateStatus.isPending}
             >
-              Не иду
+              {t('participants.notGoing')}
             </Button>
           </HStack>
         </Box>
       )}
 
-      {isOrganizer && (
+      {isOrganizer && !isCompleted && (
         <Stack direction={{ base: 'column', sm: 'row' }} spacing={2}>
           <Button
             size="sm"
@@ -105,7 +109,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
             onClick={onToggle}
             flex={1}
           >
-            Пригласить по email
+            {t('participants.inviteByEmail')}
           </Button>
           <Button
             size="sm"
@@ -114,7 +118,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
             onClick={handleCopyLink}
             flex={1}
           >
-            Скопировать ссылку
+            {t('participants.copyLink')}
           </Button>
         </Stack>
       )}
@@ -122,7 +126,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
       <Collapse in={isOpen} animateOpacity>
         <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
           <FormControl>
-            <Text fontSize="xs" fontWeight="600" color="dimText" mb={2}>Email участника</Text>
+            <Text fontSize="xs" fontWeight="600" color="dimText" mb={2}>{t('participants.emailLabel')}</Text>
             <VStack spacing={2} align="stretch">
               <Input
                 size="sm"
@@ -134,14 +138,14 @@ export default function ParticipantsTab({ event }: { event: Event }) {
                 autoFocus
               />
               <HStack spacing={2} justify="flex-end">
-                <Button size="sm" variant="ghost" onClick={onToggle}>Отмена</Button>
+                <Button size="sm" variant="ghost" onClick={onToggle}>{t('common.cancel')}</Button>
                 <Button
                   size="sm"
                   colorScheme="blue"
                   onClick={handleInvite}
                   isLoading={invite.isPending}
                 >
-                  Пригласить
+                  {t('participants.inviteButton')}
                 </Button>
               </HStack>
             </VStack>
@@ -150,10 +154,10 @@ export default function ParticipantsTab({ event }: { event: Event }) {
       </Collapse>
 
       <HStack spacing={2} flexWrap="wrap">
-        <Badge colorScheme="green" variant="subtle" px={2.5} py={1}>{confirmed} идут</Badge>
-        <Badge colorScheme="yellow" variant="subtle" px={2.5} py={1}>{invited} приглашены</Badge>
+        <Badge colorScheme="green" variant="subtle" px={2.5} py={1}>{t('participants.badgeCount_going', { count: confirmed })}</Badge>
+        <Badge colorScheme="yellow" variant="subtle" px={2.5} py={1}>{t('participants.badgeCount_invited', { count: invited })}</Badge>
         {declined > 0 && (
-          <Badge colorScheme="red" variant="subtle" px={2.5} py={1}>{declined} отказались</Badge>
+          <Badge colorScheme="red" variant="subtle" px={2.5} py={1}>{t('participants.badgeCount_declined', { count: declined })}</Badge>
         )}
       </HStack>
 
@@ -172,7 +176,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
                 <HStack spacing={1.5}>
                   <Text fontWeight="500" fontSize="sm" noOfLines={1}>{p.user.name}</Text>
                   {p.user.id === event.organizer.id && (
-                    <Badge colorScheme="purple" fontSize="xs" flexShrink={0}>орг.</Badge>
+                    <Badge colorScheme="purple" fontSize="xs" flexShrink={0}>{t('participants.badgeOrganizer')}</Badge>
                   )}
                 </HStack>
                 <Text fontSize="xs" color="faintText" noOfLines={1}>{p.user.email}</Text>
@@ -183,7 +187,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
               variant="subtle"
               flexShrink={0}
             >
-              {statusLabel[p.status]}
+              {t(`participants.status${p.status.charAt(0).toUpperCase()}${p.status.slice(1)}`)}
             </Badge>
           </HStack>
         ))}

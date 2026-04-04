@@ -18,6 +18,7 @@ type EventRepo interface {
 	ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error)
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateEventRequest) (model.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	Complete(ctx context.Context, id uuid.UUID) error
 	AddParticipant(ctx context.Context, eventID, userID uuid.UUID, status string) (model.EventParticipant, error)
 	UpdateParticipantStatus(ctx context.Context, eventID, userID uuid.UUID, status string) (model.EventParticipant, error)
 	ListParticipants(ctx context.Context, eventID uuid.UUID) ([]model.EventParticipant, error)

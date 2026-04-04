@@ -1,6 +1,7 @@
 import { Box, HStack, VStack, Icon, Text } from '@chakra-ui/react'
 import { Link, useMatch } from 'react-router-dom'
-import { FiCalendar } from 'react-icons/fi'
+import { FiCalendar, FiUser } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 
 interface BottomNavItemProps {
   to: string
@@ -42,6 +43,7 @@ function BottomNavItem({ to, icon, label }: BottomNavItemProps) {
 }
 
 export default function BottomNav() {
+  const { t } = useTranslation()
   return (
     <Box
       display={{ base: 'flex', lg: 'none' }}
@@ -57,7 +59,8 @@ export default function BottomNav() {
       alignItems="stretch"
     >
       <HStack w="full" spacing={0} align="stretch">
-        <BottomNavItem to="/events" icon={FiCalendar} label="Встречи" />
+        <BottomNavItem to="/events" icon={FiCalendar} label={t('nav.events')} />
+        <BottomNavItem to="/profile" icon={FiUser} label={t('nav.profile')} />
       </HStack>
     </Box>
   )

@@ -7,6 +7,7 @@ import EventsListPage from '@/pages/events-list'
 import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
 import InvitePage from '@/pages/invite'
+import ProfilePage from '@/pages/profile'
 
 export default function AppRouter() {
   return (
@@ -50,6 +51,16 @@ export default function AppRouter() {
             <ProtectedRoute>
               <Layout>
                 <EventFormPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ProfilePage />
               </Layout>
             </ProtectedRoute>
           }

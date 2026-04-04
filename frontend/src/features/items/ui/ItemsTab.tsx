@@ -14,6 +14,7 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiPlus, FiShoppingBag } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
 import { useAddItem, useAssignItem } from '@/features/items/model/hooks'
@@ -21,11 +22,13 @@ import { useAuth } from '@/features/auth/model/AuthContext'
 
 export default function ItemsTab({ event }: { event: Event }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const { isOpen, onToggle } = useDisclosure()
   const [newName, setNewName] = useState('')
 
   const addItem = useAddItem(event.id)
   const assignItem = useAssignItem(event.id)
+  const isCompleted = event.status === 'completed'
 
   function handleAdd() {
     if (!newName.trim()) return
@@ -41,30 +44,32 @@ export default function ItemsTab({ event }: { event: Event }) {
     <VStack align="stretch" spacing={4}>
       <HStack justify="space-between">
         <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          Кто что берёт
+          {t('items.sectionTitle')}
         </Text>
-        <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
-          Добавить
-        </Button>
+        {!isCompleted && (
+          <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
+            Добавить
+          </Button>
+        )}
       </HStack>
 
       <Collapse in={isOpen} animateOpacity>
         <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
           <VStack spacing={3}>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">Что нужно взять</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('items.fieldName')}</FormLabel>
               <Input
                 size="sm"
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
-                placeholder="Например: Гитара"
+                placeholder={t('items.fieldNamePlaceholder')}
                 onKeyDown={e => e.key === 'Enter' && handleAdd()}
                 autoFocus
               />
             </FormControl>
             <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={onToggle}>Отмена</Button>
-              <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addItem.isPending}>Добавить</Button>
+              <Button size="sm" variant="ghost" onClick={onToggle}>{t('common.cancel')}</Button>
+              <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addItem.isPending}>{t('common.add')}</Button>
             </HStack>
           </VStack>
         </Box>
@@ -73,7 +78,7 @@ export default function ItemsTab({ event }: { event: Event }) {
       {event.items.length === 0 && (
         <Box textAlign="center" py={10}>
           <Icon as={FiShoppingBag} boxSize={8} color="faintText" mb={2} />
-          <Text fontSize="sm" color="dimText">Список пуст</Text>
+          <Text fontSize="sm" color="dimText">{t('items.empty')}</Text>
         </Box>
       )}
 
@@ -101,16 +106,18 @@ export default function ItemsTab({ event }: { event: Event }) {
                   <Box minW={0}>
                     <Text fontSize="sm" fontWeight="500" noOfLines={1}>{item.name}</Text>
                     <Text fontSize="xs" color="dimText" mt={0.5}>
-                      {item.assigned_to ? item.assigned_to.name : 'Никто не взялся'}
+                      {item.assigned_to ? item.assigned_to.name : t('items.unassigned')}
                     </Text>
                   </Box>
                 </HStack>
 
                 <HStack spacing={2} flexShrink={0}>
                   {isMine && (
-                    <Badge colorScheme="blue" variant="subtle">вы</Badge>
+                    <Badge colorScheme="blue" variant="subtle">{t('items.badgeYou')}</Badge>
                   )}
-                  {isMine ? (
+                  {isCompleted ? (
+                    isTaken && !isMine && <Badge colorScheme="green" variant="subtle">{t('items.badgeTaken')}</Badge>
+                  ) : isMine ? (
                     <Button
                       size="sm"
                       colorScheme="red"
@@ -118,7 +125,7 @@ export default function ItemsTab({ event }: { event: Event }) {
                       onClick={() => assignItem.mutate({ itemId: item.id, userId: null })}
                       isLoading={assignItem.isPending}
                     >
-                      Отказаться
+                      {t('items.buttonGiveUp')}
                     </Button>
                   ) : !isTaken ? (
                     <Button
@@ -128,10 +135,10 @@ export default function ItemsTab({ event }: { event: Event }) {
                       onClick={() => user && assignItem.mutate({ itemId: item.id, userId: user.id })}
                       isLoading={assignItem.isPending}
                     >
-                      Возьму я
+                      {t('items.buttonTake')}
                     </Button>
                   ) : (
-                    <Badge colorScheme="green" variant="subtle">занято</Badge>
+                    <Badge colorScheme="green" variant="subtle">{t('items.badgeTaken')}</Badge>
                   )}
                 </HStack>
               </HStack>

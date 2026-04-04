@@ -9,11 +9,38 @@ import (
 // ─── Domain structs ────────────────────────────────────────────────────────
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           uuid.UUID  `json:"id"`
+	Name         string     `json:"name"`
+	LastName     string     `json:"last_name"`
+	Email        string     `json:"email"`
+	PasswordHash string     `json:"-"`
+	BirthDate    *time.Time `json:"birth_date"`
+	City         string     `json:"city"`
+	CreatedAt    time.Time  `json:"created_at"`
+}
+
+type UpdateProfileRequest struct {
+	Name      string `json:"name"`
+	LastName  string `json:"last_name"`
+	BirthDate string `json:"birth_date"` // "YYYY-MM-DD", empty = clear
+	City      string `json:"city"`
+}
+
+type ProfileStats struct {
+	Organized    int `json:"organized"`
+	Participated int `json:"participated"`
+	Completed    int `json:"completed"`
+	Upcoming     int `json:"upcoming"`
+}
+
+type ReminderEvent struct {
+	ID             uuid.UUID
+	Title          string
+	DateEnd        time.Time
+	OrganizerID    uuid.UUID
+	ParticipantIDs []uuid.UUID
+	Needs3d        bool
+	Needs1d        bool
 }
 
 type Event struct {
@@ -25,6 +52,7 @@ type Event struct {
 	Location    string    `json:"location"`
 	Category    string    `json:"category"` // ordinary | business
 	DressCode   *string   `json:"dress_code,omitempty"`
+	Status      string    `json:"status"` // active | completed
 	OrganizerID uuid.UUID `json:"organizer_id"`
 	InviteToken uuid.UUID `json:"invite_token"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -321,6 +349,7 @@ type EventDetail struct {
 	Location     string            `json:"location"`
 	Category     string            `json:"category"`
 	DressCode    *string           `json:"dress_code,omitempty"`
+	Status       string            `json:"status"`
 	Organizer    UserInfo          `json:"organizer"`
 	InviteToken  uuid.UUID         `json:"invite_token"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -343,6 +372,7 @@ type EventListItem struct {
 	Location     string            `json:"location"`
 	Category     string            `json:"category"`
 	DressCode    *string           `json:"dress_code,omitempty"`
+	Status       string            `json:"status"`
 	Organizer    UserInfo          `json:"organizer"`
 	InviteToken  uuid.UUID         `json:"invite_token"`
 	CreatedAt    time.Time         `json:"created_at"`

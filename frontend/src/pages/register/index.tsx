@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { apiFetch } from '@/shared/api/client'
 
@@ -20,6 +21,7 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('token')
   const [name, setName] = useState('')
@@ -30,14 +32,14 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !email || !password) {
-      toast({ title: 'Заполните все поля', status: 'warning', duration: 3000 })
+      toast({ title: t('auth.fillAllFields'), status: 'warning', duration: 3000 })
       return
     }
     setLoading(true)
     const ok = await register(name, email, password)
     if (!ok) {
       setLoading(false)
-      toast({ title: 'Ошибка регистрации', status: 'error', duration: 3000 })
+      toast({ title: t('auth.registerError'), status: 'error', duration: 3000 })
       return
     }
     if (inviteToken) {
@@ -103,7 +105,7 @@ export default function RegisterPage() {
                 </Box>
                 <Text fontSize="lg" fontWeight="600" color="gray.900" letterSpacing="-0.3px">MeetUp</Text>
               </HStack>
-              <Text color="gray.400" fontSize="sm">Организуйте встречи легко</Text>
+              <Text color="gray.400" fontSize="sm">{t('auth.tagline')}</Text>
             </VStack>
 
             <Box
@@ -116,17 +118,17 @@ export default function RegisterPage() {
             >
               <VStack spacing={5} as="form" onSubmit={handleSubmit}>
                 <Box w="full">
-                  <Heading size="md" mb={1}>Создать аккаунт</Heading>
-                  <Text fontSize="sm" color="gray.400">Начните организовывать встречи</Text>
+                  <Heading size="md" mb={1}>{t('auth.createAccount')}</Heading>
+                  <Text fontSize="sm" color="gray.400">{t('auth.createAccountSubtitle')}</Text>
                 </Box>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">Имя</FormLabel>
-                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Иван Иванов" />
+                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.name')}</FormLabel>
+                  <Input value={name} onChange={e => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">Email</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.email')}</FormLabel>
                   <Input
                     type="email"
                     value={email}
@@ -136,21 +138,21 @@ export default function RegisterPage() {
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">Пароль</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.password')}</FormLabel>
                   <Input
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Минимум 6 символов"
+                    placeholder={t('auth.passwordPlaceholder')}
                   />
                 </FormControl>
 
                 <Button type="submit" colorScheme="blue" w="full" size="md" isLoading={loading} mt={1}>
-                  Зарегистрироваться
+                  {t('auth.signUp')}
                 </Button>
 
                 <Text fontSize="sm" color="gray.500" textAlign="center">
-                  Уже есть аккаунт?{' '}
+                  {t('auth.alreadyHaveAccount')}{' '}
                   <ChakraLink
                     as={Link}
                     to={inviteToken ? `/login?token=${inviteToken}` : '/login'}
@@ -158,7 +160,7 @@ export default function RegisterPage() {
                     fontWeight="600"
                     _hover={{ textDecoration: 'none', color: 'brand.700' }}
                   >
-                    Войти
+                    {t('auth.signIn')}
                   </ChakraLink>
                 </Text>
               </VStack>

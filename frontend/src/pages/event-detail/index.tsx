@@ -1,4 +1,10 @@
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
   Box,
   Button,
   Grid,
@@ -13,9 +19,15 @@ import {
   TabPanels,
   TabPanel,
   Avatar,
+  Alert,
+  AlertIcon,
+  useDisclosure,
 } from '@chakra-ui/react'
 import { Link, useParams } from 'react-router-dom'
+import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
+  FiCheckCircle,
   FiClock,
   FiUsers,
   FiPocket,
@@ -26,6 +38,7 @@ import {
 } from 'react-icons/fi'
 import { useEvent } from '@/entities/event/queries'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { useCompleteEvent } from '@/features/event-manage/model/hooks'
 import ParticipantsTab from '@/features/participants/ui/ParticipantsTab'
 import CollectionsTab from '@/features/collections/ui/CollectionsTab'
 import PollsTab from '@/features/polls/ui/PollsTab'
@@ -36,49 +49,56 @@ import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import ParticipantsSummaryPanel from '@/widgets/event-detail/ParticipantsSummaryPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
 
-const ORDINARY_TABS = [
-  { label: 'Участники',    icon: FiUsers,       key: 'participants' },
-  { label: 'Сбор средств', icon: FiPocket,      key: 'collections' },
-  { label: 'Опросы',       icon: FiBarChart2,   key: 'polls' },
-  { label: 'Вещи',         icon: FiShoppingBag, key: 'items' },
-  { label: 'Попутчики',    icon: FiTruck,       key: 'carpools' },
+const ORDINARY_TAB_KEYS = [
+  { tKey: 'tabs.participants', icon: FiUsers,       key: 'participants' },
+  { tKey: 'tabs.collections',  icon: FiPocket,      key: 'collections' },
+  { tKey: 'tabs.polls',        icon: FiBarChart2,   key: 'polls' },
+  { tKey: 'tabs.items',        icon: FiShoppingBag, key: 'items' },
+  { tKey: 'tabs.carpools',     icon: FiTruck,       key: 'carpools' },
 ]
 
-const BUSINESS_TABS = [
-  { label: 'Участники', icon: FiUsers,     key: 'participants' },
-  { label: 'Опросы',    icon: FiBarChart2, key: 'polls' },
-  { label: 'Ссылки',    icon: FiLink,      key: 'links' },
+const BUSINESS_TAB_KEYS = [
+  { tKey: 'tabs.participants', icon: FiUsers,     key: 'participants' },
+  { tKey: 'tabs.polls',        icon: FiBarChart2, key: 'polls' },
+  { tKey: 'tabs.links',        icon: FiLink,      key: 'links' },
 ]
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const event = useEvent(id!)
   const { user } = useAuth()
+  const { t } = useTranslation()
+  const { isOpen: isCompleteOpen, onOpen: onCompleteOpen, onClose: onCompleteClose } = useDisclosure()
+  const cancelCompleteRef = useRef<HTMLButtonElement>(null)
+
+  const completeEvent = useCompleteEvent(id ?? '')
 
   if (!event) {
     return (
       <Box textAlign="center" py={20}>
-        <Text color="dimText" mb={4}>Встреча не найдена</Text>
-        <Button as={Link} to="/events" colorScheme="blue">К списку</Button>
+        <Text color="dimText" mb={4}>{t('events.notFound')}</Text>
+        <Button as={Link} to="/events" colorScheme="blue">{t('common.backToList')}</Button>
       </Box>
     )
   }
 
   const isOrganizer = event.organizer.id === user?.id
 
-  const baseTabs = event.category === 'business' ? BUSINESS_TABS : ORDINARY_TABS
-  const allTabs = event.change_log.length > 0
-    ? [...baseTabs, { label: 'История', icon: FiClock, key: 'changelog' }]
-    : baseTabs
+  const baseTabKeys = event.category === 'business' ? BUSINESS_TAB_KEYS : ORDINARY_TAB_KEYS
+  const allTabKeys = event.change_log.length > 0
+    ? [...baseTabKeys, { tKey: 'tabs.history', icon: FiClock, key: 'changelog' }]
+    : baseTabKeys
+  const allTabs = allTabKeys.map(tab => ({ ...tab, label: t(tab.tKey) }))
 
   return (
+    <>
     <Grid
       templateColumns={{ base: '1fr', lg: '320px 1fr' }}
       gap={5}
       alignItems="flex-start"
     >
       {/* Left panel — sticky on desktop */}
-      <Box position={{ lg: 'sticky' }} top={{ lg: '64px' }}>
+      <Box position={{ lg: 'sticky' }} top={{ lg: '64px' }} zIndex={1}>
         <EventInfoPanel event={event} isOrganizer={isOrganizer} />
         <Box mt={4}>
           <ParticipantsSummaryPanel event={event} />
@@ -94,7 +114,35 @@ export default function EventDetailPage() {
         boxShadow="0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.05)"
         overflow="hidden"
       >
+        {event.status === 'completed' && (
+          <Alert status="warning" fontSize="sm" borderRadius={0} py={2.5}>
+            <AlertIcon boxSize={4} />
+            {t('events.completedAlert')}
+          </Alert>
+        )}
+
+        {/* Mobile: complete button above tabs */}
+        {isOrganizer && event.status === 'active' && (
+          <Box px={4} pt={3} display={{ base: 'block', lg: 'none' }}>
+            <Button
+              w="full"
+              size="sm"
+              variant="outline"
+              leftIcon={<FiCheckCircle size={14} />}
+              borderColor="defaultBorder"
+              color="dimText"
+              fontWeight="500"
+              _hover={{ borderColor: 'green.400', color: 'green.500', bg: 'transparent' }}
+              _dark={{ _hover: { borderColor: 'green.400', color: 'green.400' } }}
+              onClick={onCompleteOpen}
+            >
+              {t('eventInfo.menuComplete')}
+            </Button>
+          </Box>
+        )}
+
         <Tabs colorScheme="brand" isLazy>
+          <Box position="relative">
           <TabList
             px={2}
             pt={1}
@@ -102,6 +150,7 @@ export default function EventDetailPage() {
             borderColor="subtleBorder"
             overflowX={{ base: 'auto', lg: 'visible' }}
             css={{ scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
+            pr={{ lg: isOrganizer && event.status === 'active' ? '160px' : 2 }}
           >
             {allTabs.map(tab => (
               <Tab
@@ -123,6 +172,34 @@ export default function EventDetailPage() {
             ))}
           </TabList>
 
+          {/* Desktop: complete button pinned to the right of the tab bar */}
+          {isOrganizer && event.status === 'active' && (
+            <Box
+              position="absolute"
+              right={3}
+              top={0}
+              bottom={0}
+              display={{ base: 'none', lg: 'flex' }}
+              alignItems="center"
+            >
+              <Button
+                size="xs"
+                variant="outline"
+                leftIcon={<FiCheckCircle size={12} />}
+                borderColor="defaultBorder"
+                color="dimText"
+                fontWeight="500"
+                _hover={{ borderColor: 'green.400', color: 'green.500', bg: 'transparent' }}
+                _dark={{ _hover: { borderColor: 'green.400', color: 'green.400' } }}
+                onClick={onCompleteOpen}
+              >
+                {t('eventInfo.menuComplete')}
+              </Button>
+            </Box>
+          )}
+          </Box>
+
+
           <TabPanels>
             {allTabs.map(tab => (
               <TabPanel key={tab.key} p={{ base: 4, sm: 6 }}>
@@ -135,7 +212,7 @@ export default function EventDetailPage() {
                 {tab.key === 'changelog' && (
                   <VStack align="stretch" spacing={3}>
                     <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-                      История изменений
+                      {t('events.changeHistory')}
                     </Text>
                     {[...event.change_log].reverse().map(log => (
                       <Box
@@ -149,7 +226,7 @@ export default function EventDetailPage() {
                         <HStack spacing={2.5} mb={2} flexWrap="wrap">
                           <Avatar size="xs" name={log.changed_by.name} bg="brand.400" flexShrink={0} />
                           <Text fontSize="sm" fontWeight="500">{log.changed_by.name}</Text>
-                          <Text fontSize="xs" color="faintText">изменил «{log.field_name}»</Text>
+                          <Text fontSize="xs" color="faintText">{t('events.changed', { field: log.field_name })}</Text>
                           <Text fontSize="xs" color="faintText" ml="auto">{formatDateTime(log.changed_at)}</Text>
                         </HStack>
                         <HStack spacing={2} flexWrap="wrap">
@@ -167,5 +244,32 @@ export default function EventDetailPage() {
         </Tabs>
       </Box>
     </Grid>
+
+    <AlertDialog isOpen={isCompleteOpen} leastDestructiveRef={cancelCompleteRef} onClose={onCompleteClose}>
+      <AlertDialogOverlay>
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            {t('eventInfo.completeDialogTitle')}
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            {t('eventInfo.completeDialogBody')}
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button ref={cancelCompleteRef} onClick={onCompleteClose} variant="ghost">
+              {t('common.cancel')}
+            </Button>
+            <Button
+              colorScheme="blue"
+              ml={3}
+              onClick={() => completeEvent.mutate(undefined, { onSuccess: onCompleteClose })}
+              isLoading={completeEvent.isPending}
+            >
+              {t('eventInfo.completeDialogConfirm')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialogOverlay>
+    </AlertDialog>
+    </>
   )
 }

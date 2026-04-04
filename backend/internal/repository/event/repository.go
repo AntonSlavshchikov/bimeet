@@ -23,10 +23,10 @@ func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, o
 	err := r.pool.QueryRow(ctx,
 		`INSERT INTO events (title, description, date_start, date_end, location, category, dress_code, organizer_id)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at`,
+		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, status, organizer_id, invite_token, created_at, updated_at`,
 		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, organizerID,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("create event: %w", err)
 	}
@@ -36,11 +36,11 @@ func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, o
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at
+		`SELECT id, title, description, date_start, date_end, location, category, dress_code, status, organizer_id, invite_token, created_at, updated_at
 		 FROM events WHERE id=$1`,
 		id,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by id: %w", err)
 	}
@@ -83,14 +83,25 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateE
 		   dress_code  = COALESCE($8, dress_code),
 		   updated_at  = NOW()
 		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, organizer_id, invite_token, created_at, updated_at`,
+		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, status, organizer_id, invite_token, created_at, updated_at`,
 		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("update event: %w", err)
 	}
 	return e, nil
+}
+
+func (r *Repository) Complete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE events SET status='completed', updated_at=NOW() WHERE id=$1`,
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf("complete event: %w", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
@@ -223,7 +234,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	var orgID uuid.UUID
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code,
+		        e.category, e.dress_code, e.status,
 		        e.organizer_id, u.name, u.email,
 		        e.invite_token, e.created_at, e.updated_at
 		 FROM events e
@@ -232,7 +243,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		eventID,
 	).Scan(
 		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location,
-		&detail.Category, &detail.DressCode,
+		&detail.Category, &detail.DressCode, &detail.Status,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
 		&detail.InviteToken, &detail.CreatedAt, &detail.UpdatedAt,
 	)
@@ -520,7 +531,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code,
+		        e.category, e.dress_code, e.status,
 		        e.organizer_id, ou.name, ou.email,
 		        e.invite_token, e.created_at,
 		        COALESCE(ep2.status, '') AS my_status
@@ -542,7 +553,7 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 		var e model.EventListItem
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-			&e.Category, &e.DressCode,
+			&e.Category, &e.DressCode, &e.Status,
 			&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
 			&e.InviteToken, &e.CreatedAt, &e.MyStatus,
 		); err != nil {
@@ -615,4 +626,51 @@ func (r *Repository) IsConfirmedParticipant(ctx context.Context, eventID, userID
 		return false, fmt.Errorf("is confirmed participant: %w", err)
 	}
 	return exists, nil
+}
+
+func (r *Repository) ListForReminder(ctx context.Context) ([]model.ReminderEvent, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT
+			e.id,
+			e.title,
+			e.date_end,
+			e.organizer_id,
+			COALESCE(array_agg(ep.user_id) FILTER (WHERE ep.user_id IS NOT NULL), '{}') AS participant_ids,
+			(NOT e.reminder_3d_sent AND e.date_end <= NOW() + INTERVAL '3 days') AS needs_3d,
+			(NOT e.reminder_1d_sent AND e.date_end <= NOW() + INTERVAL '1 day')  AS needs_1d
+		FROM events e
+		LEFT JOIN event_participants ep ON ep.event_id = e.id AND ep.status = 'confirmed'
+		WHERE e.status = 'active'
+		  AND e.date_end > NOW()
+		  AND (
+		    (NOT e.reminder_3d_sent AND e.date_end <= NOW() + INTERVAL '3 days')
+		    OR
+		    (NOT e.reminder_1d_sent AND e.date_end <= NOW() + INTERVAL '1 day')
+		  )
+		GROUP BY e.id, e.title, e.date_end, e.organizer_id, e.reminder_3d_sent, e.reminder_1d_sent
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("list for reminder: %w", err)
+	}
+	defer rows.Close()
+
+	var result []model.ReminderEvent
+	for rows.Next() {
+		var e model.ReminderEvent
+		if err := rows.Scan(&e.ID, &e.Title, &e.DateEnd, &e.OrganizerID, &e.ParticipantIDs, &e.Needs3d, &e.Needs1d); err != nil {
+			return nil, fmt.Errorf("scan reminder event: %w", err)
+		}
+		result = append(result, e)
+	}
+	return result, rows.Err()
+}
+
+func (r *Repository) MarkReminder3dSent(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `UPDATE events SET reminder_3d_sent=TRUE WHERE id=$1`, id)
+	return err
+}
+
+func (r *Repository) MarkReminder1dSent(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `UPDATE events SET reminder_1d_sent=TRUE WHERE id=$1`, id)
+	return err
 }

@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi'
 import { apiFetch } from '@/shared/api/client'
 import { useAuth } from '@/features/auth/model/AuthContext'
@@ -22,6 +23,7 @@ export default function InvitePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const { t } = useTranslation()
 
   const [event, setEvent] = useState<InviteEventInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -62,9 +64,9 @@ export default function InvitePage() {
     return (
       <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" p={4}>
         <VStack spacing={4} textAlign="center">
-          <Text fontSize="lg" fontWeight="600" color="dimText">Приглашение недействительно</Text>
-          <Text color="faintText" fontSize="sm">Ссылка устарела или встреча не найдена</Text>
-          <Button as={Link} to="/events" colorScheme="blue" size="sm">На главную</Button>
+          <Text fontSize="lg" fontWeight="600" color="dimText">{t('invite.invalidTitle')}</Text>
+          <Text color="faintText" fontSize="sm">{t('invite.invalidSubtitle')}</Text>
+          <Button as={Link} to="/events" colorScheme="blue" size="sm">{t('common.home')}</Button>
         </VStack>
       </Box>
     )
@@ -98,7 +100,7 @@ export default function InvitePage() {
             <VStack align="stretch" spacing={4}>
               <Box>
                 <Text fontSize="xs" fontWeight="600" color="brand.500" textTransform="uppercase" letterSpacing="0.06em" mb={1}>
-                  Приглашение на встречу
+                  {t('invite.badge')}
                 </Text>
                 <Heading size="md" letterSpacing="-0.3px">{event.title}</Heading>
                 {event.description && (
@@ -119,27 +121,27 @@ export default function InvitePage() {
                 </HStack>
                 <HStack spacing={2}>
                   <Icon as={FiUsers} color="brand.400" boxSize={4} />
-                  <Text fontSize="sm" color="dimText">{event.confirmed_count} подтвердили участие</Text>
+                  <Text fontSize="sm" color="dimText">{t('invite.confirmedCount', { count: event.confirmed_count })}</Text>
                 </HStack>
               </VStack>
 
               {event.organizer && (
                 <Text fontSize="xs" color="faintText">
-                  Организатор: <Text as="span" fontWeight="600">{event.organizer.name}</Text>
+                  {t('invite.organizer')} <Text as="span" fontWeight="600">{event.organizer.name}</Text>
                 </Text>
               )}
 
               {user ? (
                 <Button colorScheme="blue" w="full" onClick={handleJoin} isLoading={joining}>
-                  Перейти к встрече
+                  {t('invite.joinButton')}
                 </Button>
               ) : (
                 <VStack spacing={2}>
                   <Button colorScheme="blue" w="full" as={Link} to={`/register?token=${token}`}>
-                    Зарегистрироваться и принять
+                    {t('invite.registerAndAccept')}
                   </Button>
                   <Button colorScheme="blue" variant="outline" w="full" as={Link} to={`/login?token=${token}`}>
-                    Войти
+                    {t('invite.signIn')}
                   </Button>
                 </VStack>
               )}

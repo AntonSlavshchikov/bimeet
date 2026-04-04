@@ -651,3 +651,91 @@ service/event/interfaces.go   → EventRepo, UserRepo, NotificationRepo, Mailer
 - [x] Добавить `go.uber.org/mock` + `//go:generate` директивы
 - [x] Написать unit-тесты для `service/event`
 - [x] Написать unit-тесты для `handler/event`
+
+---
+
+## Этап 12 — Локализация (RU / EN)
+
+### Контекст
+
+Весь текст в приложении был захардкожен на русском языке. Цель — добавить поддержку двух языков (русский и английский) с переключением прямо в UI, без изменений бэкенда.
+
+---
+
+### Библиотека
+
+`i18next` + `react-i18next`
+
+---
+
+### Новые файлы
+
+| Файл | Назначение |
+|---|---|
+| `src/shared/i18n/index.ts` | Инициализация i18next, язык из `localStorage` |
+| `src/shared/i18n/locales/ru.json` | Русские строки (~130 ключей) |
+| `src/shared/i18n/locales/en.json` | Английские строки (~130 ключей) |
+
+Ключи организованы по доменным секциям: `common`, `auth`, `nav`, `layout`, `events`, `eventCard`, `eventForm`, `eventInfo`, `participantsSummary`, `notifications`, `invite`, `tabs`, `participants`, `collections`, `polls`, `items`, `carpools`, `links`.
+
+---
+
+### Переключатель языка
+
+Компонент `LanguageToggle` (inline в `widgets/layout/index.tsx`) — кнопка `RU ↔ EN` в TopBar рядом с переключателем темы. Язык сохраняется в `localStorage`.
+
+---
+
+### Чеклист
+
+- [x] Установить `i18next` + `react-i18next`
+- [x] Создать `src/shared/i18n/index.ts`
+- [x] Создать `ru.json` и `en.json`
+- [x] Инициализировать i18n в `app/providers/index.tsx`
+- [x] Добавить `LanguageToggle` в `widgets/layout/index.tsx`
+- [x] Локализовать все 22 компонента (pages, widgets, features)
+
+---
+
+## Этап 13 — Профиль пользователя
+
+### Контекст
+
+Страница профиля с редактированием личных данных и статистикой участия во встречах.
+
+### Backend
+
+- [x] Миграция `005_user_profile`: добавить `last_name`, `birth_date`, `city` в таблицу `users`
+- [x] Расширить модель `User` новыми полями; добавить `UpdateProfileRequest`, `ProfileStats`
+- [x] Обновить `repository/user`: методы `UpdateProfile`, `GetStats` + новые поля в SELECT
+- [x] Новый сервис `service/profile`: `GetMe`, `UpdateMe`, `GetStats`
+- [x] Новый хендлер `handler/profile`: `GET /api/auth/me`, `PUT /api/auth/me`, `GET /api/auth/me/stats`
+- [x] Обновить `router.go` и `main.go`
+
+### Frontend
+
+- [x] Расширить тип `User` (`entities/user/model/types.ts`): `last_name`, `birth_date`, `city`, `created_at`; добавить `ProfileStats`
+- [x] Добавить API методы в `features/auth/api`: `getMe`, `updateProfile`, `getStats`
+- [x] Добавить `updateUser()` в `AuthContext`
+- [x] Создать `pages/profile/index.tsx`: двухпанельный layout, таб «Редактировать» + таб «Статистика»
+- [x] Добавить маршрут `/profile` в роутер
+- [x] Добавить `NavItem` «Профиль» в `Sidebar` и `BottomNav`
+- [x] Аватар пользователя в сайдбаре — кликабельная ссылка на `/profile`
+- [x] Добавить секцию `profile` в `ru.json` и `en.json`
+
+---
+
+## Этап 14 — Напоминания о встречах
+
+### Контекст
+
+Автоматические уведомления всем участникам (включая организатора) за 3 дня и за 1 день до окончания встречи (`date_end`). Фоновый тикер в бэкенде, доставка через существующую систему уведомлений. Фронтенд не меняется.
+
+### Backend
+
+- [x] Миграция `006_event_reminders`: добавить `reminder_3d_sent BOOLEAN DEFAULT FALSE` и `reminder_1d_sent BOOLEAN DEFAULT FALSE` в `events`
+- [x] Добавить тип `ReminderEvent` в `model.go`
+- [x] Добавить методы в `repository/event/repository.go`: `ListForReminder`, `MarkReminder3dSent`, `MarkReminder1dSent`
+- [x] Создать `internal/reminder/interfaces.go` — минимальные интерфейсы `EventRepo`, `NotificationRepo`
+- [x] Создать `internal/reminder/runner.go` — тикер (1 час), отправка уведомлений, дедупликация через флаги
+- [x] Обновить `main.go`: запустить `reminderRunner.Start(ctx)` в горутине

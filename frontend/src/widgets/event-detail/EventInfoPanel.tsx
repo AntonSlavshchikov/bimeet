@@ -1,34 +1,47 @@
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Badge,
   Box,
+  Button,
+  Collapse,
+  Divider,
   Heading,
   HStack,
-  Text,
-  VStack,
   Icon,
-  Divider,
+  IconButton,
   Menu,
   MenuButton,
-  MenuList,
+  MenuDivider,
   MenuItem,
-  IconButton,
+  MenuList,
+  Text,
   useDisclosure,
-  Collapse,
-  Badge,
+  VStack,
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
+import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
-  FiCalendar,
-  FiMapPin,
-  FiMoreVertical,
-  FiClock,
   FiBriefcase,
-  FiTag,
+  FiCalendar,
   FiChevronDown,
   FiChevronUp,
+  FiClock,
+  FiMapPin,
+  FiMoreVertical,
+  FiTag,
+  FiEdit2,
+  FiTrash2,
 } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
 import { getGradient } from '@/widgets/event-card'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
+import { useDeleteEvent } from '@/features/event-manage/model/hooks'
 
 interface EventInfoPanelProps {
   event: Event
@@ -37,36 +50,58 @@ interface EventInfoPanelProps {
 
 export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { isOpen: isDescExpanded, onToggle: onDescToggle } = useDisclosure()
+  const {
+    isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose,
+  } = useDisclosure()
+  const cancelDeleteRef = useRef<HTMLButtonElement>(null)
+
+  const deleteEvent = useDeleteEvent()
+
   const gradient = getGradient(event.id, event.category)
   const sameDay = formatDate(event.date_start) === formatDate(event.date_end)
-
   const descLong = (event.description ?? '').length > 120
 
+  function handleDelete() {
+    deleteEvent.mutate(event.id, {
+      onSuccess: () => {
+        onDeleteClose()
+        navigate('/events')
+      },
+    })
+  }
+
   return (
+    <>
     <Box
       bg="cardBg"
       borderRadius="xl"
       border="1px solid"
       borderColor="cardBorder"
       boxShadow="0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.05)"
-      overflow="hidden"
     >
-      <Box h="4px" bgGradient={gradient} />
+      <Box h="4px" bgGradient={gradient} borderTopRadius="xl" />
 
       <Box p={5}>
         <HStack justify="space-between" align="flex-start" mb={3}>
           <Box flex={1} minW={0}>
-            <Text
-              fontSize="10px"
-              fontWeight="600"
-              color={event.category === 'business' ? 'brand.700' : 'brand.500'}
-              textTransform="uppercase"
-              letterSpacing="0.1em"
-              mb={1}
-            >
-              {event.category === 'business' ? 'Деловая встреча' : 'Обычная встреча'}
-            </Text>
+            <HStack mb={1} spacing={2} flexWrap="wrap">
+              <Text
+                fontSize="10px"
+                fontWeight="600"
+                color={event.category === 'business' ? 'brand.700' : 'brand.500'}
+                textTransform="uppercase"
+                letterSpacing="0.1em"
+              >
+                {event.category === 'business' ? t('eventInfo.categoryBusiness') : t('eventInfo.categoryOrdinary')}
+              </Text>
+              {event.status === 'completed' && (
+                <Badge colorScheme="gray" variant="subtle" fontSize="9px" borderRadius="md">
+                  {t('eventInfo.statusCompleted')}
+                </Badge>
+              )}
+            </HStack>
             <Heading size="md" letterSpacing="-0.3px" lineHeight="1.3">
               {event.title}
             </Heading>
@@ -79,15 +114,23 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
                 icon={<FiMoreVertical />}
                 variant="ghost"
                 size="sm"
-                aria-label="Действия"
+                aria-label={t('eventInfo.menuActions')}
                 borderRadius="xl"
                 color="faintText"
                 _hover={{ bg: 'subtleBg', color: 'dimText' }}
                 flexShrink={0}
               />
               <MenuList>
-                <MenuItem fontSize="sm" onClick={() => navigate(`/events/${event.id}/edit`)}>
-                  Редактировать
+                {event.status === 'active' && (
+                  <>
+                    <MenuItem fontSize="sm" icon={<FiEdit2 size={14} />} onClick={() => navigate(`/events/${event.id}/edit`)}>
+                      {t('common.edit')}
+                    </MenuItem>
+                    <MenuDivider />
+                  </>
+                )}
+                <MenuItem fontSize="sm" icon={<FiTrash2 size={14} />} color="red.400" onClick={onDeleteOpen}>
+                  {t('common.delete')}
                 </MenuItem>
               </MenuList>
             </Menu>
@@ -115,9 +158,9 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
                 _hover={{ color: 'brand.600' }}
               >
                 {isDescExpanded ? (
-                  <><Icon as={FiChevronUp} /> Свернуть</>
+                  <><Icon as={FiChevronUp} /> {t('eventInfo.descCollapse')}</>
                 ) : (
-                  <><Icon as={FiChevronDown} /> Подробнее</>
+                  <><Icon as={FiChevronDown} /> {t('eventInfo.descExpand')}</>
                 )}
               </Text>
             )}
@@ -155,7 +198,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
           {event.dress_code && (
             <HStack spacing={2.5}>
               <Icon as={FiTag} color="brand.400" boxSize={3.5} flexShrink={0} />
-              <Text fontSize="sm" color="dimText" fontWeight="500">Дресс-код: {event.dress_code}</Text>
+              <Text fontSize="sm" color="dimText" fontWeight="500">{t('eventInfo.dressCode', { value: event.dress_code })}</Text>
             </HStack>
           )}
 
@@ -163,7 +206,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
             <HStack spacing={2.5}>
               <Icon as={FiBriefcase} color="brand.400" boxSize={3.5} flexShrink={0} />
               <Badge colorScheme="blue" variant="subtle" borderRadius="md" fontSize="xs">
-                Деловая встреча
+                {t('eventInfo.categoryBusiness')}
               </Badge>
             </HStack>
           )}
@@ -172,10 +215,38 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
         <Divider my={4} borderColor="subtleBorder" />
 
         <HStack spacing={2}>
-          <Text fontSize="xs" color="faintText">Организатор:</Text>
+          <Text fontSize="xs" color="faintText">{t('eventInfo.organizer')}</Text>
           <Text fontSize="xs" fontWeight="600" color="dimText">{event.organizer.name}</Text>
         </HStack>
       </Box>
     </Box>
+
+    {/* Delete confirmation */}
+    <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={cancelDeleteRef} onClose={onDeleteClose}>
+      <AlertDialogOverlay>
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            {t('eventInfo.deleteDialogTitle')}
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            {t('eventInfo.deleteDialogBody')}
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button ref={cancelDeleteRef} onClick={onDeleteClose} variant="ghost">
+              {t('common.cancel')}
+            </Button>
+            <Button
+              colorScheme="red"
+              ml={3}
+              onClick={handleDelete}
+              isLoading={deleteEvent.isPending}
+            >
+              {t('eventInfo.deleteDialogConfirm')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialogOverlay>
+    </AlertDialog>
+    </>
   )
 }

@@ -15,6 +15,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FiLink, FiExternalLink, FiPlus, FiTrash2 } from 'react-icons/fi'
 import { useAddLink, useRemoveLink } from '@/features/links/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
@@ -23,17 +24,19 @@ import type { Event } from '@/entities/event/model/types'
 export default function LinksTab({ event }: { event: Event }) {
   const { user } = useAuth()
   const toast = useToast()
+  const { t } = useTranslation()
   const { isOpen, onToggle } = useDisclosure()
   const addLink = useAddLink(event.id)
   const removeLink = useRemoveLink(event.id)
 
   const isOrganizer = event.organizer.id === user?.id
+  const isCompleted = event.status === 'completed'
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
 
   function handleAdd() {
     if (!title.trim() || !url.trim()) {
-      toast({ title: 'Заполните название и ссылку', status: 'warning', duration: 2500 })
+      toast({ title: t('links.validationError'), status: 'warning', duration: 2500 })
       return
     }
     const fullUrl = url.startsWith('http') ? url : `https://${url}`
@@ -44,7 +47,7 @@ export default function LinksTab({ event }: { event: Event }) {
         onToggle()
       },
       onError: (err) => {
-        toast({ title: 'Ошибка', description: err.message, status: 'error', duration: 3000 })
+        toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 })
       },
     })
   }
@@ -58,7 +61,7 @@ export default function LinksTab({ event }: { event: Event }) {
   function handleDelete(linkId: string) {
     removeLink.mutate(linkId, {
       onError: (err) => {
-        toast({ title: 'Ошибка удаления', description: err.message, status: 'error', duration: 3000 })
+        toast({ title: t('links.deleteError'), description: err.message, status: 'error', duration: 3000 })
       },
     })
   }
@@ -69,9 +72,9 @@ export default function LinksTab({ event }: { event: Event }) {
     <VStack align="stretch" spacing={5}>
       <HStack justify="space-between">
         <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          Ссылки
+          {t('links.sectionTitle')}
         </Text>
-        {isOrganizer && (
+        {isOrganizer && !isCompleted && (
           <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
             Добавить
           </Button>
@@ -82,18 +85,18 @@ export default function LinksTab({ event }: { event: Event }) {
         <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
           <VStack spacing={3}>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">Название</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('links.fieldTitle')}</FormLabel>
               <Input
                 size="sm"
                 bg="inputBg"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="Например: Zoom-звонок"
+                placeholder={t('links.fieldTitlePlaceholder')}
                 autoFocus
               />
             </FormControl>
             <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">URL</FormLabel>
+              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('links.fieldUrl')}</FormLabel>
               <Input
                 size="sm"
                 bg="inputBg"
@@ -103,9 +106,9 @@ export default function LinksTab({ event }: { event: Event }) {
               />
             </FormControl>
             <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={handleCancel}>Отмена</Button>
+              <Button size="sm" variant="ghost" onClick={handleCancel}>{t('common.cancel')}</Button>
               <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addLink.isPending}>
-                Создать
+                {t('common.create')}
               </Button>
             </HStack>
           </VStack>
@@ -116,7 +119,7 @@ export default function LinksTab({ event }: { event: Event }) {
         <Box textAlign="center" py={10}>
           <Icon as={FiLink} boxSize={8} color="faintText" mb={2} />
           <Text fontSize="sm" color="dimText">
-            {isOrganizer ? 'Добавьте ссылки для участников' : 'Ссылок пока нет'}
+            {isOrganizer ? t('links.emptyOrganizer') : t('links.emptyParticipant')}
           </Text>
         </Box>
       )}
@@ -149,9 +152,9 @@ export default function LinksTab({ event }: { event: Event }) {
                 {link.url} <Icon as={FiExternalLink} boxSize={2.5} mb="1px" />
               </Link>
             </Box>
-            {isOrganizer && (
+            {isOrganizer && !isCompleted && (
               <IconButton
-                aria-label="Удалить ссылку"
+                aria-label={t('links.deleteButton')}
                 icon={<FiTrash2 />}
                 size="sm"
                 variant="ghost"

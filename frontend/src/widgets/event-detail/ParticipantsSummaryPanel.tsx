@@ -7,6 +7,7 @@ import {
   AvatarGroup,
   Badge,
 } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import type { Event } from '@/entities/event/model/types'
 
 interface ParticipantsSummaryPanelProps {
@@ -14,6 +15,7 @@ interface ParticipantsSummaryPanelProps {
 }
 
 export default function ParticipantsSummaryPanel({ event }: ParticipantsSummaryPanelProps) {
+  const { t } = useTranslation()
   const confirmed = event.participants.filter(p => p.status === 'confirmed')
   const invited = event.participants.filter(p => p.status === 'invited')
   const declined = event.participants.filter(p => p.status === 'declined')
@@ -37,20 +39,20 @@ export default function ParticipantsSummaryPanel({ event }: ParticipantsSummaryP
         letterSpacing="0.1em"
         mb={3}
       >
-        Участники
+        {t('participantsSummary.title')}
       </Text>
 
       <VStack align="stretch" spacing={3}>
         <HStack spacing={2} flexWrap="wrap">
           <Badge colorScheme="green" variant="subtle" px={2.5} py={1}>
-            {confirmed.length} идут
+            {t('participantsSummary.going', { count: confirmed.length })}
           </Badge>
           <Badge colorScheme="yellow" variant="subtle" px={2.5} py={1}>
-            {invited.length} ждут
+            {t('participantsSummary.waiting', { count: invited.length })}
           </Badge>
           {declined.length > 0 && (
             <Badge colorScheme="red" variant="subtle" px={2.5} py={1}>
-              {declined.length} отказались
+              {t('participantsSummary.declined', { count: declined.length })}
             </Badge>
           )}
         </HStack>

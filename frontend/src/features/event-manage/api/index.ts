@@ -11,6 +11,9 @@ export const eventMutationsApi = {
   delete: (id: string) =>
     apiFetch<void>(`/api/events/${id}`, { method: 'DELETE' }),
 
+  complete: (id: string) =>
+    apiFetch<void>(`/api/events/${id}/complete`, { method: 'POST' }),
+
   inviteParticipant: (eventId: string, email: string) =>
     apiFetch<{ status: string; message: string }>(`/api/events/${eventId}/participants`, { method: 'POST', body: JSON.stringify({ email }) }),
 

@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   HStack,
   Text,
@@ -7,15 +8,16 @@ import {
   AvatarGroup,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiCalendar, FiMapPin, FiChevronRight } from 'react-icons/fi'
 import type { EventListItem } from '@/entities/event/model/types'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 import { getGradient } from './index'
 
-const statusMeta = {
-  invited:   { label: 'Приглашён', color: '#F59E0B', bg: '#FFFBEB' },
-  confirmed: { label: 'Иду',       color: '#10B981', bg: '#ECFDF5' },
-  declined:  { label: 'Не иду',    color: '#EF4444', bg: '#FEF2F2' },
+const statusColors = {
+  invited:   { color: '#F59E0B', bg: '#FFFBEB' },
+  confirmed: { color: '#10B981', bg: '#ECFDF5' },
+  declined:  { color: '#EF4444', bg: '#FEF2F2' },
 }
 
 interface EventListRowProps {
@@ -24,9 +26,11 @@ interface EventListRowProps {
 }
 
 export default function EventListRow({ event, myStatus }: EventListRowProps) {
+  const { t } = useTranslation()
   const confirmedCount = event.participants.filter(p => p.status === 'confirmed').length
   const gradient = getGradient(event.id, event.category)
-  const meta = myStatus ? statusMeta[myStatus as keyof typeof statusMeta] : null
+  const statusKey = myStatus as keyof typeof statusColors | undefined
+  const colors = statusKey ? statusColors[statusKey] : null
 
   return (
     <Box
@@ -61,17 +65,23 @@ export default function EventListRow({ event, myStatus }: EventListRowProps) {
 
       {/* Title + category */}
       <Box flex="2" minW={0}>
-        <Text
-          fontSize="xs"
-          fontWeight="600"
-          color={event.category === 'business' ? 'brand.700' : 'brand.500'}
-          textTransform="uppercase"
-          letterSpacing="0.08em"
-          mb={0.5}
-        >
-          {event.category === 'business' ? 'Деловая' : 'Обычная'}
-        </Text>
-        <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1}>
+        <HStack mb={0.5} spacing={1.5}>
+          <Text
+            fontSize="xs"
+            fontWeight="600"
+            color={event.category === 'business' ? 'brand.700' : 'brand.500'}
+            textTransform="uppercase"
+            letterSpacing="0.08em"
+          >
+            {event.category === 'business' ? t('eventCard.categoryBusiness') : t('eventCard.categoryOrdinary')}
+          </Text>
+          {event.status === 'completed' && (
+            <Badge colorScheme="gray" variant="subtle" fontSize="9px" borderRadius="md">
+              {t('eventCard.statusCompleted')}
+            </Badge>
+          )}
+        </HStack>
+        <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1} opacity={event.status === 'completed' ? 0.6 : 1}>
           {event.title}
         </Text>
       </Box>
@@ -93,9 +103,11 @@ export default function EventListRow({ event, myStatus }: EventListRowProps) {
       </HStack>
 
       {/* Status badge */}
-      {meta && (
-        <Box px={2.5} py={1} borderRadius="full" bg={meta.bg} flexShrink={0}>
-          <Text fontSize="xs" fontWeight="700" color={meta.color}>{meta.label}</Text>
+      {colors && statusKey && (
+        <Box px={2.5} py={1} borderRadius="full" bg={colors.bg} flexShrink={0}>
+          <Text fontSize="xs" fontWeight="700" color={colors.color}>
+            {t(`eventCard.status${statusKey.charAt(0).toUpperCase()}${statusKey.slice(1)}`)}
+          </Text>
         </Box>
       )}
 

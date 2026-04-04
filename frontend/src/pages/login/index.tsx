@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { apiFetch } from '@/shared/api/client'
 
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('token')
   const [email, setEmail] = useState('andrey@example.com')
@@ -32,7 +34,7 @@ export default function LoginPage() {
     const ok = await login(email, password)
     if (!ok) {
       setLoading(false)
-      toast({ title: 'Ошибка входа', status: 'error', duration: 3000 })
+      toast({ title: t('auth.loginError'), status: 'error', duration: 3000 })
       return
     }
     if (inviteToken) {
@@ -98,7 +100,7 @@ export default function LoginPage() {
                 </Box>
                 <Text fontSize="lg" fontWeight="600" color="gray.900" letterSpacing="-0.3px">MeetUp</Text>
               </HStack>
-              <Text color="gray.400" fontSize="sm">Организуйте встречи легко</Text>
+              <Text color="gray.400" fontSize="sm">{t('auth.tagline')}</Text>
             </VStack>
 
             <Box
@@ -111,12 +113,12 @@ export default function LoginPage() {
             >
               <VStack spacing={5} as="form" onSubmit={handleSubmit}>
                 <Box w="full">
-                  <Heading size="md" mb={1}>Добро пожаловать</Heading>
-                  <Text fontSize="sm" color="gray.400">Войдите в свой аккаунт</Text>
+                  <Heading size="md" mb={1}>{t('auth.welcome')}</Heading>
+                  <Text fontSize="sm" color="gray.400">{t('auth.signInSubtitle')}</Text>
                 </Box>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">Email</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.email')}</FormLabel>
                   <Input
                     type="email"
                     value={email}
@@ -127,7 +129,7 @@ export default function LoginPage() {
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">Пароль</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.password')}</FormLabel>
                   <Input
                     type="password"
                     value={password}
@@ -138,11 +140,11 @@ export default function LoginPage() {
                 </FormControl>
 
                 <Button type="submit" colorScheme="blue" w="full" size="md" isLoading={loading} mt={1}>
-                  Войти
+                  {t('auth.signIn')}
                 </Button>
 
                 <Text fontSize="sm" color="gray.500" textAlign="center">
-                  Нет аккаунта?{' '}
+                  {t('auth.noAccount')}{' '}
                   <ChakraLink
                     as={Link}
                     to={inviteToken ? `/register?token=${inviteToken}` : '/register'}
@@ -150,14 +152,14 @@ export default function LoginPage() {
                     fontWeight="600"
                     _hover={{ textDecoration: 'none', color: 'brand.700' }}
                   >
-                    Зарегистрироваться
+                    {t('auth.signUp')}
                   </ChakraLink>
                 </Text>
               </VStack>
             </Box>
 
             <Text fontSize="xs" color="gray.400" textAlign="center">
-              Demo: любой email/пароль для входа
+              {t('auth.demo')}
             </Text>
           </VStack>
         </Box>

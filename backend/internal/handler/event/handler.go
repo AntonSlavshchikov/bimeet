@@ -212,6 +212,36 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	if err := h.svc.Complete(r.Context(), id, userID); err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "forbidden") {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if strings.Contains(msg, "not found") {
+			response.Error(w, http.StatusNotFound, "event not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to complete event")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) InviteParticipant(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
