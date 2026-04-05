@@ -40,6 +40,11 @@ import (
 	pollsvc             "meetup/internal/service/poll"
 	profilesvc          "meetup/internal/service/profile"
 	"meetup/internal/reminder"
+	"meetup/internal/storage"
+
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 func main() {
@@ -89,7 +94,33 @@ func main() {
 	carpoolSvc      := carpoolsvc.New(carpoolRepo, eventRepo)
 	linkSvc         := eventlinksvc.New(linkRepo, eventRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
-	profileSvc      := profilesvc.New(userRepo)
+
+	// S3 storage for avatars
+	var avatarStorage profilesvc.AvatarStorage
+	if cfg.S3Bucket != "" {
+		awsCfg, err := awsconfig.LoadDefaultConfig(ctx,
+			awsconfig.WithRegion(cfg.AWSRegion),
+			awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				cfg.AWSAccessKeyID, cfg.AWSSecretKey, "",
+			)),
+		)
+		if err != nil {
+			log.Fatalf("load aws config: %v", err)
+		}
+		s3Opts := []func(*s3.Options){}
+		if cfg.S3Endpoint != "" {
+			s3Opts = append(s3Opts, func(o *s3.Options) {
+				o.BaseEndpoint = &cfg.S3Endpoint
+				o.UsePathStyle = true // required for MinIO
+			})
+		}
+		avatarStorage = storage.NewS3(s3.NewFromConfig(awsCfg, s3Opts...), cfg.S3Bucket, cfg.S3PublicBaseURL)
+	} else {
+		log.Println("S3_BUCKET not set — avatar uploads disabled")
+		avatarStorage = &storage.NoopStorage{}
+	}
+
+	profileSvc := profilesvc.New(userRepo, avatarStorage)
 
 	// Handlers
 	authH         := authhandler.New(authSvc)

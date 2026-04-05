@@ -739,3 +739,105 @@ service/event/interfaces.go   → EventRepo, UserRepo, NotificationRepo, Mailer
 - [x] Создать `internal/reminder/interfaces.go` — минимальные интерфейсы `EventRepo`, `NotificationRepo`
 - [x] Создать `internal/reminder/runner.go` — тикер (1 час), отправка уведомлений, дедупликация через флаги
 - [x] Обновить `main.go`: запустить `reminderRunner.Start(ctx)` в горутине
+
+---
+
+## Этап 15 — Аватарка пользователя
+
+### Контекст
+
+Сейчас аватарка везде генерируется из инициалов (Chakra UI `<Avatar name=...>`). Нужно дать пользователю возможность загрузить собственное фото. Файлы хранятся в AWS S3; публичный URL сохраняется в БД.
+
+### Backend
+
+- [ ] Добавить env-переменные `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_BASE_URL` в `.env.example`
+- [ ] `go get github.com/aws/aws-sdk-go-v2/...`
+- [ ] Миграция `007_user_avatar`: `ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`
+- [ ] `AvatarURL *string \`json:"avatar_url"\`` в модели `User`
+- [ ] `avatar_url` в SELECT-запросах репозитория + метод `UpdateAvatar(ctx, userID, url)`
+- [ ] Создать `internal/storage/s3.go` — обёртка `Upload(ctx, key, contentType, body) (url, err)`
+- [ ] Сервисный метод `UploadAvatar(ctx, userID, file, header)` — валидация MIME+размер (5 MB), S3 upload, UpdateAvatar
+- [ ] Хендлер `UploadAvatar`, интерфейсы, маршрут `POST /api/auth/me/avatar`
+- [ ] Инициализация S3-клиента в `main.go`
+
+### Frontend
+
+- [ ] `avatar_url?: string` в типе `User` (`entities/user/model/types.ts`)
+- [ ] `uploadAvatar(file: File): Promise<User>` в `features/auth/api` (FormData + fetch с JWT header)
+- [ ] Хук `useUploadAvatar()` — мутация, `updateUser(data)` + инвалидация `['profile']`
+- [ ] `pages/profile/index.tsx`: кликабельный аватар с оверлеем `FiCamera` и скрытым `<input type="file">`; Spinner во время загрузки
+- [ ] `widgets/layout/Sidebar.tsx`: `<Avatar src={user.avatar_url} name={user.name}>`
+- [ ] i18n ключи `profile.uploadAvatar`, `profile.uploadError` в `ru.json` и `en.json`
+
+---
+
+## Этап 16 — Docker + CI/CD деплой
+
+### Контекст
+
+Контейнеризация бэкенда и фронтенда, продакшн docker-compose с полным стеком сервисов, автоматический деплой через GitHub Actions при пуше в `master`.
+
+---
+
+### Новые файлы
+
+| Файл | Назначение |
+|---|---|
+| `backend/Dockerfile` | Multi-stage сборка Go-бинарника |
+| `frontend/Dockerfile` | Multi-stage сборка Vite → nginx |
+| `frontend/nginx.conf` | SPA-роутинг + проксирование `/api` на бэкенд |
+| `docker-compose.prod.yml` | Продакшн-конфиг: все сервисы + volumes + сеть |
+| `.github/workflows/deploy.yml` | CI: build → push GHCR → SSH deploy |
+| `.env.prod.example` | Шаблон продакшн-переменных |
+
+---
+
+### Детали реализации
+
+#### `backend/Dockerfile` (multi-stage)
+- Сборка: `golang:1.26-alpine`, `CGO_ENABLED=0 go build -o server ./cmd/server`
+- Runtime: `alpine:3.20` + `ca-certificates` + `tzdata`, образ ~15 MB
+
+#### `frontend/Dockerfile` (multi-stage)
+- Сборка: `node:20-alpine`, `npm ci && npm run build`
+- Runtime: `nginx:alpine`, раздаёт `/app/dist`
+
+#### `frontend/nginx.conf`
+- SPA fallback: `try_files $uri $uri/ /index.html`
+- Прокси `/api/` → `http://backend:8080/api/`
+
+#### `docker-compose.prod.yml` (в корне репозитория)
+Сервисы: `backend`, `frontend`, `postgres:16-alpine`, `minio` (если не AWS S3).
+Одна bridge-сеть `app-net`, named volumes для postgres и minio.
+
+#### `.github/workflows/deploy.yml`
+Триггер: `push` в `master`
+1. Build + push образов в GHCR (`ghcr.io/<owner>/meetup-backend:latest`, `meetup-frontend:latest`)
+2. SSH на VPS → `docker compose -f docker-compose.prod.yml pull && up -d`
+
+Секреты: `SSH_HOST`, `SSH_USER`, `SSH_KEY`, `GITHUB_TOKEN` (встроенный, для GHCR).
+
+#### `.env.prod.example`
+- `DSN=postgres://meetup:<password>@postgres:5432/meetup?sslmode=disable` (хост `postgres`, не `localhost`)
+- `JWT_SECRET=<strong-random-secret>`
+- Реальный SMTP (SendGrid и др.)
+- AWS S3 или MinIO-переменные
+
+---
+
+### Важные нюансы
+
+- **DSN в проде**: хост `postgres` (имя сервиса в compose-сети), не `localhost`
+- **VITE_API_URL**: передаётся как `--build-arg` при сборке фронтенд-образа
+- **Миграции**: бэкенд запускает автоматически при старте — дополнительных шагов не нужно
+
+---
+
+### Чеклист реализации
+
+- [ ] `backend/Dockerfile`
+- [ ] `frontend/Dockerfile`
+- [ ] `frontend/nginx.conf`
+- [ ] `docker-compose.prod.yml`
+- [ ] `.env.prod.example`
+- [ ] `.github/workflows/deploy.yml`

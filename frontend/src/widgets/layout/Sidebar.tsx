@@ -110,6 +110,7 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
             as={Link}
             to="/profile"
             onClick={onClose}
+            display="block"
             px={3}
             py={2}
             mb={1}
@@ -118,7 +119,7 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
             transition="background 0.15s"
           >
             <HStack spacing={2.5}>
-              <Avatar size="sm" name={user.name} bg="brand.600" color="white" fontWeight="600" flexShrink={0} />
+              <Avatar size="sm" src={user.avatar_url ?? undefined} name={user.name} bg="brand.600" color="white" fontWeight="600" flexShrink={0} />
               <Box minW={0}>
                 <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1}>{user.name}</Text>
                 <Text fontSize="xs" color="faintText" noOfLines={1}>{user.email}</Text>

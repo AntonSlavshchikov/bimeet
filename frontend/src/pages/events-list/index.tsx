@@ -35,29 +35,9 @@ type ViewMode = 'grid' | 'list'
 function EmptyState({ onAction, label, isSearch }: { onAction?: string; label: string; isSearch?: boolean }) {
   const { t } = useTranslation()
   return (
-    <Box
-      textAlign="center"
-      py={20}
-      px={8}
-      bg="cardBg"
-      borderRadius="2xl"
-      border="2px dashed"
-      borderColor="subtleBorder"
-    >
-      <Box
-        w="64px"
-        h="64px"
-        borderRadius="xl"
-        bgGradient="linear(135deg, brand.50, brand.100)"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        mx="auto"
-        mb={4}
-      >
-        <Icon as={isSearch ? FiSearch : FiCalendar} color="brand.400" boxSize={7} />
-      </Box>
-      <Text fontWeight="600" color="dimText" mb={1}>{label}</Text>
+    <Box textAlign="center" py={10}>
+      <Icon as={isSearch ? FiSearch : FiCalendar} boxSize={8} color="faintText" mb={2} />
+      <Text fontSize="sm" color="dimText">{label}</Text>
       {onAction && (
         <Button as={Link} to={onAction} colorScheme="blue" mt={4} size="sm">
           {t('events.emptyCreateButton')}

@@ -106,6 +106,8 @@ func NewRouter(
 		r.Get("/api/auth/me", profile.GetMe)
 		r.Put("/api/auth/me", profile.UpdateMe)
 		r.Get("/api/auth/me/stats", profile.GetStats)
+		r.Post("/api/auth/me/avatar", profile.UploadAvatar)
+		r.Delete("/api/auth/me/avatar", profile.DeleteAvatar)
 	})
 
 	return r

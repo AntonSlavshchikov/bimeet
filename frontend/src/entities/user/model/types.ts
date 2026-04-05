@@ -5,6 +5,7 @@ export interface User {
   email: string
   birth_date?: string
   city?: string
+  avatar_url?: string
   created_at?: string
 }
 

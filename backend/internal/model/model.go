@@ -16,6 +16,7 @@ type User struct {
 	PasswordHash string     `json:"-"`
 	BirthDate    *time.Time `json:"birth_date"`
 	City         string     `json:"city"`
+	AvatarURL    *string    `json:"avatar_url"`
 	CreatedAt    time.Time  `json:"created_at"`
 }
 

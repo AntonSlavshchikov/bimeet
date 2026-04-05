@@ -10,6 +10,7 @@ import {
   HStack,
   Icon,
   Input,
+  Spinner,
   Tab,
   TabList,
   TabPanel,
@@ -19,9 +20,9 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiMail, FiMapPin, FiUser } from 'react-icons/fi'
+import { FiCalendar, FiCamera, FiMail, FiMapPin, FiTrash2, FiUser } from 'react-icons/fi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/model/AuthContext'
@@ -32,6 +33,7 @@ export default function ProfilePage() {
   const { t } = useTranslation()
   const toast = useToast()
   const queryClient = useQueryClient()
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const { data: stats } = useQuery({
     queryKey: ['profile', 'stats'],
@@ -43,6 +45,30 @@ export default function ProfilePage() {
     last_name: user?.last_name ?? '',
     city: user?.city ?? '',
     birth_date: user?.birth_date ? user.birth_date.slice(0, 10) : '',
+  })
+
+  const avatarMutation = useMutation({
+    mutationFn: authApi.uploadAvatar,
+    onSuccess: (updated) => {
+      updateUser(updated)
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      toast({ title: t('profile.avatarSaved'), status: 'success', duration: 2500, isClosable: true })
+    },
+    onError: () => {
+      toast({ title: t('profile.uploadError'), status: 'error', duration: 3000, isClosable: true })
+    },
+  })
+
+  const deleteAvatarMutation = useMutation({
+    mutationFn: authApi.deleteAvatar,
+    onSuccess: (updated) => {
+      updateUser(updated)
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      toast({ title: t('profile.avatarDeleted'), status: 'success', duration: 2500, isClosable: true })
+    },
+    onError: () => {
+      toast({ title: t('profile.uploadError'), status: 'error', duration: 3000, isClosable: true })
+    },
   })
 
   const updateMutation = useMutation({
@@ -88,12 +114,73 @@ export default function ProfilePage() {
           p={6}
         >
           <VStack spacing={4} align="center">
-            <Avatar
-              size="2xl"
-              name={fullName || user?.name}
-              bg="brand.600"
-              color="white"
-              fontWeight="700"
+            <Box position="relative">
+              <Box
+                cursor="pointer"
+                role="group"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                <Avatar
+                  size="2xl"
+                  src={user?.avatar_url ?? undefined}
+                  name={fullName || user?.name}
+                  bg="brand.600"
+                  color="white"
+                  fontWeight="700"
+                />
+                <Box
+                  position="absolute"
+                  inset={0}
+                  borderRadius="full"
+                  bg="blackAlpha.600"
+                  opacity={0}
+                  _groupHover={{ opacity: 1 }}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  transition="opacity 0.2s"
+                >
+                  {avatarMutation.isPending
+                    ? <Spinner color="white" size="sm" />
+                    : <Icon as={FiCamera} color="white" boxSize={5} />
+                  }
+                </Box>
+              </Box>
+              {user?.avatar_url && (
+                <Box
+                  as="button"
+                  position="absolute"
+                  bottom={0}
+                  right={0}
+                  w={6}
+                  h={6}
+                  borderRadius="full"
+                  bg="red.500"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  onClick={() => deleteAvatarMutation.mutate()}
+                  title={t('profile.deleteAvatar')}
+                  _hover={{ bg: 'red.600' }}
+                  transition="background 0.15s"
+                >
+                  {deleteAvatarMutation.isPending
+                    ? <Spinner color="white" size="xs" />
+                    : <Icon as={FiTrash2} color="white" boxSize={3} />
+                  }
+                </Box>
+              )}
+            </Box>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const file = e.target.files?.[0]
+                if (file) avatarMutation.mutate(file)
+                e.target.value = ''
+              }}
             />
             <VStack spacing={1.5} align="center">
               <Heading size="sm" letterSpacing="-0.2px">{fullName || user?.name}</Heading>

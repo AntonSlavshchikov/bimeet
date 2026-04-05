@@ -19,13 +19,13 @@ func New(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const userColumns = `id, name, last_name, email, password_hash, birth_date, city, created_at`
+const userColumns = `id, name, last_name, email, password_hash, birth_date, city, avatar_url, created_at`
 
 func scanUser(row interface {
 	Scan(...any) error
 }) (model.User, error) {
 	var u model.User
-	err := row.Scan(&u.ID, &u.Name, &u.LastName, &u.Email, &u.PasswordHash, &u.BirthDate, &u.City, &u.CreatedAt)
+	err := row.Scan(&u.ID, &u.Name, &u.LastName, &u.Email, &u.PasswordHash, &u.BirthDate, &u.City, &u.AvatarURL, &u.CreatedAt)
 	return u, err
 }
 
@@ -85,6 +85,30 @@ func (r *Repository) UpdateProfile(ctx context.Context, id uuid.UUID, req model.
 	u, err := scanUser(row)
 	if err != nil {
 		return model.User{}, fmt.Errorf("update profile: %w", err)
+	}
+	return u, nil
+}
+
+func (r *Repository) UpdateAvatar(ctx context.Context, id uuid.UUID, url string) (model.User, error) {
+	row := r.pool.QueryRow(ctx,
+		`UPDATE users SET avatar_url=$1 WHERE id=$2 RETURNING `+userColumns,
+		url, id,
+	)
+	u, err := scanUser(row)
+	if err != nil {
+		return model.User{}, fmt.Errorf("update avatar: %w", err)
+	}
+	return u, nil
+}
+
+func (r *Repository) ClearAvatar(ctx context.Context, id uuid.UUID) (model.User, error) {
+	row := r.pool.QueryRow(ctx,
+		`UPDATE users SET avatar_url=NULL WHERE id=$1 RETURNING `+userColumns,
+		id,
+	)
+	u, err := scanUser(row)
+	if err != nil {
+		return model.User{}, fmt.Errorf("clear avatar: %w", err)
 	}
 	return u, nil
 }

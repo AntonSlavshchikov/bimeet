@@ -19,6 +19,13 @@ type Config struct {
 	SMTPPass    string
 	SMTPFrom    string
 	FrontendURL string
+	// S3-compatible storage (optional — if S3Bucket is empty, avatar uploads are disabled)
+	AWSRegion        string
+	AWSAccessKeyID   string
+	AWSSecretKey     string
+	S3Bucket         string
+	S3PublicBaseURL  string
+	S3Endpoint       string // custom endpoint for MinIO / S3-compatible services
 }
 
 func Load() Config {
@@ -57,5 +64,11 @@ func Load() Config {
 		SMTPPass:    os.Getenv("SMTP_PASS"),
 		SMTPFrom:    os.Getenv("SMTP_FROM"),
 		FrontendURL: frontendURL,
+		AWSRegion:       os.Getenv("AWS_REGION"),
+		AWSAccessKeyID:  os.Getenv("AWS_ACCESS_KEY_ID"),
+		AWSSecretKey:    os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		S3Bucket:        os.Getenv("S3_BUCKET"),
+		S3PublicBaseURL: os.Getenv("S3_PUBLIC_BASE_URL"),
+		S3Endpoint:      os.Getenv("S3_ENDPOINT"),
 	}
 }

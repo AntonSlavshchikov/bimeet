@@ -250,6 +250,10 @@
     "statsOrganized": "Организовано",
     "statsParticipated": "Участвовал",
     "statsCompleted": "Завершено",
-    "statsUpcoming": "Предстоит"
+    "statsUpcoming": "Предстоит",
+    "avatarSaved": "Аватарка обновлена",
+    "avatarDeleted": "Аватарка удалена",
+    "deleteAvatar": "Удалить аватарку",
+    "uploadError": "Не удалось загрузить аватарку"
   }
 }

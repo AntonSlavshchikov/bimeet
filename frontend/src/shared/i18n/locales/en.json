@@ -250,6 +250,10 @@
     "statsOrganized": "Organized",
     "statsParticipated": "Participated",
     "statsCompleted": "Completed",
-    "statsUpcoming": "Upcoming"
+    "statsUpcoming": "Upcoming",
+    "avatarSaved": "Avatar updated",
+    "avatarDeleted": "Avatar removed",
+    "deleteAvatar": "Remove avatar",
+    "uploadError": "Failed to upload avatar"
   }
 }

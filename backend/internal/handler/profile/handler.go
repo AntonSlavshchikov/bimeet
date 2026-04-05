@@ -1,6 +1,7 @@
 package profilehandler
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -79,4 +80,60 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, stats)
+}
+
+func (h *Handler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	user, err := h.svc.DeleteAvatar(r.Context(), userID)
+	if err != nil {
+		log.Printf("delete avatar: %v", err)
+		response.Error(w, http.StatusInternalServerError, "failed to delete avatar")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, user)
+}
+
+const maxAvatarSize = 5 << 20 // 5 MB
+
+func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	if err := r.ParseMultipartForm(maxAvatarSize); err != nil {
+		response.Error(w, http.StatusBadRequest, "file too large or invalid form")
+		return
+	}
+
+	file, header, err := r.FormFile("avatar")
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "avatar file is required")
+		return
+	}
+	defer file.Close()
+
+	user, err := h.svc.UploadAvatar(r.Context(), userID, file, header)
+	if err != nil {
+		log.Printf("upload avatar: %v", err)
+		if strings.Contains(err.Error(), "unsupported image type") {
+			response.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if strings.Contains(err.Error(), "not configured") {
+			response.Error(w, http.StatusServiceUnavailable, "avatar storage is not configured")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to upload avatar")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, user)
 }
