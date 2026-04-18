@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { eventMutationsApi } from '@/features/event-manage/api'
-import { eventKeys } from '@/entities/event/queries'
+import { eventKeys, publicEventKeys } from '@/entities/event/queries'
 import type { UpdateEventData } from '@/entities/event/model/types'
 
 export function useCreateEvent() {
@@ -37,6 +37,17 @@ export function useCompleteEvent(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
       qc.invalidateQueries({ queryKey: eventKeys.detail(id) })
+    },
+  })
+}
+
+export function useJoinPublicEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => eventMutationsApi.joinPublicEvent(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.all })
     },
   })
 }

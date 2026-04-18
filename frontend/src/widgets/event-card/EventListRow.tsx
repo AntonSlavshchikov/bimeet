@@ -1,15 +1,17 @@
 import {
   Badge,
   Box,
+  Button,
   HStack,
   Text,
   Icon,
   Avatar,
   AvatarGroup,
+  Tooltip,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiMapPin, FiChevronRight } from 'react-icons/fi'
+import { FiCalendar, FiChevronRight, FiGlobe, FiLock, FiMapPin } from 'react-icons/fi'
 import type { EventListItem } from '@/entities/event/model/types'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 import { getGradient } from './index'
@@ -23,11 +25,13 @@ const statusColors = {
 interface EventListRowProps {
   event: EventListItem
   myStatus?: string
+  canJoin?: boolean
+  onJoin?: (e: React.MouseEvent) => void
 }
 
-export default function EventListRow({ event, myStatus }: EventListRowProps) {
+export default function EventListRow({ event, myStatus, canJoin, onJoin }: EventListRowProps) {
   const { t } = useTranslation()
-  const confirmedCount = event.participants.filter(p => p.status === 'confirmed').length
+  const confirmedCount = event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
   const gradient = getGradient(event.id, event.category)
   const statusKey = myStatus as keyof typeof statusColors | undefined
   const colors = statusKey ? statusColors[statusKey] : null
@@ -80,6 +84,18 @@ export default function EventListRow({ event, myStatus }: EventListRowProps) {
               {t('eventCard.statusCompleted')}
             </Badge>
           )}
+          <Badge
+            colorScheme={event.is_public ? 'teal' : 'purple'}
+            variant="subtle"
+            fontSize="9px"
+            borderRadius="md"
+            display="flex"
+            alignItems="center"
+            gap={0.5}
+          >
+            <Icon as={event.is_public ? FiGlobe : FiLock} boxSize={2.5} />
+            {event.is_public ? t('eventCard.publicBadge') : t('eventCard.personalBadge')}
+          </Badge>
         </HStack>
         <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1} opacity={event.status === 'completed' ? 0.6 : 1}>
           {event.title}
@@ -123,7 +139,21 @@ export default function EventListRow({ event, myStatus }: EventListRowProps) {
         </AvatarGroup>
       </HStack>
 
-      <Icon as={FiChevronRight} color="faintText" boxSize={4} flexShrink={0} />
+      {canJoin != null ? (
+        <Tooltip label={!canJoin ? t('eventInfo.noSpots') : undefined} isDisabled={canJoin}>
+          <Button
+            size="xs"
+            colorScheme="blue"
+            isDisabled={!canJoin}
+            flexShrink={0}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onJoin?.(e) }}
+          >
+            {t('eventInfo.join')}
+          </Button>
+        </Tooltip>
+      ) : (
+        <Icon as={FiChevronRight} color="faintText" boxSize={4} flexShrink={0} />
+      )}
     </Box>
   )
 }

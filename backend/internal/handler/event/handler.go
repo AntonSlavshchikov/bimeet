@@ -1,6 +1,7 @@
 package eventhandler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"meetup/internal/handler/response"
 	"meetup/internal/middleware"
 	"meetup/internal/model"
+	eventsvc "meetup/internal/service/event"
 )
 
 type Handler struct {
@@ -80,8 +82,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	event, err := h.svc.GetByID(r.Context(), id, userID)
 	if err != nil {
-		msg := err.Error()
-		if strings.Contains(msg, "forbidden") {
+		if errors.Is(err, eventsvc.ErrForbidden) || strings.Contains(err.Error(), "forbidden") {
 			response.Error(w, http.StatusForbidden, "forbidden")
 			return
 		}
@@ -320,4 +321,51 @@ func (h *Handler) UpdateParticipantStatus(w http.ResponseWriter, r *http.Request
 	}
 
 	response.JSON(w, http.StatusOK, participant)
+}
+
+func (h *Handler) ListPublic(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	events, err := h.svc.ListPublic(r.Context(), userID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "failed to list public events")
+		return
+	}
+	if events == nil {
+		events = []model.PublicEventListItem{}
+	}
+	response.JSON(w, http.StatusOK, events)
+}
+
+func (h *Handler) JoinPublic(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	eventID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	if err := h.svc.JoinPublic(r.Context(), eventID, userID); err != nil {
+		if errors.Is(err, eventsvc.ErrForbidden) {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if errors.Is(err, eventsvc.ErrFull) {
+			response.Error(w, http.StatusConflict, "event is full")
+			return
+		}
+		response.Error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"status": "joined"})
 }

@@ -21,12 +21,12 @@ func New(pool *pgxpool.Pool) *Repository {
 func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO events (title, description, date_start, date_end, location, category, dress_code, organizer_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, status, organizer_id, invite_token, created_at, updated_at`,
-		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, organizerID,
+		`INSERT INTO events (title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, organizer_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
+		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, req.IsPublic, req.MaxGuests, organizerID,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("create event: %w", err)
 	}
@@ -36,11 +36,11 @@ func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, o
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, category, dress_code, status, organizer_id, invite_token, created_at, updated_at
+		`SELECT id, title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at
 		 FROM events WHERE id=$1`,
 		id,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by id: %w", err)
 	}
@@ -51,7 +51,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 	var e model.InviteEventInfo
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code,
+		        e.category, e.dress_code, e.is_public,
 		        u.id, u.name, u.email,
 		        COUNT(ep.id) FILTER (WHERE ep.status = 'confirmed') AS confirmed_count
 		 FROM events e
@@ -61,7 +61,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 		 GROUP BY e.id, u.id`,
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode,
+		&e.Category, &e.DressCode, &e.IsPublic,
 		&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
 		&e.ConfirmedCount)
 	if err != nil {
@@ -81,12 +81,14 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateE
 		   location    = COALESCE($6, location),
 		   category    = COALESCE($7, category),
 		   dress_code  = COALESCE($8, dress_code),
+		   is_public   = COALESCE($9, is_public),
+		   max_guests  = COALESCE($10, max_guests),
 		   updated_at  = NOW()
 		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, status, organizer_id, invite_token, created_at, updated_at`,
-		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode,
+		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
+		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, req.IsPublic, req.MaxGuests,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("update event: %w", err)
 	}
@@ -234,7 +236,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	var orgID uuid.UUID
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code, e.status,
+		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, u.name, u.email,
 		        e.invite_token, e.created_at, e.updated_at
 		 FROM events e
@@ -243,7 +245,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		eventID,
 	).Scan(
 		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location,
-		&detail.Category, &detail.DressCode, &detail.Status,
+		&detail.Category, &detail.DressCode, &detail.Status, &detail.IsPublic, &detail.MaxGuests,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
 		&detail.InviteToken, &detail.CreatedAt, &detail.UpdatedAt,
 	)
@@ -259,14 +261,6 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	detail.Carpools = []model.CarpoolInfo{}
 	detail.Links = []model.EventLinkInfo{}
 	detail.ChangeLog = []model.ChangeLogInfo{}
-
-	ok, err := r.IsParticipant(ctx, eventID, userID)
-	if err != nil {
-		return model.EventDetail{}, err
-	}
-	if !ok {
-		return model.EventDetail{}, fmt.Errorf("forbidden")
-	}
 
 	// Participants
 	pRows, err := r.pool.Query(ctx,
@@ -290,6 +284,14 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	pRows.Close()
 	if err := pRows.Err(); err != nil {
 		return model.EventDetail{}, err
+	}
+
+	// ConfirmedCount: organizer + confirmed participants
+	detail.ConfirmedCount = 1
+	for _, p := range detail.Participants {
+		if p.Status == "confirmed" {
+			detail.ConfirmedCount++
+		}
 	}
 
 	// Collections
@@ -531,7 +533,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code, e.status,
+		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, ou.email,
 		        e.invite_token, e.created_at,
 		        COALESCE(ep2.status, '') AS my_status
@@ -553,7 +555,7 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 		var e model.EventListItem
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-			&e.Category, &e.DressCode, &e.Status,
+			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
 			&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
 			&e.InviteToken, &e.CreatedAt, &e.MyStatus,
 		); err != nil {
@@ -588,6 +590,14 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 		pRows.Close()
 		if err := pRows.Err(); err != nil {
 			return nil, err
+		}
+
+		// ConfirmedCount: organizer + confirmed participants
+		events[i].ConfirmedCount = 1
+		for _, p := range events[i].Participants {
+			if p.Status == "confirmed" {
+				events[i].ConfirmedCount++
+			}
 		}
 	}
 
@@ -673,4 +683,97 @@ func (r *Repository) MarkReminder3dSent(ctx context.Context, id uuid.UUID) error
 func (r *Repository) MarkReminder1dSent(ctx context.Context, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, `UPDATE events SET reminder_1d_sent=TRUE WHERE id=$1`, id)
 	return err
+}
+
+// ListPublic returns active public events with confirmed_count and is_participant flag.
+func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
+		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
+		        e.organizer_id, ou.name, ou.email,
+		        e.invite_token, e.created_at,
+		        EXISTS(
+		            SELECT 1 FROM event_participants ep
+		            WHERE ep.event_id = e.id AND ep.user_id = $1
+		        ) AS is_participant
+		 FROM events e
+		 JOIN users ou ON ou.id = e.organizer_id
+		 WHERE e.is_public = TRUE AND e.status = 'active'
+		 ORDER BY e.date_start`,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list public events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []model.PublicEventListItem
+	for rows.Next() {
+		var e model.PublicEventListItem
+		if err := rows.Scan(
+			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
+			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
+			&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
+			&e.InviteToken, &e.CreatedAt,
+			&e.IsParticipant,
+		); err != nil {
+			return nil, fmt.Errorf("scan public event list item: %w", err)
+		}
+		e.MyStatus = ""
+		events = append(events, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i, e := range events {
+		pRows, err := r.pool.Query(ctx,
+			`SELECT ep.id, ep.user_id, u.name, u.email, ep.status
+			 FROM event_participants ep
+			 JOIN users u ON u.id = ep.user_id
+			 WHERE ep.event_id = $1`,
+			e.ID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("list participants for public event: %w", err)
+		}
+		events[i].Participants = []model.ParticipantInfo{}
+		for pRows.Next() {
+			var p model.ParticipantInfo
+			if err := pRows.Scan(&p.ID, &p.User.ID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
+				pRows.Close()
+				return nil, fmt.Errorf("scan participant public event: %w", err)
+			}
+			events[i].Participants = append(events[i].Participants, p)
+		}
+		pRows.Close()
+		if err := pRows.Err(); err != nil {
+			return nil, err
+		}
+
+		events[i].ConfirmedCount = 1
+		for _, p := range events[i].Participants {
+			if p.Status == "confirmed" {
+				events[i].ConfirmedCount++
+			}
+		}
+	}
+
+	return events, nil
+}
+
+// JoinPublic adds a user as a confirmed participant of a public event.
+func (r *Repository) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) (model.EventParticipant, error) {
+	var p model.EventParticipant
+	err := r.pool.QueryRow(ctx,
+		`INSERT INTO event_participants (event_id, user_id, status)
+		 VALUES ($1, $2, 'confirmed')
+		 ON CONFLICT (event_id, user_id) DO UPDATE SET status = 'confirmed'
+		 RETURNING id, event_id, user_id, status`,
+		eventID, userID,
+	).Scan(&p.ID, &p.EventID, &p.UserID, &p.Status)
+	if err != nil {
+		return model.EventParticipant{}, fmt.Errorf("join public event: %w", err)
+	}
+	return p, nil
 }

@@ -19,16 +19,18 @@ import {
   TabPanel,
   VStack,
   useDisclosure,
+  useToast,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiCalendar, FiGrid, FiList, FiPlus, FiSearch } from 'react-icons/fi'
-import { useEvents } from '@/entities/event/queries'
+import { useEvents, usePublicEvents } from '@/entities/event/queries'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { useJoinPublicEvent } from '@/features/event-manage/model/hooks'
 import EventCard from '@/widgets/event-card'
 import EventListRow from '@/widgets/event-card/EventListRow'
-import type { EventListItem } from '@/entities/event/model/types'
+import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 
 type ViewMode = 'grid' | 'list'
 
@@ -75,13 +77,61 @@ function EventsList({ events, myId }: { events: EventListItem[]; myId?: string }
   )
 }
 
+function PublicEventsGrid({ events, onJoin }: { events: PublicEventListItem[]; onJoin: (id: string) => void }) {
+  return (
+    <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }} gap={5}>
+      {events.map(event => {
+        const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
+        const canJoin = !event.is_participant && (spotsLeft == null || spotsLeft > 0)
+        return (
+          <EventCard
+            key={event.id}
+            event={event}
+            canJoin={event.is_participant ? undefined : (spotsLeft == null || spotsLeft > 0)}
+            onJoin={canJoin ? () => onJoin(event.id) : undefined}
+          />
+        )
+      })}
+    </Grid>
+  )
+}
+
+function PublicEventsList({ events, onJoin }: { events: PublicEventListItem[]; onJoin: (id: string) => void }) {
+  return (
+    <VStack align="stretch" spacing={1.5}>
+      {events.map(event => {
+        const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
+        const canJoin = !event.is_participant && (spotsLeft == null || spotsLeft > 0)
+        return (
+          <EventListRow
+            key={event.id}
+            event={event}
+            canJoin={event.is_participant ? undefined : (spotsLeft == null || spotsLeft > 0)}
+            onJoin={canJoin ? () => onJoin(event.id) : undefined}
+          />
+        )
+      })}
+    </VStack>
+  )
+}
+
 export default function EventsListPage() {
   const events = useEvents()
+  const publicEvents = usePublicEvents()
   const { user } = useAuth()
   const { t } = useTranslation()
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const { isOpen: isSearchOpen, onToggle: onSearchToggle } = useDisclosure()
+  const joinPublicEvent = useJoinPublicEvent()
+
+  function handleJoin(id: string) {
+    joinPublicEvent.mutate(id, {
+      onSuccess: () => toast({ title: t('eventInfo.joinSuccess'), status: 'success', duration: 2000 }),
+      onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
+    })
+  }
 
   const myEvents = events.filter(e => e.organizer.id === user?.id)
   const invitedEvents = events.filter(e =>
@@ -100,6 +150,11 @@ export default function EventsListPage() {
 
   const filteredMy = filterEvents(myEvents)
   const filteredInvited = filterEvents(invitedEvents)
+  const filteredPublic = publicEvents.filter(e => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return e.title.toLowerCase().includes(q) || e.location.toLowerCase().includes(q)
+  })
   const hasSearch = search.trim().length > 0
 
   return (
@@ -203,6 +258,15 @@ export default function EventsListPage() {
               {invitedEvents.length}
             </Box>
           </Tab>
+          <Tab
+            pb={3} px={4} fontSize="sm" fontWeight="500" color="faintText"
+            _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
+          >
+            {t('events.tabPublic')}
+            <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
+              {publicEvents.length}
+            </Box>
+          </Tab>
         </TabList>
 
         <TabPanels>
@@ -226,6 +290,17 @@ export default function EventsListPage() {
               viewMode === 'grid'
                 ? <EventsGrid events={filteredInvited} myId={user?.id} />
                 : <EventsList events={filteredInvited} myId={user?.id} />
+            )}
+          </TabPanel>
+          <TabPanel px={0} pt={0}>
+            {filteredPublic.length === 0 ? (
+              hasSearch
+                ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
+                : <EmptyState label={t('events.emptyNoPublic')} />
+            ) : (
+              viewMode === 'grid'
+                ? <PublicEventsGrid events={filteredPublic} onJoin={handleJoin} />
+                : <PublicEventsList events={filteredPublic} onJoin={handleJoin} />
             )}
           </TabPanel>
         </TabPanels>

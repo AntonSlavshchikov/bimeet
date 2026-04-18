@@ -2,12 +2,18 @@ package eventsvc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	"meetup/internal/model"
+)
+
+var (
+	ErrForbidden = errors.New("forbidden")
+	ErrFull      = errors.New("event is full")
 )
 
 type Service struct {
@@ -55,7 +61,66 @@ func (s *Service) Create(ctx context.Context, req model.CreateEventRequest, orga
 }
 
 func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.EventDetail, error) {
-	return s.eventRepo.GetDetail(ctx, id, userID)
+	detail, err := s.eventRepo.GetDetail(ctx, id, userID)
+	if err != nil {
+		return model.EventDetail{}, fmt.Errorf("event not found")
+	}
+
+	if !detail.IsPublic {
+		if detail.Organizer.ID != userID {
+			isParticipant := false
+			for _, p := range detail.Participants {
+				if p.User.ID == userID {
+					isParticipant = true
+					break
+				}
+			}
+			if !isParticipant {
+				return model.EventDetail{}, ErrForbidden
+			}
+		}
+	}
+
+	return detail, nil
+}
+
+func (s *Service) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
+	return s.eventRepo.ListPublic(ctx, userID)
+}
+
+func (s *Service) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) error {
+	detail, err := s.eventRepo.GetDetail(ctx, eventID, userID)
+	if err != nil {
+		return fmt.Errorf("event not found")
+	}
+	if !detail.IsPublic {
+		return ErrForbidden
+	}
+	if detail.Status != "active" {
+		return fmt.Errorf("event is not active")
+	}
+	if detail.Organizer.ID == userID {
+		return fmt.Errorf("you are the organizer")
+	}
+	if detail.MaxGuests != nil && detail.ConfirmedCount >= *detail.MaxGuests {
+		return ErrFull
+	}
+
+	if _, err := s.eventRepo.JoinPublic(ctx, eventID, userID); err != nil {
+		return err
+	}
+
+	go func() {
+		bgCtx := context.Background()
+		user, err := s.userRepo.GetByID(bgCtx, userID)
+		if err != nil {
+			return
+		}
+		_, _ = s.notificationRepo.Create(bgCtx, detail.Organizer.ID, &eventID,
+			"event_joined", fmt.Sprintf("%s joined your event '%s'", user.Name, detail.Title))
+	}()
+
+	return nil
 }
 
 func (s *Service) GetByInviteToken(ctx context.Context, token uuid.UUID) (model.InviteEventInfo, error) {

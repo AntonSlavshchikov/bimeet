@@ -51,6 +51,9 @@ func NewRouter(
 		// Join by invite token (POST requires auth)
 		r.Post("/api/events/invite/{token}", event.JoinByInviteToken)
 
+		// Public events list (must be before /{id} to avoid conflict)
+		r.Get("/api/events/public", event.ListPublic)
+
 		// Events
 		r.Route("/api/events", func(r chi.Router) {
 			r.Get("/", event.List)
@@ -61,6 +64,7 @@ func NewRouter(
 				r.Put("/", event.Update)
 				r.Delete("/", event.Delete)
 				r.Post("/complete", event.Complete)
+				r.Post("/join", event.JoinPublic)
 
 				// Participants
 				r.Post("/participants", event.InviteParticipant)

@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Heading,
   HStack,
   Text,
@@ -8,10 +9,11 @@ import {
   Avatar,
   AvatarGroup,
   Badge,
+  Tooltip,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi'
+import { FiCalendar, FiGlobe, FiLock, FiMapPin, FiUsers } from 'react-icons/fi'
 import type { EventListItem } from '@/entities/event/model/types'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 
@@ -40,11 +42,13 @@ const statusScheme = {
 interface EventCardProps {
   event: EventListItem
   myStatus?: string
+  canJoin?: boolean
+  onJoin?: (e: React.MouseEvent) => void
 }
 
-export default function EventCard({ event, myStatus }: EventCardProps) {
+export default function EventCard({ event, myStatus, canJoin, onJoin }: EventCardProps) {
   const { t } = useTranslation()
-  const confirmedCount = event.participants.filter(p => p.status === 'confirmed').length
+  const confirmedCount = event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
   const gradient = getGradient(event.id, event.category)
   const statusKey = myStatus as keyof typeof statusScheme | undefined
 
@@ -87,6 +91,18 @@ export default function EventCard({ event, myStatus }: EventCardProps) {
                     {t('eventCard.statusCompleted')}
                   </Badge>
                 )}
+                <Badge
+                  colorScheme={event.is_public ? 'teal' : 'purple'}
+                  variant="subtle"
+                  fontSize="9px"
+                  borderRadius="md"
+                  display="flex"
+                  alignItems="center"
+                  gap={0.5}
+                >
+                  <Icon as={event.is_public ? FiGlobe : FiLock} boxSize={2.5} />
+                  {event.is_public ? t('eventCard.publicBadge') : t('eventCard.personalBadge')}
+                </Badge>
               </HStack>
               <Heading
                 size="sm"
@@ -143,7 +159,20 @@ export default function EventCard({ event, myStatus }: EventCardProps) {
                   ))}
               </AvatarGroup>
             </HStack>
-            <Text fontSize="xs" fontWeight="500" color="faintText">→</Text>
+            {canJoin != null ? (
+              <Tooltip label={!canJoin ? t('eventInfo.noSpots') : undefined} isDisabled={canJoin}>
+                <Button
+                  size="xs"
+                  colorScheme="blue"
+                  isDisabled={!canJoin}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onJoin?.(e) }}
+                >
+                  {t('eventInfo.join')}
+                </Button>
+              </Tooltip>
+            ) : (
+              <Text fontSize="xs" fontWeight="500" color="faintText">→</Text>
+            )}
           </HStack>
         </VStack>
       </Box>

@@ -841,3 +841,296 @@ service/event/interfaces.go   → EventRepo, UserRepo, NotificationRepo, Mailer
 - [ ] `docker-compose.prod.yml`
 - [ ] `.env.prod.example`
 - [ ] `.github/workflows/deploy.yml`
+
+---
+
+## Этап 17 — Публичные и персональные встречи
+
+> Описание добавлено на основе раздела «Требования: Публичные и персональные встречи» в `requirements.md`.
+
+### Контекст
+
+Сейчас все встречи де-факто персональные: `GET /api/events` возвращает только встречи, где пользователь — организатор или участник. Нет полей `is_public` / `max_guests`, нет публичного каталога, нет кнопки «Присоединиться». Нужно добавить тип встречи, публичный список, ограничение по гостям и соответствующий UI.
+
+---
+
+### Backend
+
+#### Миграция `008_public_events`
+
+- [ ] Создать `backend/internal/db/migrations/008_public_events.up.sql`:
+  ```sql
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS is_public  BOOLEAN NOT NULL DEFAULT FALSE;
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS max_guests INTEGER;
+  ```
+- [ ] Создать `backend/internal/db/migrations/008_public_events.down.sql`
+
+---
+
+#### Доменные изменения (`internal/model/model.go`)
+
+- [ ] `Event` — добавить `IsPublic bool`, `MaxGuests *int`
+- [ ] `EventDetail` — те же поля + `ConfirmedCount int`
+- [ ] `EventListItem` — те же поля + `ConfirmedCount int`
+- [ ] `InviteEventInfo` — добавить `IsPublic bool`
+- [ ] `CreateEventRequest` — добавить `IsPublic bool`, `MaxGuests *int`
+- [ ] `UpdateEventRequest` — добавить `IsPublic *bool`, `MaxGuests *int`
+- [ ] Новый тип `PublicEventListItem` — все поля `EventListItem` + `IsParticipant bool`
+
+---
+
+#### Repository (`internal/repository/event/repository.go`)
+
+- [ ] `Create`: добавить `is_public`, `max_guests` в INSERT + RETURNING + Scan
+- [ ] `Update`: добавить `is_public = COALESCE($N, is_public)`, `max_guests = COALESCE($M, max_guests)` + Scan
+- [ ] `GetByID`, `GetDetail`, `ListForUserEnriched`: добавить новые поля в SELECT + Scan
+- [ ] `GetDetail`: вычислить `confirmed_count` (COUNT confirmed + organizer)
+- [ ] Новый метод `ListPublic(ctx, userID)` → `[]PublicEventListItem`: активные публичные встречи с confirmed_count и флагом is_participant
+- [ ] Новый метод `JoinPublic(ctx, eventID, userID)`: INSERT со статусом `confirmed`, ON CONFLICT DO UPDATE
+
+---
+
+#### Service (`internal/service/event/service.go`)
+
+- [ ] `GetByID`: если `!is_public` и пользователь не организатор и не участник → вернуть `ErrForbidden`
+- [ ] Новый метод `ListPublic(ctx, userID)`
+- [ ] Новый метод `JoinPublic(ctx, eventID, userID)`: проверить is_public, статус, лимит (`ErrFull`), затем `eventRepo.JoinPublic` + уведомление организатору
+
+---
+
+#### Handler + Router
+
+- [ ] `handler/event/interfaces.go`: добавить `ListPublic`, `JoinPublic` в интерфейс `EventService`
+- [ ] `handler/event/handler.go`: хендлеры `ListPublic` и `JoinPublic`; `GetByID` → обработать `ErrForbidden` → `403`
+- [ ] `router.go`: `GET /api/events/public` (до группы `/{id}`), `POST /api/events/{id}/join`
+
+---
+
+### Frontend
+
+#### Типы (`entities/event/model/types.ts`)
+
+- [ ] `Event`, `EventListItem` — добавить `is_public: boolean`, `max_guests?: number`, `confirmed_count?: number`
+- [ ] `CreateEventData`, `UpdateEventData` — аналогично
+- [ ] Новый интерфейс `PublicEventListItem`: расширяет `EventListItem`, добавляет `is_participant: boolean`
+
+---
+
+#### API, Queries, Hooks
+
+- [ ] `entities/event/api/index.ts` — добавить `getPublicEvents()`
+- [ ] `features/event-manage/api/index.ts` — добавить `joinPublicEvent(id)`
+- [ ] `entities/event/queries/index.ts` — добавить `publicEventKeys` и `usePublicEvents()`
+- [ ] `features/event-manage/model/hooks.ts` — добавить `useJoinPublicEvent()`
+
+---
+
+#### UI
+
+- [ ] `pages/event-form/index.tsx`: RadioGroup «Персональная» / «Публичная» + поле «Максимальное количество гостей» (условно)
+- [ ] `pages/events-list/index.tsx`: третий таб «Публичные встречи» + кнопка «Присоединиться»
+- [ ] `widgets/event-card/`: Badge «Публичная» (FiGlobe) / «Персональная» (FiLock) + счётчик `confirmed_count / max_guests`
+- [ ] `pages/event-detail/index.tsx` + `EventInfoPanel.tsx`: кнопка «Присоединиться», disabled при лимите
+- [ ] `shared/i18n/locales/ru.json`, `en.json`: ключи `typePersonal`, `typePublic`, `maxGuests`, `join`, `noSpots`, `spotsLeft`, `tabPublic`, `publicBadge`, `personalBadge`
+
+---
+
+## Этап 18 — Лендинг (отдельный проект)
+
+### Контекст
+
+Маркетинговая страница для продвижения приложения. Отдельный проект `landing/` — основное приложение (`frontend/`) не меняется. Стек: **Next.js (App Router) + Tailwind**, статическая генерация (`output: 'export'`).
+
+---
+
+### Структура
+
+```
+ai-project/
+├── backend/
+├── frontend/     ← SPA, без изменений
+├── landing/      ← новый проект (Next.js)
+│   ├── app/
+│   │   ├── page.tsx       # главная
+│   │   └── layout.tsx
+│   ├── components/        # Hero, Features, Footer
+│   ├── next.config.ts     # output: 'export'
+│   └── package.json
+└── docs/
+```
+
+---
+
+### Содержимое лендинга
+
+- **Hero**: название, tagline, CTA «Попробовать» → `NEXT_PUBLIC_APP_URL`
+- **Features**: 4 карточки (встречи, сборы, опросы, карпулинг)
+- **Footer**: ссылки на вход / регистрацию
+
+---
+
+### Деплой
+
+| Проект | Хостинг | URL |
+|---|---|---|
+| `landing/` | Vercel / Cloudflare Pages | `meetup.app` |
+| `frontend/` | Docker + nginx (Этап 16) | `app.meetup.app` |
+| `backend/` | Docker + VPS | `api.meetup.app` |
+
+---
+
+### Чеклист
+
+- [ ] `npx create-next-app@latest landing --typescript --tailwind --app`
+- [ ] `next.config.ts`: `output: 'export'`, `trailingSlash: true`
+- [ ] Компонент `Hero` с CTA
+- [ ] Компонент `Features` (4 карточки)
+- [ ] Компонент `Footer`
+- [ ] Env: `NEXT_PUBLIC_APP_URL`
+- [ ] `.github/workflows/deploy.yml`: отдельный job для деплоя лендинга
+
+---
+
+## Этап 17 — Публичные и персональные встречи
+
+### Контекст
+
+Сейчас все встречи де-факто персональные: `GET /api/events` возвращает только встречи, где пользователь — организатор или участник. Нет полей `is_public` / `max_guests`, нет публичного каталога, нет кнопки «Присоединиться». Нужно добавить тип встречи, публичный список, ограничение по гостям и соответствующий UI.
+
+---
+
+### Backend
+
+#### Миграция `008_public_events`
+
+- [ ] Создать `backend/internal/db/migrations/008_public_events.up.sql`:
+  ```sql
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS is_public  BOOLEAN NOT NULL DEFAULT FALSE;
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS max_guests INTEGER;
+  ```
+- [ ] Создать `backend/internal/db/migrations/008_public_events.down.sql`
+
+---
+
+#### Доменные изменения (`internal/model/model.go`)
+
+- [ ] `Event` — добавить `IsPublic bool \`json:"is_public"\``, `MaxGuests *int \`json:"max_guests,omitempty"\``
+- [ ] `EventDetail` — те же поля + `ConfirmedCount int \`json:"confirmed_count"\``
+- [ ] `EventListItem` — те же поля + `ConfirmedCount int \`json:"confirmed_count"\``
+- [ ] `InviteEventInfo` — добавить `IsPublic bool`
+- [ ] `CreateEventRequest` — добавить `IsPublic bool`, `MaxGuests *int`
+- [ ] `UpdateEventRequest` — добавить `IsPublic *bool`, `MaxGuests *int`
+- [ ] Новый тип `PublicEventListItem` — все поля `EventListItem` + `IsParticipant bool \`json:"is_participant"\``
+
+---
+
+#### Repository (`internal/repository/event/repository.go`)
+
+- [ ] `Create`: добавить `is_public`, `max_guests` в INSERT + RETURNING + Scan
+- [ ] `Update`: добавить `is_public = COALESCE($N, is_public)`, `max_guests = COALESCE($M, max_guests)` + Scan
+- [ ] `GetByID`: добавить новые поля в SELECT + Scan
+- [ ] `GetDetail`: добавить `e.is_public`, `e.max_guests`, вычислить `confirmed_count` (COUNT confirmed + organizer), Scan
+- [ ] `ListForUserEnriched`: добавить `e.is_public`, `e.max_guests`, `confirmed_count` в SELECT + Scan
+- [ ] Новый метод `ListPublic(ctx, userID)` → `[]PublicEventListItem`: активные публичные встречи с confirmed_count и флагом is_participant
+- [ ] Новый метод `JoinPublic(ctx, eventID, userID)`: INSERT в event_participants со статусом `confirmed`, ON CONFLICT DO UPDATE
+
+---
+
+#### Service (`internal/service/event/service.go`)
+
+- [ ] `GetByID`: после GetDetail — если `!detail.IsPublic` и пользователь не организатор и не участник, вернуть `ErrForbidden`
+- [ ] Новый метод `ListPublic(ctx, userID)`: делегирует в `eventRepo.ListPublic`
+- [ ] Новый метод `JoinPublic(ctx, eventID, userID)`:
+  1. Проверить `is_public = true` и `status = active`
+  2. Если `max_guests != nil`, проверить `confirmed_count < max_guests` (иначе `ErrFull`)
+  3. Вызвать `eventRepo.JoinPublic`
+  4. Уведомить организатора (горутина)
+
+---
+
+#### Interfaces (`internal/handler/event/interfaces.go`)
+
+- [ ] Добавить `ListPublic` и `JoinPublic` в интерфейс `EventService`
+
+---
+
+#### Handler (`internal/handler/event/handler.go`)
+
+- [ ] `GetByID`: обработать `ErrForbidden` → `403 Forbidden`
+- [ ] Новый хендлер `ListPublic`: `GET /api/events/public`
+- [ ] Новый хендлер `JoinPublic`: `POST /api/events/{id}/join`; `ErrFull` → `409 Conflict`
+
+---
+
+#### Router (`internal/handler/router.go`)
+
+- [ ] `r.Get("/api/events/public", event.ListPublic)` — добавить до группы `/{id}`
+- [ ] Внутри `/{id}`: `r.Post("/join", event.JoinPublic)`
+
+---
+
+### Frontend
+
+#### Типы (`entities/event/model/types.ts`)
+
+- [ ] `Event`, `EventListItem` — добавить `is_public: boolean`, `max_guests?: number`, `confirmed_count?: number`
+- [ ] `CreateEventData` — добавить `is_public: boolean`, `max_guests?: number`
+- [ ] `UpdateEventData` — добавить `is_public?: boolean`, `max_guests?: number`
+- [ ] Новый интерфейс `PublicEventListItem` — расширяет `EventListItem`, добавляет `is_participant: boolean`
+
+---
+
+#### API
+
+- [ ] `entities/event/api/index.ts` — добавить `getPublicEvents(): Promise<PublicEventListItem[]>`
+- [ ] `features/event-manage/api/index.ts` — добавить `joinPublicEvent(id: string)`
+
+---
+
+#### Queries (`entities/event/queries/index.ts`)
+
+- [ ] Добавить `publicEventKeys` и хук `usePublicEvents()`
+
+---
+
+#### Mutation hook (`features/event-manage/model/hooks.ts`)
+
+- [ ] Добавить `useJoinPublicEvent()` — инвалидирует `publicEventKeys.all` и `eventKeys.all`
+
+---
+
+#### Форма события (`pages/event-form/index.tsx`)
+
+- [ ] Добавить в `FormValues`: `isPublic: boolean`, `maxGuests: string`
+- [ ] Секция «Тип встречи»: RadioGroup «Персональная» / «Публичная»
+- [ ] При «Публичная» — показывать `NumberInput` «Максимальное количество гостей» (необязательное)
+- [ ] Передавать `is_public`, `max_guests` при сабмите
+
+---
+
+#### Список встреч (`pages/events-list/index.tsx`)
+
+- [ ] Добавить третий таб «Публичные встречи» с данными из `usePublicEvents()`
+- [ ] В публичном табе: кнопка «Присоединиться» если `!is_participant` и места есть
+- [ ] Счётчик таба = число публичных встреч
+
+---
+
+#### EventCard и EventListRow (`widgets/event-card/`)
+
+- [ ] Badge «Публичная» (FiGlobe) / «Персональная» (FiLock)
+- [ ] Счётчик участников: `confirmed_count / max_guests` или просто `confirmed_count`
+
+---
+
+#### Детальная страница (`pages/event-detail/index.tsx`, `widgets/event-detail/EventInfoPanel.tsx`)
+
+- [ ] Кнопка «Присоединиться» для публичных встреч (если не участник и не организатор)
+- [ ] Кнопка disabled с подсказкой «Мест нет» при достижении лимита
+- [ ] Отображать `confirmed_count / max_guests` в информационной панели
+
+---
+
+#### i18n (`shared/i18n/locales/ru.json`, `en.json`)
+
+- [ ] Новые ключи: `typePersonal`, `typePublic`, `maxGuests`, `maxGuestsPlaceholder`, `join`, `joinSuccess`, `noSpots`, `spotsLeft`, `tabPublic`, `publicBadge`, `personalBadge`

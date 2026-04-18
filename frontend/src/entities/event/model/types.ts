@@ -34,6 +34,9 @@ export interface Event {
   category: EventCategory
   dress_code?: string
   status: 'active' | 'completed'
+  is_public: boolean
+  max_guests?: number
+  confirmed_count: number
   organizer: User
   invite_token: string
   created_at: string
@@ -58,11 +61,18 @@ export interface EventListItem {
   category: EventCategory
   dress_code?: string
   status: 'active' | 'completed'
+  is_public: boolean
+  max_guests?: number
+  confirmed_count: number
   organizer: { id: string; name: string; email: string }
   invite_token: string
   created_at: string
   my_status: string
   participants: Array<{ id: string; user: { id: string; name: string; email: string }; status: string }>
+}
+
+export interface PublicEventListItem extends EventListItem {
+  is_participant: boolean
 }
 
 export interface InviteEventInfo {

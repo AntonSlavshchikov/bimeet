@@ -19,4 +19,7 @@ export const eventMutationsApi = {
 
   updateParticipantStatus: (eventId: string, userId: string, status: 'confirmed' | 'declined') =>
     apiFetch(`/api/events/${eventId}/participants/${userId}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  joinPublicEvent: (id: string) =>
+    apiFetch<{ status: string }>(`/api/events/${id}/join`, { method: 'POST' }),
 }

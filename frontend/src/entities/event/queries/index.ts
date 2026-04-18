@@ -7,6 +7,10 @@ export const eventKeys = {
   detail: (id: string) => ['events', id] as const,
 }
 
+export const publicEventKeys = {
+  all: ['publicEvents'] as const,
+}
+
 export function useEvents() {
   const { data = [] } = useQuery({
     queryKey: eventKeys.all,
@@ -22,4 +26,12 @@ export function useEvent(id: string) {
     enabled: !!id,
   })
   return data as Event | undefined
+}
+
+export function usePublicEvents() {
+  const { data = [] } = useQuery({
+    queryKey: publicEventKeys.all,
+    queryFn: eventsReadApi.listPublic,
+  })
+  return data
 }

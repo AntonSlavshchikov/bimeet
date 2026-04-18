@@ -20,7 +20,9 @@ import {
   MenuItem,
   MenuList,
   Text,
+  Tooltip,
   useDisclosure,
+  useToast,
   VStack,
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
@@ -32,16 +34,20 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiClock,
+  FiGlobe,
+  FiLock,
   FiMapPin,
   FiMoreVertical,
   FiTag,
   FiEdit2,
   FiTrash2,
+  FiUsers,
 } from 'react-icons/fi'
 import type { Event } from '@/entities/event/model/types'
 import { getGradient } from '@/widgets/event-card'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
-import { useDeleteEvent } from '@/features/event-manage/model/hooks'
+import { useDeleteEvent, useJoinPublicEvent } from '@/features/event-manage/model/hooks'
+import { useAuth } from '@/features/auth/model/AuthContext'
 
 interface EventInfoPanelProps {
   event: Event
@@ -51,6 +57,8 @@ interface EventInfoPanelProps {
 export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelProps) {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const toast = useToast()
+  const { user } = useAuth()
   const { isOpen: isDescExpanded, onToggle: onDescToggle } = useDisclosure()
   const {
     isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose,
@@ -58,6 +66,19 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
   const cancelDeleteRef = useRef<HTMLButtonElement>(null)
 
   const deleteEvent = useDeleteEvent()
+  const joinPublicEvent = useJoinPublicEvent()
+
+  const isParticipant = event.participants.some(p => p.user?.id === user?.id)
+  const confirmedCount = event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
+  const spotsLeft = event.max_guests != null ? event.max_guests - confirmedCount : null
+  const canJoin = event.is_public && event.status === 'active' && !isOrganizer && !isParticipant && (spotsLeft == null || spotsLeft > 0)
+
+  function handleJoin() {
+    joinPublicEvent.mutate(event.id, {
+      onSuccess: () => toast({ title: t('eventInfo.joinSuccess'), status: 'success', duration: 2000 }),
+      onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
+    })
+  }
 
   const gradient = getGradient(event.id, event.category)
   const sameDay = formatDate(event.date_start) === formatDate(event.date_end)
@@ -210,7 +231,39 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
               </Badge>
             </HStack>
           )}
+
+          <HStack spacing={2.5}>
+            <Icon as={event.is_public ? FiGlobe : FiLock} color="brand.400" boxSize={3.5} flexShrink={0} />
+            <Badge colorScheme={event.is_public ? 'teal' : 'purple'} variant="subtle" borderRadius="md" fontSize="xs">
+              {event.is_public ? t('eventCard.publicBadge') : t('eventCard.personalBadge')}
+            </Badge>
+          </HStack>
+
+          <HStack spacing={2.5}>
+            <Icon as={FiUsers} color="brand.400" boxSize={3.5} flexShrink={0} />
+            <Text fontSize="sm" color="dimText" fontWeight="500">
+              {event.max_guests != null
+                ? `${confirmedCount} / ${event.max_guests}`
+                : t('eventInfo.confirmedCount', { count: confirmedCount })}
+            </Text>
+          </HStack>
         </VStack>
+
+        {(canJoin || (event.is_public && !isOrganizer && !isParticipant && spotsLeft != null && spotsLeft <= 0)) && (
+          <Box mt={4}>
+            <Tooltip label={!canJoin ? t('eventInfo.noSpots') : undefined} isDisabled={canJoin}>
+              <Button
+                w="full"
+                colorScheme="blue"
+                isDisabled={!canJoin}
+                isLoading={joinPublicEvent.isPending}
+                onClick={handleJoin}
+              >
+                {t('eventInfo.join')}
+              </Button>
+            </Tooltip>
+          </Box>
+        )}
 
         <Divider my={4} borderColor="subtleBorder" />
 

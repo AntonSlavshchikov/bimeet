@@ -4,6 +4,8 @@ import {
   FormControl,
   FormLabel,
   Input,
+  NumberInput,
+  NumberInputField,
   Textarea,
   VStack,
   Heading,
@@ -33,6 +35,8 @@ interface FormValues {
   location: string
   category: EventCategory
   dressCode: string
+  isPublic: boolean
+  maxGuests: string
 }
 
 function toDatetimeLocal(iso: string) {
@@ -59,6 +63,8 @@ export default function EventFormPage() {
     location: '',
     category: 'ordinary',
     dressCode: '',
+    isPublic: false,
+    maxGuests: '',
   })
 
   useEffect(() => {
@@ -71,6 +77,8 @@ export default function EventFormPage() {
         location: event.location,
         category: event.category ?? 'ordinary',
         dressCode: event.dress_code ?? '',
+        isPublic: event.is_public ?? false,
+        maxGuests: event.max_guests != null ? String(event.max_guests) : '',
       })
     }
   }, [event])
@@ -86,6 +94,7 @@ export default function EventFormPage() {
       return
     }
 
+    const maxGuests = form.isPublic && form.maxGuests.trim() ? parseInt(form.maxGuests) : undefined
     const payload = {
       title: form.title,
       description: form.description,
@@ -93,7 +102,9 @@ export default function EventFormPage() {
       date_end: new Date(form.dateEnd).toISOString(),
       location: form.location,
       category: form.category,
+      is_public: form.isPublic,
       ...(form.dressCode.trim() ? { dress_code: form.dressCode.trim() } : {}),
+      ...(maxGuests != null ? { max_guests: maxGuests } : {}),
     }
 
     if (isEdit && id) {
@@ -178,6 +189,46 @@ export default function EventFormPage() {
                   </Stack>
                 </RadioGroup>
               </FormControl>
+            </Box>
+
+            <Divider borderColor="subtleBorder" my={6} />
+
+            {/* Visibility */}
+            <Box mb={6}>
+              <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.08em" mb={3}>
+                {t('eventForm.sectionVisibility')}
+              </Text>
+              <RadioGroup value={form.isPublic ? 'public' : 'personal'} onChange={(val) => setForm(f => ({ ...f, isPublic: val === 'public', maxGuests: val === 'personal' ? '' : f.maxGuests }))}>
+                <Stack direction={{ base: 'column', sm: 'row' }} spacing={4}>
+                  <Radio value="personal" colorScheme="blue">
+                    <VStack align="flex-start" spacing={0}>
+                      <Text fontSize="sm" fontWeight="500">{t('eventForm.typePersonal')}</Text>
+                      <Text fontSize="xs" color="dimText">{t('eventForm.typePersonalDesc')}</Text>
+                    </VStack>
+                  </Radio>
+                  <Radio value="public" colorScheme="blue">
+                    <VStack align="flex-start" spacing={0}>
+                      <Text fontSize="sm" fontWeight="500">{t('eventForm.typePublic')}</Text>
+                      <Text fontSize="xs" color="dimText">{t('eventForm.typePublicDesc')}</Text>
+                    </VStack>
+                  </Radio>
+                </Stack>
+              </RadioGroup>
+              {form.isPublic && (
+                <FormControl mt={4} maxW="200px">
+                  <FormLabel fontSize="sm" fontWeight="500" color="dimText">
+                    {t('eventForm.maxGuests')}
+                    <Text as="span" fontSize="xs" color="faintText" fontWeight="400" ml={2}>{t('common.optional')}</Text>
+                  </FormLabel>
+                  <NumberInput
+                    min={1}
+                    value={form.maxGuests}
+                    onChange={(val) => setForm(f => ({ ...f, maxGuests: val }))}
+                  >
+                    <NumberInputField placeholder={t('eventForm.maxGuestsPlaceholder')} />
+                  </NumberInput>
+                </FormControl>
+              )}
             </Box>
 
             <Divider borderColor="subtleBorder" mb={6} />
