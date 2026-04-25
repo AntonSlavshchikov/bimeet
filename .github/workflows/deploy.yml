@@ -63,7 +63,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/bimeet
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u antonshlavshchikov --password-stdin
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u antonslavshchikov --password-stdin
             docker compose --env-file .env.prod -f docker-compose.prod.yml pull
             docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
             docker image prune -f
