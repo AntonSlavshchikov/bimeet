@@ -79,12 +79,12 @@ type EventParticipant struct {
 }
 
 type Collection struct {
-	ID           uuid.UUID `json:"id"`
-	EventID      uuid.UUID `json:"event_id"`
-	Title        string    `json:"title"`
-	TargetAmount float64   `json:"target_amount"`
-	CreatedBy    uuid.UUID `json:"created_by"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID              uuid.UUID `json:"id"`
+	EventID         uuid.UUID `json:"event_id"`
+	Title           string    `json:"title"`
+	PerPersonAmount float64   `json:"per_person_amount"`
+	CreatedBy       uuid.UUID `json:"created_by"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type CollectionContribution struct {
@@ -93,6 +93,8 @@ type CollectionContribution struct {
 	UserID       uuid.UUID  `json:"user_id"`
 	Paid         bool       `json:"paid"`
 	PaidAt       *time.Time `json:"paid_at,omitempty"`
+	Status       string     `json:"status"`                  // not_paid | pending | paid
+	ReceiptURL   *string    `json:"receipt_url,omitempty"`
 }
 
 type Poll struct {
@@ -216,19 +218,19 @@ type UpdateParticipantStatusRequest struct {
 }
 
 type CreateCollectionRequest struct {
-	Title        string  `json:"title"`
-	TargetAmount float64 `json:"target_amount"`
+	Title           string  `json:"title"`
+	PerPersonAmount float64 `json:"per_person_amount"`
 }
 
 type CollectionSummary struct {
-	CollectionID uuid.UUID `json:"collection_id"`
-	Title        string    `json:"title"`
-	TargetAmount float64   `json:"target_amount"`
-	PerPerson    float64   `json:"per_person"`
-	PaidCount    int       `json:"paid_count"`
-	TotalCount   int       `json:"total_count"`
-	TotalPaid    float64   `json:"total_paid"`
-	Remaining    float64   `json:"remaining"`
+	CollectionID    uuid.UUID `json:"collection_id"`
+	Title           string    `json:"title"`
+	PerPersonAmount float64   `json:"per_person_amount"`
+	ExpectedTotal   float64   `json:"expected_total"`
+	PaidCount       int       `json:"paid_count"`
+	TotalCount      int       `json:"total_count"`
+	TotalPaid       float64   `json:"total_paid"`
+	Remaining       float64   `json:"remaining"`
 }
 
 type EventCollectionsSummaryResponse struct {
@@ -289,18 +291,21 @@ type ParticipantInfo struct {
 }
 
 type ContributionInfo struct {
-	UserID uuid.UUID  `json:"user_id"`
-	Paid   bool       `json:"paid"`
-	PaidAt *time.Time `json:"paid_at,omitempty"`
+	ID         uuid.UUID  `json:"id"`
+	UserID     uuid.UUID  `json:"user_id"`
+	Paid       bool       `json:"paid"`
+	PaidAt     *time.Time `json:"paid_at,omitempty"`
+	Status     string     `json:"status"`
+	ReceiptURL *string    `json:"receipt_url,omitempty"`
 }
 
 type CollectionInfo struct {
-	ID            uuid.UUID          `json:"id"`
-	Title         string             `json:"title"`
-	TargetAmount  float64            `json:"target_amount"`
-	CreatedBy     uuid.UUID          `json:"created_by"`
-	CreatedAt     time.Time          `json:"created_at"`
-	Contributions []ContributionInfo `json:"contributions"`
+	ID              uuid.UUID          `json:"id"`
+	Title           string             `json:"title"`
+	PerPersonAmount float64            `json:"per_person_amount"`
+	CreatedBy       uuid.UUID          `json:"created_by"`
+	CreatedAt       time.Time          `json:"created_at"`
+	Contributions   []ContributionInfo `json:"contributions"`
 }
 
 type PollOptionInfo struct {

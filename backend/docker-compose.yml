@@ -2,9 +2,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: meetup
-      POSTGRES_USER: meetup
-      POSTGRES_PASSWORD: meetup
+      POSTGRES_DB: bimeet
+      POSTGRES_USER: bimeet
+      POSTGRES_PASSWORD: bimeet
     ports:
       - "5432:5432"
     volumes:

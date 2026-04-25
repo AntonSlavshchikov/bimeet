@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	eventlinkhandler "meetup/internal/handler/eventlink"
-	"meetup/internal/handler/eventlink/mock"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
+	eventlinkhandler "bimeet/internal/handler/eventlink"
+	"bimeet/internal/handler/eventlink/mock"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
 )
 
 func newRouter(t *testing.T) (http.Handler, *mock.MockEventLinkService) {

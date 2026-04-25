@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"meetup/internal/model"
+	"bimeet/internal/model"
 )
 
 type Service struct {

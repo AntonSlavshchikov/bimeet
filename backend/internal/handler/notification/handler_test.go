@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	notificationhandler "meetup/internal/handler/notification"
-	"meetup/internal/handler/notification/mock"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
+	notificationhandler "bimeet/internal/handler/notification"
+	"bimeet/internal/handler/notification/mock"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
 )
 
 func newRouter(t *testing.T) (http.Handler, *mock.MockNotificationService) {

@@ -89,7 +89,7 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
             <Text fontSize="12px" lineHeight={1} color="white">✦</Text>
           </Box>
           <Text fontSize="md" fontWeight="700" color="mainText" letterSpacing="-0.3px">
-            MeetUp
+            Bimeet
           </Text>
         </HStack>
       </Box>

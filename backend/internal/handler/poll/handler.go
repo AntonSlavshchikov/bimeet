@@ -7,9 +7,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"meetup/internal/handler/response"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
+	"bimeet/internal/handler/response"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
 )
 
 type Handler struct {

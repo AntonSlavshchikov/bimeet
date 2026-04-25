@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	collectionhandler "meetup/internal/handler/collection"
-	"meetup/internal/handler/collection/mock"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
+	collectionhandler "bimeet/internal/handler/collection"
+	"bimeet/internal/handler/collection/mock"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
 )
 
 func newRouter(t *testing.T) (http.Handler, *mock.MockCollectionService) {

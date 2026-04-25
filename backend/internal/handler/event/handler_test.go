@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	eventhandler "meetup/internal/handler/event"
-	"meetup/internal/handler/event/mock"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
+	eventhandler "bimeet/internal/handler/event"
+	"bimeet/internal/handler/event/mock"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
 )
 
 // ─── Helpers ───────────────────────────────────────────────────────────────

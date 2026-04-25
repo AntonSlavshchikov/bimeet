@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	authhandler "meetup/internal/handler/auth"
-	"meetup/internal/handler/auth/mock"
-	"meetup/internal/model"
+	authhandler "bimeet/internal/handler/auth"
+	"bimeet/internal/handler/auth/mock"
+	"bimeet/internal/model"
 )
 
 func newRouter(t *testing.T) (http.Handler, *mock.MockAuthService) {

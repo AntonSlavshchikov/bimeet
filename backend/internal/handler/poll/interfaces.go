@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"meetup/internal/model"
+	"bimeet/internal/model"
 )
 
 type PollService interface {

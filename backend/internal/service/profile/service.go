@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"meetup/internal/model"
+	"bimeet/internal/model"
 )
 
 var allowedMIME = map[string]string{

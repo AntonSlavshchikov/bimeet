@@ -22,12 +22,12 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiCalendar, FiGrid, FiList, FiPlus, FiSearch } from 'react-icons/fi'
 import { useEvents, usePublicEvents } from '@/entities/event/queries'
 import { useAuth } from '@/features/auth/model/AuthContext'
-import { useJoinPublicEvent } from '@/features/event-manage/model/hooks'
+import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
 import EventCard from '@/widgets/event-card'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
@@ -49,7 +49,15 @@ function EmptyState({ onAction, label, isSearch }: { onAction?: string; label: s
   )
 }
 
-function EventsGrid({ events, myId }: { events: EventListItem[]; myId?: string }) {
+function EventsGrid({
+  events,
+  myId,
+  onAttend,
+}: {
+  events: (EventListItem | PublicEventListItem)[]
+  myId?: string
+  onAttend?: (event: EventListItem | PublicEventListItem) => void
+}) {
   return (
     <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }} gap={5}>
       {events.map(event => {
@@ -57,38 +65,15 @@ function EventsGrid({ events, myId }: { events: EventListItem[]; myId?: string }
         const myStatus = event.organizer.id !== myId
           ? (myParticipant?.status ?? event.my_status)
           : undefined
-        return <EventCard key={event.id} event={event} myStatus={myStatus} />
-      })}
-    </Grid>
-  )
-}
-
-function EventsList({ events, myId }: { events: EventListItem[]; myId?: string }) {
-  return (
-    <VStack align="stretch" spacing={1.5}>
-      {events.map(event => {
-        const myParticipant = event.participants.find(p => p.user.id === myId)
-        const myStatus = event.organizer.id !== myId
-          ? (myParticipant?.status ?? event.my_status)
-          : undefined
-        return <EventListRow key={event.id} event={event} myStatus={myStatus} />
-      })}
-    </VStack>
-  )
-}
-
-function PublicEventsGrid({ events, onJoin }: { events: PublicEventListItem[]; onJoin: (id: string) => void }) {
-  return (
-    <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }} gap={5}>
-      {events.map(event => {
         const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-        const canJoin = !event.is_participant && (spotsLeft == null || spotsLeft > 0)
+        const canAttend = onAttend ? resolveCanAttend(event, myId, myStatus, spotsLeft) : undefined
         return (
           <EventCard
             key={event.id}
             event={event}
-            canJoin={event.is_participant ? undefined : (spotsLeft == null || spotsLeft > 0)}
-            onJoin={canJoin ? () => onJoin(event.id) : undefined}
+            myStatus={myStatus}
+            canJoin={canAttend}
+            onJoin={canAttend ? () => onAttend?.(event) : undefined}
           />
         )
       })}
@@ -96,23 +81,53 @@ function PublicEventsGrid({ events, onJoin }: { events: PublicEventListItem[]; o
   )
 }
 
-function PublicEventsList({ events, onJoin }: { events: PublicEventListItem[]; onJoin: (id: string) => void }) {
+function EventsList({
+  events,
+  myId,
+  onAttend,
+}: {
+  events: (EventListItem | PublicEventListItem)[]
+  myId?: string
+  onAttend?: (event: EventListItem | PublicEventListItem) => void
+}) {
   return (
     <VStack align="stretch" spacing={1.5}>
       {events.map(event => {
+        const myParticipant = event.participants.find(p => p.user.id === myId)
+        const myStatus = event.organizer.id !== myId
+          ? (myParticipant?.status ?? event.my_status)
+          : undefined
         const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-        const canJoin = !event.is_participant && (spotsLeft == null || spotsLeft > 0)
+        const canAttend = onAttend ? resolveCanAttend(event, myId, myStatus, spotsLeft) : undefined
         return (
           <EventListRow
             key={event.id}
             event={event}
-            canJoin={event.is_participant ? undefined : (spotsLeft == null || spotsLeft > 0)}
-            onJoin={canJoin ? () => onJoin(event.id) : undefined}
+            myStatus={myStatus}
+            canJoin={canAttend}
+            onJoin={canAttend ? () => onAttend?.(event) : undefined}
           />
         )
       })}
     </VStack>
   )
+}
+
+function resolveCanAttend(
+  event: EventListItem | PublicEventListItem,
+  myId: string | undefined,
+  myStatus: string | undefined,
+  spotsLeft: number | null,
+): boolean | undefined {
+  if (event.organizer.id === myId) return undefined
+  if (myStatus === 'confirmed') return undefined
+  if (myStatus === 'invited') return true
+  if (event.is_public) {
+    const isParticipant = (event as PublicEventListItem).is_participant
+    if (isParticipant) return undefined
+    return spotsLeft == null || spotsLeft > 0
+  }
+  return undefined
 }
 
 export default function EventsListPage() {
@@ -125,21 +140,41 @@ export default function EventsListPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const { isOpen: isSearchOpen, onToggle: onSearchToggle } = useDisclosure()
   const joinPublicEvent = useJoinPublicEvent()
+  const confirmAttendance = useConfirmAttendance()
 
-  function handleJoin(id: string) {
-    joinPublicEvent.mutate(id, {
-      onSuccess: () => toast({ title: t('eventInfo.joinSuccess'), status: 'success', duration: 2000 }),
-      onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
-    })
+  const allEvents = useMemo(() => {
+    const map = new Map<string, EventListItem | PublicEventListItem>()
+    events.forEach(e => map.set(e.id, e))
+    publicEvents.forEach(e => { if (!map.has(e.id)) map.set(e.id, e) })
+    return [...map.values()]
+      .filter(e => e.status !== 'completed')
+      .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
+  }, [events, publicEvents])
+
+  const attendingEvents = events.filter(e => e.organizer.id !== user?.id)
+  const organizingEvents = events.filter(e => e.organizer.id === user?.id)
+
+  function handleAttend(event: EventListItem | PublicEventListItem) {
+    const myParticipant = event.participants.find(p => p.user.id === user?.id)
+    const myStatus = myParticipant?.status ?? event.my_status
+
+    if (myStatus === 'invited' && user?.id) {
+      confirmAttendance.mutate(
+        { eventId: event.id, userId: user.id },
+        {
+          onSuccess: () => toast({ title: t('eventCard.statusConfirmed'), status: 'success', duration: 2000 }),
+          onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
+        },
+      )
+    } else {
+      joinPublicEvent.mutate(event.id, {
+        onSuccess: () => toast({ title: t('eventInfo.joinSuccess'), status: 'success', duration: 2000 }),
+        onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
+      })
+    }
   }
 
-  const myEvents = events.filter(e => e.organizer.id === user?.id)
-  const invitedEvents = events.filter(e =>
-    e.organizer.id !== user?.id &&
-    e.participants.some(p => p.user.id === user?.id)
-  )
-
-  function filterEvents(list: EventListItem[]) {
+  function filterList(list: (EventListItem | PublicEventListItem)[]) {
     if (!search.trim()) return list
     const q = search.toLowerCase()
     return list.filter(e =>
@@ -148,14 +183,23 @@ export default function EventsListPage() {
     )
   }
 
-  const filteredMy = filterEvents(myEvents)
-  const filteredInvited = filterEvents(invitedEvents)
-  const filteredPublic = publicEvents.filter(e => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return e.title.toLowerCase().includes(q) || e.location.toLowerCase().includes(q)
-  })
+  const filteredAll = filterList(allEvents)
+  const filteredAttending = filterList(attendingEvents)
+  const filteredOrganizing = filterList(organizingEvents)
   const hasSearch = search.trim().length > 0
+
+  const tabStyle = {
+    pb: 3, px: 4, fontSize: 'sm', fontWeight: '500', color: 'faintText',
+    _selected: { color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' },
+  }
+
+  function TabCount({ count }: { count: number }) {
+    return (
+      <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
+        {count}
+      </Box>
+    )
+  }
 
   return (
     <Box>
@@ -240,67 +284,57 @@ export default function EventsListPage() {
 
       <Tabs colorScheme="brand" variant="line">
         <TabList mb={6} borderColor="subtleBorder">
-          <Tab
-            pb={3} px={4} fontSize="sm" fontWeight="500" color="faintText"
-            _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
-          >
-            {t('events.tabOrganizing')}
-            <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
-              {myEvents.length}
-            </Box>
+          <Tab {...tabStyle}>
+            {t('events.tabAll')}
+            <TabCount count={allEvents.length} />
           </Tab>
-          <Tab
-            pb={3} px={4} fontSize="sm" fontWeight="500" color="faintText"
-            _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
-          >
+          <Tab {...tabStyle}>
             {t('events.tabAttending')}
-            <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
-              {invitedEvents.length}
-            </Box>
+            <TabCount count={attendingEvents.length} />
           </Tab>
-          <Tab
-            pb={3} px={4} fontSize="sm" fontWeight="500" color="faintText"
-            _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
-          >
-            {t('events.tabPublic')}
-            <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
-              {publicEvents.length}
-            </Box>
+          <Tab {...tabStyle}>
+            {t('events.tabOrganizing')}
+            <TabCount count={organizingEvents.length} />
           </Tab>
         </TabList>
 
         <TabPanels>
+          {/* Все встречи */}
           <TabPanel px={0} pt={0}>
-            {filteredMy.length === 0 ? (
+            {filteredAll.length === 0 ? (
               hasSearch
                 ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
                 : <EmptyState onAction="/events/new" label={t('events.emptyNoOrganized')} />
+            ) : viewMode === 'grid' ? (
+              <EventsGrid events={filteredAll} myId={user?.id} onAttend={handleAttend} />
             ) : (
-              viewMode === 'grid'
-                ? <EventsGrid events={filteredMy} myId={user?.id} />
-                : <EventsList events={filteredMy} myId={user?.id} />
+              <EventsList events={filteredAll} myId={user?.id} onAttend={handleAttend} />
             )}
           </TabPanel>
+
+          {/* Участвую */}
           <TabPanel px={0} pt={0}>
-            {filteredInvited.length === 0 ? (
+            {filteredAttending.length === 0 ? (
               hasSearch
                 ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
                 : <EmptyState label={t('events.emptyNoInvited')} />
+            ) : viewMode === 'grid' ? (
+              <EventsGrid events={filteredAttending} myId={user?.id} />
             ) : (
-              viewMode === 'grid'
-                ? <EventsGrid events={filteredInvited} myId={user?.id} />
-                : <EventsList events={filteredInvited} myId={user?.id} />
+              <EventsList events={filteredAttending} myId={user?.id} />
             )}
           </TabPanel>
+
+          {/* Организую */}
           <TabPanel px={0} pt={0}>
-            {filteredPublic.length === 0 ? (
+            {filteredOrganizing.length === 0 ? (
               hasSearch
                 ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
-                : <EmptyState label={t('events.emptyNoPublic')} />
+                : <EmptyState onAction="/events/new" label={t('events.emptyNoOrganized')} />
+            ) : viewMode === 'grid' ? (
+              <EventsGrid events={filteredOrganizing} myId={user?.id} />
             ) : (
-              viewMode === 'grid'
-                ? <PublicEventsGrid events={filteredPublic} onJoin={handleJoin} />
-                : <PublicEventsList events={filteredPublic} onJoin={handleJoin} />
+              <EventsList events={filteredOrganizing} myId={user?.id} />
             )}
           </TabPanel>
         </TabPanels>

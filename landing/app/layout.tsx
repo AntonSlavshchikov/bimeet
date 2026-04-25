@@ -5,7 +5,7 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Meetup — организуйте встречи легко",
+  title: "Bimeet — организуйте встречи легко",
   description:
     "Сборы средств, опросы, карпулинг и управление участниками — всё в одном месте.",
 };

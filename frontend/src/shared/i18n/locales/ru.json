@@ -50,6 +50,7 @@
     "viewGrid": "Карточки",
     "viewList": "Список",
     "createEvent": "Создать",
+    "tabAll": "Все встречи",
     "tabOrganizing": "Организую",
     "tabAttending": "Участвую",
     "tabPublic": "Публичные",
@@ -71,7 +72,8 @@
     "statusConfirmed": "Иду",
     "statusDeclined": "Не иду",
     "publicBadge": "Публичная",
-    "personalBadge": "Персональная"
+    "personalBadge": "Персональная",
+    "attendButton": "Иду"
   },
   "eventForm": {
     "titleEdit": "Изменить детали",
@@ -193,8 +195,8 @@
     "sectionTitle": "Сборы",
     "fieldTitle": "Название сбора",
     "fieldTitlePlaceholder": "Например: Торт",
-    "fieldAmount": "Целевая сумма (₽)",
-    "perPersonHint": "По {{amount}} ₽ с каждого",
+    "fieldAmount": "С каждого (₽)",
+    "perPersonHint": "Итого ожидается: {{amount}} ₽",
     "empty": "Сборов пока нет",
     "totalAmount": "{{amount}} ₽ всего",
     "perYou": "{{amount}} ₽ с вас",
@@ -203,7 +205,22 @@
     "contributedTooltip_paid": "{{name}}: скинулся",
     "contributedTooltip_notPaid": "{{name}}: ещё нет",
     "buttonContributed": "Скинулся",
-    "buttonContribute": "Я скинулся"
+    "buttonContribute": "Я скинулся",
+    "statusNotPaid": "Не скинулся",
+    "statusPending": "Ожидает подтверждения",
+    "statusPaid": "Скинулся",
+    "uploadReceiptTitle": "Загрузить чек",
+    "uploadReceiptHint": "Приложите фото или PDF чека об оплате",
+    "chooseFile": "Выбрать файл",
+    "uploadReceiptButton": "Отправить чек",
+    "pendingSection": "Ожидают подтверждения",
+    "viewReceipt": "Посмотреть чек",
+    "confirm": "Подтвердить",
+    "reject": "Отклонить",
+    "markPaid": "Отметить оплату",
+    "tooltipPaid": "{{name}}: скинулся",
+    "tooltipPending": "{{name}}: ожидает подтверждения",
+    "tooltipNotPaid": "{{name}}: не скинулся"
   },
   "polls": {
     "sectionTitle": "Опросы",

@@ -50,6 +50,7 @@
     "viewGrid": "Grid",
     "viewList": "List",
     "createEvent": "Create",
+    "tabAll": "All",
     "tabOrganizing": "Organizing",
     "tabAttending": "Attending",
     "tabPublic": "Public",
@@ -71,7 +72,8 @@
     "statusConfirmed": "Going",
     "statusDeclined": "Not going",
     "publicBadge": "Public",
-    "personalBadge": "Personal"
+    "personalBadge": "Personal",
+    "attendButton": "I'm going"
   },
   "eventForm": {
     "titleEdit": "Edit details",
@@ -193,8 +195,8 @@
     "sectionTitle": "Collections",
     "fieldTitle": "Collection title",
     "fieldTitlePlaceholder": "E.g., Cake",
-    "fieldAmount": "Target amount (₽)",
-    "perPersonHint": "{{amount}} ₽ per person",
+    "fieldAmount": "Per person (₽)",
+    "perPersonHint": "Expected total: {{amount}} ₽",
     "empty": "No collections yet",
     "totalAmount": "{{amount}} ₽ total",
     "perYou": "{{amount}} ₽ from you",
@@ -203,7 +205,22 @@
     "contributedTooltip_paid": "{{name}}: contributed",
     "contributedTooltip_notPaid": "{{name}}: not yet",
     "buttonContributed": "Contributed",
-    "buttonContribute": "I'm in"
+    "buttonContribute": "I'm in",
+    "statusNotPaid": "Not paid",
+    "statusPending": "Awaiting confirmation",
+    "statusPaid": "Paid",
+    "uploadReceiptTitle": "Upload receipt",
+    "uploadReceiptHint": "Attach a photo or PDF of your payment receipt",
+    "chooseFile": "Choose file",
+    "uploadReceiptButton": "Send receipt",
+    "pendingSection": "Awaiting confirmation",
+    "viewReceipt": "View receipt",
+    "confirm": "Confirm",
+    "reject": "Reject",
+    "markPaid": "Mark as paid",
+    "tooltipPaid": "{{name}}: paid",
+    "tooltipPending": "{{name}}: awaiting confirmation",
+    "tooltipNotPaid": "{{name}}: not paid"
   },
   "polls": {
     "sectionTitle": "Polls",

@@ -1,4 +1,4 @@
-module meetup
+module bimeet
 
 go 1.26
 

@@ -9,38 +9,38 @@ import (
 	"syscall"
 	"time"
 
-	"meetup/internal/config"
-	"meetup/internal/db"
-	"meetup/internal/handler"
-	authhandler         "meetup/internal/handler/auth"
-	carpoolhandler      "meetup/internal/handler/carpool"
-	collectionhandler   "meetup/internal/handler/collection"
-	eventhandler        "meetup/internal/handler/event"
-	eventlinkhandler    "meetup/internal/handler/eventlink"
-	itemhandler         "meetup/internal/handler/item"
-	notificationhandler "meetup/internal/handler/notification"
-	pollhandler         "meetup/internal/handler/poll"
-	profilehandler      "meetup/internal/handler/profile"
-	carpoolrepo         "meetup/internal/repository/carpool"
-	collectionrepo      "meetup/internal/repository/collection"
-	eventrepo           "meetup/internal/repository/event"
-	eventlinkrepo       "meetup/internal/repository/eventlink"
-	itemrepo            "meetup/internal/repository/item"
-	notificationrepo    "meetup/internal/repository/notification"
-	pollrepo            "meetup/internal/repository/poll"
-	userrepo            "meetup/internal/repository/user"
-	authsvc             "meetup/internal/service/auth"
-	carpoolsvc          "meetup/internal/service/carpool"
-	collectionsvc       "meetup/internal/service/collection"
-	eventsvc            "meetup/internal/service/event"
-	eventlinksvc        "meetup/internal/service/eventlink"
-	itemsvc             "meetup/internal/service/item"
-	"meetup/internal/service/mailer"
-	notificationsvc     "meetup/internal/service/notification"
-	pollsvc             "meetup/internal/service/poll"
-	profilesvc          "meetup/internal/service/profile"
-	"meetup/internal/reminder"
-	"meetup/internal/storage"
+	"bimeet/internal/config"
+	"bimeet/internal/db"
+	"bimeet/internal/handler"
+	authhandler         "bimeet/internal/handler/auth"
+	carpoolhandler      "bimeet/internal/handler/carpool"
+	collectionhandler   "bimeet/internal/handler/collection"
+	eventhandler        "bimeet/internal/handler/event"
+	eventlinkhandler    "bimeet/internal/handler/eventlink"
+	itemhandler         "bimeet/internal/handler/item"
+	notificationhandler "bimeet/internal/handler/notification"
+	pollhandler         "bimeet/internal/handler/poll"
+	profilehandler      "bimeet/internal/handler/profile"
+	carpoolrepo         "bimeet/internal/repository/carpool"
+	collectionrepo      "bimeet/internal/repository/collection"
+	eventrepo           "bimeet/internal/repository/event"
+	eventlinkrepo       "bimeet/internal/repository/eventlink"
+	itemrepo            "bimeet/internal/repository/item"
+	notificationrepo    "bimeet/internal/repository/notification"
+	pollrepo            "bimeet/internal/repository/poll"
+	userrepo            "bimeet/internal/repository/user"
+	authsvc             "bimeet/internal/service/auth"
+	carpoolsvc          "bimeet/internal/service/carpool"
+	collectionsvc       "bimeet/internal/service/collection"
+	eventsvc            "bimeet/internal/service/event"
+	eventlinksvc        "bimeet/internal/service/eventlink"
+	itemsvc             "bimeet/internal/service/item"
+	"bimeet/internal/service/mailer"
+	notificationsvc     "bimeet/internal/service/notification"
+	pollsvc             "bimeet/internal/service/poll"
+	profilesvc          "bimeet/internal/service/profile"
+	"bimeet/internal/reminder"
+	"bimeet/internal/storage"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -88,15 +88,17 @@ func main() {
 	})
 	authSvc         := authsvc.New(userRepo, cfg.JWTSecret, cfg.JWTExpHours)
 	eventSvc        := eventsvc.New(eventRepo, userRepo, notificationRepo, m)
-	collectionSvc   := collectionsvc.New(collectionRepo, eventRepo)
 	pollSvc         := pollsvc.New(pollRepo, eventRepo)
 	itemSvc         := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc      := carpoolsvc.New(carpoolRepo, eventRepo)
 	linkSvc         := eventlinksvc.New(linkRepo, eventRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
 
-	// S3 storage for avatars
-	var avatarStorage profilesvc.AvatarStorage
+	// S3 storage for avatars and receipts
+	var fileStorage interface {
+		profilesvc.AvatarStorage
+		collectionsvc.Uploader
+	}
 	if cfg.S3Bucket != "" {
 		awsCfg, err := awsconfig.LoadDefaultConfig(ctx,
 			awsconfig.WithRegion(cfg.AWSRegion),
@@ -114,13 +116,14 @@ func main() {
 				o.UsePathStyle = true // required for MinIO
 			})
 		}
-		avatarStorage = storage.NewS3(s3.NewFromConfig(awsCfg, s3Opts...), cfg.S3Bucket, cfg.S3PublicBaseURL)
+		fileStorage = storage.NewS3(s3.NewFromConfig(awsCfg, s3Opts...), cfg.S3Bucket, cfg.S3PublicBaseURL)
 	} else {
-		log.Println("S3_BUCKET not set — avatar uploads disabled")
-		avatarStorage = &storage.NoopStorage{}
+		log.Println("S3_BUCKET not set — file uploads disabled")
+		fileStorage = &storage.NoopStorage{}
 	}
 
-	profileSvc := profilesvc.New(userRepo, avatarStorage)
+	profileSvc    := profilesvc.New(userRepo, fileStorage)
+	collectionSvc := collectionsvc.New(collectionRepo, eventRepo, notificationRepo, fileStorage)
 
 	// Handlers
 	authH         := authhandler.New(authSvc)

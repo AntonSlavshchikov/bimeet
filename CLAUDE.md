@@ -21,7 +21,7 @@ go vet ./...                 # static analysis
 
 Backend requires env vars. Copy `backend/.env.example` → `backend/.env`:
 ```
-DSN=postgres://meetup:meetup@localhost:5432/meetup?sslmode=disable
+DSN=postgres://bimeet:bimeet@localhost:5432/bimeet?sslmode=disable
 JWT_SECRET=change-me-in-production
 PORT=8080
 JWT_EXP_HOURS=72

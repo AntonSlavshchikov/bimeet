@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"meetup/internal/model"
-	itemsvc "meetup/internal/service/item"
-	"meetup/internal/service/item/mock"
+	"bimeet/internal/model"
+	itemsvc "bimeet/internal/service/item"
+	"bimeet/internal/service/item/mock"
 )
 
 func newService(t *testing.T) (*itemsvc.Service, *mock.MockItemRepo, *mock.MockEventRepo) {

@@ -5,7 +5,7 @@ package authhandler
 import (
 	"context"
 
-	"meetup/internal/model"
+	"bimeet/internal/model"
 )
 
 type AuthService interface {

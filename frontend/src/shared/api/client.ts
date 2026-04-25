@@ -9,10 +9,14 @@ export async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getToken()
+  // Don't set Content-Type for FormData — browser sets it with the multipart boundary
+  const defaultHeaders: Record<string, string> = options.body instanceof FormData
+    ? {}
+    : { 'Content-Type': 'application/json' }
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...defaultHeaders,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },

@@ -18,7 +18,7 @@ export default function Hero() {
         </h1>
 
         <p className="max-w-2xl mx-auto text-lg sm:text-xl text-white/80 leading-relaxed mb-10">
-          Meetup объединяет всё необходимое: управление участниками, совместные
+          Bimeet объединяет всё необходимое: управление участниками, совместные
           сборы, опросы, карпулинг и история изменений — в одном удобном
           приложении.
         </p>

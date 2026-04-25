@@ -11,9 +11,9 @@ import (
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
 
-	"meetup/internal/model"
-	authsvc "meetup/internal/service/auth"
-	"meetup/internal/service/auth/mock"
+	"bimeet/internal/model"
+	authsvc "bimeet/internal/service/auth"
+	"bimeet/internal/service/auth/mock"
 )
 
 func newService(t *testing.T) (*authsvc.Service, *mock.MockUserRepo) {

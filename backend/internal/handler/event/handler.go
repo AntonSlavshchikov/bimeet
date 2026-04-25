@@ -8,10 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"meetup/internal/handler/response"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
-	eventsvc "meetup/internal/service/event"
+	"bimeet/internal/handler/response"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
+	eventsvc "bimeet/internal/service/event"
 )
 
 type Handler struct {

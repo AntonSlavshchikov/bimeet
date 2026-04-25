@@ -23,7 +23,7 @@ import {
   AlertIcon,
   useDisclosure,
 } from '@chakra-ui/react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -65,6 +65,7 @@ const BUSINESS_TAB_KEYS = [
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const event = useEvent(id!)
   const { user } = useAuth()
   const { t } = useTranslation()
@@ -89,6 +90,11 @@ export default function EventDetailPage() {
     ? [...baseTabKeys, { tKey: 'tabs.history', icon: FiClock, key: 'changelog' }]
     : baseTabKeys
   const allTabs = allTabKeys.map(tab => ({ ...tab, label: t(tab.tKey) }))
+
+  const tabParam = searchParams.get('tab')
+  const defaultTabIndex = tabParam
+    ? Math.max(0, allTabKeys.findIndex(t => t.key === tabParam))
+    : 0
 
   return (
     <>
@@ -141,7 +147,7 @@ export default function EventDetailPage() {
           </Box>
         )}
 
-        <Tabs colorScheme="brand" isLazy>
+        <Tabs colorScheme="brand" isLazy defaultIndex={defaultTabIndex}>
           <Box position="relative">
           <TabList
             px={2}

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"meetup/internal/model"
+	"bimeet/internal/model"
 )
 
 type Repository struct {

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"meetup/internal/model"
+	"bimeet/internal/model"
 )
 
 type Repository struct {
@@ -296,7 +296,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 
 	// Collections
 	colRows, err := r.pool.Query(ctx,
-		`SELECT id, title, target_amount, created_by, created_at FROM collections WHERE event_id = $1 ORDER BY created_at`,
+		`SELECT id, title, per_person_amount, created_by, created_at FROM collections WHERE event_id = $1 ORDER BY created_at`,
 		eventID,
 	)
 	if err != nil {
@@ -304,7 +304,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	}
 	for colRows.Next() {
 		var c model.CollectionInfo
-		if err := colRows.Scan(&c.ID, &c.Title, &c.TargetAmount, &c.CreatedBy, &c.CreatedAt); err != nil {
+		if err := colRows.Scan(&c.ID, &c.Title, &c.PerPersonAmount, &c.CreatedBy, &c.CreatedAt); err != nil {
 			colRows.Close()
 			return model.EventDetail{}, fmt.Errorf("scan collection detail: %w", err)
 		}
@@ -316,7 +316,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	}
 	for i, col := range detail.Collections {
 		ctRows, err := r.pool.Query(ctx,
-			`SELECT user_id, paid, paid_at FROM collection_contributions WHERE collection_id = $1`,
+			`SELECT id, user_id, paid, paid_at, status, receipt_url FROM collection_contributions WHERE collection_id = $1`,
 			col.ID,
 		)
 		if err != nil {
@@ -325,7 +325,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		detail.Collections[i].Contributions = []model.ContributionInfo{}
 		for ctRows.Next() {
 			var ct model.ContributionInfo
-			if err := ctRows.Scan(&ct.UserID, &ct.Paid, &ct.PaidAt); err != nil {
+			if err := ctRows.Scan(&ct.ID, &ct.UserID, &ct.Paid, &ct.PaidAt, &ct.Status, &ct.ReceiptURL); err != nil {
 				ctRows.Close()
 				return model.EventDetail{}, fmt.Errorf("scan contribution detail: %w", err)
 			}

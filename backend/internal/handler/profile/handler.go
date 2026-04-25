@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"meetup/internal/handler/response"
-	"meetup/internal/middleware"
-	"meetup/internal/model"
+	"bimeet/internal/handler/response"
+	"bimeet/internal/middleware"
+	"bimeet/internal/model"
 )
 
 type Handler struct {

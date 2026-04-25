@@ -812,13 +812,13 @@ service/event/interfaces.go   → EventRepo, UserRepo, NotificationRepo, Mailer
 
 #### `.github/workflows/deploy.yml`
 Триггер: `push` в `master`
-1. Build + push образов в GHCR (`ghcr.io/<owner>/meetup-backend:latest`, `meetup-frontend:latest`)
+1. Build + push образов в GHCR (`ghcr.io/<owner>/bimeet-backend:latest`, `bimeet-frontend:latest`)
 2. SSH на VPS → `docker compose -f docker-compose.prod.yml pull && up -d`
 
 Секреты: `SSH_HOST`, `SSH_USER`, `SSH_KEY`, `GITHUB_TOKEN` (встроенный, для GHCR).
 
 #### `.env.prod.example`
-- `DSN=postgres://meetup:<password>@postgres:5432/meetup?sslmode=disable` (хост `postgres`, не `localhost`)
+- `DSN=postgres://bimeet:<password>@postgres:5432/bimeet?sslmode=disable` (хост `postgres`, не `localhost`)
 - `JWT_SECRET=<strong-random-secret>`
 - Реальный SMTP (SendGrid и др.)
 - AWS S3 или MinIO-переменные
@@ -973,9 +973,9 @@ ai-project/
 
 | Проект | Хостинг | URL |
 |---|---|---|
-| `landing/` | Vercel / Cloudflare Pages | `meetup.app` |
-| `frontend/` | Docker + nginx (Этап 16) | `app.meetup.app` |
-| `backend/` | Docker + VPS | `api.meetup.app` |
+| `landing/` | Vercel / Cloudflare Pages | `bimeet.app` |
+| `frontend/` | Docker + nginx (Этап 16) | `app.bimeet.app` |
+| `backend/` | Docker + VPS | `api.bimeet.app` |
 
 ---
 
@@ -1134,3 +1134,316 @@ ai-project/
 #### i18n (`shared/i18n/locales/ru.json`, `en.json`)
 
 - [ ] Новые ключи: `typePersonal`, `typePublic`, `maxGuests`, `maxGuestsPlaceholder`, `join`, `joinSuccess`, `noSpots`, `spotsLeft`, `tabPublic`, `publicBadge`, `personalBadge`
+
+---
+
+## Этап 19 — Редизайн списка встреч: лента + новые табы
+
+### Контекст
+
+Текущие табы: **Организую | Участвую | Публичные** — встречи изолированы по ролям. Первый таб становится discovery-лентой всех встреч (включая незаписанные публичные), с кнопкой **«Иду»** для быстрого участия прямо из списка. Порядок табов меняется.
+
+---
+
+### Видимость встреч
+
+- **Приватные** (`is_public = false`) — видны только тем, кто приглашён или является организатором. `GET /api/events` уже фильтрует их на бэкенде.
+- **Публичные** (`is_public = true`) — видны всем. `GET /api/events/public` возвращает их независимо от участия.
+
+---
+
+### Новые табы
+
+| Таб | Данные | «Иду» |
+|---|---|---|
+| **Все встречи** | `useEvents()` (все «мои») + `usePublicEvents()` (все публичные), dedupe по id, сортировка по дате | да |
+| **Участвую** | `events` где `organizer.id !== user.id` | нет |
+| **Организую** | `events` где `organizer.id === user.id` | нет |
+
+---
+
+### Логика кнопки «Иду»
+
+- `organizer` → кнопки нет
+- `my_status === 'confirmed'` → кнопки нет
+- `my_status === 'invited'` → «Иду» → `confirmAttendance(eventId, userId)`
+- `is_public && !is_participant && места есть` → «Иду» → `joinPublicEvent(eventId)`
+
+---
+
+### Backend
+
+Изменений не требуется. `PATCH /api/events/:id/participants/:userId` уже существует.
+
+---
+
+### Frontend
+
+#### `features/event-manage/model/hooks.ts`
+- [ ] Добавить `useConfirmAttendance()` — вызывает `eventMutationsApi.updateParticipantStatus(eventId, userId, 'confirmed')`, инвалидирует `eventKeys.all`
+
+#### `pages/events-list/index.tsx`
+- [ ] Изменить порядок табов: Все встречи → Участвую → Организую
+- [ ] Таб «Все встречи»: объединить `events` + `publicEvents` (dedupe по `id`), сортировка по `date_start`
+- [ ] Функция `handleAttend(event)`: если `my_status === 'invited'` → confirm, иначе → join
+- [ ] Таб «Участвую»: `events.filter(e => e.organizer.id !== user.id)`
+- [ ] Таб «Организую»: `events.filter(e => e.organizer.id === user.id)`
+
+#### `widgets/event-card/index.tsx`
+- [ ] Кнопку `t('eventInfo.join')` заменить на `t('eventCard.attendButton')`
+
+#### `widgets/event-card/EventListRow.tsx`
+- [ ] Аналогично: `t('eventInfo.join')` → `t('eventCard.attendButton')`
+
+#### `shared/i18n/locales/ru.json`, `en.json`
+- [ ] `events.tabAll`: `"Все встречи"` / `"All"`
+- [ ] `eventCard.attendButton`: `"Иду"` / `"I'm going"`
+
+---
+
+## Этап 20 — Геолокация: координаты места встречи
+
+### Контекст
+
+Поле `location` хранит только текстовое описание места. Нужно добавить хранение координат (`latitude`, `longitude`) — необязательные поля. Пользователь может ввести координаты вручную или нажать кнопку «Определить моё местоположение» (Browser Geolocation API). Провайдер карт не подключается — вместо этого в карточке события появляется ссылка на внешние карты.
+
+---
+
+### Ссылка на внешние карты
+
+Если координаты заданы, показывать кнопку-ссылку:
+- **Яндекс.Карты**: `https://yandex.ru/maps/?pt={lng},{lat}&z=16`
+- При отсутствии координат — ссылки нет.
+
+---
+
+### Backend
+
+#### Миграция `009_event_coordinates`
+
+```sql
+ALTER TABLE events ADD COLUMN IF NOT EXISTS latitude  DOUBLE PRECISION;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+```
+
+#### Изменения в коде
+
+| Файл | Изменение |
+|---|---|
+| `internal/model/model.go` | `Latitude *float64 \`json:"latitude,omitempty"\``, `Longitude *float64 \`json:"longitude,omitempty"\`` в `Event`, `EventDetail`, `EventListItem` |
+| `internal/repository/event/repository.go` | `e.latitude`, `e.longitude` в SELECT + Scan; `Create` и `Update` — опциональные параметры |
+| `internal/service/event/service.go` | Прокидывать поля без бизнес-логики |
+| `internal/handler/event/handler.go` | `CreateEventRequest` и `UpdateEventRequest` — добавить `Latitude *float64`, `Longitude *float64` |
+
+- [ ] Создать `009_event_coordinates.up.sql` и `009_event_coordinates.down.sql`
+- [ ] Добавить поля в модели
+- [ ] SELECT + Scan в репозитории
+- [ ] INSERT / UPDATE в репозитории
+
+---
+
+### Frontend
+
+#### Типы (`entities/event/model/types.ts`)
+- [ ] `latitude?: number`, `longitude?: number` в `Event`, `EventListItem`, `CreateEventData`, `UpdateEventData`
+
+#### Форма события (`pages/event-form/index.tsx`)
+- [ ] Два поля `latitude` / `longitude` в `FormValues` (строки, необязательные)
+- [ ] Раздел «Координаты» с двумя `NumberInput` или `Input type="number"` (широта / долгота)
+- [ ] Кнопка «Определить местоположение» (иконка `FiNavigation`) — вызывает `navigator.geolocation.getCurrentPosition`, заполняет оба поля
+- [ ] При сабмите: передавать `latitude` / `longitude` если заполнены, иначе `undefined`
+
+#### Карточка события (`widgets/event-detail/EventInfoPanel.tsx`)
+- [ ] Если `latitude` и `longitude` заданы — рядом с иконкой `FiMapPin` добавить ссылку «Открыть на карте» → Яндекс.Карты
+
+#### i18n (`shared/i18n/locales/ru.json`, `en.json`)
+- [ ] `eventForm.fieldCoordinates`: `"Координаты"` / `"Coordinates"`
+- [ ] `eventForm.fieldLatitude`: `"Широта"` / `"Latitude"`
+- [ ] `eventForm.fieldLongitude`: `"Долгота"` / `"Longitude"`
+- [ ] `eventForm.detectLocation`: `"Определить местоположение"` / `"Detect location"`
+- [ ] `eventForm.detectLocationError`: `"Не удалось определить местоположение"` / `"Could not detect location"`
+- [ ] `eventInfo.openMap`: `"Открыть на карте"` / `"Open in maps"`
+
+---
+
+## Этап 21 — Верификация взносов через чек
+
+### Контекст
+
+Сейчас участник нажимает «Я скинулся» и статус сразу меняется на `paid` без проверки. Это недостоверно. Вводится трёхшаговый процесс подтверждения через чек. Дополнительно: организатор может принудительно отметить любого участника как заплатившего (для наличных и других случаев).
+
+---
+
+### Статусная машина
+
+```
+not_paid → (участник загрузил чек)         → pending
+pending  → (организатор подтвердил)        → paid  [необратимо]
+pending  → (организатор отклонил)          → not_paid
+not_paid → (организатор принудительно)     → paid  [необратимо]
+pending  → (организатор принудительно)     → paid  [необратимо]
+```
+
+---
+
+### Backend
+
+#### Миграция `010_contribution_receipt`
+
+```sql
+ALTER TABLE collection_contributions
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'not_paid'
+    CHECK (status IN ('not_paid', 'pending', 'paid')),
+  ADD COLUMN IF NOT EXISTS receipt_url TEXT;
+
+UPDATE collection_contributions SET status = 'paid' WHERE paid = TRUE;
+```
+
+#### Доменные изменения (`internal/model/model.go`)
+
+- [ ] Добавить `Status string \`json:"status"\`` и `ReceiptURL *string \`json:"receipt_url,omitempty"\`` в `CollectionContribution`
+
+#### Repository (`internal/repository/collection/repository.go`)
+
+- [ ] Обновить SELECT + Scan: добавить `status`, `receipt_url`
+- [ ] Удалить `ToggleContribution`
+- [ ] Новый метод `SubmitContribution(ctx, collectionID, userID, receiptURL)` — INSERT/UPDATE со `status='pending'`
+- [ ] Новый метод `ConfirmContribution(ctx, id)` — `status='paid'`, `paid=TRUE`, `paid_at=NOW()`
+- [ ] Новый метод `RejectContribution(ctx, id)` — `status='not_paid'`, `paid=FALSE`, `receipt_url=NULL`
+- [ ] Новый метод `MarkPaid(ctx, collectionID, userID)` — принудительно `status='paid'` (без чека)
+- [ ] Новый метод `GetContributionByID(ctx, id)` — для confirm/reject по ID взноса
+- [ ] Обновить `CountPaidContributions`: WHERE `status = 'paid'`
+
+#### Service (`internal/service/collection/service.go`)
+
+- [ ] Добавить `NotificationRepo` и `Uploader` в зависимости сервиса
+- [ ] Удалить `ToggleContribution`, добавить:
+  - `SubmitContribution(ctx, eventID, collectionID, userID, file, contentType)` — загружает в S3, сохраняет URL, уведомляет организатора
+  - `ConfirmContribution(ctx, eventID, collectionID, contribID, organizerID)` — подтверждает, уведомляет участника
+  - `RejectContribution(ctx, eventID, collectionID, contribID, organizerID)` — отклоняет, уведомляет участника
+  - `MarkPaid(ctx, eventID, collectionID, targetUserID, organizerID)` — принудительная отметка
+
+#### Handler + Router
+
+- [ ] `SubmitContribution`: `POST /api/events/{id}/collections/{collectionId}/contribute` (multipart, поле `receipt`, лимит 10 MB)
+- [ ] `ConfirmContribution`: `POST /api/events/{id}/collections/{collectionId}/contributions/{contribId}/confirm`
+- [ ] `RejectContribution`: `POST /api/events/{id}/collections/{collectionId}/contributions/{contribId}/reject`
+- [ ] `MarkPaid`: `POST /api/events/{id}/collections/{collectionId}/contributions/mark-paid` (тело: `{ "user_id": "..." }`)
+- [ ] Обновить `interfaces.go`: `CollectionService` + `Uploader`
+- [ ] Обновить `main.go`: передать uploader в коллекции (S3-клиент уже инициализирован для аватарок)
+
+---
+
+### Frontend
+
+#### Типы (`entities/event/model/types.ts`)
+
+- [ ] Добавить `status: 'not_paid' | 'pending' | 'paid'` и `receipt_url?: string` в `CollectionContribution`
+
+#### API + Хуки (`features/collections/`)
+
+- [ ] `api/index.ts`: обновить `contribute` (FormData + файл), добавить `confirmContribution`, `rejectContribution`, `markPaid`
+- [ ] `model/hooks.ts`: удалить `useToggleContribution`, добавить `useSubmitContribution`, `useConfirmContribution`, `useRejectContribution`, `useMarkPaid`
+
+#### UI (`features/collections/ui/CollectionsTab.tsx`)
+
+- [ ] Кнопка «Я скинулся» → открывает модальное окно загрузки чека
+- [ ] Модальное окно: `<input type="file" accept="image/*,.pdf">` + кнопка «Отправить»
+- [ ] Статусы участника: `not_paid` → кнопка, `pending` → жёлтый badge, `paid` → зелёный badge
+- [ ] Аватарки по статусу: зелёный/жёлтый/серый
+- [ ] Блок организатора «Ожидают подтверждения»: имя + ссылка на чек + кнопки «Подтвердить» / «Отклонить»
+- [ ] Кнопка «Отметить оплату» для организатора рядом с каждым участником (`not_paid` / `pending`)
+
+#### i18n
+
+- [ ] Новые ключи: `statusNotPaid`, `statusPending`, `statusPaid`, `uploadReceiptTitle`, `uploadReceiptHint`, `uploadReceiptButton`, `pendingSection`, `viewReceipt`, `confirm`, `reject`, `markPaid`, `tooltipPending`
+
+---
+
+### Чеклист реализации
+
+**Backend:**
+- [ ] `010_contribution_receipt.up.sql` / `.down.sql`
+- [ ] Обновить модель
+- [ ] Обновить репозиторий (новые методы + SELECT)
+- [ ] Обновить сервис (новые методы + зависимости)
+- [ ] Обновить хендлер и интерфейсы
+- [ ] Обновить роутер
+- [ ] Обновить `main.go`
+
+**Frontend:**
+- [ ] Обновить типы
+- [ ] Обновить API + хуки
+- [ ] Переработать `CollectionsTab.tsx`
+- [ ] Обновить i18n
+
+---
+
+## Этап 22 — Фиксированная сумма взноса на участника
+
+### Контекст
+
+Сейчас сумма взноса вычисляется динамически: `ceil(target_amount / confirmed_count)`. Это несправедливо — ранние плательщики могут заплатить больше, чем поздние. Решение: организатор задаёт фиксированную сумму **с каждого** при создании сбора. Итоговый сбор = `per_person_amount × confirmed_count` и растёт вместе с участниками, но каждый платит одинаково.
+
+---
+
+### Изменения модели данных
+
+`target_amount` (целевая сумма) → `per_person_amount` (сумма с каждого).
+
+Итог вычисляется динамически на основе числа участников и нигде не хранится.
+
+---
+
+### Backend
+
+#### Миграция `011_collection_per_person`
+
+```sql
+ALTER TABLE collections RENAME COLUMN target_amount TO per_person_amount;
+```
+
+#### Модель (`internal/model/model.go`)
+
+- [ ] `Collection.TargetAmount` → `PerPersonAmount float64 \`json:"per_person_amount"\``
+- [ ] `CollectionInfo` — то же
+- [ ] `CreateCollectionRequest.TargetAmount` → `PerPersonAmount`
+- [ ] `CollectionSummary`: убрать `TargetAmount`, добавить `ExpectedTotal float64 \`json:"expected_total"\``
+
+#### Repository (`internal/repository/collection/repository.go`)
+
+- [ ] `Create`, `GetByID`, `ListByEvent`: `target_amount` → `per_person_amount` в SQL и Scan
+
+#### Service (`internal/service/collection/service.go`)
+
+- [ ] Упростить `Summary`: `perPerson = col.PerPersonAmount` (не делить на count); `remaining = (totalCount - paidCount) * perPerson`
+
+---
+
+### Frontend
+
+#### Типы (`entities/collection/model/types.ts`)
+
+- [ ] `target_amount` → `per_person_amount`
+
+#### API + UI (`features/collections/`)
+
+- [ ] `api/index.ts`: payload `{ title, per_person_amount }`
+- [ ] `CollectionsTab.tsx`: метка формы «С каждого (₽)»; подсказка «Итого ожидается: N ₽»; убрать `Math.ceil(target_amount / contributors.length)`
+- [ ] i18n: обновить ключ `perPersonHint` в `ru.json` и `en.json`
+
+---
+
+### Чеклист реализации
+
+**Backend:**
+- [ ] `011_collection_per_person.up.sql` / `.down.sql`
+- [ ] Обновить модели
+- [ ] Обновить репозиторий
+- [ ] Упростить Summary в сервисе
+
+**Frontend:**
+- [ ] Типы
+- [ ] API payload
+- [ ] `CollectionsTab.tsx` — форма и отображение
+- [ ] i18n

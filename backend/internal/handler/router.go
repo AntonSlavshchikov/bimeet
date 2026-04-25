@@ -5,16 +5,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	authhandler         "meetup/internal/handler/auth"
-	carpoolhandler      "meetup/internal/handler/carpool"
-	collectionhandler   "meetup/internal/handler/collection"
-	eventhandler        "meetup/internal/handler/event"
-	eventlinkhandler    "meetup/internal/handler/eventlink"
-	itemhandler         "meetup/internal/handler/item"
-	notificationhandler "meetup/internal/handler/notification"
-	pollhandler         "meetup/internal/handler/poll"
-	profilehandler      "meetup/internal/handler/profile"
-	"meetup/internal/middleware"
+	authhandler         "bimeet/internal/handler/auth"
+	carpoolhandler      "bimeet/internal/handler/carpool"
+	collectionhandler   "bimeet/internal/handler/collection"
+	eventhandler        "bimeet/internal/handler/event"
+	eventlinkhandler    "bimeet/internal/handler/eventlink"
+	itemhandler         "bimeet/internal/handler/item"
+	notificationhandler "bimeet/internal/handler/notification"
+	pollhandler         "bimeet/internal/handler/poll"
+	profilehandler      "bimeet/internal/handler/profile"
+	"bimeet/internal/middleware"
 )
 
 func NewRouter(
@@ -75,7 +75,10 @@ func NewRouter(
 				r.Post("/collections", collection.Create)
 				r.Get("/collections/summary", collection.Summary)
 				r.Delete("/collections/{collectionId}", collection.Delete)
-				r.Patch("/collections/{collectionId}/contribute", collection.ToggleContribution)
+				r.Post("/collections/{collectionId}/contribute", collection.SubmitContribution)
+				r.Post("/collections/{collectionId}/contributions/{contribId}/confirm", collection.ConfirmContribution)
+				r.Post("/collections/{collectionId}/contributions/{contribId}/reject", collection.RejectContribution)
+				r.Post("/collections/{collectionId}/contributions/mark-paid", collection.MarkPaid)
 
 				// Polls
 				r.Get("/polls", poll.List)
