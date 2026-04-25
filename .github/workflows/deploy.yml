@@ -7,9 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/bimeet-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/bimeet-frontend
-  LANDING_IMAGE: ghcr.io/${{ github.repository_owner }}/bimeet-landing
 
 jobs:
   build-and-deploy:
@@ -21,6 +18,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set lowercase owner
+        id: owner
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -34,14 +35,14 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ${{ env.BACKEND_IMAGE }}:latest
+          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-backend:latest
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: ${{ env.FRONTEND_IMAGE }}:latest
+          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-frontend:latest
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
 
@@ -50,7 +51,7 @@ jobs:
         with:
           context: ./landing
           push: true
-          tags: ${{ env.LANDING_IMAGE }}:latest
+          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-landing:latest
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
 
