@@ -7,9 +7,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/meetup-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/meetup-frontend
-  LANDING_IMAGE: ghcr.io/${{ github.repository_owner }}/meetup-landing
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/bimeet-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/bimeet-frontend
+  LANDING_IMAGE: ghcr.io/${{ github.repository_owner }}/bimeet-landing
 
 jobs:
   build-and-deploy:
