@@ -2,21 +2,47 @@
 
 ## Обзор
 
-| Сервис | Образ | Порт |
+| Сервис | Образ | Доступ |
 |---|---|---|
+| Traefik (reverse proxy) | `traefik:v3.3` | :80, :443 |
 | Backend (Go API) | `bimeet-backend` | внутренний :8080 |
-| Frontend (React SPA) | `bimeet-frontend` | :80 |
-| Landing (Next.js static) | `bimeet-landing` | :3000 |
+| Frontend (React SPA) | `bimeet-frontend` | `app.bimeet.pro` |
+| Landing (Next.js static) | `bimeet-landing` | `bimeet.pro`, `www.bimeet.pro` |
 | PostgreSQL | `postgres:16-alpine` | внутренний |
-| MinIO (S3-совместимое хранилище) | `minio/minio` | внутренний |
+| MinIO (S3-совместимое хранилище) | `minio/minio` | `s3.bimeet.pro` |
 
 Образы хранятся в GitHub Container Registry (GHCR). Деплой запускается автоматически при пуше в `master` через GitHub Actions.
 
 ---
 
+## Маршрутизация
+
+Traefik принимает весь входящий трафик на портах 80 и 443 и маршрутизирует по доменам:
+
+| Домен | Сервис | Описание |
+|---|---|---|
+| `bimeet.pro`, `www.bimeet.pro` | landing | Лендинг |
+| `app.bimeet.pro` | frontend | SPA, `/api/*` → backend (через nginx) |
+| `s3.bimeet.pro` | minio | Публичные аватарки |
+
+HTTP автоматически редиректится на HTTPS. SSL-сертификаты выпускаются через Let's Encrypt (HTTP challenge) и хранятся в Docker volume `acme_data`.
+
+---
+
 ## Первоначальная настройка
 
-### 1. Подготовка VPS
+### 1. DNS
+
+Добавить A-записи у регистратора домена, указывающие на IP вашего VPS:
+
+```
+bimeet.pro      → <server-ip>
+www.bimeet.pro  → <server-ip>
+app.bimeet.pro  → <server-ip>
+s3.bimeet.pro   → <server-ip>
+```
+
+### 2. Подготовка VPS
 
 Установить Docker и Docker Compose:
 
@@ -25,20 +51,27 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 ```
 
-Создать рабочую директорию и скопировать файлы:
+Открыть порты в firewall (нужны для Traefik и Let's Encrypt):
+
+```bash
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw allow 22
+sudo ufw enable
+```
+
+Создать рабочую директорию:
 
 ```bash
 mkdir ~/bimeet && cd ~/bimeet
 ```
 
-Скопировать на VPS два файла из репозитория:
+Скопировать на VPS файл из репозитория:
 - `docker-compose.prod.yml`
-- `.env.prod` (создать по шаблону `.env.prod.example`)
 
-### 2. Создать `.env.prod`
+### 3. Создать `.env.prod`
 
 ```bash
-cp .env.prod.example .env.prod
 nano .env.prod
 ```
 
@@ -51,9 +84,10 @@ POSTGRES_PASSWORD=<тот же пароль>
 
 # JWT
 JWT_SECRET=<случайная строка 32+ символа>
+JWT_EXP_HOURS=72
 
 # URL приложения
-FRONTEND_URL=https://app.your-domain.com
+FRONTEND_URL=https://app.bimeet.pro
 
 # GITHUB (для pull образов из GHCR)
 GITHUB_REPOSITORY_OWNER=<ваш github username>
@@ -61,7 +95,19 @@ GITHUB_REPOSITORY_OWNER=<ваш github username>
 
 Для S3 выбрать один из двух вариантов:
 
-**Вариант A — AWS S3:**
+**Вариант A — MinIO (встроенный, рекомендуется):**
+```env
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=<надёжный пароль>
+S3_BUCKET=avatars
+S3_ENDPOINT=http://minio:9000
+S3_PUBLIC_BASE_URL=https://s3.bimeet.pro/avatars
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=<тот же пароль>
+```
+
+**Вариант B — AWS S3:**
 ```env
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=<key>
@@ -70,19 +116,7 @@ S3_BUCKET=<bucket>
 S3_PUBLIC_BASE_URL=https://<bucket>.s3.<region>.amazonaws.com
 ```
 
-**Вариант B — MinIO (встроенный):**
-```env
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=<пароль>
-S3_BUCKET=avatars
-S3_ENDPOINT=http://minio:9000
-S3_PUBLIC_BASE_URL=https://app.your-domain.com/minio/avatars
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=<тот же пароль>
-```
-
-### 3. Настроить GitHub Secrets
+### 4. Настроить GitHub Secrets
 
 В репозитории: **Settings → Secrets and variables → Actions → New repository secret**
 
@@ -90,11 +124,11 @@ MINIO_ROOT_PASSWORD=<тот же пароль>
 |---|---|
 | `SSH_HOST` | IP или домен VPS |
 | `SSH_USER` | имя пользователя на VPS (например `ubuntu`) |
-| `SSH_KEY` | приватный SSH-ключ (содержимое `~/.ssh/id_rsa`) |
-| `VITE_API_URL` | URL бэкенда, например `https://api.your-domain.com` |
-| `NEXT_PUBLIC_APP_URL` | URL SPA, например `https://app.your-domain.com` |
+| `SSH_KEY` | приватный SSH-ключ (содержимое `~/.ssh/id_ed25519`) |
+| `VITE_API_URL` | `https://app.bimeet.pro` |
+| `NEXT_PUBLIC_APP_URL` | `https://app.bimeet.pro` |
 
-### 4. Настроить SSH-ключ на VPS
+### 5. Настроить SSH-ключ на VPS
 
 На локальной машине:
 ```bash
@@ -171,6 +205,9 @@ docker compose -f docker-compose.prod.yml up -d backend
 ```bash
 # Статус всех сервисов
 docker compose -f docker-compose.prod.yml ps
+
+# Логи Traefik (SSL-сертификаты, маршрутизация)
+docker compose -f docker-compose.prod.yml logs -f traefik
 
 # Логи бэкенда (live)
 docker compose -f docker-compose.prod.yml logs -f backend
