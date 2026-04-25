@@ -479,7 +479,7 @@ npm install
 npm run dev            # starts Next.js dev server on :3000
 ```
 
-### Local service URLs
+## Local service URLs
 
 | Service | URL |
 |---|---|
