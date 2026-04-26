@@ -22,7 +22,7 @@
     "signIn": "Войти",
     "noAccount": "Нет аккаунта?",
     "signUp": "Зарегистрироваться",
-    "demo": "Demo: любой email/пароль для входа",
+    "emailPlaceholder": "you@example.com",
     "loginError": "Ошибка входа",
     "createAccount": "Создать аккаунт",
     "createAccountSubtitle": "Начните организовывать встречи",

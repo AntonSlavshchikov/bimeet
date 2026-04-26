@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -16,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className={geist.className}>
       <body className="min-h-screen flex flex-col bg-white text-slate-900 antialiased">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

@@ -10,10 +10,14 @@ import {
   Link as ChakraLink,
   useToast,
   HStack,
+  IconButton,
+  Tooltip,
+  useColorMode,
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FiMoon, FiSun } from 'react-icons/fi'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { apiFetch } from '@/shared/api/client'
 
@@ -22,6 +26,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { t } = useTranslation()
+  const { colorMode, toggleColorMode } = useColorMode()
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('token')
   const [name, setName] = useState('')
@@ -84,6 +89,20 @@ export default function RegisterPage() {
         filter="blur(100px)"
       />
 
+      <Tooltip label={colorMode === 'light' ? t('layout.darkTheme') : t('layout.lightTheme')} borderRadius="lg">
+        <IconButton
+          aria-label={t('layout.toggleTheme')}
+          icon={colorMode === 'light' ? <FiMoon size={15} /> : <FiSun size={15} />}
+          size="sm"
+          variant="ghost"
+          position="absolute"
+          top={4}
+          right={4}
+          zIndex={2}
+          onClick={toggleColorMode}
+        />
+      </Tooltip>
+
       <Box
         position="relative"
         zIndex={1}
@@ -103,9 +122,9 @@ export default function RegisterPage() {
                 >
                   <Text fontSize="12px" lineHeight={1} color="white">✦</Text>
                 </Box>
-                <Text fontSize="lg" fontWeight="600" color="gray.900" letterSpacing="-0.3px">MeetUp</Text>
+                <Text fontSize="lg" fontWeight="600" color="mainText" letterSpacing="-0.3px">Bimeet</Text>
               </HStack>
-              <Text color="gray.400" fontSize="sm">{t('auth.tagline')}</Text>
+              <Text color="dimText" fontSize="sm">{t('auth.tagline')}</Text>
             </VStack>
 
             <Box
@@ -119,26 +138,26 @@ export default function RegisterPage() {
               <VStack spacing={5} as="form" onSubmit={handleSubmit}>
                 <Box w="full">
                   <Heading size="md" mb={1}>{t('auth.createAccount')}</Heading>
-                  <Text fontSize="sm" color="gray.400">{t('auth.createAccountSubtitle')}</Text>
+                  <Text fontSize="sm" color="dimText">{t('auth.createAccountSubtitle')}</Text>
                 </Box>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.name')}</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600">{t('auth.name')}</FormLabel>
                   <Input value={name} onChange={e => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.email')}</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600">{t('auth.email')}</FormLabel>
                   <Input
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                   />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.password')}</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600">{t('auth.password')}</FormLabel>
                   <Input
                     type="password"
                     value={password}
@@ -151,7 +170,7 @@ export default function RegisterPage() {
                   {t('auth.signUp')}
                 </Button>
 
-                <Text fontSize="sm" color="gray.500" textAlign="center">
+                <Text fontSize="sm" color="dimText" textAlign="center">
                   {t('auth.alreadyHaveAccount')}{' '}
                   <ChakraLink
                     as={Link}

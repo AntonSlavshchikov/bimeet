@@ -22,7 +22,7 @@
     "signIn": "Sign in",
     "noAccount": "No account?",
     "signUp": "Sign up",
-    "demo": "Demo: any email/password to sign in",
+    "emailPlaceholder": "you@example.com",
     "loginError": "Login error",
     "createAccount": "Create account",
     "createAccountSubtitle": "Start organizing events",

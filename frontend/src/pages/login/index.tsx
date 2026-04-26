@@ -10,10 +10,14 @@ import {
   Link as ChakraLink,
   useToast,
   HStack,
+  IconButton,
+  Tooltip,
+  useColorMode,
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FiMoon, FiSun } from 'react-icons/fi'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { apiFetch } from '@/shared/api/client'
 
@@ -22,10 +26,11 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { t } = useTranslation()
+  const { colorMode, toggleColorMode } = useColorMode()
   const [searchParams] = useSearchParams()
   const inviteToken = searchParams.get('token')
-  const [email, setEmail] = useState('andrey@example.com')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -79,6 +84,20 @@ export default function LoginPage() {
         filter="blur(100px)"
       />
 
+      <Tooltip label={colorMode === 'light' ? t('layout.darkTheme') : t('layout.lightTheme')} borderRadius="lg">
+        <IconButton
+          aria-label={t('layout.toggleTheme')}
+          icon={colorMode === 'light' ? <FiMoon size={15} /> : <FiSun size={15} />}
+          size="sm"
+          variant="ghost"
+          position="absolute"
+          top={4}
+          right={4}
+          zIndex={2}
+          onClick={toggleColorMode}
+        />
+      </Tooltip>
+
       <Box
         position="relative"
         zIndex={1}
@@ -98,9 +117,9 @@ export default function LoginPage() {
                 >
                   <Text fontSize="12px" lineHeight={1} color="white">✦</Text>
                 </Box>
-                <Text fontSize="lg" fontWeight="600" color="gray.900" letterSpacing="-0.3px">MeetUp</Text>
+                <Text fontSize="lg" fontWeight="600" color="mainText" letterSpacing="-0.3px">Bimeet</Text>
               </HStack>
-              <Text color="gray.400" fontSize="sm">{t('auth.tagline')}</Text>
+              <Text color="dimText" fontSize="sm">{t('auth.tagline')}</Text>
             </VStack>
 
             <Box
@@ -114,27 +133,27 @@ export default function LoginPage() {
               <VStack spacing={5} as="form" onSubmit={handleSubmit}>
                 <Box w="full">
                   <Heading size="md" mb={1}>{t('auth.welcome')}</Heading>
-                  <Text fontSize="sm" color="gray.400">{t('auth.signInSubtitle')}</Text>
+                  <Text fontSize="sm" color="dimText">{t('auth.signInSubtitle')}</Text>
                 </Box>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.email')}</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600">{t('auth.email')}</FormLabel>
                   <Input
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     size="md"
                   />
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="600" color="gray.700">{t('auth.password')}</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="600">{t('auth.password')}</FormLabel>
                   <Input
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder')}
                     size="md"
                   />
                 </FormControl>
@@ -143,7 +162,7 @@ export default function LoginPage() {
                   {t('auth.signIn')}
                 </Button>
 
-                <Text fontSize="sm" color="gray.500" textAlign="center">
+                <Text fontSize="sm" color="dimText" textAlign="center">
                   {t('auth.noAccount')}{' '}
                   <ChakraLink
                     as={Link}
@@ -158,9 +177,6 @@ export default function LoginPage() {
               </VStack>
             </Box>
 
-            <Text fontSize="xs" color="gray.400" textAlign="center">
-              {t('auth.demo')}
-            </Text>
           </VStack>
         </Box>
       </Box>
