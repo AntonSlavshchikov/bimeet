@@ -171,6 +171,25 @@
 
 ---
 
+### Этап 7 — Восстановление пароля
+
+**Backend**
+- [ ] Миграция: таблица `password_reset_tokens` (token UUID, user_id, expires_at, used)
+- [ ] Репозиторий токенов: `Create`, `GetByToken`, `MarkUsed`
+- [ ] Метод `UpdatePassword` в репозитории пользователей
+- [ ] Метод `SendPasswordReset` в mailer (по образцу `SendInvite`)
+- [ ] Auth service: `ForgotPassword` (генерирует токен, отправляет письмо; 200 даже если email не найден) и `ResetPassword` (валидирует токен, меняет пароль)
+- [ ] Auth handler: `POST /api/auth/forgot-password` и `POST /api/auth/reset-password` (публичные маршруты)
+
+**Frontend**
+- [ ] Страница `/forgot-password`: форма с email, после отправки — сообщение «Письмо отправлено»
+- [ ] Страница `/reset-password`: читает `?token=` из URL, форма нового пароля, редирект на `/login`
+- [ ] Ссылка «Забыли пароль?» на странице логина
+- [ ] Методы `forgotPassword` и `resetPassword` в `features/auth/api/index.ts`
+- [ ] i18n-ключи для обоих языков
+
+---
+
 ## Структура проекта
 
 ```
