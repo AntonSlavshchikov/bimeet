@@ -162,6 +162,18 @@ export default function LoginPage() {
                   {t('auth.signIn')}
                 </Button>
 
+                <Text fontSize="sm" textAlign="center">
+                  <ChakraLink
+                    as={Link}
+                    to="/forgot-password"
+                    color="brand.600"
+                    fontWeight="600"
+                    _hover={{ textDecoration: 'none', color: 'brand.700' }}
+                  >
+                    {t('auth.forgotPassword')}
+                  </ChakraLink>
+                </Text>
+
                 <Text fontSize="sm" color="dimText" textAlign="center">
                   {t('auth.noAccount')}{' '}
                   <ChakraLink

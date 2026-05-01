@@ -61,3 +61,44 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, resp)
 }
+
+func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req model.ForgotPasswordRequest
+	if err := response.ParseJSON(r, &req); err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+
+	if err := h.svc.ForgotPassword(r.Context(), req); err != nil {
+		if strings.Contains(err.Error(), "required") {
+			response.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to process request")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req model.ResetPasswordRequest
+	if err := response.ParseJSON(r, &req); err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if err := h.svc.ResetPassword(r.Context(), req); err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "required") || strings.Contains(msg, "invalid token") {
+			response.Error(w, http.StatusBadRequest, msg)
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to reset password")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}

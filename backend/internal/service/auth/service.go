@@ -3,6 +3,7 @@ package authsvc
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,15 +13,21 @@ import (
 	"bimeet/internal/model"
 )
 
+const passwordResetTokenTTL = time.Hour
+
 type Service struct {
 	userRepo  UserRepo
+	tokenRepo TokenRepo
+	mailer    Mailer
 	jwtSecret string
 	jwtExpH   int
 }
 
-func New(userRepo UserRepo, jwtSecret string, jwtExpHours int) *Service {
+func New(userRepo UserRepo, tokenRepo TokenRepo, mailer Mailer, jwtSecret string, jwtExpHours int) *Service {
 	return &Service{
 		userRepo:  userRepo,
+		tokenRepo: tokenRepo,
+		mailer:    mailer,
 		jwtSecret: jwtSecret,
 		jwtExpH:   jwtExpHours,
 	}
@@ -69,6 +76,68 @@ func (s *Service) Login(ctx context.Context, req model.LoginRequest) (model.Auth
 	}
 
 	return model.AuthResponse{Token: token, User: user}, nil
+}
+
+// ForgotPassword always returns nil to avoid leaking which emails are registered.
+// If the email exists, a reset token is generated and emailed.
+func (s *Service) ForgotPassword(ctx context.Context, req model.ForgotPasswordRequest) error {
+	if req.Email == "" {
+		return fmt.Errorf("email is required")
+	}
+
+	user, err := s.userRepo.GetByEmail(ctx, req.Email)
+	if err != nil {
+		return nil
+	}
+
+	token, err := s.tokenRepo.Create(ctx, user.ID, time.Now().Add(passwordResetTokenTTL))
+	if err != nil {
+		log.Printf("forgot password: create token: %v", err)
+		return nil
+	}
+
+	if err := s.mailer.SendPasswordReset(user.Email, token.Token.String()); err != nil {
+		log.Printf("forgot password: send email: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Service) ResetPassword(ctx context.Context, req model.ResetPasswordRequest) error {
+	if req.Token == "" || req.Password == "" {
+		return fmt.Errorf("token and password are required")
+	}
+
+	tokenUUID, err := uuid.Parse(req.Token)
+	if err != nil {
+		return fmt.Errorf("invalid token")
+	}
+
+	t, err := s.tokenRepo.GetByToken(ctx, tokenUUID)
+	if err != nil {
+		return fmt.Errorf("invalid token")
+	}
+	if t.Used {
+		return fmt.Errorf("invalid token")
+	}
+	if time.Now().After(t.ExpiresAt) {
+		return fmt.Errorf("invalid token")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
+
+	if err := s.userRepo.UpdatePassword(ctx, t.UserID, string(hash)); err != nil {
+		return fmt.Errorf("update password: %w", err)
+	}
+
+	if err := s.tokenRepo.MarkUsed(ctx, tokenUUID); err != nil {
+		log.Printf("reset password: mark token used: %v", err)
+	}
+
+	return nil
 }
 
 func (s *Service) generateToken(userID uuid.UUID) (string, error) {

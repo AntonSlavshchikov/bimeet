@@ -10,8 +10,8 @@
 package mock
 
 import (
-	context "context"
 	model "bimeet/internal/model"
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -39,6 +39,20 @@ func NewMockAuthService(ctrl *gomock.Controller) *MockAuthService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAuthService) EXPECT() *MockAuthServiceMockRecorder {
 	return m.recorder
+}
+
+// ForgotPassword mocks base method.
+func (m *MockAuthService) ForgotPassword(ctx context.Context, req model.ForgotPasswordRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ForgotPassword", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ForgotPassword indicates an expected call of ForgotPassword.
+func (mr *MockAuthServiceMockRecorder) ForgotPassword(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForgotPassword", reflect.TypeOf((*MockAuthService)(nil).ForgotPassword), ctx, req)
 }
 
 // Login mocks base method.
@@ -69,4 +83,18 @@ func (m *MockAuthService) Register(ctx context.Context, req model.RegisterReques
 func (mr *MockAuthServiceMockRecorder) Register(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockAuthService)(nil).Register), ctx, req)
+}
+
+// ResetPassword mocks base method.
+func (m *MockAuthService) ResetPassword(ctx context.Context, req model.ResetPasswordRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetPassword", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResetPassword indicates an expected call of ResetPassword.
+func (mr *MockAuthServiceMockRecorder) ResetPassword(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPassword", reflect.TypeOf((*MockAuthService)(nil).ResetPassword), ctx, req)
 }

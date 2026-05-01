@@ -113,6 +113,17 @@ func (r *Repository) ClearAvatar(ctx context.Context, id uuid.UUID) (model.User,
 	return u, nil
 }
 
+func (r *Repository) UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET password_hash=$1 WHERE id=$2`,
+		passwordHash, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update password: %w", err)
+	}
+	return nil
+}
+
 func (r *Repository) GetStats(ctx context.Context, id uuid.UUID) (model.ProfileStats, error) {
 	var stats model.ProfileStats
 	err := r.pool.QueryRow(ctx, `

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,18 @@ func newService(t *testing.T) (*authsvc.Service, *mock.MockUserRepo) {
 	t.Helper()
 	ctrl := gomock.NewController(t)
 	repo := mock.NewMockUserRepo(ctrl)
-	return authsvc.New(repo, "secret", 72), repo
+	tokens := mock.NewMockTokenRepo(ctrl)
+	mailer := mock.NewMockMailer(ctrl)
+	return authsvc.New(repo, tokens, mailer, "secret", 72), repo
+}
+
+func newServiceFull(t *testing.T) (*authsvc.Service, *mock.MockUserRepo, *mock.MockTokenRepo, *mock.MockMailer) {
+	t.Helper()
+	ctrl := gomock.NewController(t)
+	repo := mock.NewMockUserRepo(ctrl)
+	tokens := mock.NewMockTokenRepo(ctrl)
+	mailer := mock.NewMockMailer(ctrl)
+	return authsvc.New(repo, tokens, mailer, "secret", 72), repo, tokens, mailer
 }
 
 // ─── Register ──────────────────────────────────────────────────────────────
@@ -106,4 +118,87 @@ func TestLogin_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, userID, resp.User.ID)
 	assert.NotEmpty(t, resp.Token)
+}
+
+// ─── ForgotPassword ────────────────────────────────────────────────────────
+
+func TestForgotPassword_MissingEmail(t *testing.T) {
+	svc, _, _, _ := newServiceFull(t)
+	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{})
+	require.Error(t, err)
+}
+
+func TestForgotPassword_UserNotFound_ReturnsNil(t *testing.T) {
+	svc, repo, _, _ := newServiceFull(t)
+	repo.EXPECT().GetByEmail(gomock.Any(), "ghost@x.com").
+		Return(model.User{}, errors.New("not found"))
+
+	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{Email: "ghost@x.com"})
+	require.NoError(t, err)
+}
+
+func TestForgotPassword_HappyPath(t *testing.T) {
+	svc, repo, tokens, mailer := newServiceFull(t)
+
+	userID := uuid.New()
+	tokenID := uuid.New()
+	repo.EXPECT().GetByEmail(gomock.Any(), "alice@example.com").
+		Return(model.User{ID: userID, Email: "alice@example.com"}, nil)
+	tokens.EXPECT().Create(gomock.Any(), userID, gomock.Any()).
+		Return(model.PasswordResetToken{Token: tokenID, UserID: userID}, nil)
+	mailer.EXPECT().SendPasswordReset("alice@example.com", tokenID.String()).Return(nil)
+
+	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{Email: "alice@example.com"})
+	require.NoError(t, err)
+}
+
+// ─── ResetPassword ─────────────────────────────────────────────────────────
+
+func TestResetPassword_MissingFields(t *testing.T) {
+	svc, _, _, _ := newServiceFull(t)
+	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{})
+	require.Error(t, err)
+}
+
+func TestResetPassword_InvalidTokenFormat(t *testing.T) {
+	svc, _, _, _ := newServiceFull(t)
+	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: "not-a-uuid", Password: "new"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid token")
+}
+
+func TestResetPassword_TokenUsed(t *testing.T) {
+	svc, _, tokens, _ := newServiceFull(t)
+	tokenID := uuid.New()
+	tokens.EXPECT().GetByToken(gomock.Any(), tokenID).
+		Return(model.PasswordResetToken{Token: tokenID, Used: true, ExpiresAt: time.Now().Add(time.Hour)}, nil)
+
+	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: tokenID.String(), Password: "new"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid token")
+}
+
+func TestResetPassword_TokenExpired(t *testing.T) {
+	svc, _, tokens, _ := newServiceFull(t)
+	tokenID := uuid.New()
+	tokens.EXPECT().GetByToken(gomock.Any(), tokenID).
+		Return(model.PasswordResetToken{Token: tokenID, ExpiresAt: time.Now().Add(-time.Hour)}, nil)
+
+	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: tokenID.String(), Password: "new"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid token")
+}
+
+func TestResetPassword_HappyPath(t *testing.T) {
+	svc, repo, tokens, _ := newServiceFull(t)
+
+	tokenID := uuid.New()
+	userID := uuid.New()
+	tokens.EXPECT().GetByToken(gomock.Any(), tokenID).
+		Return(model.PasswordResetToken{Token: tokenID, UserID: userID, ExpiresAt: time.Now().Add(time.Hour)}, nil)
+	repo.EXPECT().UpdatePassword(gomock.Any(), userID, gomock.Any()).Return(nil)
+	tokens.EXPECT().MarkUsed(gomock.Any(), tokenID).Return(nil)
+
+	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: tokenID.String(), Password: "newpass123"})
+	require.NoError(t, err)
 }

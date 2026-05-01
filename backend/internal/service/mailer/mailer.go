@@ -54,3 +54,37 @@ func (m *Mailer) SendInvite(toEmail, eventTitle, organizerName, inviteToken stri
 	}
 	return smtp.SendMail(addr, auth, from, []string{toEmail}, []byte(msg))
 }
+
+// SendPasswordReset sends a password reset email. If SMTP is not configured, it logs and returns nil.
+func (m *Mailer) SendPasswordReset(toEmail, resetToken string) error {
+	resetURL := m.cfg.FrontendURL + "/reset-password?token=" + resetToken
+	if m.cfg.Host == "" {
+		fmt.Printf("[mailer] password reset email to %s → %s\n", toEmail, resetURL)
+		return nil
+	}
+
+	subject := "Восстановление пароля"
+	body := fmt.Sprintf(
+		"Привет!\n\nВы запросили восстановление пароля.\n\n"+
+			"Перейдите по ссылке, чтобы задать новый пароль:\n%s\n\n"+
+			"Если вы не запрашивали восстановление, просто проигнорируйте это письмо.",
+		resetURL,
+	)
+
+	msg := fmt.Sprintf(
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
+		m.cfg.From, toEmail, subject, body,
+	)
+
+	addr := m.cfg.Host + ":" + m.cfg.Port
+	var auth smtp.Auth
+	if m.cfg.User != "" {
+		auth = smtp.PlainAuth("", m.cfg.User, m.cfg.Pass, m.cfg.Host)
+	}
+
+	from := m.cfg.From
+	if from == "" {
+		from = m.cfg.User
+	}
+	return smtp.SendMail(addr, auth, from, []string{toEmail}, []byte(msg))
+}

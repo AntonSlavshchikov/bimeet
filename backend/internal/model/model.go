@@ -158,6 +158,14 @@ type Notification struct {
 	CreatedAt time.Time  `json:"created_at"`
 }
 
+type PasswordResetToken struct {
+	Token     uuid.UUID `json:"token"`
+	UserID    uuid.UUID `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+	Used      bool      `json:"used"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // ─── DTOs ──────────────────────────────────────────────────────────────────
 
 type RegisterRequest struct {
@@ -174,6 +182,15 @@ type LoginRequest struct {
 type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type ResetPasswordRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
 }
 
 type CreateEventRequest struct {

@@ -39,6 +39,8 @@ func NewRouter(
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", auth.Register)
 		r.Post("/login", auth.Login)
+		r.Post("/forgot-password", auth.ForgotPassword)
+		r.Post("/reset-password", auth.ResetPassword)
 	})
 
 	// Public invite link (GET only)

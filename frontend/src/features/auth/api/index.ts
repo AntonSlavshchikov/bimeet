@@ -26,6 +26,16 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+  forgotPassword: (email: string) =>
+    apiFetch<{ status: string }>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string) =>
+    apiFetch<{ status: string }>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    }),
   getMe: () =>
     apiFetch<User>('/api/auth/me'),
   updateProfile: (data: UpdateProfileData) =>

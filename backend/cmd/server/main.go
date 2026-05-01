@@ -27,6 +27,7 @@ import (
 	eventlinkrepo       "bimeet/internal/repository/eventlink"
 	itemrepo            "bimeet/internal/repository/item"
 	notificationrepo    "bimeet/internal/repository/notification"
+	passwordresetrepo   "bimeet/internal/repository/passwordreset"
 	pollrepo            "bimeet/internal/repository/poll"
 	userrepo            "bimeet/internal/repository/user"
 	authsvc             "bimeet/internal/service/auth"
@@ -68,14 +69,15 @@ func main() {
 	db.Migrate(ctx, pool)
 
 	// Repositories
-	userRepo         := userrepo.New(pool)
-	eventRepo        := eventrepo.New(pool)
-	collectionRepo   := collectionrepo.New(pool)
-	pollRepo         := pollrepo.New(pool)
-	itemRepo         := itemrepo.New(pool)
-	carpoolRepo      := carpoolrepo.New(pool)
-	linkRepo         := eventlinkrepo.New(pool)
-	notificationRepo := notificationrepo.New(pool)
+	userRepo          := userrepo.New(pool)
+	eventRepo         := eventrepo.New(pool)
+	collectionRepo    := collectionrepo.New(pool)
+	pollRepo          := pollrepo.New(pool)
+	itemRepo          := itemrepo.New(pool)
+	carpoolRepo       := carpoolrepo.New(pool)
+	linkRepo          := eventlinkrepo.New(pool)
+	notificationRepo  := notificationrepo.New(pool)
+	passwordResetRepo := passwordresetrepo.New(pool)
 
 	// Services
 	m            := mailer.New(mailer.Config{
@@ -86,7 +88,7 @@ func main() {
 		From:        cfg.SMTPFrom,
 		FrontendURL: cfg.FrontendURL,
 	})
-	authSvc         := authsvc.New(userRepo, cfg.JWTSecret, cfg.JWTExpHours)
+	authSvc         := authsvc.New(userRepo, passwordResetRepo, m, cfg.JWTSecret, cfg.JWTExpHours)
 	eventSvc        := eventsvc.New(eventRepo, userRepo, notificationRepo, m)
 	pollSvc         := pollsvc.New(pollRepo, eventRepo)
 	itemSvc         := itemsvc.New(itemRepo, eventRepo)
