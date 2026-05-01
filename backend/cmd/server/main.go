@@ -81,12 +81,14 @@ func main() {
 
 	// Services
 	m            := mailer.New(mailer.Config{
-		Host:        cfg.SMTPHost,
-		Port:        cfg.SMTPPort,
-		User:        cfg.SMTPUser,
-		Pass:        cfg.SMTPPass,
-		From:        cfg.SMTPFrom,
-		FrontendURL: cfg.FrontendURL,
+		ResendAPIKey: cfg.ResendAPIKey,
+		MailFrom:     cfg.MailFrom,
+		SMTPHost:     cfg.SMTPHost,
+		SMTPPort:     cfg.SMTPPort,
+		SMTPUser:     cfg.SMTPUser,
+		SMTPPass:     cfg.SMTPPass,
+		SMTPFrom:     cfg.SMTPFrom,
+		FrontendURL:  cfg.FrontendURL,
 	})
 	authSvc         := authsvc.New(userRepo, passwordResetRepo, m, cfg.JWTSecret, cfg.JWTExpHours)
 	eventSvc        := eventsvc.New(eventRepo, userRepo, notificationRepo, m)

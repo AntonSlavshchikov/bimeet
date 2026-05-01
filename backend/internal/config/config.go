@@ -12,13 +12,18 @@ type Config struct {
 	DSN         string
 	JWTSecret   string
 	JWTExpHours int
-	// SMTP (optional — if SMTPHost is empty, emails are logged but not sent)
-	SMTPHost    string
-	SMTPPort    string
-	SMTPUser    string
-	SMTPPass    string
-	SMTPFrom    string
-	FrontendURL string
+	// Mail provider:
+	//   1. If ResendAPIKey set → Resend HTTP API (port 443, works on any network)
+	//   2. Else if SMTPHost set → SMTP (mailhog locally / SendGrid etc.)
+	//   3. Else emails are only logged
+	ResendAPIKey string
+	MailFrom     string // canonical "From:" — falls back to SMTPFrom
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUser     string
+	SMTPPass     string
+	SMTPFrom     string
+	FrontendURL  string
 	// S3-compatible storage (optional — if S3Bucket is empty, avatar uploads are disabled)
 	AWSRegion        string
 	AWSAccessKeyID   string
@@ -53,17 +58,24 @@ func Load() Config {
 		frontendURL = "http://localhost:5173"
 	}
 
+	mailFrom := os.Getenv("MAIL_FROM")
+	if mailFrom == "" {
+		mailFrom = os.Getenv("SMTP_FROM")
+	}
+
 	return Config{
-		Port:        port,
-		DSN:         os.Getenv("DSN"),
-		JWTSecret:   os.Getenv("JWT_SECRET"),
-		JWTExpHours: expHours,
-		SMTPHost:    os.Getenv("SMTP_HOST"),
-		SMTPPort:    smtpPort,
-		SMTPUser:    os.Getenv("SMTP_USER"),
-		SMTPPass:    os.Getenv("SMTP_PASS"),
-		SMTPFrom:    os.Getenv("SMTP_FROM"),
-		FrontendURL: frontendURL,
+		Port:         port,
+		DSN:          os.Getenv("DSN"),
+		JWTSecret:    os.Getenv("JWT_SECRET"),
+		JWTExpHours:  expHours,
+		ResendAPIKey: os.Getenv("RESEND_API_KEY"),
+		MailFrom:     mailFrom,
+		SMTPHost:     os.Getenv("SMTP_HOST"),
+		SMTPPort:     smtpPort,
+		SMTPUser:     os.Getenv("SMTP_USER"),
+		SMTPPass:     os.Getenv("SMTP_PASS"),
+		SMTPFrom:     os.Getenv("SMTP_FROM"),
+		FrontendURL:  frontendURL,
 		AWSRegion:       os.Getenv("AWS_REGION"),
 		AWSAccessKeyID:  os.Getenv("AWS_ACCESS_KEY_ID"),
 		AWSSecretKey:    os.Getenv("AWS_SECRET_ACCESS_KEY"),
