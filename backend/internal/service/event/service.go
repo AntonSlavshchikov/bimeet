@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -306,7 +307,9 @@ func (s *Service) InviteParticipant(ctx context.Context, eventID, organizerID uu
 	user, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		go func() {
-			_ = s.mailer.SendInvite(req.Email, event.Title, organizer.Name, event.InviteToken.String())
+			if err := s.mailer.SendInvite(req.Email, event.Title, organizer.Name, event.InviteToken.String()); err != nil {
+				log.Printf("send invite to %s: %v", req.Email, err)
+			}
 		}()
 		return model.EventParticipant{}, nil
 	}
@@ -323,7 +326,9 @@ func (s *Service) InviteParticipant(ctx context.Context, eventID, organizerID uu
 	go func() {
 		_, _ = s.notificationRepo.Create(context.Background(), user.ID, &eventID, "event_invite",
 			fmt.Sprintf("You have been invited to event '%s'", event.Title))
-		_ = s.mailer.SendInvite(user.Email, event.Title, organizer.Name, event.InviteToken.String())
+		if err := s.mailer.SendInvite(user.Email, event.Title, organizer.Name, event.InviteToken.String()); err != nil {
+			log.Printf("send invite to %s: %v", user.Email, err)
+		}
 	}()
 
 	return p, nil
