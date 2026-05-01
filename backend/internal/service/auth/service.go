@@ -96,9 +96,11 @@ func (s *Service) ForgotPassword(ctx context.Context, req model.ForgotPasswordRe
 		return nil
 	}
 
-	if err := s.mailer.SendPasswordReset(user.Email, token.Token.String()); err != nil {
-		log.Printf("forgot password: send email: %v", err)
-	}
+	go func(email, tok string) {
+		if err := s.mailer.SendPasswordReset(email, tok); err != nil {
+			log.Printf("forgot password: send email to %s: %v", email, err)
+		}
+	}(user.Email, token.Token.String())
 
 	return nil
 }

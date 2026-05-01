@@ -1,9 +1,14 @@
 package mailer
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/smtp"
+	"time"
 )
+
+const smtpDialTimeout = 10 * time.Second
 
 type Config struct {
 	Host        string
@@ -37,22 +42,7 @@ func (m *Mailer) SendInvite(toEmail, eventTitle, organizerName, inviteToken stri
 		organizerName, eventTitle, inviteURL,
 	)
 
-	msg := fmt.Sprintf(
-		"From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
-		m.cfg.From, toEmail, subject, body,
-	)
-
-	addr := m.cfg.Host + ":" + m.cfg.Port
-	var auth smtp.Auth
-	if m.cfg.User != "" {
-		auth = smtp.PlainAuth("", m.cfg.User, m.cfg.Pass, m.cfg.Host)
-	}
-
-	from := m.cfg.From
-	if from == "" {
-		from = m.cfg.User
-	}
-	return smtp.SendMail(addr, auth, from, []string{toEmail}, []byte(msg))
+	return m.send(toEmail, subject, body)
 }
 
 // SendPasswordReset sends a password reset email. If SMTP is not configured, it logs and returns nil.
@@ -71,20 +61,64 @@ func (m *Mailer) SendPasswordReset(toEmail, resetToken string) error {
 		resetURL,
 	)
 
-	msg := fmt.Sprintf(
-		"From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
-		m.cfg.From, toEmail, subject, body,
-	)
+	return m.send(toEmail, subject, body)
+}
 
-	addr := m.cfg.Host + ":" + m.cfg.Port
-	var auth smtp.Auth
-	if m.cfg.User != "" {
-		auth = smtp.PlainAuth("", m.cfg.User, m.cfg.Pass, m.cfg.Host)
-	}
-
+func (m *Mailer) send(toEmail, subject, body string) error {
 	from := m.cfg.From
 	if from == "" {
 		from = m.cfg.User
 	}
-	return smtp.SendMail(addr, auth, from, []string{toEmail}, []byte(msg))
+
+	msg := fmt.Sprintf(
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
+		from, toEmail, subject, body,
+	)
+
+	addr := m.cfg.Host + ":" + m.cfg.Port
+
+	conn, err := net.DialTimeout("tcp", addr, smtpDialTimeout)
+	if err != nil {
+		return fmt.Errorf("dial %s: %w", addr, err)
+	}
+
+	c, err := smtp.NewClient(conn, m.cfg.Host)
+	if err != nil {
+		_ = conn.Close()
+		return fmt.Errorf("smtp client: %w", err)
+	}
+	defer c.Close()
+
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		if err := c.StartTLS(&tls.Config{ServerName: m.cfg.Host}); err != nil {
+			return fmt.Errorf("starttls: %w", err)
+		}
+	}
+
+	if m.cfg.User != "" {
+		auth := smtp.PlainAuth("", m.cfg.User, m.cfg.Pass, m.cfg.Host)
+		if err := c.Auth(auth); err != nil {
+			return fmt.Errorf("auth: %w", err)
+		}
+	}
+
+	if err := c.Mail(from); err != nil {
+		return fmt.Errorf("mail from: %w", err)
+	}
+	if err := c.Rcpt(toEmail); err != nil {
+		return fmt.Errorf("rcpt to: %w", err)
+	}
+
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("data: %w", err)
+	}
+	if _, err := w.Write([]byte(msg)); err != nil {
+		return fmt.Errorf("write body: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("close data: %w", err)
+	}
+
+	return c.Quit()
 }

@@ -146,10 +146,22 @@ func TestForgotPassword_HappyPath(t *testing.T) {
 		Return(model.User{ID: userID, Email: "alice@example.com"}, nil)
 	tokens.EXPECT().Create(gomock.Any(), userID, gomock.Any()).
 		Return(model.PasswordResetToken{Token: tokenID, UserID: userID}, nil)
-	mailer.EXPECT().SendPasswordReset("alice@example.com", tokenID.String()).Return(nil)
+
+	done := make(chan struct{})
+	mailer.EXPECT().SendPasswordReset("alice@example.com", tokenID.String()).
+		DoAndReturn(func(string, string) error {
+			close(done)
+			return nil
+		})
 
 	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{Email: "alice@example.com"})
 	require.NoError(t, err)
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("SendPasswordReset was not called")
+	}
 }
 
 // ─── ResetPassword ─────────────────────────────────────────────────────────
