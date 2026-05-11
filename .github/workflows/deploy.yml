@@ -45,6 +45,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-frontend:latest
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_ADMIN_EMAILS=${{ secrets.VITE_ADMIN_EMAILS }}
 
       - name: Build and push landing
         uses: docker/build-push-action@v5
