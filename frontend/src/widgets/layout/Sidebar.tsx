@@ -9,9 +9,10 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
-import { FiCalendar, FiLogOut, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiCalendar, FiLogOut, FiUser } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { isAdmin } from '@/features/auth/lib/isAdmin'
 
 interface NavItemProps {
   to: string
@@ -100,6 +101,9 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
       <VStack align="stretch" spacing={0.5} px={3} pt={3} flex={1}>
         <NavItem to="/events" icon={FiCalendar} label={t('nav.events')} onClick={onClose} />
         <NavItem to="/profile" icon={FiUser} label={t('nav.profile')} onClick={onClose} />
+        {isAdmin(user) && (
+          <NavItem to="/admin" icon={FiBarChart2} label={t('nav.admin')} onClick={onClose} />
+        )}
       </VStack>
 
       {/* User section */}

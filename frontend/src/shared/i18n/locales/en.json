@@ -51,7 +51,8 @@
   },
   "nav": {
     "events": "Events",
-    "profile": "Profile"
+    "profile": "Profile",
+    "admin": "Admin"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -304,5 +305,58 @@
     "avatarDeleted": "Avatar removed",
     "deleteAvatar": "Remove avatar",
     "uploadError": "Failed to upload avatar"
+  },
+  "admin": {
+    "title": "Admin panel",
+    "subtitle": "Statistics and key metrics",
+    "empty": "No data",
+    "tabs": {
+      "overview": "Overview",
+      "users": "Users",
+      "events": "Events"
+    },
+    "kpi": {
+      "totalUsers": "Total users",
+      "activeUsers7d": "Active in 7 days",
+      "activeUsers30dHint": "Last 30 days: {{count}}",
+      "totalEvents": "Total events",
+      "activeEvents": "Active events",
+      "completedHint": "Completed: {{count}}",
+      "totalCollections": "Total collections",
+      "totalCollected": "Collected"
+    },
+    "charts": {
+      "timeseries": "Registrations and events",
+      "byCategory": "By category",
+      "byStatus": "By status",
+      "users": "Users",
+      "events": "Events",
+      "range30": "30 days",
+      "range90": "90 days"
+    },
+    "users": {
+      "recent": "Recent users",
+      "topOrganizers": "Top organizers",
+      "name": "Name",
+      "email": "Email",
+      "city": "City",
+      "createdAt": "Registered"
+    },
+    "events": {
+      "recent": "Recent events",
+      "title": "Title",
+      "category": "Category",
+      "status": "Status",
+      "visibility": "Visibility",
+      "organizer": "Organizer",
+      "dateStart": "Starts",
+      "createdAt": "Created",
+      "category_ordinary": "Ordinary",
+      "category_business": "Business",
+      "status_active": "Active",
+      "status_completed": "Completed",
+      "visibility_public": "Public",
+      "visibility_private": "Private"
+    }
   }
 }

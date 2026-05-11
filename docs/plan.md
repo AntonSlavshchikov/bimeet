@@ -1466,3 +1466,141 @@ ALTER TABLE collections RENAME COLUMN target_amount TO per_person_amount;
 - [ ] API payload
 - [ ] `CollectionsTab.tsx` — форма и отображение
 - [ ] i18n
+
+---
+
+## Этап 23 — Админ-панель статистики
+
+### Контекст
+
+Read-only админ-панель для разработчиков и директора. Отображает KPI приложения, динамику регистраций и встреч, распределения и топ-листы. Без CRUD: всё, что нужно — увидеть состояние системы. Доступ ограничен whitelist'ом email-адресов в `.env`, чтобы не вводить миграцию ролей в `users` и не раздувать JWT.
+
+---
+
+### Доступ
+
+#### Backend
+
+`backend/.env` (+ `.env.example`):
+```
+ADMIN_EMAILS=email1@example.com,email2@example.com
+```
+
+- [ ] `internal/config/config.go`: поле `AdminEmails []string`, парсинг по запятой, lowercase + `strings.TrimSpace` каждого элемента
+- [ ] `internal/middleware/admin.go`: `RequireAdmin(userRepo UserRepo, allowed []string)` — берёт `userID` из контекста, грузит email через существующий `userrepo.GetByID`, проверяет вхождение в `allowed`. На несоответствие — 403
+- [ ] `cmd/server/main.go`: пробросить `cfg.AdminEmails` и `userRepo` в роутер
+
+#### Frontend
+
+`frontend/.env` (+ `.env.example`):
+```
+VITE_ADMIN_EMAILS=email1@example.com,email2@example.com
+```
+
+- [ ] `features/auth/lib/isAdmin.ts`: `isAdmin(user)` — читает `import.meta.env.VITE_ADMIN_EMAILS`, lowercase-сравнение. Только для UI-видимости (серверная проверка обязательна)
+- [ ] `features/auth/ui/AdminRoute.tsx`: оборачивает дочерний компонент, редиректит `/events` если `!isAdmin(user)` или нет авторизации
+
+---
+
+### Backend
+
+#### Repository (`internal/repository/admin/repository.go`)
+
+- [ ] `Overview(ctx) (model.AdminOverview, error)` — один запрос с подзапросами по образцу `userrepo.GetStats` (см. `repository/user/repository.go:131`):
+  - `total_users`, `users_active_7d`, `users_active_30d` (active = создал или подтвердил участие в событии за период)
+  - `total_events`, `events_active`, `events_completed`
+  - `total_collections`, `total_collected` (`SUM` по `collection_contributions` где `status='paid'`)
+- [ ] `Timeseries(ctx, days int) (model.AdminTimeseries, error)` — два запроса `GROUP BY DATE(created_at)` за последние N дней, заполнение пропусков нулями на стороне Go
+- [ ] `Distribution(ctx) (model.AdminDistribution, error)` — три запроса: `events GROUP BY category`, `GROUP BY status`, `GROUP BY is_public`
+- [ ] `TopOrganizers(ctx, limit int) ([]model.OrganizerStat, error)` — JOIN с `users`, агрегация по `events.organizer_id`, ORDER BY count DESC
+- [ ] `RecentUsers(ctx, limit int)` и `RecentEvents(ctx, limit int)` — простой `ORDER BY created_at DESC LIMIT`
+
+#### Model (`internal/model/model.go`)
+
+- [ ] `AdminOverview`, `AdminTimeseries`, `AdminTimeseriesPoint`, `AdminDistribution`, `OrganizerStat`, `AdminUserRow`, `AdminEventRow`
+
+#### Service (`internal/service/admin/service.go`)
+
+- [ ] Тонкий слой над repo: одна структура `Service{repo *adminrepo.Repository}` с методами `Overview`, `Timeseries(days)`, `Distribution`, `TopOrganizers(limit)`, `RecentUsers(limit)`, `RecentEvents(limit)`
+
+#### Handler (`internal/handler/admin/handler.go`)
+
+- [ ] `GET /api/admin/overview`
+- [ ] `GET /api/admin/timeseries?days=30` (default 30, max 365)
+- [ ] `GET /api/admin/distribution`
+- [ ] `GET /api/admin/top-organizers?limit=10` (default 10, max 50)
+- [ ] `GET /api/admin/recent-users?limit=20`
+- [ ] `GET /api/admin/recent-events?limit=20`
+
+#### Router (`internal/handler/router.go`)
+
+- [ ] Новая защищённая группа `r.Route("/api/admin", ...)` под `middleware.Auth(jwtSecret)` + `middleware.RequireAdmin(userRepo, cfg.AdminEmails)`
+
+---
+
+### Frontend
+
+#### Зависимости (`frontend/package.json`)
+
+- [ ] `recharts` для графиков. `@tanstack/react-table` уже установлен — переиспользуем для таблиц
+
+#### Сущность (`entities/admin-stats/`)
+
+- [ ] `model/types.ts` — типы, зеркалирующие backend-модель
+- [ ] `api/index.ts` — методы `getOverview`, `getTimeseries`, `getDistribution`, `getTopOrganizers`, `getRecentUsers`, `getRecentEvents` через `apiFetch`
+- [ ] `queries/index.ts` — `adminStatsKeys` + хуки `useAdminOverview`, `useAdminTimeseries(days)`, `useAdminDistribution`, `useAdminTopOrganizers`, `useAdminRecentUsers`, `useAdminRecentEvents`. Все с `staleTime: 60_000`
+
+#### Виджеты
+
+- [ ] `widgets/admin-kpi-card/` — плитка с заголовком, числом и иконкой. Использует `cardBg` + `cardBorder`
+- [ ] `widgets/admin-line-chart/` — обёртка над `recharts.LineChart`, адаптированная под текущую тему
+
+#### Страница (`pages/admin-panel/`)
+
+- [ ] `index.tsx` — три таба (Tabs из Chakra UI): «Обзор», «Пользователи», «Встречи»
+- [ ] `ui/OverviewTab.tsx`:
+  - 6 KPI-плиток в Grid (`totalUsers` / `activeUsers7d` / `totalEvents` / `activeEvents` / `totalCollections` / `totalCollected`)
+  - Линейный график «Регистрации vs Встречи» по дням (переключатель 30 / 90 дней)
+  - Bar-чарт «Категория» и Pie-чарт «Статус»
+- [ ] `ui/UsersTab.tsx` — таблица последних 20 пользователей (TanStack Table) + блок «Топ организаторов»
+- [ ] `ui/EventsTab.tsx` — таблица последних 20 событий с category, status, organizer email
+
+#### Роутинг и навигация
+
+- [ ] `app/router/index.tsx`: маршрут `/admin` через `AdminRoute` + `Layout`
+- [ ] `widgets/layout/Sidebar.tsx`: условно показывать `NavItem` «Админка» (icon `FiBarChart2`) если `isAdmin(user)`. Аналогично в `BottomNav.tsx`
+
+#### i18n
+
+- [ ] `shared/i18n/locales/ru.json` и `en.json`:
+  - `nav.admin` = «Админка» / «Admin»
+  - `admin.title`, `admin.tabs.overview`, `admin.tabs.users`, `admin.tabs.events`
+  - `admin.kpi.totalUsers`, `admin.kpi.activeUsers7d`, и т.д.
+  - `admin.charts.timeseries`, `admin.charts.byCategory`, и т.д.
+
+---
+
+### Чеклист реализации
+
+**Backend:**
+- [ ] `config.go`: добавить `AdminEmails`
+- [ ] `middleware/admin.go`: `RequireAdmin`
+- [ ] `model/model.go`: новые DTO
+- [ ] `repository/admin/repository.go`: 6 методов
+- [ ] `service/admin/service.go`
+- [ ] `handler/admin/handler.go`
+- [ ] `handler/router.go`: группа `/api/admin`
+- [ ] `cmd/server/main.go`: проводка
+- [ ] `.env.example`: `ADMIN_EMAILS=`
+
+**Frontend:**
+- [ ] `package.json`: добавить `recharts`
+- [ ] `features/auth/lib/isAdmin.ts`
+- [ ] `features/auth/ui/AdminRoute.tsx`
+- [ ] `entities/admin-stats/{api,model,queries}/`
+- [ ] `widgets/admin-kpi-card/`, `widgets/admin-line-chart/`
+- [ ] `pages/admin-panel/{index,ui/OverviewTab,ui/UsersTab,ui/EventsTab}.tsx`
+- [ ] `app/router/index.tsx`: `/admin`
+- [ ] `widgets/layout/{Sidebar,BottomNav}.tsx`: условный пункт «Админка»
+- [ ] i18n: `nav.admin` + `admin.*`
+- [ ] `.env.example`: `VITE_ADMIN_EMAILS=`

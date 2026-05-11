@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -31,6 +32,8 @@ type Config struct {
 	S3Bucket         string
 	S3PublicBaseURL  string
 	S3Endpoint       string // custom endpoint for MinIO / S3-compatible services
+	// AdminEmails — whitelist of users (by email) allowed to access /api/admin/*
+	AdminEmails []string
 }
 
 func Load() Config {
@@ -82,5 +85,21 @@ func Load() Config {
 		S3Bucket:        os.Getenv("S3_BUCKET"),
 		S3PublicBaseURL: os.Getenv("S3_PUBLIC_BASE_URL"),
 		S3Endpoint:      os.Getenv("S3_ENDPOINT"),
+		AdminEmails:     parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
 	}
+}
+
+func parseAdminEmails(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		e := strings.ToLower(strings.TrimSpace(p))
+		if e != "" {
+			result = append(result, e)
+		}
+	}
+	return result
 }

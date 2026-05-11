@@ -51,7 +51,8 @@
   },
   "nav": {
     "events": "Встречи",
-    "profile": "Профиль"
+    "profile": "Профиль",
+    "admin": "Админка"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -304,5 +305,58 @@
     "avatarDeleted": "Аватарка удалена",
     "deleteAvatar": "Удалить аватарку",
     "uploadError": "Не удалось загрузить аватарку"
+  },
+  "admin": {
+    "title": "Админ-панель",
+    "subtitle": "Статистика и ключевые показатели",
+    "empty": "Нет данных",
+    "tabs": {
+      "overview": "Обзор",
+      "users": "Пользователи",
+      "events": "Встречи"
+    },
+    "kpi": {
+      "totalUsers": "Всего пользователей",
+      "activeUsers7d": "Активны за 7 дней",
+      "activeUsers30dHint": "За 30 дней: {{count}}",
+      "totalEvents": "Всего встреч",
+      "activeEvents": "Активных встреч",
+      "completedHint": "Завершено: {{count}}",
+      "totalCollections": "Всего сборов",
+      "totalCollected": "Собрано"
+    },
+    "charts": {
+      "timeseries": "Регистрации и встречи",
+      "byCategory": "По категориям",
+      "byStatus": "По статусу",
+      "users": "Пользователи",
+      "events": "Встречи",
+      "range30": "30 дней",
+      "range90": "90 дней"
+    },
+    "users": {
+      "recent": "Последние пользователи",
+      "topOrganizers": "Топ организаторов",
+      "name": "Имя",
+      "email": "Email",
+      "city": "Город",
+      "createdAt": "Зарегистрирован"
+    },
+    "events": {
+      "recent": "Последние встречи",
+      "title": "Название",
+      "category": "Категория",
+      "status": "Статус",
+      "visibility": "Видимость",
+      "organizer": "Организатор",
+      "dateStart": "Начало",
+      "createdAt": "Создана",
+      "category_ordinary": "Обычная",
+      "category_business": "Деловая",
+      "status_active": "Активна",
+      "status_completed": "Завершена",
+      "visibility_public": "Публичная",
+      "visibility_private": "Личная"
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from '@/features/auth/ui/ProtectedRoute'
+import AdminRoute from '@/features/auth/ui/AdminRoute'
 import Layout from '@/widgets/layout'
 import LoginPage from '@/pages/login'
 import RegisterPage from '@/pages/register'
@@ -10,6 +11,7 @@ import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
 import InvitePage from '@/pages/invite'
 import ProfilePage from '@/pages/profile'
+import AdminPanelPage from '@/pages/admin-panel'
 
 export default function AppRouter() {
   return (
@@ -67,6 +69,16 @@ export default function AppRouter() {
                 <ProfilePage />
               </Layout>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Layout>
+                <AdminPanelPage />
+              </Layout>
+            </AdminRoute>
           }
         />
         <Route path="/invite/:token" element={<InvitePage />} />

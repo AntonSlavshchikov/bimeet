@@ -12,6 +12,7 @@ import (
 	"bimeet/internal/config"
 	"bimeet/internal/db"
 	"bimeet/internal/handler"
+	adminhandler        "bimeet/internal/handler/admin"
 	authhandler         "bimeet/internal/handler/auth"
 	carpoolhandler      "bimeet/internal/handler/carpool"
 	collectionhandler   "bimeet/internal/handler/collection"
@@ -21,6 +22,7 @@ import (
 	notificationhandler "bimeet/internal/handler/notification"
 	pollhandler         "bimeet/internal/handler/poll"
 	profilehandler      "bimeet/internal/handler/profile"
+	adminrepo           "bimeet/internal/repository/admin"
 	carpoolrepo         "bimeet/internal/repository/carpool"
 	collectionrepo      "bimeet/internal/repository/collection"
 	eventrepo           "bimeet/internal/repository/event"
@@ -30,6 +32,7 @@ import (
 	passwordresetrepo   "bimeet/internal/repository/passwordreset"
 	pollrepo            "bimeet/internal/repository/poll"
 	userrepo            "bimeet/internal/repository/user"
+	adminsvc            "bimeet/internal/service/admin"
 	authsvc             "bimeet/internal/service/auth"
 	carpoolsvc          "bimeet/internal/service/carpool"
 	collectionsvc       "bimeet/internal/service/collection"
@@ -78,6 +81,7 @@ func main() {
 	linkRepo          := eventlinkrepo.New(pool)
 	notificationRepo  := notificationrepo.New(pool)
 	passwordResetRepo := passwordresetrepo.New(pool)
+	adminRepo         := adminrepo.New(pool)
 
 	// Services
 	m            := mailer.New(mailer.Config{
@@ -97,6 +101,7 @@ func main() {
 	carpoolSvc      := carpoolsvc.New(carpoolRepo, eventRepo)
 	linkSvc         := eventlinksvc.New(linkRepo, eventRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
+	adminSvc        := adminsvc.New(adminRepo)
 
 	// S3 storage for avatars and receipts
 	var fileStorage interface {
@@ -139,6 +144,7 @@ func main() {
 	linkH         := eventlinkhandler.New(linkSvc)
 	notificationH := notificationhandler.New(notificationSvc)
 	profileH      := profilehandler.New(profileSvc)
+	adminH        := adminhandler.New(adminSvc)
 
 	// Reminder scheduler
 	reminderRunner := reminder.New(eventRepo, notificationRepo, time.Hour)
@@ -155,6 +161,9 @@ func main() {
 		linkH,
 		notificationH,
 		profileH,
+		adminH,
+		userRepo,
+		cfg.AdminEmails,
 		cfg.JWTSecret,
 	)
 
