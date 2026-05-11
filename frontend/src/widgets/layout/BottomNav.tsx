@@ -1,7 +1,9 @@
 import { Box, HStack, VStack, Icon, Text } from '@chakra-ui/react'
 import { Link, useMatch } from 'react-router-dom'
-import { FiCalendar, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiCalendar, FiUser } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/features/auth/model/AuthContext'
+import { isAdmin } from '@/features/auth/lib/isAdmin'
 
 interface BottomNavItemProps {
   to: string
@@ -44,6 +46,7 @@ function BottomNavItem({ to, icon, label }: BottomNavItemProps) {
 
 export default function BottomNav() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   return (
     <Box
       display={{ base: 'flex', lg: 'none' }}
@@ -61,6 +64,9 @@ export default function BottomNav() {
       <HStack w="full" spacing={0} align="stretch">
         <BottomNavItem to="/events" icon={FiCalendar} label={t('nav.events')} />
         <BottomNavItem to="/profile" icon={FiUser} label={t('nav.profile')} />
+        {isAdmin(user) && (
+          <BottomNavItem to="/admin" icon={FiBarChart2} label={t('nav.admin')} />
+        )}
       </HStack>
     </Box>
   )

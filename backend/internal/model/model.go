@@ -420,3 +420,65 @@ type PublicEventListItem struct {
 	EventListItem
 	IsParticipant bool `json:"is_participant"`
 }
+
+// ─── Admin DTOs ────────────────────────────────────────────────────────────
+
+type AdminOverview struct {
+	TotalUsers       int     `json:"total_users"`
+	UsersActive7d    int     `json:"users_active_7d"`
+	UsersActive30d   int     `json:"users_active_30d"`
+	TotalEvents      int     `json:"total_events"`
+	EventsActive     int     `json:"events_active"`
+	EventsCompleted  int     `json:"events_completed"`
+	TotalCollections int     `json:"total_collections"`
+	TotalCollected   float64 `json:"total_collected"`
+}
+
+type AdminTimeseriesPoint struct {
+	Date   string `json:"date"` // YYYY-MM-DD
+	Users  int    `json:"users"`
+	Events int    `json:"events"`
+}
+
+type AdminTimeseries struct {
+	Points []AdminTimeseriesPoint `json:"points"`
+}
+
+type AdminDistributionItem struct {
+	Key   string `json:"key"`
+	Count int    `json:"count"`
+}
+
+type AdminDistribution struct {
+	ByCategory []AdminDistributionItem `json:"by_category"`
+	ByStatus   []AdminDistributionItem `json:"by_status"`
+	ByVisibility []AdminDistributionItem `json:"by_visibility"`
+}
+
+type OrganizerStat struct {
+	UserID     uuid.UUID `json:"user_id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
+	EventCount int       `json:"event_count"`
+}
+
+type AdminUserRow struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	City      string    `json:"city"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type AdminEventRow struct {
+	ID             uuid.UUID `json:"id"`
+	Title          string    `json:"title"`
+	Category       string    `json:"category"`
+	Status         string    `json:"status"`
+	IsPublic       bool      `json:"is_public"`
+	OrganizerID    uuid.UUID `json:"organizer_id"`
+	OrganizerEmail string    `json:"organizer_email"`
+	DateStart      time.Time `json:"date_start"`
+	CreatedAt      time.Time `json:"created_at"`
+}

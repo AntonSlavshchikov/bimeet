@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	adminhandler        "bimeet/internal/handler/admin"
 	authhandler         "bimeet/internal/handler/auth"
 	carpoolhandler      "bimeet/internal/handler/carpool"
 	collectionhandler   "bimeet/internal/handler/collection"
@@ -27,6 +28,9 @@ func NewRouter(
 	link         *eventlinkhandler.Handler,
 	notification *notificationhandler.Handler,
 	profile      *profilehandler.Handler,
+	admin        *adminhandler.Handler,
+	userLookup   middleware.UserLookup,
+	adminEmails  []string,
 	jwtSecret    string,
 ) http.Handler {
 	r := chi.NewRouter()
@@ -117,6 +121,17 @@ func NewRouter(
 		r.Get("/api/auth/me/stats", profile.GetStats)
 		r.Post("/api/auth/me/avatar", profile.UploadAvatar)
 		r.Delete("/api/auth/me/avatar", profile.DeleteAvatar)
+
+		// Admin (whitelisted by email)
+		r.Route("/api/admin", func(r chi.Router) {
+			r.Use(middleware.RequireAdmin(userLookup, adminEmails))
+			r.Get("/overview", admin.Overview)
+			r.Get("/timeseries", admin.Timeseries)
+			r.Get("/distribution", admin.Distribution)
+			r.Get("/top-organizers", admin.TopOrganizers)
+			r.Get("/recent-users", admin.RecentUsers)
+			r.Get("/recent-events", admin.RecentEvents)
+		})
 	})
 
 	return r
