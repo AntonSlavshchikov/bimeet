@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Partiful — тёмный неон</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  :root {
+    --bg: #0A0A0B;
+    --bg-2: #131316;
+    --card: #161618;
+    --card-hover: #1C1C20;
+    --ink: #FAFAF7;
+    --ink-2: #A1A1AA;
+    --ink-3: #71717A;
+    --line: rgba(255,255,255,0.07);
+    --line-2: rgba(255,255,255,0.14);
+    --neon: #D4FF3F;
+    --neon-glow: rgba(212,255,63,0.25);
+  }
+  html, body { margin: 0; padding: 0 }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01';
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(212,255,63,0.06), transparent 40%),
+      radial-gradient(circle at 85% 30%, rgba(244,114,182,0.05), transparent 40%);
+    min-height: 100vh;
+  }
+
+  .topnav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(10,10,11,0.80);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 32px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 14px; color: var(--ink-2);
+  }
+  .topnav a { color: var(--ink-2); text-decoration: none; font-weight: 500 }
+  .topnav a:hover { color: var(--ink) }
+  .topnav .sep { color: var(--ink-3) }
+  .topnav .title { color: var(--ink); font-weight: 600 }
+
+  .shell { max-width: 1200px; margin: 0 auto; padding: 64px 32px 120px }
+
+  .header { margin-bottom: 48px }
+  .header h1 {
+    margin: 0;
+    font-size: 80px; line-height: 0.95;
+    letter-spacing: -0.05em; font-weight: 800;
+  }
+  .header h1 em {
+    font-style: italic; font-family: 'Instrument Serif', serif;
+    font-weight: 400; color: var(--neon);
+    text-shadow: 0 0 40px var(--neon-glow);
+  }
+  .header .sub {
+    color: var(--ink-2); font-size: 17px; margin: 20px 0 0;
+    max-width: 500px;
+  }
+
+  .actions { display: flex; gap: 12px; margin-top: 32px }
+  .btn {
+    border-radius: 999px; padding: 14px 24px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: 0;
+    transition: all .15s ease; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--neon); color: #0A0A0B;
+    letter-spacing: -0.005em;
+    box-shadow: 0 0 0 0 var(--neon-glow);
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--neon-glow);
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,0.05); color: var(--ink); border: 1px solid var(--line-2);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); box-shadow: none }
+
+  /* tabs as pill segmented */
+  .tabs {
+    display: inline-flex; padding: 4px; gap: 2px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 999px; margin-bottom: 40px;
+  }
+  .tab {
+    padding: 9px 18px; font-size: 13px; font-weight: 500; color: var(--ink-2);
+    cursor: pointer; border-radius: 999px;
+    transition: all .15s; user-select: none;
+  }
+  .tab:hover { color: var(--ink) }
+  .tab.active {
+    background: var(--ink); color: var(--bg); font-weight: 600;
+  }
+
+  .group { margin-bottom: 48px }
+  .group-title {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-3); margin: 0 0 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .group-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--line);
+  }
+
+  /* MAIN CARDS — two-column grid */
+  .grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  }
+
+  .card {
+    position: relative; overflow: hidden;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 24px; padding: 0;
+    text-decoration: none; color: inherit;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    cursor: pointer;
+    display: flex; flex-direction: column;
+  }
+  .card:hover {
+    background: var(--card-hover);
+    border-color: var(--line-2);
+    transform: translateY(-3px);
+  }
+
+  /* gradient cover */
+  .cover {
+    height: 140px;
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #FB7185 0%, #F43F5E 100%);
+  }
+  .cover.violet  { background: linear-gradient(135deg, #A78BFA, #4F46E5 70%, #DB2777) }
+  .cover.ocean   { background: linear-gradient(135deg, #38BDF8, #0EA5E9 50%, #6366F1) }
+  .cover.sunset  { background: linear-gradient(135deg, #FCD34D, #FB923C 50%, #DB2777) }
+  .cover.forest  { background: linear-gradient(135deg, #A3E635, #16A34A 50%, #0EA5E9) }
+  .cover.peach   { background: linear-gradient(135deg, #FCA5A5, #FB7185 50%, #F472B6) }
+  .cover.midnight{ background: linear-gradient(135deg, #1E1B4B, #312E81 50%, #4338CA) }
+
+  .cover::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(0,0,0,0.3), transparent 50%);
+  }
+
+  /* big date */
+  .cover-date {
+    position: absolute; top: 16px; left: 20px; z-index: 2;
+    color: #fff;
+    font-family: 'Instrument Serif', serif;
+    line-height: 0.85;
+  }
+  .cover-date .day {
+    font-size: 78px; letter-spacing: -0.04em; font-weight: 400;
+    display: block;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
+  .cover-date .mon-wd {
+    margin-top: 4px;
+    font-family: 'Inter', sans-serif; font-size: 12px;
+    font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+    opacity: 0.92;
+  }
+
+  /* status pill on cover */
+  .cover-status {
+    position: absolute; top: 16px; right: 16px; z-index: 2;
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.18); color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .cover-status.going { background: rgba(212,255,63,0.95); color: #0A0A0B; border-color: transparent }
+  .cover-status.host  { background: rgba(255,255,255,0.95); color: #0A0A0B; border-color: transparent }
+  .cover-status.invited { background: rgba(255,200,80,0.95); color: #422006; border-color: transparent }
+
+  /* card body */
+  .body { padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1 }
+  .title {
+    font-size: 22px; font-weight: 700; line-height: 1.2; letter-spacing: -0.025em;
+    color: var(--ink);
+  }
+  .meta {
+    display: flex; flex-direction: column; gap: 6px;
+    color: var(--ink-2); font-size: 14px;
+  }
+  .meta-item { display: inline-flex; align-items: center; gap: 8px }
+  .meta-item svg { stroke: var(--ink-3); flex-shrink: 0; opacity: 0.8 }
+
+  .badges { display: flex; gap: 6px; flex-wrap: wrap }
+  .badge {
+    font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: 999px;
+    background: rgba(255,255,255,0.07); color: var(--ink-2);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .badge.public { background: rgba(56,189,248,0.15); color: #7DD3FC }
+  .badge.private { background: rgba(255,255,255,0.07); color: var(--ink-2) }
+  .badge.work { background: rgba(161,161,170,0.15); color: var(--ink-2) }
+  .badge.live { background: rgba(212,255,63,0.18); color: var(--neon) }
+
+  /* footer */
+  .footer {
+    margin-top: auto; padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .avatars { display: flex }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 11px; font-weight: 600;
+    border: 2px solid var(--card);
+    margin-left: -8px;
+    background: linear-gradient(135deg, #FB7185, #F43F5E);
+  }
+  .avatar:first-child { margin-left: 0 }
+  .avatar.g2 { background: linear-gradient(135deg, #38BDF8, #0284C7) }
+  .avatar.g3 { background: linear-gradient(135deg, #A78BFA, #7C3AED) }
+  .avatar.g4 { background: linear-gradient(135deg, #FCD34D, #D97706) }
+  .avatar.g5 { background: linear-gradient(135deg, #6EE7B7, #059669) }
+  .avatar.g6 { background: linear-gradient(135deg, #F472B6, #DB2777) }
+  .more { background: rgba(255,255,255,0.08); color: var(--ink-2); font-weight: 600 }
+
+  .count {
+    font-size: 13px; color: var(--ink-2); font-weight: 500;
+  }
+  .count strong { color: var(--ink); font-weight: 700 }
+
+  /* hero card — first one, spans both columns */
+  .card.hero { grid-column: 1 / -1 }
+  .card.hero .cover { height: 240px }
+  .card.hero .cover-date .day { font-size: 120px }
+  .card.hero .body { padding: 28px }
+  .card.hero .title { font-size: 32px }
+
+  /* completed */
+  .card.completed { opacity: 0.5 }
+  .card.completed:hover { opacity: 0.75 }
+
+  @media (max-width: 720px) {
+    .shell { padding: 32px 16px 80px }
+    .header h1 { font-size: 48px }
+    .grid { grid-template-columns: 1fr }
+    .card.hero .cover-date .day { font-size: 76px }
+    .card.hero .title { font-size: 24px }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="index.html">← Все варианты</a>
+  <span class="sep">·</span>
+  <span class="title">02 · Partiful — тёмный неон</span>
+</nav>
+
+<div class="shell">
+
+  <div class="header">
+    <h1>Лето<br>пишется <em>встречами</em>.</h1>
+    <p class="sub">Восемь предстоящих. Кто-то ждёт вашего «иду», на чьей-то свадьбе вы уже подтвердились. Время сверить календарь.</p>
+    <div class="actions">
+      <button class="btn">＋ Создать встречу</button>
+      <button class="btn btn-ghost">🔍 Найти публичную</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active">Все · 8</div>
+    <div class="tab">Иду · 5</div>
+    <div class="tab">Организую · 3</div>
+    <div class="tab">Архив · 12</div>
+  </div>
+
+  <div class="group">
+    <h2 class="group-title">На этой неделе</h2>
+    <div class="grid">
+
+      <a class="card hero" href="#">
+        <div class="cover peach">
+          <div class="cover-date">
+            <span class="day">8</span>
+            <span class="mon-wd">Сб · Июнь · 20:00</span>
+          </div>
+          <div class="cover-status invited">✦ Подтвердить</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge private">Личная</span>
+            <span class="badge">Винотека</span>
+          </div>
+          <div class="title">Винный вечер у Лены — пробуем грузинское</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Простые вещи, Никольская 25
+            </span>
+            <span class="meta-item">💸 Сбор 2 500 ₽ · 6 из 8 скинулись</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>8</strong> идут · 1 раздумывает</div>
+            <div class="avatars">
+              <div class="avatar">АН</div>
+              <div class="avatar g2">МК</div>
+              <div class="avatar g3">ИВ</div>
+              <div class="avatar g4">СВ</div>
+              <div class="avatar more">+4</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="group">
+    <h2 class="group-title">Июнь</h2>
+    <div class="grid">
+
+      <a class="card" href="#">
+        <div class="cover sunset">
+          <div class="cover-date">
+            <span class="day">12</span>
+            <span class="mon-wd">Ср · Июнь · 19:00</span>
+          </div>
+          <div class="cover-status going">✓ Иду</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge private">Личная</span>
+            <span class="badge">День рождения</span>
+          </div>
+          <div class="title">Ане 28 — отмечаем в Quartier Latin</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Покровка 17, второй этаж
+            </span>
+            <span class="meta-item">🎁 Сбор на подарок · 1 500 ₽ с каждого</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>12</strong> гостей</div>
+            <div class="avatars">
+              <div class="avatar g4">АП</div>
+              <div class="avatar g5">КС</div>
+              <div class="avatar g6">МД</div>
+              <div class="avatar more">+9</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="#">
+        <div class="cover midnight">
+          <div class="cover-date">
+            <span class="day">14</span>
+            <span class="mon-wd">Пт · Июнь · 06:00</span>
+          </div>
+          <div class="cover-status going">✓ Иду</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge work">Деловая</span>
+            <span class="badge">Карпулинг</span>
+          </div>
+          <div class="title">В Шереметьево вместе — рейс в 9:30</div>
+          <div class="meta">
+            <span class="meta-item">🚗 3 из 4 мест занято</span>
+            <span class="meta-item">⏱ 4 часа в пути</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>4</strong> попутчика</div>
+            <div class="avatars">
+              <div class="avatar g3">ИВ</div>
+              <div class="avatar">ВС</div>
+              <div class="avatar g2">ТР</div>
+              <div class="avatar more">+1</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="#">
+        <div class="cover ocean">
+          <div class="cover-date">
+            <span class="day">16</span>
+            <span class="mon-wd">Вс · Июнь · 14:00</span>
+          </div>
+          <div class="cover-status">＋ Иду</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge public">Публичная</span>
+            <span class="badge live">Места есть</span>
+          </div>
+          <div class="title">Пикник в Парке Горького — приходи с пледом</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              ЦПКиО · поляна у фонтана
+            </span>
+            <span class="meta-item">🥪 24/50 — присоединяйтесь</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>24</strong> идут</div>
+            <div class="avatars">
+              <div class="avatar g5">ОЛ</div>
+              <div class="avatar">ПК</div>
+              <div class="avatar g4">НМ</div>
+              <div class="avatar more">+21</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="#">
+        <div class="cover violet">
+          <div class="cover-date">
+            <span class="day">22</span>
+            <span class="mon-wd">Сб · Июнь · 10:00</span>
+          </div>
+          <div class="cover-status going">✓ Иду</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge work">Деловая</span>
+            <span class="badge public">Публичная</span>
+          </div>
+          <div class="title">React Day Moscow — конференция и афтерпати</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Skolkovo Conference Hall
+            </span>
+            <span class="meta-item">🎤 12 докладов · 187/200 мест</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>187</strong> участников</div>
+            <div class="avatars">
+              <div class="avatar g3">ИВ</div>
+              <div class="avatar g2">МК</div>
+              <div class="avatar">АН</div>
+              <div class="avatar more">+184</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="#">
+        <div class="cover forest">
+          <div class="cover-date">
+            <span class="day">28</span>
+            <span class="mon-wd">Пт · Июнь · 09:00</span>
+          </div>
+          <div class="cover-status host">★ Хост</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge private">Личная</span>
+            <span class="badge">3 дня</span>
+          </div>
+          <div class="title">Поход на Хибины — три дня без сети</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Кировск, Мурманская обл.
+            </span>
+            <span class="meta-item">⛺ Дресс-код: треккинг + дождевик</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>6</strong> в команде</div>
+            <div class="avatars">
+              <div class="avatar g5">КС</div>
+              <div class="avatar g6">МД</div>
+              <div class="avatar g4">АП</div>
+              <div class="avatar more">+3</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="card" href="#">
+        <div class="cover peach">
+          <div class="cover-date">
+            <span class="day">30</span>
+            <span class="mon-wd">Вс · Июнь · 17:00</span>
+          </div>
+          <div class="cover-status going">✓ Иду</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge private">Личная</span>
+            <span class="badge">Свадьба</span>
+          </div>
+          <div class="title">Катя и Миша — наконец-то</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Усадьба Архангельское
+            </span>
+            <span class="meta-item">👔 Black tie · 80 гостей</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>80</strong> гостей</div>
+            <div class="avatars">
+              <div class="avatar">КП</div>
+              <div class="avatar g3">МЛ</div>
+              <div class="avatar g6">ОЖ</div>
+              <div class="avatar more">+77</div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="group">
+    <h2 class="group-title">Июль</h2>
+    <div class="grid">
+      <a class="card" href="#">
+        <div class="cover ocean">
+          <div class="cover-date">
+            <span class="day">5</span>
+            <span class="mon-wd">Пт · Июль · 11:00</span>
+          </div>
+          <div class="cover-status host">★ Хост</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge work">Деловая</span>
+            <span class="badge">Онлайн</span>
+          </div>
+          <div class="title">Совещание Q3 — планы и метрики</div>
+          <div class="meta">
+            <span class="meta-item">💻 Zoom — ссылка появится за час до старта</span>
+            <span class="meta-item">⏱ 2 часа</span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>8</strong> приглашённых</div>
+            <div class="avatars">
+              <div class="avatar g4">СВ</div>
+              <div class="avatar">ВС</div>
+              <div class="avatar g2">МК</div>
+              <div class="avatar more">+5</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2 class="group-title">Прошедшие</h2>
+    <div class="grid">
+      <a class="card completed" href="#">
+        <div class="cover" style="background: linear-gradient(135deg, #404040, #18181B)">
+          <div class="cover-date">
+            <span class="day">25</span>
+            <span class="mon-wd">Сб · Май · 18:00</span>
+          </div>
+          <div class="cover-status">Завершена</div>
+        </div>
+        <div class="body">
+          <div class="badges">
+            <span class="badge private">Личная</span>
+          </div>
+          <div class="title">Брайтонский ужин — обсудили всё, что не успели</div>
+          <div class="meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              The Sad Bar, Камергерский
+            </span>
+          </div>
+          <div class="footer">
+            <div class="count"><strong>9</strong> были</div>
+            <div class="avatars">
+              <div class="avatar g6">ИК</div>
+              <div class="avatar">АР</div>
+              <div class="avatar more">+7</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

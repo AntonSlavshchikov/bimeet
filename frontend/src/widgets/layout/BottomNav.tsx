@@ -1,73 +1,82 @@
-import { Box, HStack, VStack, Icon, Text } from '@chakra-ui/react'
 import { Link, useMatch } from 'react-router-dom'
-import { FiBarChart2, FiCalendar, FiUser } from 'react-icons/fi'
+import { Calendar, User, BarChart3, Bell } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
+import { useNotifications } from '@/entities/notification/queries'
+import NotificationCenter from '@/features/notifications/ui/NotificationCenter'
+import { cn } from '@/shared/lib/cn'
 
-interface BottomNavItemProps {
+interface TabProps {
   to: string
-  icon: React.ElementType
+  icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
 }
 
-function BottomNavItem({ to, icon, label }: BottomNavItemProps) {
-  const isActive = !!useMatch({ path: to, end: false })
-
+function TabLink({ to, icon: Icon, label }: TabProps) {
+  const active = !!useMatch({ path: to, end: false })
   return (
-    <Box
-      as={Link}
+    <Link
       to={to}
-      flex={1}
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      py={2}
+      className={cn(
+        'flex flex-col items-center justify-center gap-0.5 py-1 transition select-none',
+        active ? 'text-accent' : 'text-ink-3',
+      )}
     >
-      <VStack spacing={0.5}>
-        <Icon
-          as={icon}
-          boxSize={5}
-          color={isActive ? 'brand.600' : 'faintText'}
-          transition="color 0.15s"
-        />
-        <Text
-          fontSize="10px"
-          fontWeight={isActive ? 600 : 400}
-          color={isActive ? 'brand.600' : 'faintText'}
-          transition="all 0.15s"
+      <Icon size={22} className="shrink-0" />
+      <span className={cn('text-[10px]', active ? 'font-semibold' : 'font-medium')}>{label}</span>
+    </Link>
+  )
+}
+
+/** «Уведомления» — не route, а popover triger (NotificationCenter с кастомным triggerm) */
+function TabNotifications() {
+  const { t } = useTranslation()
+  const { data: notifications = [] } = useNotifications()
+  const unread = notifications.filter(n => !n.is_read).length
+  return (
+    <NotificationCenter
+      renderTrigger={() => (
+        <button
+          type="button"
+          className="relative flex flex-col items-center justify-center gap-0.5 py-1 transition select-none w-full focus-ring text-ink-3 cursor-pointer hover:text-ink-2"
         >
-          {label}
-        </Text>
-      </VStack>
-    </Box>
+          <Bell size={22} className="shrink-0" />
+          <span className="text-[10px] font-medium">{t('nav.notifications', 'Уведом.')}</span>
+          {unread > 0 && (
+            <span
+              className="absolute top-0.5 right-[calc(50%-18px)] inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-white tnum"
+              aria-hidden
+            >
+              {unread > 99 ? '99+' : unread}
+            </span>
+          )}
+        </button>
+      )}
+    />
   )
 }
 
 export default function BottomNav() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const showAdmin = isAdmin(user)
   return (
-    <Box
-      display={{ base: 'flex', lg: 'none' }}
-      position="fixed"
-      bottom={0}
-      left={0}
-      right={0}
-      zIndex={100}
-      bg="sidebarBg"
-      borderTop="1px solid"
-      borderColor="sidebarBorder"
-      h="56px"
-      alignItems="stretch"
+    <nav
+      className={cn(
+        'lg:hidden fixed bottom-0 left-0 right-0 z-50',
+        'border-t border-line bg-bg/80 backdrop-blur-xl backdrop-saturate-150',
+        'grid pt-2',
+      )}
+      style={{
+        paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
+        gridTemplateColumns: `repeat(${showAdmin ? 4 : 3}, 1fr)`,
+      }}
     >
-      <HStack w="full" spacing={0} align="stretch">
-        <BottomNavItem to="/events" icon={FiCalendar} label={t('nav.events')} />
-        <BottomNavItem to="/profile" icon={FiUser} label={t('nav.profile')} />
-        {isAdmin(user) && (
-          <BottomNavItem to="/admin" icon={FiBarChart2} label={t('nav.admin')} />
-        )}
-      </HStack>
-    </Box>
+      <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
+      <TabNotifications />
+      <TabLink to="/profile" icon={User} label={t('nav.profile')} />
+      {showAdmin && <TabLink to="/admin" icon={BarChart3} label={t('nav.admin')} />}
+    </nav>
   )
 }

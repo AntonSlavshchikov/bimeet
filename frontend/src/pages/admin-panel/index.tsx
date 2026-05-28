@@ -1,51 +1,42 @@
-import {
-  Box,
-  Container,
-  Heading,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Text,
-} from '@chakra-ui/react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import OverviewTab from '@/pages/admin-panel/ui/OverviewTab'
 import UsersTab from '@/pages/admin-panel/ui/UsersTab'
 import EventsTab from '@/pages/admin-panel/ui/EventsTab'
+import { SegmentedControl } from '@/shared/ui'
+
+type Tab = 'overview' | 'users' | 'events'
 
 export default function AdminPanelPage() {
   const { t } = useTranslation()
+  const [tab, setTab] = useState<Tab>('overview')
 
   return (
-    <Container maxW="7xl" py={{ base: 4, md: 6 }}>
-      <Box mb={6}>
-        <Heading size="lg" color="mainText">
-          {t('admin.title')}
-        </Heading>
-        <Text color="dimText" mt={1} fontSize="sm">
-          {t('admin.subtitle')}
-        </Text>
-      </Box>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-[28px] font-bold tracking-[-0.022em] leading-[1.15] text-ink">
+          {t('admin.title', 'Админ-панель')}
+        </h1>
+        <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">
+          {t('admin.subtitle', 'Статистика, пользователи и встречи')}
+        </p>
+      </div>
 
-      <Tabs colorScheme="blue" variant="line" isLazy>
-        <TabList borderColor="subtleBorder" mb={6}>
-          <Tab>{t('admin.tabs.overview')}</Tab>
-          <Tab>{t('admin.tabs.users')}</Tab>
-          <Tab>{t('admin.tabs.events')}</Tab>
-        </TabList>
-        <TabPanels>
-          <TabPanel px={0} pt={0}>
-            <OverviewTab />
-          </TabPanel>
-          <TabPanel px={0} pt={0}>
-            <UsersTab />
-          </TabPanel>
-          <TabPanel px={0} pt={0}>
-            <EventsTab />
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Container>
+      <SegmentedControl
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'overview', label: t('admin.tabs.overview', 'Обзор') },
+          { value: 'users', label: t('admin.tabs.users', 'Пользователи') },
+          { value: 'events', label: t('admin.tabs.events', 'Встречи') },
+        ]}
+      />
+
+      <div>
+        {tab === 'overview' && <OverviewTab />}
+        {tab === 'users' && <UsersTab />}
+        {tab === 'events' && <EventsTab />}
+      </div>
+    </div>
   )
 }

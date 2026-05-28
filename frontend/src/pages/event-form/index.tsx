@@ -1,31 +1,12 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  NumberInput,
-  NumberInputField,
-  Textarea,
-  VStack,
-  Heading,
-  HStack,
-  useToast,
-  Text,
-  SimpleGrid,
-  RadioGroup,
-  Radio,
-  Stack,
-  Divider,
-} from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiArrowLeft } from 'react-icons/fi'
+import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
 import type { EventCategory } from '@/entities/event/model/types'
+import { Button, Input, Textarea, useToast } from '@/shared/ui'
+import { cn } from '@/shared/lib/cn'
 
 interface FormValues {
   title: string
@@ -83,14 +64,14 @@ export default function EventFormPage() {
     }
   }, [event])
 
-  function handleChange(field: keyof FormValues, value: string) {
+  function update<K extends keyof FormValues>(field: K, value: FormValues[K]) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!form.title || !form.dateStart || !form.dateEnd || !form.location) {
-      toast({ title: t('eventForm.requiredFieldsWarning'), status: 'warning', duration: 3000 })
+      toast({ title: t('eventForm.requiredFieldsWarning', 'Заполните обязательные поля'), status: 'warning' })
       return
     }
 
@@ -110,22 +91,18 @@ export default function EventFormPage() {
     if (isEdit && id) {
       updateEvent.mutate(payload, {
         onSuccess: () => {
-          toast({ title: t('eventForm.successUpdate'), status: 'success', duration: 2000 })
+          toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
           navigate(`/events/${id}`)
         },
-        onError: (err) => {
-          toast({ title: t('eventForm.errorUpdate'), description: err.message, status: 'error', duration: 3000 })
-        },
+        onError: err => toast({ title: t('eventForm.errorUpdate', 'Не удалось сохранить'), description: err.message, status: 'error' }),
       })
     } else {
       createEvent.mutate(payload, {
         onSuccess: (newEvent) => {
-          toast({ title: t('eventForm.successCreate'), status: 'success', duration: 2000 })
+          toast({ title: t('eventForm.successCreate', 'Встреча создана'), status: 'success' })
           navigate(`/events/${newEvent.id}`)
         },
-        onError: (err) => {
-          toast({ title: t('eventForm.errorCreate'), description: err.message, status: 'error', duration: 3000 })
-        },
+        onError: err => toast({ title: t('eventForm.errorCreate', 'Не удалось создать'), description: err.message, status: 'error' }),
       })
     }
   }
@@ -133,208 +110,218 @@ export default function EventFormPage() {
   const isLoading = createEvent.isPending || updateEvent.isPending
 
   return (
-    <Box maxW="860px" mx="auto">
-      <Button
-        as={Link}
-        to={isEdit && id ? `/events/${id}` : '/events'}
-        leftIcon={<FiArrowLeft />}
-        variant="ghost"
-        size="sm"
-        color="dimText"
-        mb={6}
-        _hover={{ color: 'brand.600', bg: 'brand.50' }}
-      >
-        {t('common.back')}
+    <div className="flex flex-col gap-5">
+      <Button asChild variant="ghost" size="sm" className="self-start -ml-2">
+        <Link to={isEdit && id ? `/events/${id}` : '/events'}>
+          <ArrowLeft size={14} /> {t('common.back', 'Назад')}
+        </Link>
       </Button>
 
-      <Box mb={6}>
-        <Heading size="lg">{isEdit ? t('eventForm.titleEdit') : t('eventForm.titleCreate')}</Heading>
-        <Text fontSize="sm" color="dimText" mt={1}>
-          {isEdit ? t('eventForm.subtitleEdit') : t('eventForm.subtitleCreate')}
-        </Text>
-      </Box>
+      <div>
+        <h1 className="text-[24px] font-bold tracking-[-0.02em] leading-[1.2] text-ink">
+          {isEdit ? t('eventForm.titleEdit', 'Редактировать встречу') : t('eventForm.titleCreate', 'Новая встреча')}
+        </h1>
+        <p className="mt-1.5 text-[13.5px] text-ink-3">
+          {isEdit ? t('eventForm.subtitleEdit', 'Обновите детали встречи') : t('eventForm.subtitleCreate', 'Заполните поля — участников пригласите после создания.')}
+        </p>
+      </div>
 
-      <Box
-        bg="cardBg"
-        borderRadius="xl"
-        border="1px solid"
-        borderColor="cardBorder"
-        boxShadow="0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)"
-        overflow="hidden"
-      >
-        <Box h="4px" bgGradient="linear(135deg, brand.600, #7C3AED)" />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Тип встречи */}
+        <Section title={t('eventForm.sectionType', 'Тип встречи')}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <RadioCard
+              checked={form.category === 'ordinary'}
+              onClick={() => update('category', 'ordinary')}
+              title={t('eventForm.typeOrdinary', 'Личная')}
+              description={t('eventForm.typeOrdinaryDesc', 'Праздник, ужин, поход')}
+            />
+            <RadioCard
+              checked={form.category === 'business'}
+              onClick={() => update('category', 'business')}
+              title={t('eventForm.typeBusiness', 'Деловая')}
+              description={t('eventForm.typeBusinessDesc', 'Совещание, созвон')}
+            />
+          </div>
+        </Section>
 
-        <form onSubmit={handleSubmit}>
-          <Box p={{ base: 4, sm: 6 }}>
-            {/* Тип встречи — full width */}
-            <Box mb={6}>
-              <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.08em" mb={3}>
-                {t('eventForm.sectionType')}
-              </Text>
-              <FormControl isRequired>
-                <RadioGroup value={form.category} onChange={(val) => handleChange('category', val)}>
-                  <Stack direction={{ base: 'column', sm: 'row' }} spacing={4}>
-                    <Radio value="ordinary" colorScheme="blue">
-                      <VStack align="flex-start" spacing={0}>
-                        <Text fontSize="sm" fontWeight="500">{t('eventForm.typeOrdinary')}</Text>
-                        <Text fontSize="xs" color="dimText">{t('eventForm.typeOrdinaryDesc')}</Text>
-                      </VStack>
-                    </Radio>
-                    <Radio value="business" colorScheme="blue">
-                      <VStack align="flex-start" spacing={0}>
-                        <Text fontSize="sm" fontWeight="500">{t('eventForm.typeBusiness')}</Text>
-                        <Text fontSize="xs" color="dimText">{t('eventForm.typeBusinessDesc')}</Text>
-                      </VStack>
-                    </Radio>
-                  </Stack>
-                </RadioGroup>
-              </FormControl>
-            </Box>
+        <Section title={t('eventForm.sectionVisibility', 'Кто может присоединиться')}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <RadioCard
+              checked={!form.isPublic}
+              onClick={() => setForm(f => ({ ...f, isPublic: false, maxGuests: '' }))}
+              title={t('eventForm.typePersonal', 'Персональная')}
+              description={t('eventForm.typePersonalDesc', 'Только приглашённые')}
+            />
+            <RadioCard
+              checked={form.isPublic}
+              onClick={() => update('isPublic', true)}
+              title={t('eventForm.typePublic', 'Публичная')}
+              description={t('eventForm.typePublicDesc', 'Любой может присоединиться')}
+            />
+          </div>
+          {form.isPublic && (
+            <Field
+              label={t('eventForm.maxGuests', 'Максимум гостей')}
+              optional
+              className="max-w-[200px] mt-3"
+            >
+              <Input
+                type="number"
+                min={1}
+                value={form.maxGuests}
+                onChange={e => update('maxGuests', e.target.value)}
+                placeholder={t('eventForm.maxGuestsPlaceholder', 'без лимита')}
+              />
+            </Field>
+          )}
+        </Section>
 
-            <Divider borderColor="subtleBorder" my={6} />
+        <Section title={t('eventForm.sectionMainInfo', 'Основная информация')}>
+          <Field label={t('eventForm.fieldTitle', 'Название')} required>
+            <Input
+              value={form.title}
+              onChange={e => update('title', e.target.value)}
+              placeholder={t('eventForm.fieldTitlePlaceholder', 'День рождения Ани · 28 лет')}
+              required
+            />
+          </Field>
+          <Field label={t('eventForm.fieldDescription', 'Описание')}>
+            <Textarea
+              value={form.description}
+              onChange={e => update('description', e.target.value)}
+              placeholder={t('eventForm.fieldDescriptionPlaceholder', 'Расскажите, чего ждать гостям...')}
+              rows={4}
+            />
+          </Field>
+        </Section>
 
-            {/* Visibility */}
-            <Box mb={6}>
-              <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.08em" mb={3}>
-                {t('eventForm.sectionVisibility')}
-              </Text>
-              <RadioGroup value={form.isPublic ? 'public' : 'personal'} onChange={(val) => setForm(f => ({ ...f, isPublic: val === 'public', maxGuests: val === 'personal' ? '' : f.maxGuests }))}>
-                <Stack direction={{ base: 'column', sm: 'row' }} spacing={4}>
-                  <Radio value="personal" colorScheme="blue">
-                    <VStack align="flex-start" spacing={0}>
-                      <Text fontSize="sm" fontWeight="500">{t('eventForm.typePersonal')}</Text>
-                      <Text fontSize="xs" color="dimText">{t('eventForm.typePersonalDesc')}</Text>
-                    </VStack>
-                  </Radio>
-                  <Radio value="public" colorScheme="blue">
-                    <VStack align="flex-start" spacing={0}>
-                      <Text fontSize="sm" fontWeight="500">{t('eventForm.typePublic')}</Text>
-                      <Text fontSize="xs" color="dimText">{t('eventForm.typePublicDesc')}</Text>
-                    </VStack>
-                  </Radio>
-                </Stack>
-              </RadioGroup>
-              {form.isPublic && (
-                <FormControl mt={4} maxW="200px">
-                  <FormLabel fontSize="sm" fontWeight="500" color="dimText">
-                    {t('eventForm.maxGuests')}
-                    <Text as="span" fontSize="xs" color="faintText" fontWeight="400" ml={2}>{t('common.optional')}</Text>
-                  </FormLabel>
-                  <NumberInput
-                    min={1}
-                    value={form.maxGuests}
-                    onChange={(val) => setForm(f => ({ ...f, maxGuests: val }))}
-                  >
-                    <NumberInputField placeholder={t('eventForm.maxGuestsPlaceholder')} />
-                  </NumberInput>
-                </FormControl>
-              )}
-            </Box>
+        <Section title={t('eventForm.sectionWhenWhere', 'Когда и где')}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label={t('eventForm.fieldStart', 'Начало')} required>
+              <Input
+                type="datetime-local"
+                value={form.dateStart}
+                onChange={e => update('dateStart', e.target.value)}
+                required
+              />
+            </Field>
+            <Field label={t('eventForm.fieldEnd', 'Конец')} required>
+              <Input
+                type="datetime-local"
+                value={form.dateEnd}
+                onChange={e => update('dateEnd', e.target.value)}
+                required
+              />
+            </Field>
+          </div>
+          <Field label={t('eventForm.fieldLocation', 'Место')} required>
+            <Input
+              value={form.location}
+              onChange={e => update('location', e.target.value)}
+              placeholder={
+                form.category === 'business'
+                  ? t('eventForm.fieldLocationPlaceholderBusiness', 'Zoom / адрес офиса')
+                  : t('eventForm.fieldLocationPlaceholderOrdinary', 'Адрес или название места')
+              }
+              required
+            />
+          </Field>
+          <Field label={t('eventForm.fieldDressCode', 'Дресс-код')} optional>
+            <Input
+              value={form.dressCode}
+              onChange={e => update('dressCode', e.target.value)}
+              placeholder={t('eventForm.fieldDressCodePlaceholder', 'Smart casual, треккинг, Black tie...')}
+            />
+          </Field>
+        </Section>
 
-            <Divider borderColor="subtleBorder" mb={6} />
+        {/* Submit bar */}
+        <div className="sticky bottom-0 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-bg/85 backdrop-blur-xl border-t border-line flex items-center justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
+            {t('common.cancel', 'Отмена')}
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isEdit ? t('common.save', 'Сохранить') : t('common.create', 'Создать')}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
 
-            {/* Two-column layout on md+ */}
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              {/* Left column: main info */}
-              <VStack spacing={4} align="stretch">
-                <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.08em">
-                  {t('eventForm.sectionMainInfo')}
-                </Text>
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-[14px] border border-line bg-surface p-5 flex flex-col gap-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">{title}</div>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  )
+}
 
-                <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="500" color="dimText">{t('eventForm.fieldTitle')}</FormLabel>
-                  <Input
-                    value={form.title}
-                    onChange={e => handleChange('title', e.target.value)}
-                    placeholder={t('eventForm.fieldTitlePlaceholder')}
-                  />
-                </FormControl>
+function Field({
+  label,
+  required,
+  optional,
+  children,
+  className,
+}: {
+  label: string
+  required?: boolean
+  optional?: boolean
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn('flex flex-col', className)}>
+      <label className="text-[12px] font-semibold text-ink-2 mb-1.5 flex items-center gap-1.5">
+        <span>{label}</span>
+        {required && <span className="text-danger">*</span>}
+        {optional && <span className="text-ink-3 font-medium">(необязательно)</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
 
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="500" color="dimText">{t('eventForm.fieldDescription')}</FormLabel>
-                  <Textarea
-                    value={form.description}
-                    onChange={e => handleChange('description', e.target.value)}
-                    placeholder={t('eventForm.fieldDescriptionPlaceholder')}
-                    rows={4}
-                    resize="none"
-                  />
-                </FormControl>
-              </VStack>
-
-              {/* Right column: when & where */}
-              <VStack spacing={4} align="stretch">
-                <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.08em">
-                  {t('eventForm.sectionWhenWhere')}
-                </Text>
-
-                <SimpleGrid columns={2} spacing={3}>
-                  <FormControl isRequired>
-                    <FormLabel fontSize="sm" fontWeight="500" color="dimText">{t('eventForm.fieldStart')}</FormLabel>
-                    <Input
-                      type="datetime-local"
-                      value={form.dateStart}
-                      onChange={e => handleChange('dateStart', e.target.value)}
-                    />
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel fontSize="sm" fontWeight="500" color="dimText">{t('eventForm.fieldEnd')}</FormLabel>
-                    <Input
-                      type="datetime-local"
-                      value={form.dateEnd}
-                      onChange={e => handleChange('dateEnd', e.target.value)}
-                    />
-                  </FormControl>
-                </SimpleGrid>
-
-                <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="500" color="dimText">{t('eventForm.fieldLocation')}</FormLabel>
-                  <Input
-                    value={form.location}
-                    onChange={e => handleChange('location', e.target.value)}
-                    placeholder={form.category === 'business' ? t('eventForm.fieldLocationPlaceholderBusiness') : t('eventForm.fieldLocationPlaceholderOrdinary')}
-                  />
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="500" color="dimText">
-                    {t('eventForm.fieldDressCode')}
-                    <Text as="span" fontSize="xs" color="faintText" fontWeight="400" ml={2}>{t('common.optional')}</Text>
-                  </FormLabel>
-                  <Input
-                    value={form.dressCode}
-                    onChange={e => handleChange('dressCode', e.target.value)}
-                    placeholder={t('eventForm.fieldDressCodePlaceholder')}
-                  />
-                </FormControl>
-              </VStack>
-            </SimpleGrid>
-          </Box>
-
-          {/* Sticky submit bar */}
-          <Box
-            borderTop="1px solid"
-            borderColor="subtleBorder"
-            px={{ base: 4, sm: 6 }}
-            py={4}
-            bg="cardBg"
-          >
-            <HStack justify="space-between" align="center">
-              {!isEdit && (
-                <Text fontSize="xs" color="faintText">
-                  {t('eventForm.footerHint')}
-                </Text>
-              )}
-              <HStack spacing={2} ml="auto">
-                <Button variant="ghost" onClick={() => navigate(-1)}>{t('common.cancel')}</Button>
-                <Button type="submit" colorScheme="blue" px={8} isLoading={isLoading}>
-                  {isEdit ? t('common.save') : t('common.create')}
-                </Button>
-              </HStack>
-            </HStack>
-          </Box>
-        </form>
-      </Box>
-    </Box>
+function RadioCard({
+  checked,
+  onClick,
+  title,
+  description,
+}: {
+  checked: boolean
+  onClick: () => void
+  title: string
+  description: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'text-left rounded-[10px] border p-3 transition focus-ring',
+        checked
+          ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]'
+          : 'border-line bg-surface hover:bg-hover',
+      )}
+    >
+      <div className="flex items-start gap-2">
+        <span
+          className={cn(
+            'mt-0.5 inline-flex w-4 h-4 shrink-0 rounded-full border-2 transition items-center justify-center',
+            checked ? 'border-accent' : 'border-line',
+          )}
+        >
+          {checked && <span className="w-2 h-2 rounded-full bg-accent" />}
+        </span>
+        <div className="min-w-0">
+          <div className={cn('text-[13.5px] font-semibold', checked ? 'text-accent' : 'text-ink')}>
+            {title}
+          </div>
+          <div className="text-[12px] text-ink-3 mt-0.5">{description}</div>
+        </div>
+      </div>
+    </button>
   )
 }

@@ -1,22 +1,13 @@
-import {
-  Box,
-  Button,
-  Heading,
-  Text,
-  VStack,
-  HStack,
-  Icon,
-  Spinner,
-  useToast,
-} from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiMapPin, FiUsers } from 'react-icons/fi'
+import { Calendar, Loader2, MapPin, Users } from 'lucide-react'
 import { apiFetch } from '@/shared/api/client'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import type { InviteEventInfo } from '@/entities/event/model/types'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
+import AuthShell from '@/features/auth/ui/AuthShell'
+import { Button, useToast } from '@/shared/ui'
 
 export default function InvitePage() {
   const { token } = useParams<{ token: string }>()
@@ -46,7 +37,7 @@ export default function InvitePage() {
       navigate(`/events/${participant.event_id}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Ошибка'
-      toast({ title: msg, status: 'error', duration: 3000 })
+      toast({ title: msg, status: 'error' })
     } finally {
       setJoining(false)
     }
@@ -54,101 +45,65 @@ export default function InvitePage() {
 
   if (loading) {
     return (
-      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
-        <Spinner size="lg" color="brand.500" />
-      </Box>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 size={28} className="text-ink-3 animate-spin" />
+      </div>
     )
   }
 
   if (!event) {
     return (
-      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" p={4}>
-        <VStack spacing={4} textAlign="center">
-          <Text fontSize="lg" fontWeight="600" color="dimText">{t('invite.invalidTitle')}</Text>
-          <Text color="faintText" fontSize="sm">{t('invite.invalidSubtitle')}</Text>
-          <Button as={Link} to="/events" colorScheme="blue" size="sm">{t('common.home')}</Button>
-        </VStack>
-      </Box>
+      <AuthShell title={t('invite.invalidTitle', 'Приглашение недоступно')} subtitle={t('invite.invalidSubtitle', 'Ссылка устарела или была отозвана организатором.')}>
+        <Button asChild className="w-full">
+          <Link to="/events">{t('common.home', 'На главную')}</Link>
+        </Button>
+      </AuthShell>
     )
   }
 
   return (
-    <Box minH="100vh" bg="pageBg" display="flex" alignItems="center" justifyContent="center" p={4}>
-      <Box w="full" maxW="420px">
-        <VStack spacing={1.5} align="center" mb={6}>
-          <HStack spacing={2}>
-            <Box
-              w="28px" h="28px" borderRadius="md" bg="brand.600"
-              display="flex" alignItems="center" justifyContent="center"
-            >
-              <Text fontSize="12px" lineHeight={1} color="white">✦</Text>
-            </Box>
-            <Text fontSize="lg" fontWeight="600" color="mainText" letterSpacing="-0.3px">MeetUp</Text>
-          </HStack>
-        </VStack>
+    <AuthShell title={t('invite.badge', 'Вас приглашают')} subtitle={event.title}>
+      {event.description && (
+        <p className="text-[13.5px] text-ink-2 leading-[1.5] -mt-2">{event.description}</p>
+      )}
 
-        <Box
-          bg="cardBg"
-          borderRadius="xl"
-          overflow="hidden"
-          border="1px solid"
-          borderColor="cardBorder"
-          boxShadow="0 2px 16px rgba(0,0,0,0.07)"
-        >
-          <Box h="4px" bgGradient="linear(135deg, brand.600, #7C3AED)" />
-          <Box p={6}>
-            <VStack align="stretch" spacing={4}>
-              <Box>
-                <Text fontSize="xs" fontWeight="600" color="brand.500" textTransform="uppercase" letterSpacing="0.06em" mb={1}>
-                  {t('invite.badge')}
-                </Text>
-                <Heading size="md" letterSpacing="-0.3px">{event.title}</Heading>
-                {event.description && (
-                  <Text fontSize="sm" color="dimText" mt={1} lineHeight="1.5">{event.description}</Text>
-                )}
-              </Box>
+      <div className="flex flex-col gap-2">
+        <Meta icon={Calendar}>{formatDate(event.date_start)}, {formatTime(event.date_start)}</Meta>
+        <Meta icon={MapPin}>{event.location}</Meta>
+        <Meta icon={Users}>
+          {t('invite.confirmedCount', { count: event.confirmed_count, defaultValue: `${event.confirmed_count} уже подтвердили` })}
+        </Meta>
+      </div>
 
-              <VStack align="stretch" spacing={2}>
-                <HStack spacing={2}>
-                  <Icon as={FiCalendar} color="brand.400" boxSize={4} />
-                  <Text fontSize="sm" color="dimText">
-                    {formatDate(event.date_start)}, {formatTime(event.date_start)}
-                  </Text>
-                </HStack>
-                <HStack spacing={2}>
-                  <Icon as={FiMapPin} color="brand.400" boxSize={4} />
-                  <Text fontSize="sm" color="dimText">{event.location}</Text>
-                </HStack>
-                <HStack spacing={2}>
-                  <Icon as={FiUsers} color="brand.400" boxSize={4} />
-                  <Text fontSize="sm" color="dimText">{t('invite.confirmedCount', { count: event.confirmed_count })}</Text>
-                </HStack>
-              </VStack>
+      {event.organizer && (
+        <div className="text-[12px] text-ink-3">
+          {t('invite.organizer', 'Организатор:')} <span className="font-semibold text-ink-2">{event.organizer.name}</span>
+        </div>
+      )}
 
-              {event.organizer && (
-                <Text fontSize="xs" color="faintText">
-                  {t('invite.organizer')} <Text as="span" fontWeight="600">{event.organizer.name}</Text>
-                </Text>
-              )}
+      {user ? (
+        <Button className="w-full" onClick={handleJoin} disabled={joining}>
+          {joining ? '…' : t('invite.joinButton', 'Принять приглашение')}
+        </Button>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <Button asChild className="w-full">
+            <Link to={`/register?token=${token}`}>{t('invite.registerAndAccept', 'Зарегистрироваться и принять')}</Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link to={`/login?token=${token}`}>{t('invite.signIn', 'Войти')}</Link>
+          </Button>
+        </div>
+      )}
+    </AuthShell>
+  )
+}
 
-              {user ? (
-                <Button colorScheme="blue" w="full" onClick={handleJoin} isLoading={joining}>
-                  {t('invite.joinButton')}
-                </Button>
-              ) : (
-                <VStack spacing={2}>
-                  <Button colorScheme="blue" w="full" as={Link} to={`/register?token=${token}`}>
-                    {t('invite.registerAndAccept')}
-                  </Button>
-                  <Button colorScheme="blue" variant="outline" w="full" as={Link} to={`/login?token=${token}`}>
-                    {t('invite.signIn')}
-                  </Button>
-                </VStack>
-              )}
-            </VStack>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+function Meta({ icon: Icon, children }: { icon: React.ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5 text-[13.5px] text-ink-2 leading-[1.5]">
+      <Icon size={14} className="text-ink-3 shrink-0 mt-0.5" />
+      <span className="min-w-0">{children}</span>
+    </div>
   )
 }

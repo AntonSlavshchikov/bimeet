@@ -1,120 +1,104 @@
-import {
-  Box,
-  Button,
-  Collapse,
-  Grid,
-  Heading,
-  HStack,
-  Icon,
-  IconButton,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  ButtonGroup,
-  Text,
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
-  VStack,
-  useDisclosure,
-  useToast,
-} from '@chakra-ui/react'
-import { Link } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiGrid, FiList, FiPlus, FiSearch } from 'react-icons/fi'
+import { CalendarOff, Filter, Plus, SearchX, X } from 'lucide-react'
 import { useEvents, usePublicEvents } from '@/entities/event/queries'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
-import EventCard from '@/widgets/event-card'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
+import {
+  Button,
+  ListGroup,
+  MiniCalendar,
+  RailCard,
+  RailCardTitle,
+  SearchInput,
+  SegmentedControl,
+  StatCell,
+  useToast,
+} from '@/shared/ui'
+type Tab = 'all' | 'attending' | 'organizing' | 'past' | 'public'
+type EventAny = EventListItem | PublicEventListItem
 
-type ViewMode = 'grid' | 'list'
+const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'past', 'public']
 
-function EmptyState({ onAction, label, isSearch }: { onAction?: string; label: string; isSearch?: boolean }) {
-  const { t } = useTranslation()
-  return (
-    <Box textAlign="center" py={10}>
-      <Icon as={isSearch ? FiSearch : FiCalendar} boxSize={8} color="faintText" mb={2} />
-      <Text fontSize="sm" color="dimText">{label}</Text>
-      {onAction && (
-        <Button as={Link} to={onAction} colorScheme="blue" mt={4} size="sm">
-          {t('events.emptyCreateButton')}
-        </Button>
-      )}
-    </Box>
-  )
+const MONTHS_LONG_RU = [
+  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+]
+
+function isoDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function EventsGrid({
-  events,
-  myId,
-  onAttend,
-}: {
-  events: (EventListItem | PublicEventListItem)[]
-  myId?: string
-  onAttend?: (event: EventListItem | PublicEventListItem) => void
-}) {
-  return (
-    <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }} gap={5}>
-      {events.map(event => {
-        const myParticipant = event.participants.find(p => p.user.id === myId)
-        const myStatus = event.organizer.id !== myId
-          ? (myParticipant?.status ?? event.my_status)
-          : undefined
-        const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-        const canAttend = onAttend ? resolveCanAttend(event, myId, myStatus, spotsLeft) : undefined
-        return (
-          <EventCard
-            key={event.id}
-            event={event}
-            myStatus={myStatus}
-            canJoin={canAttend}
-            onJoin={canAttend ? () => onAttend?.(event) : undefined}
-          />
-        )
-      })}
-    </Grid>
-  )
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
-function EventsList({
-  events,
-  myId,
-  onAttend,
-}: {
-  events: (EventListItem | PublicEventListItem)[]
-  myId?: string
-  onAttend?: (event: EventListItem | PublicEventListItem) => void
-}) {
-  return (
-    <VStack align="stretch" spacing={1.5}>
-      {events.map(event => {
-        const myParticipant = event.participants.find(p => p.user.id === myId)
-        const myStatus = event.organizer.id !== myId
-          ? (myParticipant?.status ?? event.my_status)
-          : undefined
-        const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-        const canAttend = onAttend ? resolveCanAttend(event, myId, myStatus, spotsLeft) : undefined
-        return (
-          <EventListRow
-            key={event.id}
-            event={event}
-            myStatus={myStatus}
-            canJoin={canAttend}
-            onJoin={canAttend ? () => onAttend?.(event) : undefined}
-          />
-        )
-      })}
-    </VStack>
+interface Group {
+  /** Заголовок секции — «Сегодня · ср, 8 июня» или «Июнь · 5 встреч» */
+  title: string
+  /** Подпись для дней внутри: 'weekday' для внутримесячных, 'month' иначе */
+  dateCaption: 'weekday' | 'month'
+  events: EventAny[]
+}
+
+function groupEvents(events: EventAny[]): Group[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
   )
+
+  const todayList: EventAny[] = []
+  const byMonth = new Map<string, EventAny[]>()
+
+  for (const e of sorted) {
+    const d = new Date(e.date_start)
+    if (isSameDay(d, today)) {
+      todayList.push(e)
+      continue
+    }
+    const key = `${d.getFullYear()}-${d.getMonth()}`
+    if (!byMonth.has(key)) byMonth.set(key, [])
+    byMonth.get(key)!.push(e)
+  }
+
+  const groups: Group[] = []
+  if (todayList.length > 0) {
+    const wd = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'][today.getDay()]
+    groups.push({
+      title: `Сегодня · ${wd}, ${today.getDate()} ${MONTHS_LONG_RU[today.getMonth()].toLowerCase()}`,
+      dateCaption: 'weekday',
+      events: todayList,
+    })
+  }
+  for (const [key, list] of byMonth) {
+    const [y, m] = key.split('-').map(Number)
+    const monthName = MONTHS_LONG_RU[m]
+    const currentYear = new Date().getFullYear()
+    const yearPart = y === currentYear ? '' : ` ${y}`
+    groups.push({
+      title: `${monthName}${yearPart} · ${list.length} ${pluralEvents(list.length)}`,
+      dateCaption: 'weekday',
+      events: list,
+    })
+  }
+  return groups
+}
+
+function pluralEvents(n: number): string {
+  const m10 = n % 10
+  const m100 = n % 100
+  if (m100 >= 11 && m100 <= 14) return 'встреч'
+  if (m10 === 1) return 'встреча'
+  if (m10 >= 2 && m10 <= 4) return 'встречи'
+  return 'встреч'
 }
 
 function resolveCanAttend(
-  event: EventListItem | PublicEventListItem,
+  event: EventAny,
   myId: string | undefined,
   myStatus: string | undefined,
   spotsLeft: number | null,
@@ -130,31 +114,173 @@ function resolveCanAttend(
   return undefined
 }
 
-export default function EventsListPage() {
+function EmptyState({
+  icon: Icon,
+  title,
+  action,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>
+  title: string
+  action?: { to: string; label: string }
+}) {
+  return (
+    <div className="rounded-[12px] border border-line bg-surface py-14 px-4 flex flex-col items-center gap-3">
+      <Icon size={28} className="text-ink-3" />
+      <div className="text-[13.5px] text-ink-3">{title}</div>
+      {action && (
+        <Button asChild size="sm" className="mt-1">
+          <Link to={action.to}><Plus size={14} /> {action.label}</Link>
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function UpcomingRail({ events }: { events: EventAny[] }) {
+  const { t } = useTranslation()
+  const today = new Date()
+  const todayEvents = events.filter(e => isSameDay(new Date(e.date_start), today))
+  const nextFew = events
+    .filter(e => new Date(e.date_start) > today)
+    .slice(0, 3)
+
+  const eventDates = useMemo(
+    () => new Set(events.map(e => isoDay(new Date(e.date_start)))),
+    [events],
+  )
+
+  const upcoming = todayEvents.length > 0 ? todayEvents : nextFew
+
+  return (
+    <>
+      <RailCard>
+        <RailCardTitle>{todayEvents.length > 0 ? 'Сегодня' : 'Ближайшие'}</RailCardTitle>
+        <div className="text-[44px] font-bold tracking-[-0.03em] leading-none text-ink">
+          {today.getDate()}
+        </div>
+        <div className="text-[13px] text-ink-3 mt-1 mb-3">
+          {today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
+        </div>
+        {upcoming.length === 0 ? (
+          <div className="border-t border-line-soft pt-3 text-[13px] text-ink-3">
+            {t('events.emptyNoOrganized', 'Пока ничего не запланировано')}
+          </div>
+        ) : (
+          upcoming.map(e => {
+            const time = new Date(e.date_start).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            return (
+              <Link
+                key={e.id}
+                to={`/events/${e.id}`}
+                className="border-t border-line-soft pt-2.5 mt-2.5 first:mt-0 flex gap-2.5 items-start group hover:bg-hover -mx-1 px-1 rounded-[6px] transition"
+              >
+                <div className="text-[12px] font-semibold w-10 text-ink-2 tnum pt-0.5">{time}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13.5px] font-medium text-ink truncate group-hover:text-ink">{e.title}</div>
+                  {e.location && <div className="text-[12px] text-ink-3 mt-0.5 truncate">{e.location}</div>}
+                </div>
+              </Link>
+            )
+          })
+        )}
+      </RailCard>
+
+      <RailCard>
+        <MiniCalendar eventDates={eventDates} />
+      </RailCard>
+    </>
+  )
+}
+
+function StatsRail({
+  events,
+  myId,
+}: {
+  events: EventAny[]
+  myId?: string
+}) {
+  const today = new Date()
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  const thisMonth = events.filter(e => {
+    const d = new Date(e.date_start)
+    return d >= monthStart && d <= monthEnd && e.status !== 'completed'
+  })
+  const organizing = thisMonth.filter(e => e.organizer.id === myId).length
+  const upcoming = thisMonth.length
+
+  // Уникальные participants в this-month
+  const people = new Set<string>()
+  thisMonth.forEach(e => {
+    e.participants.forEach(p => { if (p.user.id !== myId) people.add(p.user.id) })
+  })
+
+  return (
+    <RailCard>
+      <RailCardTitle>Этот месяц</RailCardTitle>
+      <div className="grid grid-cols-2 gap-3">
+        <StatCell value={upcoming} label="встреч впереди" />
+        <StatCell value={organizing} label="организуете" />
+        <StatCell value={people.size} label="человек рядом" />
+        <StatCell value="—" label="сборов" />
+      </div>
+    </RailCard>
+  )
+}
+
+function EventsListPage() {
   const events = useEvents()
   const publicEvents = usePublicEvents()
   const { user } = useAuth()
   const { t } = useTranslation()
   const toast = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // tab синхронизируется с ?tab=… в URL — кликабельно из Sidebar (фильтры)
+  const urlTab = searchParams.get('tab') as Tab | null
+  const [tab, setTabState] = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'all')
+
+  useEffect(() => {
+    if (urlTab && VALID_TABS.includes(urlTab) && urlTab !== tab) setTabState(urlTab)
+    if (!urlTab && tab !== 'all') setTabState('all')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab])
+
+  function setTab(next: Tab) {
+    setTabState(next)
+    const params = new URLSearchParams(searchParams)
+    if (next === 'all') params.delete('tab')
+    else params.set('tab', next)
+    setSearchParams(params, { replace: true })
+  }
+
   const [search, setSearch] = useState('')
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  const { isOpen: isSearchOpen, onToggle: onSearchToggle } = useDisclosure()
+  const mobileSearchRef = useRef<HTMLInputElement>(null)
+  const mobileSearchOpen = searchParams.get('search') === '1'
+
+  function closeMobileSearch() {
+    const next = new URLSearchParams(searchParams)
+    next.delete('search')
+    setSearchParams(next, { replace: true })
+    setSearch('')
+  }
+
   const joinPublicEvent = useJoinPublicEvent()
   const confirmAttendance = useConfirmAttendance()
 
-  const allEvents = useMemo(() => {
-    const map = new Map<string, EventListItem | PublicEventListItem>()
+  const allUpcoming = useMemo<EventAny[]>(() => {
+    const map = new Map<string, EventAny>()
     events.forEach(e => map.set(e.id, e))
     publicEvents.forEach(e => { if (!map.has(e.id)) map.set(e.id, e) })
-    return [...map.values()]
-      .filter(e => e.status !== 'completed')
-      .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
+    return [...map.values()].filter(e => e.status !== 'completed')
   }, [events, publicEvents])
 
-  const attendingEvents = events.filter(e => e.organizer.id !== user?.id)
-  const organizingEvents = events.filter(e => e.organizer.id === user?.id)
+  const attendingEvents = events.filter(e => e.organizer.id !== user?.id && e.status !== 'completed')
+  const organizingEvents = events.filter(e => e.organizer.id === user?.id && e.status !== 'completed')
+  const pastEvents = events.filter(e => e.status === 'completed')
+  const publicOnly = publicEvents.filter(e => e.status !== 'completed')
 
-  function handleAttend(event: EventListItem | PublicEventListItem) {
+  function handleAttend(event: EventAny) {
     const myParticipant = event.participants.find(p => p.user.id === user?.id)
     const myStatus = myParticipant?.status ?? event.my_status
 
@@ -162,19 +288,19 @@ export default function EventsListPage() {
       confirmAttendance.mutate(
         { eventId: event.id, userId: user.id },
         {
-          onSuccess: () => toast({ title: t('eventCard.statusConfirmed'), status: 'success', duration: 2000 }),
-          onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
+          onSuccess: () => toast({ title: t('eventCard.statusConfirmed', 'Подтверждено'), status: 'success' }),
+          onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
         },
       )
     } else {
       joinPublicEvent.mutate(event.id, {
-        onSuccess: () => toast({ title: t('eventInfo.joinSuccess'), status: 'success', duration: 2000 }),
-        onError: (err) => toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 }),
+        onSuccess: () => toast({ title: t('eventInfo.joinSuccess', 'Вы присоединились'), status: 'success' }),
+        onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
       })
     }
   }
 
-  function filterList(list: (EventListItem | PublicEventListItem)[]) {
+  function filterBySearch(list: EventAny[]): EventAny[] {
     if (!search.trim()) return list
     const q = search.toLowerCase()
     return list.filter(e =>
@@ -183,162 +309,171 @@ export default function EventsListPage() {
     )
   }
 
-  const filteredAll = filterList(allEvents)
-  const filteredAttending = filterList(attendingEvents)
-  const filteredOrganizing = filterList(organizingEvents)
+  const sourceForTab: Record<Tab, EventAny[]> = {
+    all: allUpcoming,
+    attending: attendingEvents,
+    organizing: organizingEvents,
+    past: pastEvents,
+    public: publicOnly,
+  }
+
+  const visible: EventAny[] = filterBySearch(sourceForTab[tab])
+  const groups = groupEvents(visible)
   const hasSearch = search.trim().length > 0
+  const isEmpty = visible.length === 0
 
-  const tabStyle = {
-    pb: 3, px: 4, fontSize: 'sm', fontWeight: '500', color: 'faintText',
-    _selected: { color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' },
-  }
-
-  function TabCount({ count }: { count: number }) {
-    return (
-      <Box as="span" ml={2} px={2} py={0.5} bg="brand.50" color="brand.600" borderRadius="full" fontSize="xs" fontWeight="700">
-        {count}
-      </Box>
-    )
-  }
+  const todayLine = (() => {
+    const todayCount = allUpcoming.filter(e => isSameDay(new Date(e.date_start), new Date())).length
+    if (todayCount === 0) return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди`
+    return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди · ${todayCount} ${pluralEvents(todayCount)} сегодня`
+  })()
 
   return (
-    <Box>
-      {/* Header */}
-      <HStack justify="space-between" mb={4} align="center" gap={3}>
-        <Heading size="lg" flexShrink={0}>{t('events.title')}</Heading>
-
-        <HStack spacing={2} flexWrap="wrap" justify="flex-end">
-          {/* Search — desktop only */}
-          <InputGroup size="sm" w="220px" display={{ base: 'none', lg: 'flex' }}>
-            <InputLeftElement pointerEvents="none">
-              <Icon as={FiSearch} color="faintText" boxSize={3.5} />
-            </InputLeftElement>
-            <Input
-              placeholder={t('events.searchPlaceholder')}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              borderRadius="10px"
-              pl={8}
-            />
-          </InputGroup>
-
-          {/* Search toggle — mobile */}
-          <IconButton
-            aria-label={t('events.search')}
-            icon={<FiSearch size={15} />}
-            variant="outline"
-            size="sm"
-            borderRadius="10px"
-            onClick={onSearchToggle}
-            display={{ base: 'flex', lg: 'none' }}
-            color={isSearchOpen ? 'brand.600' : 'dimText'}
-            borderColor={isSearchOpen ? 'brand.300' : 'defaultBorder'}
-          />
-
-          {/* View toggle */}
-          <ButtonGroup size="sm" isAttached variant="outline">
-            <IconButton
-              aria-label={t('events.viewGrid')}
-              icon={<FiGrid size={14} />}
-              onClick={() => setViewMode('grid')}
-              borderRadius="10px 0 0 10px"
-              color={viewMode === 'grid' ? 'brand.600' : 'dimText'}
-              borderColor={viewMode === 'grid' ? 'brand.300' : 'defaultBorder'}
-              bg={viewMode === 'grid' ? 'navActiveBg' : undefined}
-            />
-            <IconButton
-              aria-label={t('events.viewList')}
-              icon={<FiList size={14} />}
-              onClick={() => setViewMode('list')}
-              borderRadius="0 10px 10px 0"
-              color={viewMode === 'list' ? 'brand.600' : 'dimText'}
-              borderColor={viewMode === 'list' ? 'brand.300' : 'defaultBorder'}
-              bg={viewMode === 'list' ? 'navActiveBg' : undefined}
-            />
-          </ButtonGroup>
-
-          <Button as={Link} to="/events/new" colorScheme="blue" leftIcon={<FiPlus />} size="sm">
-            {t('events.createEvent')}
+    <div className="flex flex-col gap-6">
+      {/* Toolbar — DESKTOP only. На mobile «+» переехал в navbar, поиск — компактный icon-toggle ниже. */}
+      <div className="hidden lg:grid gap-4 items-center grid-cols-[minmax(0,1fr)_auto]">
+        <SearchInput
+          className="max-w-[420px]"
+          kbdHint="⌘K"
+          placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <div className="flex items-center gap-2 justify-self-end">
+          <Button variant="icon" size="icon" aria-label={t('events.filter', 'Фильтр')}>
+            <Filter size={16} />
           </Button>
-        </HStack>
-      </HStack>
+          <Button asChild>
+            <Link to="/events/new">
+              <Plus size={14} strokeWidth={2.4} />
+              {t('events.createEvent', 'Создать встречу')}
+            </Link>
+          </Button>
+        </div>
+      </div>
 
-      {/* Mobile search bar */}
-      <Collapse in={isSearchOpen} animateOpacity>
-        <Box mb={4} display={{ base: 'block', lg: 'none' }}>
-          <InputGroup size="sm">
-            <InputLeftElement pointerEvents="none">
-              <Icon as={FiSearch} color="faintText" boxSize={3.5} />
-            </InputLeftElement>
-            <Input
-              placeholder={t('events.searchPlaceholder')}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              borderRadius="10px"
-              pl={8}
-              autoFocus
-            />
-          </InputGroup>
-        </Box>
-      </Collapse>
+      {/* Mobile search bar — collapsible */}
+      {mobileSearchOpen && (
+        <div className="lg:hidden flex items-center gap-2">
+          <SearchInput
+            ref={mobileSearchRef}
+            className="flex-1"
+            placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoFocus
+          />
+          <Button
+            variant="icon"
+            size="icon"
+            aria-label={t('common.cancel', 'Закрыть')}
+            onClick={closeMobileSearch}
+          >
+            <X size={16} />
+          </Button>
+        </div>
+      )}
 
-      <Tabs colorScheme="brand" variant="line">
-        <TabList mb={6} borderColor="subtleBorder">
-          <Tab {...tabStyle}>
-            {t('events.tabAll')}
-            <TabCount count={allEvents.length} />
-          </Tab>
-          <Tab {...tabStyle}>
-            {t('events.tabAttending')}
-            <TabCount count={attendingEvents.length} />
-          </Tab>
-          <Tab {...tabStyle}>
-            {t('events.tabOrganizing')}
-            <TabCount count={organizingEvents.length} />
-          </Tab>
-        </TabList>
+      {/* Page head — крупнее на mobile (iOS large title 34px) */}
+      <div>
+        <h1 className="text-[34px] lg:text-[28px] font-bold tracking-[-0.022em] leading-[1.05] lg:leading-[1.15]">
+          {t('events.title', 'Встречи')}
+        </h1>
+        <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">{todayLine}</p>
+      </div>
 
-        <TabPanels>
-          {/* Все встречи */}
-          <TabPanel px={0} pt={0}>
-            {filteredAll.length === 0 ? (
-              hasSearch
-                ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
-                : <EmptyState onAction="/events/new" label={t('events.emptyNoOrganized')} />
-            ) : viewMode === 'grid' ? (
-              <EventsGrid events={filteredAll} myId={user?.id} onAttend={handleAttend} />
-            ) : (
-              <EventsList events={filteredAll} myId={user?.id} onAttend={handleAttend} />
-            )}
-          </TabPanel>
+      {/* Tabs */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <SegmentedControl
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'all',        label: t('events.tabAll', 'Все'),             count: allUpcoming.length },
+            { value: 'attending',  label: t('events.tabAttending', 'Участвую'),   count: attendingEvents.length },
+            { value: 'organizing', label: t('events.tabOrganizing', 'Организую'), count: organizingEvents.length },
+            { value: 'public',     label: t('events.tabPublic', 'Публичные'),     count: publicOnly.length },
+            { value: 'past',       label: t('events.tabPast', 'Прошедшие'),       count: pastEvents.length },
+          ]}
+        />
+      </div>
 
-          {/* Участвую */}
-          <TabPanel px={0} pt={0}>
-            {filteredAttending.length === 0 ? (
-              hasSearch
-                ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
-                : <EmptyState label={t('events.emptyNoInvited')} />
-            ) : viewMode === 'grid' ? (
-              <EventsGrid events={filteredAttending} myId={user?.id} />
-            ) : (
-              <EventsList events={filteredAttending} myId={user?.id} />
-            )}
-          </TabPanel>
-
-          {/* Организую */}
-          <TabPanel px={0} pt={0}>
-            {filteredOrganizing.length === 0 ? (
-              hasSearch
-                ? <EmptyState label={t('events.emptySearchResult', { query: search })} isSearch />
-                : <EmptyState onAction="/events/new" label={t('events.emptyNoOrganized')} />
-            ) : viewMode === 'grid' ? (
-              <EventsGrid events={filteredOrganizing} myId={user?.id} />
-            ) : (
-              <EventsList events={filteredOrganizing} myId={user?.id} />
-            )}
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Box>
+      {/* Body */}
+      {isEmpty ? (
+        hasSearch ? (
+          <EmptyState
+            icon={SearchX}
+            title={t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })}
+          />
+        ) : (
+          <EmptyState
+            icon={CalendarOff}
+            title={t('events.emptyNoOrganized', 'Пока ничего не запланировано')}
+            action={{ to: '/events/new', label: t('events.emptyCreateButton', 'Создать встречу') }}
+          />
+        )
+      ) : (
+        <div className="flex flex-col gap-8">
+          {groups.map(g => {
+            const myId = user?.id
+            return (
+              <section key={g.title} className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <div className="text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-3">
+                    {g.title}
+                  </div>
+                </div>
+                <ListGroup>
+                  {g.events.map(event => {
+                    const myParticipant = event.participants.find(p => p.user.id === myId)
+                    const myStatus =
+                      event.organizer.id !== myId
+                        ? (myParticipant?.status ?? event.my_status)
+                        : undefined
+                    const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
+                    const canAttend = resolveCanAttend(event, myId, myStatus, spotsLeft)
+                    return (
+                      <EventListRow
+                        key={event.id}
+                        event={event}
+                        myStatus={myStatus}
+                        canJoin={canAttend}
+                        onJoin={canAttend ? () => handleAttend(event) : undefined}
+                        dateCaption={g.dateCaption}
+                      />
+                    )
+                  })}
+                </ListGroup>
+              </section>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
+
+EventsListPage.displayName = 'EventsListPage'
+
+export default EventsListPage
+
+// Reusable Rail composition for this page — exposed for Router
+export function EventsListRail() {
+  const events = useEvents()
+  const publicEvents = usePublicEvents()
+  const { user } = useAuth()
+
+  const allEvents = useMemo<EventAny[]>(() => {
+    const map = new Map<string, EventAny>()
+    events.forEach(e => map.set(e.id, e))
+    publicEvents.forEach(e => { if (!map.has(e.id)) map.set(e.id, e) })
+    return [...map.values()]
+  }, [events, publicEvents])
+
+  return (
+    <>
+      <UpcomingRail events={allEvents} />
+      <StatsRail events={allEvents} myId={user?.id} />
+    </>
+  )
+}
+

@@ -1,32 +1,14 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Divider,
-  FormControl,
-  FormLabel,
-  Grid,
-  Heading,
-  HStack,
-  Icon,
-  Input,
-  Spinner,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Text,
-  useToast,
-  VStack,
-} from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiCamera, FiMail, FiMapPin, FiTrash2, FiUser } from 'react-icons/fi'
+import { Calendar, Camera, Loader2, Mail, MapPin, Trash2, User } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { formatDate } from '@/shared/lib/formatDate'
+import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
+import { cn } from '@/shared/lib/cn'
+
+type Tab = 'edit' | 'stats'
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth()
@@ -34,6 +16,7 @@ export default function ProfilePage() {
   const toast = useToast()
   const queryClient = useQueryClient()
   const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [tab, setTab] = useState<Tab>('edit')
 
   const { data: stats } = useQuery({
     queryKey: ['profile', 'stats'],
@@ -49,31 +32,27 @@ export default function ProfilePage() {
 
   const avatarMutation = useMutation({
     mutationFn: authApi.uploadAvatar,
-    onSuccess: (updated) => {
+    onSuccess: updated => {
       updateUser(updated)
       queryClient.invalidateQueries({ queryKey: ['profile'] })
-      toast({ title: t('profile.avatarSaved'), status: 'success', duration: 2500, isClosable: true })
+      toast({ title: t('profile.avatarSaved', 'Аватар обновлён'), status: 'success' })
     },
-    onError: () => {
-      toast({ title: t('profile.uploadError'), status: 'error', duration: 3000, isClosable: true })
-    },
+    onError: () => toast({ title: t('profile.uploadError', 'Не удалось загрузить'), status: 'error' }),
   })
 
   const deleteAvatarMutation = useMutation({
     mutationFn: authApi.deleteAvatar,
-    onSuccess: (updated) => {
+    onSuccess: updated => {
       updateUser(updated)
       queryClient.invalidateQueries({ queryKey: ['profile'] })
-      toast({ title: t('profile.avatarDeleted'), status: 'success', duration: 2500, isClosable: true })
+      toast({ title: t('profile.avatarDeleted', 'Аватар удалён'), status: 'success' })
     },
-    onError: () => {
-      toast({ title: t('profile.uploadError'), status: 'error', duration: 3000, isClosable: true })
-    },
+    onError: () => toast({ title: t('profile.uploadError', 'Ошибка'), status: 'error' }),
   })
 
   const updateMutation = useMutation({
     mutationFn: authApi.updateProfile,
-    onSuccess: (updated) => {
+    onSuccess: updated => {
       updateUser(updated)
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       setForm({
@@ -82,12 +61,7 @@ export default function ProfilePage() {
         city: updated.city ?? '',
         birth_date: updated.birth_date ? updated.birth_date.slice(0, 10) : '',
       })
-      toast({
-        title: t('profile.saved'),
-        status: 'success',
-        duration: 2500,
-        isClosable: true,
-      })
+      toast({ title: t('profile.saved', 'Сохранено'), status: 'success' })
     },
   })
 
@@ -98,248 +72,170 @@ export default function ProfilePage() {
   const fullName = [user?.name, user?.last_name].filter(Boolean).join(' ')
 
   return (
-    <Grid
-      templateColumns={{ base: '1fr', lg: '280px 1fr' }}
-      gap={5}
-      alignItems="flex-start"
-    >
-      {/* Left panel */}
-      <Box position={{ lg: 'sticky' }} top={{ lg: '64px' }}>
-        <Box
-          bg="cardBg"
-          borderRadius="xl"
-          border="1px solid"
-          borderColor="cardBorder"
-          boxShadow="0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.05)"
-          p={6}
-        >
-          <VStack spacing={4} align="center">
-            <Box position="relative">
-              <Box
-                cursor="pointer"
-                role="group"
-                onClick={() => avatarInputRef.current?.click()}
-              >
-                <Avatar
-                  size="2xl"
-                  src={user?.avatar_url ?? undefined}
-                  name={fullName || user?.name}
-                  bg="brand.600"
-                  color="white"
-                  fontWeight="700"
-                />
-                <Box
-                  position="absolute"
-                  inset={0}
-                  borderRadius="full"
-                  bg="blackAlpha.600"
-                  opacity={0}
-                  _groupHover={{ opacity: 1 }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  transition="opacity 0.2s"
-                >
-                  {avatarMutation.isPending
-                    ? <Spinner color="white" size="sm" />
-                    : <Icon as={FiCamera} color="white" boxSize={5} />
-                  }
-                </Box>
-              </Box>
-              {user?.avatar_url && (
-                <Box
-                  as="button"
-                  position="absolute"
-                  bottom={0}
-                  right={0}
-                  w={6}
-                  h={6}
-                  borderRadius="full"
-                  bg="red.500"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  onClick={() => deleteAvatarMutation.mutate()}
-                  title={t('profile.deleteAvatar')}
-                  _hover={{ bg: 'red.600' }}
-                  transition="background 0.15s"
-                >
-                  {deleteAvatarMutation.isPending
-                    ? <Spinner color="white" size="xs" />
-                    : <Icon as={FiTrash2} color="white" boxSize={3} />
-                  }
-                </Box>
-              )}
-            </Box>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
-              onChange={e => {
-                const file = e.target.files?.[0]
-                if (file) avatarMutation.mutate(file)
-                e.target.value = ''
-              }}
-            />
-            <VStack spacing={1.5} align="center">
-              <Heading size="sm" letterSpacing="-0.2px">{fullName || user?.name}</Heading>
-              <HStack spacing={1.5}>
-                <Icon as={FiMail} color="faintText" boxSize={3} />
-                <Text fontSize="xs" color="faintText">{user?.email}</Text>
-              </HStack>
-            </VStack>
-          </VStack>
-
-          <Divider my={5} borderColor="subtleBorder" />
-
-          <VStack align="stretch" spacing={2.5}>
-            {user?.city && (
-              <HStack spacing={2.5}>
-                <Icon as={FiMapPin} color="brand.400" boxSize={3.5} flexShrink={0} />
-                <Text fontSize="sm" color="dimText">{user.city}</Text>
-              </HStack>
-            )}
-            {user?.birth_date && (
-              <HStack spacing={2.5}>
-                <Icon as={FiCalendar} color="brand.400" boxSize={3.5} flexShrink={0} />
-                <Text fontSize="sm" color="dimText">{formatDate(user.birth_date)}</Text>
-              </HStack>
-            )}
-            {user?.created_at && (
-              <HStack spacing={2.5}>
-                <Icon as={FiUser} color="brand.400" boxSize={3.5} flexShrink={0} />
-                <Text fontSize="xs" color="faintText">
-                  {t('profile.memberSince')} {formatDate(user.created_at)}
-                </Text>
-              </HStack>
-            )}
-          </VStack>
-        </Box>
-      </Box>
-
-      {/* Right panel */}
-      <Box
-        bg="cardBg"
-        borderRadius="xl"
-        border="1px solid"
-        borderColor="cardBorder"
-        boxShadow="0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.05)"
-        overflow="hidden"
-      >
-        <Tabs colorScheme="brand" isLazy>
-          <TabList
-            px={2}
-            pt={1}
-            borderBottom="1px solid"
-            borderColor="subtleBorder"
+    <div className="grid gap-5 items-start xl:grid-cols-[280px_minmax(0,1fr)]">
+      {/* Left: profile card */}
+      <div className="rounded-[14px] border border-line bg-surface p-5 xl:sticky xl:top-5 flex flex-col items-center gap-4">
+        {/* Avatar */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            className="group relative rounded-full focus-ring"
           >
-            <Tab
-              px={4} py={3} fontSize="sm" fontWeight="500" color="faintText"
-              _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
-              _hover={{ color: 'dimText' }}
+            <Avatar size="xl" name={fullName || user?.name || '?'} src={user?.avatar_url} />
+            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+              {avatarMutation.isPending
+                ? <Loader2 size={18} className="text-white animate-spin" />
+                : <Camera size={18} className="text-white" />}
+            </div>
+          </button>
+          {user?.avatar_url && (
+            <button
+              type="button"
+              onClick={() => deleteAvatarMutation.mutate()}
+              title={t('profile.deleteAvatar', 'Удалить аватар')}
+              className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-danger hover:opacity-90 transition flex items-center justify-center"
             >
-              {t('profile.editTab')}
-            </Tab>
-            <Tab
-              px={4} py={3} fontSize="sm" fontWeight="500" color="faintText"
-              _selected={{ color: 'brand.600', fontWeight: '700', borderBottomColor: 'brand.500', borderBottomWidth: '2px' }}
-              _hover={{ color: 'dimText' }}
-            >
-              {t('profile.statsTab')}
-            </Tab>
-          </TabList>
+              {deleteAvatarMutation.isPending
+                ? <Loader2 size={11} className="text-white animate-spin" />
+                : <Trash2 size={11} className="text-white" />}
+            </button>
+          )}
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) avatarMutation.mutate(file)
+              e.target.value = ''
+            }}
+          />
+        </div>
 
-          <TabPanels>
-            {/* Edit tab */}
-            <TabPanel p={{ base: 4, sm: 6 }}>
-              <VStack spacing={5} align="stretch" maxW="480px">
-                <FormControl>
-                  <FormLabel fontSize="sm" color="dimText" mb={1.5}>{t('auth.email')}</FormLabel>
-                  <Input value={user?.email ?? ''} isReadOnly opacity={0.6} cursor="default" _focus={{ boxShadow: 'none', borderColor: 'defaultBorder' }} />
-                </FormControl>
+        <div className="text-center">
+          <div className="text-[16px] font-semibold tracking-[-0.015em] text-ink">{fullName || user?.name}</div>
+          <div className="inline-flex items-center gap-1.5 mt-1 text-[12px] text-ink-3">
+            <Mail size={11} />
+            {user?.email}
+          </div>
+        </div>
 
-                <Grid templateColumns={{ base: '1fr', sm: '1fr 1fr' }} gap={4}>
-                  <FormControl>
-                    <FormLabel fontSize="sm" color="dimText" mb={1.5}>{t('profile.firstName')}</FormLabel>
-                    <Input
-                      value={form.name}
-                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder={t('profile.firstName')}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel fontSize="sm" color="dimText" mb={1.5}>{t('profile.lastName')}</FormLabel>
-                    <Input
-                      value={form.last_name}
-                      onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
-                      placeholder={t('profile.lastName')}
-                    />
-                  </FormControl>
-                </Grid>
+        <div className="w-full border-t border-line-soft pt-4 flex flex-col gap-2.5">
+          {user?.city && (
+            <ProfileMeta icon={MapPin}>{user.city}</ProfileMeta>
+          )}
+          {user?.birth_date && (
+            <ProfileMeta icon={Calendar}>{formatDate(user.birth_date)}</ProfileMeta>
+          )}
+          {user?.created_at && (
+            <ProfileMeta icon={User}>
+              <span className="text-ink-3">
+                {t('profile.memberSince', 'С нами с')} {formatDate(user.created_at)}
+              </span>
+            </ProfileMeta>
+          )}
+        </div>
+      </div>
 
-                <FormControl>
-                  <FormLabel fontSize="sm" color="dimText" mb={1.5}>{t('profile.city')}</FormLabel>
+      {/* Right: tabs */}
+      <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
+        <div className="border-b border-line-soft px-3 py-3">
+          <SegmentedControl
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'edit', label: t('profile.editTab', 'Редактировать') },
+              { value: 'stats', label: t('profile.statsTab', 'Статистика') },
+            ]}
+          />
+        </div>
+
+        <div className="p-4 sm:p-6">
+          {tab === 'edit' && (
+            <div className="flex flex-col gap-4">
+              <Field label={t('auth.email', 'Email')}>
+                <Input value={user?.email ?? ''} readOnly className="opacity-60 cursor-default" />
+              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label={t('profile.firstName', 'Имя')}>
                   <Input
-                    value={form.city}
-                    onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-                    placeholder={t('profile.city')}
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder={t('profile.firstName', 'Имя')}
                   />
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel fontSize="sm" color="dimText" mb={1.5}>{t('profile.birthDate')}</FormLabel>
+                </Field>
+                <Field label={t('profile.lastName', 'Фамилия')}>
                   <Input
-                    type="date"
-                    value={form.birth_date}
-                    onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))}
+                    value={form.last_name}
+                    onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
+                    placeholder={t('profile.lastName', 'Фамилия')}
                   />
-                </FormControl>
+                </Field>
+              </div>
+              <Field label={t('profile.city', 'Город')}>
+                <Input
+                  value={form.city}
+                  onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+                  placeholder={t('profile.city', 'Город')}
+                />
+              </Field>
+              <Field label={t('profile.birthDate', 'Дата рождения')}>
+                <Input
+                  type="date"
+                  value={form.birth_date}
+                  onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))}
+                />
+              </Field>
+              <Button
+                className="self-start"
+                onClick={handleSave}
+                disabled={updateMutation.isPending || !form.name.trim()}
+              >
+                {t('profile.save', 'Сохранить')}
+              </Button>
+            </div>
+          )}
 
-                <Button
-                  colorScheme="blue"
-                  alignSelf="flex-start"
-                  onClick={handleSave}
-                  isLoading={updateMutation.isPending}
-                  isDisabled={!form.name.trim()}
-                >
-                  {t('profile.save')}
-                </Button>
-              </VStack>
-            </TabPanel>
-
-            {/* Stats tab */}
-            <TabPanel p={{ base: 4, sm: 6 }}>
-              <Grid templateColumns={{ base: '1fr 1fr', md: 'repeat(4, 1fr)' }} gap={4}>
-                <StatCard value={stats?.organized ?? 0} label={t('profile.statsOrganized')} />
-                <StatCard value={stats?.participated ?? 0} label={t('profile.statsParticipated')} />
-                <StatCard value={stats?.completed ?? 0} label={t('profile.statsCompleted')} />
-                <StatCard value={stats?.upcoming ?? 0} label={t('profile.statsUpcoming')} />
-              </Grid>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
-      </Box>
-    </Grid>
+          {tab === 'stats' && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatTile value={stats?.organized ?? 0} label={t('profile.statsOrganized', 'Организую')} />
+              <StatTile value={stats?.participated ?? 0} label={t('profile.statsParticipated', 'Участвую')} />
+              <StatTile value={stats?.completed ?? 0} label={t('profile.statsCompleted', 'Завершено')} />
+              <StatTile value={stats?.upcoming ?? 0} label={t('profile.statsUpcoming', 'Впереди')} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
-function StatCard({ value, label }: { value: number; label: string }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Box
-      bg="subtleBg"
-      borderRadius="xl"
-      border="1px solid"
-      borderColor="subtleBorder"
-      p={5}
-      textAlign="center"
-    >
-      <Text fontSize="3xl" fontWeight="700" color="brand.500" lineHeight={1}>
-        {value}
-      </Text>
-      <Text fontSize="xs" color="faintText" mt={2} fontWeight="500">
-        {label}
-      </Text>
-    </Box>
+    <div>
+      <label className="block text-[12px] font-semibold text-ink-2 mb-1.5">{label}</label>
+      {children}
+    </div>
   )
 }
+
+function ProfileMeta({ icon: Icon, children }: { icon: React.ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 text-[13px] text-ink-2">
+      <Icon size={13} className="text-ink-3 shrink-0" />
+      <span className="min-w-0 truncate">{children}</span>
+    </div>
+  )
+}
+
+function StatTile({ value, label }: { value: number; label: string }) {
+  return (
+    <div className={cn('rounded-[12px] bg-bg-2 p-4 flex flex-col items-center text-center gap-1')}>
+      <div className="text-[32px] leading-none font-bold tracking-[-0.025em] text-accent tnum">{value}</div>
+      <div className="text-[12px] text-ink-3 font-medium">{label}</div>
+    </div>
+  )
+}
+

@@ -1604,3 +1604,309 @@ VITE_ADMIN_EMAILS=email1@example.com,email2@example.com
 - [ ] `widgets/layout/{Sidebar,BottomNav}.tsx`: условный пункт «Админка»
 - [ ] i18n: `nav.admin` + `admin.*`
 - [ ] `.env.example`: `VITE_ADMIN_EMAILS=`
+
+---
+
+## Этап 24 — Редизайн: App-минимализм + переход с Chakra UI на Tailwind/shadcn
+
+### Контекст
+
+Текущий look — generic SaaS на Chakra v2 + emotion. После сравнения четырёх направлений (см. `design/01-luma.html` … `design/04-frosted.html`) выбран **минималистичный app-style** ([`design/05-app-web.html`](../design/05-app-web.html) для десктопа и [`design/05-app.html`](../design/05-app.html) для мобильного). Это «iOS Settings / Things 3 / Linear» tonality: ноль декора, inset-list группы с тонкими разделителями, цветной accent-bar слева у строки, один основной цвет (iOS Blue) + системные семантические (green/orange/red/purple). Без hero-обложек, без spectrum-градиентов, без serif-display шрифтов — контент главный.
+
+Параллельно меняем UI-стек: Chakra v2 раздувает bundle и завязан на emotion; Tailwind + Radix/shadcn даёт меньше байт, точный контроль над дизайном и современный DX.
+
+Текущее состояние: 70 .tsx-файлов, ~30 импортируют `@chakra-ui/react`. Стили в основном написаны как props на `Box` (по сути inline-Tailwind) — миграция в основном механическая. Theme tokens, color modes и компонентные оверрайды из `app/styles/theme.ts` переносим в `@theme` Tailwind v4. Data layer (queries, api, entities, i18n, backend) — без изменений.
+
+---
+
+### Целевой визуальный язык
+
+Эталон — `design/05-app-web.html` (desktop) и `design/05-app.html` (mobile). Светлая тема сейчас, тёмную добавим позже.
+
+#### Палитра
+
+Минимум цветов. Один primary accent (iOS Blue), системные семантические для статусов. Никаких градиентов на поверхностях.
+
+```
+surface:
+  bg          #FFFFFF              — основной фон main/sidebar/rail
+  bg-2        #F7F7F8              — search, segmented controls, rail cards
+  surface     #FFFFFF              — inset-list карточки, popovers
+  hover       rgba(60,60,67,0.05)  — hover-стейт строк и пунктов
+
+ink (text + lines):
+  ink         #000000              — заголовки, primary text
+  ink-2       #3C3C43              — body, nav items
+  ink-3       rgba(60,60,67,0.60)  — meta, секции, плейсхолдеры
+  ink-4       rgba(60,60,67,0.30)  — chevron, dim numbers
+  line        rgba(60,60,67,0.14)  — границы карточек, sidebar/rail dividers
+  line-soft   rgba(60,60,67,0.07)  — внутренние разделители списка
+
+accent + семантика (системные iOS-цвета, для статуса events):
+  accent      #007AFF              — primary action, ссылки, active states
+  green       #34C759              — confirmed/going
+  orange      #FF9500              — invited/pending action
+  red         #FF3B30              — birthday/wedding accents
+  purple      #AF52DE              — events с особым статусом (конференция)
+  indigo      #5856D6              — карточка пользователя
+
+dark-mode (для будущего этапа):
+  bg #0A0A0B · bg-2 #131316 · surface #161618 · ink #FFFFFF · ink-2 rgba(235,235,245,0.92) …
+```
+
+Цвет события (`accent-bar` 4px слева) выбирается по правилу: ordinary → red/orange/green/purple по хэшу id; business → blue/gray; completed → gray.
+
+#### Типографика
+
+- **Single family**: `'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif` — без display/serif шрифтов
+- **font-feature-settings**: `'cv11', 'ss01', 'tnum'` (tabular numerics критичны — даты, время, счётчики в списке)
+
+Шкала:
+- `large-title` 28/32 700 -0.022em — page heading
+- `h2` 22/28 700 -0.02em — модалки
+- `h3` 17/22 600 -0.015em — nav-title в navbar (mobile)
+- `body-strong` 14.5/19 600 -0.01em — row title
+- `body` 13.5/18 500 — nav items, buttons, search input
+- `small` 13/17 500 — desc в строке
+- `caption` 12/16 400 — meta, place
+- `micro` 11/15 600 0.06em uppercase — section titles
+
+#### Геометрия и поверхности
+
+- Скругления: `nav-item 7px`, `button/input 9px`, `inset-list 12px`, `cards/sheets 14px`, `app-frame 28px` (mobile desktop preview)
+- Тени: минимум. `0 1px 2px rgba(0,0,0,0.04)` на activated сегментах, `0 2px 12px rgba(0,0,0,0.04)` на floating-pill. Поверхности отделяются линиями, не тенями.
+- Spacing: 4px base, шаги 4/6/8/10/12/16/20/24/28/36/48
+- Иконки: `lucide-react`, размеры 14px (компактные), 16px (nav), 20px (navbar actions), strokeWidth 2
+
+#### Ключевые UI-паттерны (web + mobile)
+
+1. **Inset-list группы** — белая карточка с border, внутри строки разделены тонкой линией (left-offset под date-колонку). Не drop-shadow карточки.
+2. **Accent-bar** 4px слева у строки, full-row-height, цветной — единственный «цветной» элемент в строке.
+3. **Date-cell** — день крупно (22px tabular), под ним день недели (10px uppercase 0.08em).
+4. **Status pill** — компактная (4×10px padding), вариант определяет цвет: `going` (зелёная outline), `invited` (orange solid), `host` (gray outline), action (blue solid).
+5. **Segmented control** для табов — `bg-2` контейнер 3px padding, активный — `surface` + лёгкая тень. Счётчик в виде маленького pill справа от лейбла.
+6. **Avatars stack** 24px (web) / 22px (mobile), border = surface цвет, overlap −6px, без spacing prop. Цвета аватаров — из системного набора (`a1..a6` по индексу пользователя).
+7. **Search input** в toolbar с `⌘K` kbd-подсказкой справа, иконка слева, focus = accent ring 3px (12% opacity).
+8. **Mini-calendar** в правой панели — 7-колонок, точка-индикатор под числом для дней со встречами, `today` = solid accent, hover = `hover` token.
+
+#### Layout (web vs mobile)
+
+**Desktop (`05-app-web.html`):**
+- 3 колонки: `260px sidebar` + `1fr main` + `340px rail`, max-width 1480px центрировано
+- Sidebar sticky на весь viewport, внутри — brand, nav sections, фильтры, user-pill внизу
+- Main: toolbar (search + actions), page-head, segmented tabs + view-toggle, секции списка по месяцам
+- Right rail: «Сегодня» (upnext), mini-calendar, stats grid 2×2
+- Breakpoints: `<1200px` скрывает rail; `<820px` скрывает sidebar → mobile layout
+
+**Mobile (`05-app.html`):**
+- Узкая колонка max 480px центрирована (на desktop preview — со скруглением 28px и тонкой тенью)
+- Sticky navbar (44px) с blur, иконка-календарь слева + title по центру + actions справа (search, +)
+- Large-title под navbar (34px iOS-style)
+- Segmented control 4 columns full-width
+- Inset-list секции с group titles над ними
+- Bottom tab bar 3 пункта (Встречи / Уведомления / Профиль), sticky с safe-area
+
+---
+
+### Технический стек
+
+| Назначение | Было | Стало |
+|---|---|---|
+| UI-компоненты | `@chakra-ui/react` | `shadcn/ui` (копии в `src/shared/ui/`) |
+| Primitives | (внутри Chakra) | `@radix-ui/react-*` |
+| Стили | `@emotion/react`, `@emotion/styled`, props на Box | Tailwind CSS v4 (CSS-first `@theme`) |
+| Toasts | `useToast` | `sonner` |
+| Иконки | `react-icons` | `lucide-react` |
+| Тема | `useColorMode` | `next-themes` (используем позже, на этом этапе только light) |
+| Variants | (Chakra `variants`) | `class-variance-authority` + `clsx` + `tailwind-merge` |
+| Поиск ⌘K | — | `cmdk` |
+| Mini-calendar | — | `react-day-picker` (или собственная сетка — оценим в 24.1) |
+| Анимации | `framer-motion` | `framer-motion` (только там, где нужно — Dialog/Drawer; список не анимируем) |
+
+**Удаляем:** `@chakra-ui/react`, `@emotion/react`, `@emotion/styled`, `react-icons`.
+
+**На этом этапе только светлая тема.** Tokens проектируем сразу с dark-вариантами в `@theme`, но не активируем — переключатель добавляем позже отдельной задачей.
+
+---
+
+### Структура и этапы реализации
+
+Полная переделка всех страниц. Делаем поэтапно, в одной ветке, без фича-флага — миграция страница-за-страницей, чтобы UI не сломался посреди. Эталон каждого экрана сверяем с `design/05-app-web.html` и `design/05-app.html`.
+
+#### Этап 24.0 — Подготовка стека
+
+- [ ] `npm i tailwindcss @tailwindcss/vite class-variance-authority clsx tailwind-merge lucide-react sonner next-themes cmdk react-day-picker @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tabs @radix-ui/react-tooltip @radix-ui/react-avatar @radix-ui/react-select @radix-ui/react-popover @radix-ui/react-separator @radix-ui/react-switch`
+- [ ] Vite plugin: `@tailwindcss/vite` в `vite.config.ts`
+- [ ] Новый `src/index.css`: `@import "tailwindcss";` + `@theme { ... }` с токенами bg/bg-2/surface/ink/ink-2/ink-3/ink-4/line/line-soft/hover/accent/green/orange/red/purple/indigo (+ dark-варианты, неактивные)
+- [ ] `src/shared/lib/cn.ts` — стандартная shadcn-утилита
+- [ ] `ThemeProvider` на `next-themes` в `src/app/providers/` — `defaultTheme="light"`, `enableSystem={false}` (dark включим позже), сосуществует с `ChakraProvider` до этапа 24.8
+
+#### Этап 24.1 — Дизайн-система
+
+Каждый компонент копируем из shadcn в `src/shared/ui/`, кастомизируем под токены и палитру (5-й вариант).
+
+**Базовые:**
+- [ ] `<Button>` варианты `primary | ghost | outline | icon` (cva). Высота 36px, radius 9px, primary = solid accent, icon = квадрат 36×36 с border
+- [ ] `<Input>` высота 36px, radius 9px, `bg-bg-2`, focus = accent ring 3px (12% opacity), поддержка `leadingIcon`/`trailingKbd` slot'ов
+- [ ] `<Textarea>`, `<Select>` (Radix Select) — те же токены
+- [ ] `<Dialog>`, `<Drawer>` (vaul) — замена Chakra Modal/Drawer
+- [ ] `<DropdownMenu>` — замена Chakra Menu
+- [ ] `<Tooltip>`, `<Popover>`, `<Separator>`
+- [ ] `<Avatar>` 24px (web default), 22px (mobile), `<AvatarStack>` — overlap −6px, border = surface
+- [ ] `<Toast>` через sonner — обёртка с `useToast()`-compatible API для миграции 1:1
+
+**Прикладные (под 5-й вариант):**
+- [ ] `<SegmentedControl>` — 3px padding, `bg-bg-2` контейнер, активный = `surface` + box-shadow `0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.04)`. Поддержка count-badge справа от лейбла. Используется для tab-фильтров на events-list и табов на event-detail.
+- [ ] `<ListGroup>` + `<ListRow>` — inset-карточка с border + radius 12px; строки разделены тонкой `line-soft` с left-offset (нужно отступить под date-колонку). Props: `accentBar?: 'blue'|'green'|'orange'|'red'|'purple'|'gray'`, `onClick`, `href`
+- [ ] `<DateCell>` — день крупно (22px tabular) + день недели мелким (10px uppercase)
+- [ ] `<TimeCell>` — время + место (две строки, tabular)
+- [ ] `<StatusPill>` варианты `going | invited | host | action | completed`. Цвета — из семантики.
+- [ ] `<EventTag>` — мини-тег (Личная/Деловая/Публичная/Black tie/Конференция), варианты `default | public | work | host`
+- [ ] `<SearchInput>` — composition `<Input>` + leading `Search` icon + trailing `<Kbd>⌘K</Kbd>`, на enter открывает `<CommandPalette>` (cmdk)
+- [ ] `<CommandPalette>` — глобальный поиск событий/мест/людей через cmdk
+- [ ] `<MiniCalendar>` — на `react-day-picker` (или собственная сетка 7×6) с точкой-индикатором под днями со встречами, `today` = solid accent
+- [ ] `<AccentBar>` цветовая логика: helper `eventAccentColor(event) → 'blue'|...'`
+  - `category === 'business'` → `blue` (online) или `gray` (карпулинг)
+  - `category === 'ordinary'` + содержит сбор крупный (свадьба, ДР) → `red`
+  - публичные → `orange`
+  - походы/природа → `green`
+  - конференции/онлайн с большим числом — `purple`
+  - completed → `gray`
+
+**Удаляются концепты (из старого плана, не нужны):**
+- ~~`<EventCover>` с градиентами~~, ~~`<DateBlock>` с цветным фоном~~, ~~`hero-секция`~~, ~~`spectrum` 8 цветов~~, ~~serif display fonts~~
+
+- [ ] Завести `src/pages/_design-system/` для визуальной проверки (страница с примерами всех компонентов; не публикуем в production)
+
+#### Этап 24.2 — Layout shell (web + mobile)
+
+Эталон: `design/05-app-web.html` (sidebar + main + rail) и `design/05-app.html` (navbar + content + bottom tabs).
+
+- [ ] `widgets/layout/index.tsx` — корневой shell. Адаптив:
+  - `≥1200px` — 3 колонки `260px / 1fr / 340px`, max-width 1480px центрировано
+  - `820–1199px` — 2 колонки `240px / 1fr`, rail скрыт
+  - `<820px` — mobile: только main + sticky navbar сверху + bottom tab bar снизу, sidebar в Drawer
+- [ ] `widgets/layout/Sidebar.tsx` — brand (28×28 квадрат с буквой) + sections (Встречи / Уведомления / Найти публичные) + filters (Иду / Организую / Прошедшие) с счётчиками + user-pill внизу с DropdownMenu (Профиль / Выйти / Язык / Тема — disabled пока)
+- [ ] `widgets/layout/RightRail.tsx` — новый виджет: `<UpNextCard>` + `<MiniCalendar>` + `<StatsCard>`. Данные — из существующих queries (`useEvents`, `useProfileStats`)
+- [ ] `widgets/layout/Navbar.tsx` (mobile) — sticky 44px с blur, иконки слева/справа, title по центру
+- [ ] `widgets/layout/BottomNav.tsx` — переписать на 3 пункта (Встречи / Уведомления / Профиль), sticky с `env(safe-area-inset-bottom)`
+- [ ] `widgets/layout/Toolbar.tsx` (web main) — `<SearchInput>` + filter icon-btn + `<Button>Создать</Button>`
+- [ ] Заменить `useColorMode` на `useTheme` (next-themes), но фиксируем light
+- [ ] `LanguageToggle` — DropdownMenu item в user-pill (убираем из topbar)
+- [ ] `features/notifications/ui/NotificationCenter.tsx` — переезжает в sidebar nav-item «Уведомления» с count-badge, страница `/notifications` с тем же list-стилем
+
+#### Этап 24.3 — Events-list (флагман редизайна)
+
+- [ ] `pages/events-list/index.tsx`:
+  - `<Toolbar>` сверху main
+  - `<PageHead>` с h1 «Встречи» и подзаголовком «N впереди · одна сегодня»
+  - `<SegmentedControl>` табы (Все / Иду / Организую / Архив) + `<ViewToggle>` справа (List / Grid / Calendar — Grid и Calendar заглушками)
+  - Группировка событий по `Сегодня / <Месяц>` (через `formatDate` или `date-fns`)
+  - Внутри каждой группы — `<ListGroup>` с `<EventListRow>`
+- [ ] `widgets/event-card/EventListRow.tsx` — основной row-компонент:
+  - 7 grid-колонок: `[accent-bar 4px] [date-cell 64px] [info 1fr] [time 160px] [att 120px] [action 130px] [chev 16px]`
+  - Адаптив: `<1100px` скрывает time+att (5 колонок); `<600px` скрывает action (3 колонки)
+  - На mobile-роутах рендерится в компактной вёрстке (см. `05-app.html`)
+- [ ] `widgets/event-card/index.tsx` (старая Grid-карточка) — удалить или оставить под `view=grid` (тёмная статья — на 24.3 решим, пока удаляем)
+- [ ] Empty state — `<EmptyState>` с иконкой `CalendarOff` + текст + primary button
+- [ ] Helper `eventAccentColor(event)` (см. 24.1) — переезжает в `entities/event/lib/`
+
+#### Этап 24.4 — Event-detail
+
+Без hero-обложки. На детальной — те же inset-list группы, но богаче. Mobile-first вёрстка с двумя секциями (info + tabs).
+
+- [ ] `pages/event-detail/index.tsx`:
+  - На `≥1200px` — двух-колоночный layout: левая sticky панель `320px` (EventInfoPanel + ParticipantsSummary) + правая (tabs)
+  - На `<1200px` — single column, info-секция сверху
+- [ ] `widgets/event-detail/EventInfoPanel.tsx`:
+  - Карточка `<ListGroup>`-style: accent-bar по статусу события + `<DateCell>` большего размера (36px day) + title h2 + meta-grid (location/dress code/organizer)
+  - DropdownMenu для организатора (Редактировать / Завершить / Удалить)
+- [ ] `widgets/event-detail/ParticipantsSummaryPanel.tsx`:
+  - Компактная карточка: счётчики `<StatusPill>` (N подтверждено / M приглашено / K отказались) + `<AvatarStack>` max 8
+- [ ] Tabs (Participants/Collections/Polls/Items/Carpools/Links) — `<SegmentedControl>` под info-секцией, контент в `<ListGroup>`
+- [ ] Sticky action bar внизу на mobile (Confirm/Decline/Join) — только когда нужен; на desktop — кнопки в info-panel
+
+#### Этап 24.5 — Feature tabs
+
+Все табы — на `<ListGroup>` + `<ListRow>` паттерн, с accent-bar/avatars/action-pill.
+
+- [ ] `features/participants/ui/ParticipantsTab.tsx` — row: avatar + name + status pill + organizer-actions DropdownMenu
+- [ ] `features/collections/ui/CollectionsTab.tsx`:
+  - Каждый сбор — карточка `<ListGroup>` с заголовком сбора и progress (paid/total)
+  - Участники внутри — rows с avatar + name + status (`going` для paid, `invited` для pending, `gray` для not_paid) + action pill
+  - Modal `ReceiptUploadModal` → `<Dialog>` из `shared/ui/`
+- [ ] `features/polls/ui/PollsTab.tsx` — карточка опроса + варианты как inset-list rows с progress-bar
+- [ ] `features/items/ui/ItemsTab.tsx` — list rows: item + assigned avatar + take/leave button
+- [ ] `features/carpools/ui/CarpoolTab.tsx` — list rows с driver + departure + seats counter
+- [ ] `features/links/ui/LinksTab.tsx` — list rows с favicon (если получим) + title + url + open icon
+
+#### Этап 24.6 — Формы и авторизация
+
+Без декоративных split-screen с градиентами — те же минималистичные карточки на чистом фоне.
+
+- [ ] `pages/event-form/index.tsx`:
+  - Центрированная колонка max 720px на desktop, full-width на mobile
+  - Поля сгруппированы в `<ListGroup>` секциях: Основное (название, описание, категория) / Когда (даты, время, дресс-код) / Где (location, координаты, кнопка «Определить») / Тип (личная/публичная, max guests)
+  - Sticky footer с Cancel / Submit на mobile; на desktop кнопки внизу формы
+- [ ] `pages/login`, `pages/register`, `pages/forgot-password`, `pages/reset-password`:
+  - Полноэкранный центрированный layout, карточка max 400px
+  - Brand-mark сверху (28×28), h2 заголовок, инпуты, primary button full-width, ссылки внизу
+  - Без иллюстраций и градиентов — тот же app-look
+- [ ] `pages/invite/index.tsx` — карточка с meta события + Join/Decline кнопками, тот же стиль что event-detail info-panel
+- [ ] `pages/profile/index.tsx`:
+  - Sidebar/rail те же
+  - Main: `<PageHead>` + segmented control (Профиль / Статистика / Настройки) + `<ListGroup>` секции
+  - Аватар upload — кликабельный avatar + `<input file>`
+
+#### Этап 24.7 — Админка
+
+- [ ] `pages/admin-panel/index.tsx` + `ui/OverviewTab/UsersTab/EventsTab.tsx`:
+  - Tabs через `<SegmentedControl>`
+  - KPI-плитки = маленькие карточки в grid 3×2, цифра tabular + label uppercase 11px (как `<StatsCard>` из RightRail)
+  - Таблицы (TanStack Table) — рестайл под inset-list стиль: header sticky, rows с тонкими разделителями, `hover` token
+- [ ] `widgets/admin-kpi-card/`, `widgets/admin-line-chart/` — `recharts` остаётся, цвета — accent + ink-2 (минимально, без градиентов)
+
+#### Этап 24.8 — Уборка
+
+- [ ] Удалить `@chakra-ui/react`, `@emotion/react`, `@emotion/styled`, `react-icons` из `package.json`
+- [ ] Удалить `src/app/styles/theme.ts`, `ChakraProvider` из `app/providers/`
+- [ ] Удалить `src/App.css` (legacy), почистить `src/index.css`
+- [ ] `npm run build` + сравнить bundle size до/после
+
+---
+
+### Reuse: что переезжает как есть
+
+- Все queries/mutations/api-клиент/i18n/router не трогаем — это слой данных
+- `formatDate`, `formatTime` из `shared/lib/formatDate` — переиспользуются; добавим хелпер `groupByMonth(events)` для секций
+- `useAuth`, `isAdmin`, `apiFetch` — без изменений
+- Семантические токены из `app/styles/theme.ts` — **не переносим**: новая палитра другая (см. выше), старые `pageBg`/`cardBg` и т.д. удаляются вместе с Chakra на 24.8
+
+### Drop / не переносим из старого
+
+- `getGradient` логика в `widgets/event-card/index.tsx:30` — **удаляется**, в новом дизайне нет градиент-обложек. Цвет события определяется через `eventAccentColor(event) → 'blue'|'green'|...` для accent-bar (4px), а не для cover
+- `useColorMode` + dark-токены `_dark` — **временно отключаем** (Tailwind токены готовы для dark, переключатель добавим позже)
+- Hero-card на event-detail, спектр из 8 градиентов, BUSINESS_GRADIENT — **удаляются**
+
+---
+
+### Верификация
+
+После каждого подэтапа:
+1. `cd frontend && npm run build` — проверка типов и сборки
+2. `npm run dev` + ручная проверка изменённой страницы (light + dark, mobile + desktop)
+3. Прогон ключевых flow: создание события, список, открытие детали, переключение табов, открытие модалок (ReceiptUploadModal), формы auth
+4. Backend интеграция: `cd backend && go run ./cmd/server`, login → events → detail
+5. После 24.8: сравнить bundle (`npm run build`), визуальный smoke-тест всех роутов
+
+---
+
+### Риски и ожидания
+
+- **Bundle**: ожидаем сокращение ~30–40% (Chakra+emotion ≈ 200KB gzipped → Tailwind+Radix ≈ 80–100KB)
+- **Toasts**: Chakra `useToast` используется в 7 файлах — sonner-обёртка с тем же API даст миграцию 1:1
+- **i18n**: ключи переводов не меняются
+- **Тёмная тема**: на этом этапе **только светлая**. Tokens в `@theme` проектируем сразу с dark-вариантами в комментариях, но не активируем — переключение добавим отдельной задачей после стабилизации UI
+- **Mini-calendar**: `react-day-picker` может оказаться overkill для 7×6 сетки — на 24.1 оценим, не проще ли написать 50 строк собственного компонента
+- **`cmdk` palette**: добавляется новая фича (⌘K-поиск), которой не было раньше — это улучшение, но потенциальный scope creep. Если затягивает 24.2, выносим в отдельный пост-этап 24.9
+- **Тестирование**: автоматических UI-тестов нет, валидируем глазами и `npm run build`. Эталон — `design/05-app-web.html` и `design/05-app.html`

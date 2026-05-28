@@ -1,17 +1,3 @@
-import {
-  Box,
-  Heading,
-  Skeleton,
-  Stack,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr,
-  VStack,
-} from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import {
   useAdminRecentUsers,
@@ -25,108 +11,100 @@ export default function UsersTab() {
   const top = useAdminTopOrganizers(10)
 
   return (
-    <Stack direction={{ base: 'column', xl: 'row' }} spacing={6} align="stretch">
-      <Box
-        flex={2}
-        bg="cardBg"
-        borderWidth="1px"
-        borderColor="cardBorder"
-        borderRadius="lg"
-        p={5}
-      >
-        <Heading size="sm" mb={4} color="mainText">
-          {t('admin.users.recent')}
-        </Heading>
+    <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-5 items-start">
+      {/* Recent users */}
+      <div className="rounded-[14px] border border-line bg-surface p-5">
+        <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">
+          {t('admin.users.recent', 'Недавние пользователи')}
+        </h2>
         {recent.isLoading ? (
-          <VStack align="stretch" spacing={2}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} h="36px" borderRadius="md" />
-            ))}
-          </VStack>
+          <SkeletonList count={6} h={36} />
         ) : (recent.data?.length ?? 0) === 0 ? (
-          <Text color="dimText" fontSize="sm">
-            {t('admin.empty')}
-          </Text>
+          <Empty />
         ) : (
-          <Box overflowX="auto">
-            <Table size="sm" variant="simple">
-              <Thead>
-                <Tr>
-                  <Th>{t('admin.users.name')}</Th>
-                  <Th>{t('admin.users.email')}</Th>
-                  <Th>{t('admin.users.city')}</Th>
-                  <Th>{t('admin.users.createdAt')}</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {recent.data?.map((u) => (
-                  <Tr key={u.id}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px]">
+              <thead className="border-b border-line">
+                <tr>
+                  <Th>{t('admin.users.name', 'Имя')}</Th>
+                  <Th>{t('admin.users.email', 'Email')}</Th>
+                  <Th>{t('admin.users.city', 'Город')}</Th>
+                  <Th>{t('admin.users.createdAt', 'Создан')}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.data?.map((u, idx) => (
+                  <tr key={u.id} className={idx === 0 ? '' : 'border-t border-line-soft'}>
                     <Td>
-                      <Text fontWeight={500} color="mainText">
+                      <span className="font-medium text-ink">
                         {[u.name, u.last_name].filter(Boolean).join(' ') || '—'}
-                      </Text>
+                      </span>
                     </Td>
-                    <Td color="dimText">{u.email}</Td>
-                    <Td color="dimText">{u.city || '—'}</Td>
-                    <Td color="faintText">{formatDate(u.created_at)}</Td>
-                  </Tr>
+                    <Td className="text-ink-2">{u.email}</Td>
+                    <Td className="text-ink-2">{u.city || '—'}</Td>
+                    <Td className="text-ink-3 tnum">{formatDate(u.created_at)}</Td>
+                  </tr>
                 ))}
-              </Tbody>
-            </Table>
-          </Box>
+              </tbody>
+            </table>
+          </div>
         )}
-      </Box>
+      </div>
 
-      <Box
-        flex={1}
-        bg="cardBg"
-        borderWidth="1px"
-        borderColor="cardBorder"
-        borderRadius="lg"
-        p={5}
-      >
-        <Heading size="sm" mb={4} color="mainText">
-          {t('admin.users.topOrganizers')}
-        </Heading>
+      {/* Top organizers */}
+      <div className="rounded-[14px] border border-line bg-surface p-5">
+        <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">
+          {t('admin.users.topOrganizers', 'Топ организаторов')}
+        </h2>
         {top.isLoading ? (
-          <VStack align="stretch" spacing={2}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} h="32px" borderRadius="md" />
-            ))}
-          </VStack>
+          <SkeletonList count={5} h={32} />
         ) : (top.data?.length ?? 0) === 0 ? (
-          <Text color="dimText" fontSize="sm">
-            {t('admin.empty')}
-          </Text>
+          <Empty />
         ) : (
-          <VStack align="stretch" spacing={2}>
+          <div className="flex flex-col gap-2">
             {top.data?.map((o, idx) => (
-              <Box
+              <div
                 key={o.user_id}
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                px={3}
-                py={2}
-                borderRadius="md"
-                bg="subtleBg"
+                className="flex items-center justify-between gap-3 px-3 py-2 rounded-[8px] bg-bg-2"
               >
-                <Box minW={0}>
-                  <Text fontWeight={500} color="mainText" noOfLines={1}>
+                <div className="min-w-0">
+                  <div className="font-medium text-ink text-[13.5px] truncate">
                     {idx + 1}. {o.name || o.email}
-                  </Text>
-                  <Text fontSize="xs" color="faintText" noOfLines={1}>
-                    {o.email}
-                  </Text>
-                </Box>
-                <Text fontWeight={600} color="brand.600" ml={3} flexShrink={0}>
-                  {o.event_count}
-                </Text>
-              </Box>
+                  </div>
+                  <div className="text-[11.5px] text-ink-3 truncate">{o.email}</div>
+                </div>
+                <div className="text-[14px] font-semibold text-accent tnum shrink-0">{o.event_count}</div>
+              </div>
             ))}
-          </VStack>
+          </div>
         )}
-      </Box>
-    </Stack>
+      </div>
+    </div>
   )
+}
+
+function Th({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-3 py-2 px-2">
+      {children}
+    </th>
+  )
+}
+
+function Td({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <td className={`py-2.5 px-2 ${className ?? ''}`}>{children}</td>
+}
+
+function SkeletonList({ count, h }: { count: number; h: number }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="rounded-[7px] bg-bg-2 animate-pulse" style={{ height: h }} />
+      ))}
+    </div>
+  )
+}
+
+function Empty() {
+  return <div className="text-[13px] text-ink-3">—</div>
 }

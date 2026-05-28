@@ -1,25 +1,13 @@
-import {
-  Box,
-  Button,
-  Grid,
-  HStack,
-  Heading,
-  SimpleGrid,
-  Skeleton,
-  Stack,
-  Text,
-  VStack,
-} from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  FiActivity,
-  FiCalendar,
-  FiDollarSign,
-  FiList,
-  FiUserCheck,
-  FiUsers,
-} from 'react-icons/fi'
+  Activity,
+  Calendar,
+  DollarSign,
+  List,
+  UserCheck,
+  Users,
+} from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -40,15 +28,16 @@ import {
 } from '@/entities/admin-stats/queries'
 import AdminKpiCard from '@/widgets/admin-kpi-card'
 import AdminLineChart from '@/widgets/admin-line-chart'
+import { SegmentedControl } from '@/shared/ui'
 
-const PIE_COLORS = ['#6366f1', '#22c55e', '#f97316', '#ef4444', '#0ea5e9']
+const PIE_COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE']
 
 function formatNumber(n: number): string {
-  return new Intl.NumberFormat().format(n)
+  return new Intl.NumberFormat('ru-RU').format(n)
 }
 
 function formatMoney(n: number): string {
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(n)
 }
 
 export default function OverviewTab() {
@@ -64,7 +53,7 @@ export default function OverviewTab() {
   const chartData = useMemo(
     () =>
       (timeseries.data?.points ?? []).map((p) => ({
-        date: p.date.slice(5), // MM-DD
+        date: p.date.slice(5),
         users: p.users,
         events: p.events,
       })),
@@ -75,158 +64,97 @@ export default function OverviewTab() {
   const statusData = distribution.data?.by_status ?? []
 
   return (
-    <VStack align="stretch" spacing={6}>
-      <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 6 }} spacing={4}>
+    <div className="flex flex-col gap-6">
+      {/* KPI grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <KpiSkeleton loading={overview.isLoading}>
-          <AdminKpiCard
-            label={t('admin.kpi.totalUsers')}
-            value={formatNumber(kpis?.total_users ?? 0)}
-            icon={FiUsers}
-          />
+          <AdminKpiCard label={t('admin.kpi.totalUsers', 'Пользователи')} value={formatNumber(kpis?.total_users ?? 0)} icon={Users} />
         </KpiSkeleton>
         <KpiSkeleton loading={overview.isLoading}>
           <AdminKpiCard
-            label={t('admin.kpi.activeUsers7d')}
+            label={t('admin.kpi.activeUsers7d', 'Активны 7д')}
             value={formatNumber(kpis?.users_active_7d ?? 0)}
-            icon={FiUserCheck}
-            hint={t('admin.kpi.activeUsers30dHint', {
-              count: kpis?.users_active_30d ?? 0,
-            })}
+            icon={UserCheck}
+            hint={t('admin.kpi.activeUsers30dHint', { count: kpis?.users_active_30d ?? 0, defaultValue: `${kpis?.users_active_30d ?? 0} за 30 дн.` })}
           />
         </KpiSkeleton>
         <KpiSkeleton loading={overview.isLoading}>
-          <AdminKpiCard
-            label={t('admin.kpi.totalEvents')}
-            value={formatNumber(kpis?.total_events ?? 0)}
-            icon={FiCalendar}
-          />
+          <AdminKpiCard label={t('admin.kpi.totalEvents', 'Встречи')} value={formatNumber(kpis?.total_events ?? 0)} icon={Calendar} />
         </KpiSkeleton>
         <KpiSkeleton loading={overview.isLoading}>
           <AdminKpiCard
-            label={t('admin.kpi.activeEvents')}
+            label={t('admin.kpi.activeEvents', 'Активные')}
             value={formatNumber(kpis?.events_active ?? 0)}
-            icon={FiActivity}
-            hint={t('admin.kpi.completedHint', {
-              count: kpis?.events_completed ?? 0,
-            })}
+            icon={Activity}
+            hint={t('admin.kpi.completedHint', { count: kpis?.events_completed ?? 0, defaultValue: `${kpis?.events_completed ?? 0} завершены` })}
           />
         </KpiSkeleton>
         <KpiSkeleton loading={overview.isLoading}>
-          <AdminKpiCard
-            label={t('admin.kpi.totalCollections')}
-            value={formatNumber(kpis?.total_collections ?? 0)}
-            icon={FiList}
-          />
+          <AdminKpiCard label={t('admin.kpi.totalCollections', 'Сборы')} value={formatNumber(kpis?.total_collections ?? 0)} icon={List} />
         </KpiSkeleton>
         <KpiSkeleton loading={overview.isLoading}>
-          <AdminKpiCard
-            label={t('admin.kpi.totalCollected')}
-            value={formatMoney(kpis?.total_collected ?? 0)}
-            icon={FiDollarSign}
-          />
+          <AdminKpiCard label={t('admin.kpi.totalCollected', 'Собрано')} value={formatMoney(kpis?.total_collected ?? 0)} icon={DollarSign} />
         </KpiSkeleton>
-      </SimpleGrid>
+      </div>
 
-      <Box
-        bg="cardBg"
-        borderWidth="1px"
-        borderColor="cardBorder"
-        borderRadius="lg"
-        p={5}
-      >
-        <Stack
-          direction={{ base: 'column', md: 'row' }}
-          justify="space-between"
-          align={{ base: 'start', md: 'center' }}
-          spacing={3}
-          mb={4}
-        >
-          <Heading size="sm" color="mainText">
-            {t('admin.charts.timeseries')}
-          </Heading>
-          <HStack spacing={2}>
-            <Button
-              size="xs"
-              variant={days === 30 ? 'solid' : 'outline'}
-              colorScheme="blue"
-              onClick={() => setDays(30)}
-            >
-              {t('admin.charts.range30')}
-            </Button>
-            <Button
-              size="xs"
-              variant={days === 90 ? 'solid' : 'outline'}
-              colorScheme="blue"
-              onClick={() => setDays(90)}
-            >
-              {t('admin.charts.range90')}
-            </Button>
-          </HStack>
-        </Stack>
+      {/* Timeseries chart */}
+      <div className="rounded-[14px] border border-line bg-surface p-5">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
+          <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink">
+            {t('admin.charts.timeseries', 'Регистрации и встречи')}
+          </h2>
+          <SegmentedControl
+            value={String(days) as '30' | '90'}
+            onChange={v => setDays(Number(v) as 30 | 90)}
+            options={[
+              { value: '30', label: t('admin.charts.range30', '30 дней') },
+              { value: '90', label: t('admin.charts.range90', '90 дней') },
+            ]}
+          />
+        </div>
         {timeseries.isLoading ? (
-          <Skeleton h="280px" borderRadius="md" />
+          <SkeletonBlock height={280} />
         ) : (
           <AdminLineChart
             data={chartData}
             xKey="date"
             series={[
-              { dataKey: 'users', name: t('admin.charts.users') },
-              { dataKey: 'events', name: t('admin.charts.events') },
+              { dataKey: 'users', name: t('admin.charts.users', 'Пользователи') },
+              { dataKey: 'events', name: t('admin.charts.events', 'Встречи') },
             ]}
           />
         )}
-      </Box>
+      </div>
 
-      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6}>
-        <Box
-          bg="cardBg"
-          borderWidth="1px"
-          borderColor="cardBorder"
-          borderRadius="lg"
-          p={5}
-        >
-          <Heading size="sm" mb={4} color="mainText">
-            {t('admin.charts.byCategory')}
-          </Heading>
+      {/* Distribution charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <ChartCard title={t('admin.charts.byCategory', 'По категориям')}>
           {distribution.isLoading ? (
-            <Skeleton h="240px" borderRadius="md" />
+            <SkeletonBlock height={240} />
           ) : categoryData.length === 0 ? (
-            <Text color="dimText" fontSize="sm">
-              {t('admin.empty')}
-            </Text>
+            <EmptyHint label={t('admin.empty', 'Нет данных')} />
           ) : (
-            <Box h="240px">
+            <div style={{ height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={categoryData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chakra-colors-cardBorder)" />
-                  <XAxis dataKey="key" tick={{ fontSize: 12 }} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12 }} tickLine={false} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(60,60,67,0.10)" />
+                  <XAxis dataKey="key" tick={{ fontSize: 12, fill: 'rgba(60,60,67,0.60)' }} tickLine={false} axisLine={{ stroke: 'rgba(60,60,67,0.10)' }} />
+                  <YAxis tick={{ fontSize: 12, fill: 'rgba(60,60,67,0.60)' }} tickLine={false} allowDecimals={false} axisLine={{ stroke: 'rgba(60,60,67,0.10)' }} />
+                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid rgba(60,60,67,0.14)', borderRadius: 9, fontSize: 12 }} />
+                  <Bar dataKey="count" fill="#007AFF" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </Box>
+            </div>
           )}
-        </Box>
+        </ChartCard>
 
-        <Box
-          bg="cardBg"
-          borderWidth="1px"
-          borderColor="cardBorder"
-          borderRadius="lg"
-          p={5}
-        >
-          <Heading size="sm" mb={4} color="mainText">
-            {t('admin.charts.byStatus')}
-          </Heading>
+        <ChartCard title={t('admin.charts.byStatus', 'По статусу')}>
           {distribution.isLoading ? (
-            <Skeleton h="240px" borderRadius="md" />
+            <SkeletonBlock height={240} />
           ) : statusData.length === 0 ? (
-            <Text color="dimText" fontSize="sm">
-              {t('admin.empty')}
-            </Text>
+            <EmptyHint label={t('admin.empty', 'Нет данных')} />
           ) : (
-            <Box h="240px">
+            <div style={{ height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -241,19 +169,40 @@ export default function OverviewTab() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid rgba(60,60,67,0.14)', borderRadius: 9, fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12, color: 'rgba(60,60,67,0.60)' }} />
                 </PieChart>
               </ResponsiveContainer>
-            </Box>
+            </div>
           )}
-        </Box>
-      </Grid>
-    </VStack>
+        </ChartCard>
+      </div>
+    </div>
   )
 }
 
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-[14px] border border-line bg-surface p-5">
+      <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function SkeletonBlock({ height }: { height: number }) {
+  return (
+    <div className="rounded-[10px] bg-bg-2 animate-pulse" style={{ height }} />
+  )
+}
+
+function EmptyHint({ label }: { label: string }) {
+  return <div className="text-[13px] text-ink-3">{label}</div>
+}
+
 function KpiSkeleton({ loading, children }: { loading: boolean; children: React.ReactNode }) {
-  if (loading) return <Skeleton h="92px" borderRadius="lg" />
+  if (loading) {
+    return <div className="h-[92px] rounded-[12px] bg-bg-2 animate-pulse" />
+  }
   return <>{children}</>
 }

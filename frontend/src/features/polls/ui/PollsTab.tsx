@@ -1,29 +1,16 @@
-import {
-  VStack,
-  HStack,
-  Text,
-  Button,
-  Box,
-  Progress,
-  Input,
-  IconButton,
-  FormControl,
-  FormLabel,
-  useDisclosure,
-  Collapse,
-  Icon,
-} from '@chakra-ui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiPlus, FiTrash2, FiBarChart2 } from 'react-icons/fi'
+import { BarChart3, Plus, Trash2 } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddPoll, useVote } from '@/features/polls/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { Button, Input } from '@/shared/ui'
+import { cn } from '@/shared/lib/cn'
 
 export default function PollsTab({ event }: { event: Event }) {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { isOpen, onToggle } = useDisclosure()
+  const [open, setOpen] = useState(false)
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
   const isOrganizer = event.organizer.id === user?.id
@@ -31,162 +18,149 @@ export default function PollsTab({ event }: { event: Event }) {
   const addPoll = useAddPoll(event.id)
   const castVote = useVote(event.id)
 
-  function handleAddOption() {
-    setOptions(o => [...o, ''])
-  }
-
-  function handleRemoveOption(i: number) {
-    setOptions(o => o.filter((_, idx) => idx !== i))
-  }
-
   function handleCreate() {
-    const validOptions = options.filter(o => o.trim())
-    if (!question.trim() || validOptions.length < 2) return
-    addPoll.mutate({ question: question.trim(), options: validOptions }, {
-      onSuccess: () => {
-        setQuestion('')
-        setOptions(['', ''])
-        onToggle()
+    const valid = options.filter(o => o.trim())
+    if (!question.trim() || valid.length < 2) return
+    addPoll.mutate(
+      { question: question.trim(), options: valid },
+      {
+        onSuccess: () => {
+          setQuestion('')
+          setOptions(['', ''])
+          setOpen(false)
+        },
       },
-    })
+    )
   }
 
   const isCompleted = event.status === 'completed'
 
   return (
-    <VStack align="stretch" spacing={4}>
-      <HStack justify="space-between">
-        <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          {t('polls.sectionTitle')}
-        </Text>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+          {t('polls.sectionTitle', 'Опросы')}
+        </div>
         {isOrganizer && !isCompleted && (
-          <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
-            {t('polls.newPoll')}
+          <Button variant="outline" size="sm" onClick={() => setOpen(v => !v)}>
+            <Plus size={13} /> {t('polls.newPoll', 'Новый опрос')}
           </Button>
         )}
-      </HStack>
+      </div>
 
-      <Collapse in={isOpen} animateOpacity>
-        <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
-          <VStack spacing={3}>
-            <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('polls.fieldQuestion')}</FormLabel>
-              <Input
-                size="sm"
-                value={question}
-                onChange={e => setQuestion(e.target.value)}
-                placeholder={t('polls.fieldQuestionPlaceholder')}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('polls.fieldOptions')}</FormLabel>
-              <VStack spacing={2}>
-                {options.map((opt, i) => (
-                  <HStack key={i} w="full">
-                    <Input
-                      size="sm"
-                      value={opt}
-                      onChange={e => setOptions(o => o.map((v, idx) => idx === i ? e.target.value : v))}
-                      placeholder={t('polls.optionPlaceholder', { number: i + 1 })}
-                    />
-                    {options.length > 2 && (
-                      <IconButton
-                        aria-label={t('polls.deleteOption')}
-                        icon={<FiTrash2 />}
-                        size="sm"
-                        variant="ghost"
-                        colorScheme="red"
-                        onClick={() => handleRemoveOption(i)}
-                      />
-                    )}
-                  </HStack>
-                ))}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  color="brand.600"
-                  alignSelf="flex-start"
-                  onClick={handleAddOption}
-                  px={0}
-                >
-                  {t('polls.addOption')}
-                </Button>
-              </VStack>
-            </FormControl>
-            <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={onToggle}>{t('common.cancel')}</Button>
-              <Button size="sm" colorScheme="blue" onClick={handleCreate} isLoading={addPoll.isPending}>{t('common.create')}</Button>
-            </HStack>
-          </VStack>
-        </Box>
-      </Collapse>
+      {open && (
+        <div className="rounded-[12px] border border-line bg-bg-2 p-3.5 flex flex-col gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
+              {t('polls.fieldQuestion', 'Вопрос')}
+            </div>
+            <Input
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              placeholder={t('polls.fieldQuestionPlaceholder', 'Где встречаемся?')}
+              autoFocus
+            />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
+              {t('polls.fieldOptions', 'Варианты')}
+            </div>
+            <div className="flex flex-col gap-2">
+              {options.map((opt, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={opt}
+                    onChange={e => setOptions(o => o.map((v, idx) => (idx === i ? e.target.value : v)))}
+                    placeholder={t('polls.optionPlaceholder', { number: i + 1, defaultValue: `Вариант ${i + 1}` })}
+                  />
+                  {options.length > 2 && (
+                    <button
+                      type="button"
+                      aria-label={t('polls.deleteOption', 'Удалить вариант')}
+                      onClick={() => setOptions(o => o.filter((_, idx) => idx !== i))}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-[9px] text-ink-3 hover:bg-danger/10 hover:text-danger transition shrink-0"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setOptions(o => [...o, ''])}
+                className="self-start text-[13px] font-semibold text-accent hover:opacity-80 transition"
+              >
+                + {t('polls.addOption', 'Добавить вариант')}
+              </button>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              {t('common.cancel', 'Отмена')}
+            </Button>
+            <Button size="sm" onClick={handleCreate} disabled={addPoll.isPending}>
+              {t('common.create', 'Создать')}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {event.polls.length === 0 && (
-        <Box textAlign="center" py={10} color="faintText">
-          <Icon as={FiBarChart2} boxSize={8} mb={2} />
-          <Text fontSize="sm" color="dimText">{t('polls.empty')}</Text>
-        </Box>
+        <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
+          <BarChart3 size={26} className="text-ink-3" />
+          <p className="text-[13px] text-ink-3">{t('polls.empty', 'Опросов пока нет.')}</p>
+        </div>
       )}
 
       {event.polls.map(poll => {
         const totalVotes = poll.options.reduce((s, o) => s + o.votes.length, 0)
         const myVote = poll.options.find(o => o.votes.includes(user?.id ?? ''))
-
         return (
-          <Box
-            key={poll.id}
-            p={4}
-            borderRadius="xl"
-            border="1px solid"
-            borderColor="subtleBorder"
-            bg="cardBg"
-          >
-            <Text fontWeight="500" fontSize="sm" mb={3}>{poll.question}</Text>
-            <VStack align="stretch" spacing={2}>
+          <div key={poll.id} className="rounded-[12px] border border-line bg-surface p-4 flex flex-col gap-2.5">
+            <div className="text-[14px] font-medium text-ink">{poll.question}</div>
+            <div className="flex flex-col gap-2">
               {poll.options.map(option => {
                 const pct = totalVotes > 0 ? Math.round((option.votes.length / totalVotes) * 100) : 0
-                const isMyVote = myVote?.id === option.id
+                const isMy = myVote?.id === option.id
                 return (
-                  <Box
+                  <button
+                    type="button"
                     key={option.id}
-                    p={3}
-                    borderRadius="lg"
-                    border="1px solid"
-                    borderColor={isMyVote ? 'brand.200' : 'subtleBorder'}
-                    bg={isMyVote ? 'navActiveBg' : 'subtleBg'}
-                    cursor={isCompleted ? 'default' : 'pointer'}
+                    disabled={isCompleted}
                     onClick={() => !isCompleted && user && castVote.mutate({ pollId: poll.id, optionId: option.id })}
-                    _hover={isCompleted ? {} : { borderColor: isMyVote ? 'brand.300' : 'defaultBorder' }}
-                    transition="all 0.15s"
+                    className={cn(
+                      'relative w-full rounded-[10px] border p-3 text-left transition focus-ring',
+                      isMy
+                        ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]'
+                        : 'border-line-soft bg-bg-2 hover:border-line',
+                      isCompleted && 'cursor-default',
+                    )}
                   >
-                    <HStack justify="space-between" mb={1.5}>
-                      <Text
-                        fontSize="sm"
-                        fontWeight={isMyVote ? '600' : '400'}
-                        color={isMyVote ? 'navActiveText' : 'mainText'}
-                        flex={1}
-                        noOfLines={2}
-                      >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className={cn('text-[13.5px] flex-1 line-clamp-2', isMy ? 'font-semibold text-accent' : 'text-ink')}>
                         {option.label}
-                      </Text>
-                      <Text fontSize="xs" color="dimText" flexShrink={0} ml={2}>
+                      </span>
+                      <span className="text-[12px] text-ink-3 tnum shrink-0">
                         {option.votes.length} · {pct}%
-                      </Text>
-                    </HStack>
-                    <Progress
-                      value={pct}
-                      size="xs"
-                      colorScheme={isMyVote ? 'purple' : 'gray'}
-                      borderRadius="full"
-                    />
-                  </Box>
+                      </span>
+                    </div>
+                    {/* Progress */}
+                    <div className="h-1 w-full rounded-full bg-line-soft overflow-hidden">
+                      <div
+                        className={cn('h-full rounded-full transition-[width]', isMy ? 'bg-accent' : 'bg-ink-3')}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </button>
                 )
               })}
-            </VStack>
-            <Text fontSize="xs" color="dimText" mt={2}>{t('polls.totalVotes', { count: totalVotes })}</Text>
-          </Box>
+            </div>
+            <div className="text-[12px] text-ink-3">
+              {t('polls.totalVotes', { count: totalVotes, defaultValue: `${totalVotes} голосов` })}
+            </div>
+          </div>
         )
       })}
-    </VStack>
+    </div>
   )
 }

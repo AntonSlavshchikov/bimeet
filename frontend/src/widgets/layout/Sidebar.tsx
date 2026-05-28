@@ -1,63 +1,108 @@
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import {
-  Box,
-  HStack,
-  Text,
-  VStack,
-  Avatar,
-  Icon,
-  Divider,
-  useColorModeValue,
-} from '@chakra-ui/react'
-import { Link, useMatch, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiCalendar, FiLogOut, FiUser } from 'react-icons/fi'
+  Activity,
+  BarChart3,
+  Bell,
+  Calendar,
+  Clock,
+  Globe,
+  Heart,
+  LogOut,
+  MoreHorizontal,
+  Search,
+  User,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
+import { useEvents, usePublicEvents } from '@/entities/event/queries'
+import { Avatar } from '@/shared/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/ui/dropdown-menu'
+import NotificationCenter from '@/features/notifications/ui/NotificationCenter'
+import { cn } from '@/shared/lib/cn'
 
 interface NavItemProps {
   to: string
-  icon: React.ElementType
+  icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
+  count?: number
+  active?: boolean
   onClick?: () => void
 }
 
-function NavItem({ to, icon, label, onClick }: NavItemProps) {
-  const isActive = !!useMatch({ path: to, end: false })
-
+function NavItem({ to, icon: Icon, label, count, active, onClick }: NavItemProps) {
   return (
-    <Box
-      as={Link}
+    <Link
       to={to}
       onClick={onClick}
-      display="flex"
-      alignItems="center"
-      gap={3}
-      px={3}
-      py={2.5}
-      borderRadius="10px"
-      bg={isActive ? 'navActiveBg' : 'transparent'}
-      color={isActive ? 'navActiveText' : 'dimText'}
-      fontWeight={isActive ? 600 : 450}
-      fontSize="sm"
-      transition="all 0.15s"
-      _hover={isActive ? {} : { bg: 'subtleBg', color: 'mainText' }}
-      userSelect="none"
+      className={cn(
+        'group flex items-center gap-2.5 rounded-[7px] px-2.5 py-1.5 text-[13.5px] transition select-none',
+        active
+          ? 'bg-hover text-ink font-semibold'
+          : 'text-ink-2 font-medium hover:bg-hover hover:text-ink',
+      )}
     >
-      <Icon as={icon} boxSize={4} />
-      {label}
-    </Box>
+      <Icon size={16} className={cn('shrink-0', active ? 'text-accent' : 'text-ink-3')} />
+      <span className="truncate">{label}</span>
+      {count != null && count > 0 && (
+        <span
+          className={cn(
+            'ml-auto rounded-full px-1.5 text-[11px] font-semibold tnum',
+            active
+              ? 'bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-accent'
+              : 'bg-line-soft text-ink-3',
+          )}
+        >
+          {count}
+        </span>
+      )}
+    </Link>
   )
 }
 
-interface SidebarContentProps {
+function NavLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-2.5 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+      {children}
+    </div>
+  )
+}
+
+interface SidebarProps {
+  /** Колбэк закрытия (если sidebar внутри Drawer). На текущем layout всегда no-op. */
   onClose?: () => void
 }
 
-export default function SidebarContent({ onClose }: SidebarContentProps) {
+export default function Sidebar({ onClose }: SidebarProps = {}) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const { t } = useTranslation()
-  const logoutHoverBg = useColorModeValue('red.50', 'rgba(254,202,202,0.08)')
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const { t, i18n } = useTranslation()
+  const isRu = i18n.language === 'ru'
+
+  const events = useEvents()
+  const publicEvents = usePublicEvents()
+
+  const myEvents = events.filter(e => e.status !== 'completed')
+  const attendingCount = myEvents.filter(e => e.organizer.id !== user?.id).length
+  const organizingCount = myEvents.filter(e => e.organizer.id === user?.id).length
+  const pastCount = events.filter(e => e.status === 'completed').length
+  const publicCount = (publicEvents ?? []).length
+
+  const onEvents = location.pathname.startsWith('/events') && !location.pathname.includes('/new')
+  const currentTab = onEvents ? searchParams.get('tab') : null
+
+  function isFilter(tab: string) {
+    return onEvents && currentTab === tab
+  }
 
   function handleLogout() {
     logout()
@@ -66,90 +111,135 @@ export default function SidebarContent({ onClose }: SidebarContentProps) {
   }
 
   return (
-    <Box
-      h="100%"
-      display="flex"
-      flexDirection="column"
-      bg="sidebarBg"
-      borderRight="1px solid"
-      borderColor="sidebarBorder"
-    >
-      {/* Logo */}
-      <Box px={4} pt={5} pb={4}>
-        <HStack spacing={2}>
-          <Box
-            w="28px"
-            h="28px"
-            borderRadius="md"
-            bg="brand.600"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            flexShrink={0}
-          >
-            <Text fontSize="12px" lineHeight={1} color="white">✦</Text>
-          </Box>
-          <Text fontSize="md" fontWeight="700" color="mainText" letterSpacing="-0.3px">
-            Bimeet
-          </Text>
-        </HStack>
-      </Box>
+    <aside className="h-full flex flex-col bg-bg border-r border-line">
+      {/* Brand */}
+      <div className="flex items-center gap-2.5 px-3 pt-5 pb-4">
+        <div className="w-7 h-7 rounded-lg bg-ink text-bg flex items-center justify-center font-bold text-[14px] tracking-[-0.02em]">
+          B
+        </div>
+        <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Bimeet</div>
+      </div>
 
-      <Divider borderColor="sidebarBorder" />
+      {/* Main nav */}
+      <nav className="flex flex-col gap-px px-3">
+        <NavItem
+          to="/events"
+          icon={Calendar}
+          label={t('nav.events', 'Встречи')}
+          count={myEvents.length}
+          active={onEvents && !currentTab}
+          onClick={onClose}
+        />
 
-      {/* Navigation */}
-      <VStack align="stretch" spacing={0.5} px={3} pt={3} flex={1}>
-        <NavItem to="/events" icon={FiCalendar} label={t('nav.events')} onClick={onClose} />
-        <NavItem to="/profile" icon={FiUser} label={t('nav.profile')} onClick={onClose} />
+        {/* Уведомления — DropdownMenu, не route */}
+        <NotificationCenter
+          renderTrigger={({ count }) => (
+            <button
+              type="button"
+              className={cn(
+                'group w-full flex items-center gap-2.5 rounded-[7px] px-2.5 py-1.5 text-[13.5px] transition select-none cursor-pointer focus-ring',
+                'text-ink-2 font-medium hover:bg-hover hover:text-ink',
+              )}
+            >
+              <Bell size={16} className="shrink-0 text-ink-3" />
+              <span className="truncate">{t('nav.notifications', 'Уведомления')}</span>
+              {count > 0 && (
+                <span className="ml-auto rounded-full px-1.5 text-[11px] font-semibold tnum bg-accent text-white">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </button>
+          )}
+        />
+
+        <NavItem
+          to="/events?tab=public"
+          icon={Search}
+          label={t('nav.publicEvents', 'Найти публичные')}
+          count={publicCount > 0 ? publicCount : undefined}
+          active={isFilter('public')}
+          onClick={onClose}
+        />
+
         {isAdmin(user) && (
-          <NavItem to="/admin" icon={FiBarChart2} label={t('nav.admin')} onClick={onClose} />
-        )}
-      </VStack>
-
-      {/* User section */}
-      {user && (
-        <Box px={3} pb={4}>
-          <Divider borderColor="sidebarBorder" mb={3} />
-          <Box
-            as={Link}
-            to="/profile"
+          <NavItem
+            to="/admin"
+            icon={BarChart3}
+            label={t('nav.admin', 'Админка')}
+            active={location.pathname.startsWith('/admin')}
             onClick={onClose}
-            display="block"
-            px={3}
-            py={2}
-            mb={1}
-            borderRadius="10px"
-            _hover={{ bg: 'subtleBg' }}
-            transition="background 0.15s"
-          >
-            <HStack spacing={2.5}>
-              <Avatar size="sm" src={user.avatar_url ?? undefined} name={user.name} bg="brand.600" color="white" fontWeight="600" flexShrink={0} />
-              <Box minW={0}>
-                <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1}>{user.name}</Text>
-                <Text fontSize="xs" color="faintText" noOfLines={1}>{user.email}</Text>
-              </Box>
-            </HStack>
-          </Box>
-          <Box
-            display="flex"
-            alignItems="center"
-            gap={3}
-            px={3}
-            py={2.5}
-            borderRadius="10px"
-            color="dimText"
-            fontSize="sm"
-            fontWeight={450}
-            cursor="pointer"
-            transition="all 0.15s"
-            _hover={{ bg: logoutHoverBg, color: 'red.500' }}
-            onClick={handleLogout}
-          >
-            <Icon as={FiLogOut} boxSize={4} />
-            {t('common.logout', 'Выйти')}
-          </Box>
-        </Box>
+          />
+        )}
+      </nav>
+
+      {/* Filters */}
+      <nav className="flex flex-col gap-px px-3">
+        <NavLabel>{t('nav.filtersLabel', 'Фильтры')}</NavLabel>
+        <NavItem
+          to="/events?tab=attending"
+          icon={Heart}
+          label={t('nav.attending', 'Иду')}
+          count={attendingCount}
+          active={isFilter('attending')}
+          onClick={onClose}
+        />
+        <NavItem
+          to="/events?tab=organizing"
+          icon={Activity}
+          label={t('nav.organizing', 'Организую')}
+          count={organizingCount}
+          active={isFilter('organizing')}
+          onClick={onClose}
+        />
+        <NavItem
+          to="/events?tab=past"
+          icon={Clock}
+          label={t('nav.past', 'Прошедшие')}
+          count={pastCount}
+          active={isFilter('past')}
+          onClick={onClose}
+        />
+      </nav>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* User pill */}
+      {user && (
+        <div className="px-3 pb-4 border-t border-line pt-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2.5 rounded-[8px] px-2 py-2 hover:bg-hover transition focus-ring"
+              >
+                <Avatar name={user.name} src={user.avatar_url} size="md" />
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="text-[13px] font-semibold leading-[1.2] truncate text-ink">{user.name}</div>
+                  <div className="text-[11px] text-ink-3 leading-[1.2] truncate">{user.email}</div>
+                </div>
+                <MoreHorizontal size={14} className="text-ink-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="w-[224px]">
+              <DropdownMenuLabel>{t('common.account', 'Аккаунт')}</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => { navigate('/profile'); onClose?.() }}>
+                <User size={14} className="text-ink-3" />
+                {t('nav.profile', 'Профиль')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => i18n.changeLanguage(isRu ? 'en' : 'ru')}>
+                <Globe size={14} className="text-ink-3" />
+                {isRu ? 'English' : 'Русский'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem destructive onClick={handleLogout}>
+                <LogOut size={14} />
+                {t('common.logout', 'Выйти')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
-    </Box>
+    </aside>
   )
 }

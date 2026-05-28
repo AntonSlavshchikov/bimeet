@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>App — минимализм</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  :root {
+    --bg: #F2F2F7;
+    --surface: #FFFFFF;
+    --ink: #000000;
+    --ink-2: #3C3C43;
+    --ink-3: rgba(60,60,67,0.60);
+    --ink-4: rgba(60,60,67,0.30);
+    --line: rgba(60,60,67,0.18);
+    --line-soft: rgba(60,60,67,0.08);
+    --accent: #007AFF;
+    --green: #34C759;
+    --orange: #FF9500;
+    --red: #FF3B30;
+    --purple: #AF52DE;
+  }
+  html, body { margin: 0; padding: 0; height: 100% }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv11', 'ss01', 'tnum';
+  }
+
+  /* back nav (only outside the app frame, hidden on small screens to keep app feel) */
+  .topnav {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    padding: 8px 14px;
+    border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink-2); font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .topnav:hover { color: var(--ink) }
+  @media (max-width: 600px) { .topnav { display: none } }
+
+  /* APP FRAME — narrow centered column, app-like on desktop, full-width on phone */
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    position: relative;
+  }
+  @media (min-width: 600px) {
+    .app {
+      margin-top: 32px; margin-bottom: 32px;
+      min-height: calc(100vh - 64px);
+      border-radius: 28px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+  }
+
+  /* APP NAV BAR (iOS-style) */
+  .navbar {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border-bottom: 0.5px solid var(--line);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 44px;
+  }
+  .navbar .nav-title {
+    font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink);
+  }
+  .navbar .nav-action {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--accent);
+    background: transparent; border: 0;
+    transition: background .15s;
+  }
+  .navbar .nav-action:hover { background: var(--line-soft) }
+  .navbar .nav-left { display: flex; align-items: center; gap: 6px }
+  .navbar .nav-right { display: flex; align-items: center; gap: 2px }
+
+  /* large title (iOS) */
+  .large-title {
+    padding: 8px 20px 16px;
+  }
+  .large-title h1 {
+    margin: 0;
+    font-size: 34px; line-height: 1.05; letter-spacing: -0.022em;
+    font-weight: 700; color: var(--ink);
+  }
+  .large-title .sub {
+    margin: 6px 0 0; font-size: 14px; color: var(--ink-3); font-weight: 500;
+  }
+
+  /* segmented control */
+  .segmented {
+    margin: 8px 16px 20px;
+    background: var(--line-soft);
+    border-radius: 9px;
+    padding: 2px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+  .segmented .seg {
+    text-align: center; padding: 7px 4px;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    border-radius: 7px; cursor: pointer; user-select: none;
+    transition: all .15s;
+    letter-spacing: -0.01em;
+  }
+  .segmented .seg.active {
+    background: var(--surface); color: var(--ink); font-weight: 600;
+    box-shadow:
+      0 3px 8px rgba(0,0,0,0.04),
+      0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  /* section group (iOS inset grouped list) */
+  .section { margin-bottom: 28px }
+  .section-header {
+    padding: 0 20px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title {
+    font-size: 13px; font-weight: 600; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .section-action {
+    font-size: 13px; color: var(--accent); font-weight: 500; cursor: pointer;
+  }
+
+  .list {
+    margin: 0 16px;
+    background: var(--surface);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    column-gap: 14px;
+    align-items: center;
+    padding: 12px 16px;
+    position: relative;
+    text-decoration: none; color: inherit;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .row:hover { background: var(--line-soft) }
+  .row:active { background: var(--line) }
+  /* separator */
+  .row + .row::before {
+    content: ''; position: absolute; top: 0; left: 64px; right: 0;
+    height: 0.5px; background: var(--line);
+  }
+
+  /* time block — left column */
+  .time {
+    width: 38px;
+    display: flex; flex-direction: column; align-items: center;
+    color: var(--ink);
+  }
+  .time .t {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .time .ap {
+    font-size: 11px; color: var(--ink-3); font-weight: 500;
+    margin-top: 1px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+
+  /* main info */
+  .info { min-width: 0; display: flex; flex-direction: column; gap: 2px }
+  .info .title {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--ink); line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .info .meta {
+    font-size: 13px; color: var(--ink-3); font-weight: 400;
+    line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .info .meta .dot {
+    margin: 0 5px; color: var(--ink-4);
+  }
+
+  /* status indicator left of time, vertical bar */
+  .accent-bar {
+    width: 3px; align-self: stretch; border-radius: 999px;
+    background: var(--accent);
+    margin-right: 2px;
+  }
+  .accent-bar.blue   { background: var(--accent) }
+  .accent-bar.green  { background: var(--green) }
+  .accent-bar.orange { background: var(--orange) }
+  .accent-bar.red    { background: var(--red) }
+  .accent-bar.purple { background: var(--purple) }
+  .accent-bar.gray   { background: var(--ink-4) }
+
+  /* right side: avatars + chevron */
+  .right { display: flex; align-items: center; gap: 8px }
+  .avatars { display: flex }
+  .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid var(--surface); margin-left: -6px;
+    background: var(--ink-3); color: var(--surface);
+    font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar:first-child { margin-left: 0 }
+  .avatar.a1 { background: #FF9500 }
+  .avatar.a2 { background: #007AFF }
+  .avatar.a3 { background: #AF52DE }
+  .avatar.a4 { background: #FF2D55 }
+  .avatar.a5 { background: #34C759 }
+  .avatar.a6 { background: #5856D6 }
+  .chev { color: var(--ink-4); font-size: 14px; font-weight: 600 }
+
+  /* status pill (compact, only when needs action) */
+  .pill {
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--orange); color: #fff;
+    letter-spacing: 0.01em;
+  }
+  .pill.host { background: transparent; color: var(--ink-3); border: 1px solid var(--line); font-weight: 500 }
+  .pill.gray { background: var(--line); color: var(--ink-2) }
+
+  /* completed row — faded */
+  .row.completed { opacity: 0.55 }
+
+  /* bottom safe area & tab bar */
+  .tabbar {
+    position: sticky; bottom: 0; z-index: 10;
+    margin-top: auto;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border-top: 0.5px solid var(--line);
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 4px; color: var(--ink-3);
+    cursor: pointer; user-select: none;
+    font-size: 10px; font-weight: 500;
+  }
+  .tab svg { width: 24px; height: 24px; stroke-width: 2 }
+  .tab.active { color: var(--accent) }
+
+  /* content scroll area */
+  .scroll {
+    padding-bottom: 8px;
+  }
+
+  /* desktop: hide tab bar to feel like a side-panel app */
+  /* keep it actually — it reinforces the app feel even on desktop */
+</style>
+</head>
+<body>
+
+<a href="index.html" class="topnav">
+  ←&nbsp;&nbsp;05 · App — минимализм
+</a>
+
+<main class="app">
+
+  <nav class="navbar">
+    <div class="nav-left">
+      <button class="nav-action" aria-label="Календарь">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
+    </div>
+    <div class="nav-title">Встречи</div>
+    <div class="nav-right">
+      <button class="nav-action" aria-label="Поиск">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button class="nav-action" aria-label="Создать">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="scroll">
+
+    <div class="large-title">
+      <h1>Встречи</h1>
+      <p class="sub">8 впереди · одна на этой неделе</p>
+    </div>
+
+    <div class="segmented">
+      <div class="seg active">Все</div>
+      <div class="seg">Иду</div>
+      <div class="seg">Хост</div>
+      <div class="seg">Архив</div>
+    </div>
+
+    <!-- THIS WEEK -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Сегодня · сб, 8 июня</span>
+      </div>
+      <div class="list">
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar orange"></div>
+            <div class="time">
+              <div class="t">20:00</div>
+              <div class="ap">сб</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Винный вечер у Лены</div>
+            <div class="meta">Простые вещи <span class="dot">·</span> 8 гостей</div>
+          </div>
+          <div class="right">
+            <span class="pill">Подтвердить</span>
+            <span class="chev">›</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- JUNE -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Июнь</span>
+        <span class="section-action">Все</span>
+      </div>
+      <div class="list">
+
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar red"></div>
+            <div class="time">
+              <div class="t">12</div>
+              <div class="ap">ср</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">День рождения Ани · 28</div>
+            <div class="meta">19:00 <span class="dot">·</span> Quartier Latin <span class="dot">·</span> 12 гостей</div>
+          </div>
+          <div class="right">
+            <div class="avatars">
+              <div class="avatar a1">АП</div>
+              <div class="avatar a2">КС</div>
+              <div class="avatar a3">+9</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </a>
+
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar gray"></div>
+            <div class="time">
+              <div class="t">14</div>
+              <div class="ap">пт</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Карпулинг в Шереметьево</div>
+            <div class="meta">06:00 <span class="dot">·</span> Сокол <span class="dot">·</span> 3/4 мест</div>
+          </div>
+          <div class="right">
+            <div class="avatars">
+              <div class="avatar a3">ИВ</div>
+              <div class="avatar a2">ВС</div>
+              <div class="avatar a5">ТР</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </a>
+
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar orange"></div>
+            <div class="time">
+              <div class="t">16</div>
+              <div class="ap">вс</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Пикник в Парке Горького</div>
+            <div class="meta">14:00 <span class="dot">·</span> ЦПКиО <span class="dot">·</span> 24/50</div>
+          </div>
+          <div class="right">
+            <span class="pill" style="background:var(--accent)">Иду</span>
+            <span class="chev">›</span>
+          </div>
+        </a>
+
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar purple"></div>
+            <div class="time">
+              <div class="t">22</div>
+              <div class="ap">сб</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">React Day Moscow</div>
+            <div class="meta">10:00 <span class="dot">·</span> Сколково <span class="dot">·</span> 187/200</div>
+          </div>
+          <div class="right">
+            <div class="avatars">
+              <div class="avatar a3">ИВ</div>
+              <div class="avatar a2">МК</div>
+              <div class="avatar a4">+184</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </a>
+
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar green"></div>
+            <div class="time">
+              <div class="t">28</div>
+              <div class="ap">пт</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Поход на Хибины · 3 дня</div>
+            <div class="meta">09:00 <span class="dot">·</span> Кировск <span class="dot">·</span> 6 в команде</div>
+          </div>
+          <div class="right">
+            <span class="pill host">Хост</span>
+            <span class="chev">›</span>
+          </div>
+        </a>
+
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar red"></div>
+            <div class="time">
+              <div class="t">30</div>
+              <div class="ap">вс</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Свадьба Кати и Миши</div>
+            <div class="meta">17:00 <span class="dot">·</span> Архангельское <span class="dot">·</span> Black tie</div>
+          </div>
+          <div class="right">
+            <div class="avatars">
+              <div class="avatar a4">КП</div>
+              <div class="avatar a3">МЛ</div>
+              <div class="avatar a1">+77</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- JULY -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Июль</span>
+      </div>
+      <div class="list">
+        <a class="row" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar blue"></div>
+            <div class="time">
+              <div class="t">5</div>
+              <div class="ap">пт</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Совещание Q3</div>
+            <div class="meta">11:00 <span class="dot">·</span> Zoom <span class="dot">·</span> 8 приглашённых</div>
+          </div>
+          <div class="right">
+            <span class="pill host">Хост</span>
+            <span class="chev">›</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- PAST -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Прошедшие</span>
+        <span class="section-action">Все 12</span>
+      </div>
+      <div class="list">
+        <a class="row completed" href="#">
+          <div style="display:flex;align-items:stretch;gap:10px">
+            <div class="accent-bar gray"></div>
+            <div class="time">
+              <div class="t">25</div>
+              <div class="ap">май</div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="title">Брайтонский ужин</div>
+            <div class="meta">18:00 <span class="dot">·</span> The Sad Bar <span class="dot">·</span> 9 были</div>
+          </div>
+          <div class="right">
+            <div class="avatars">
+              <div class="avatar a4">ИК</div>
+              <div class="avatar a2">АР</div>
+              <div class="avatar a1">+7</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="tabbar">
+    <div class="tab active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Встречи
+    </div>
+    <div class="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      Уведомления
+    </div>
+    <div class="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Профиль
+    </div>
+  </nav>
+
+</main>
+
+</body>
+</html>

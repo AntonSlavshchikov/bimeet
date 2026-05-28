@@ -1,171 +1,172 @@
-import {
-  Badge,
-  Box,
-  Button,
-  HStack,
-  Text,
-  Icon,
-  Avatar,
-  AvatarGroup,
-  Tooltip,
-} from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiCalendar, FiChevronRight, FiGlobe, FiLock, FiMapPin } from 'react-icons/fi'
-import type { EventListItem } from '@/entities/event/model/types'
-import { formatDate, formatTime } from '@/shared/lib/formatDate'
-import { getGradient } from './index'
+import { ChevronRight, Globe, Lock } from 'lucide-react'
+import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
+import { eventAccentColor } from '@/shared/lib/eventAccentColor'
+import { DateCell } from '@/shared/ui/date-cell'
+import { TimeCell } from '@/shared/ui/time-cell'
+import { StatusPill, StatusPillButton } from '@/shared/ui/status-pill'
+import { EventTag } from '@/shared/ui/event-tag'
+import { Avatar, AvatarStack } from '@/shared/ui/avatar'
+import { cn } from '@/shared/lib/cn'
 
-const statusColors = {
-  invited:   { color: '#F59E0B', bg: '#FFFBEB' },
-  confirmed: { color: '#10B981', bg: '#ECFDF5' },
-  declined:  { color: '#EF4444', bg: '#FEF2F2' },
+const MONTHS_SHORT_RU = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+const WEEKDAYS_SHORT_RU = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
+
+function formatRowTime(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 interface EventListRowProps {
-  event: EventListItem
+  event: EventListItem | PublicEventListItem
+  /** Статус текущего пользователя для этого события */
   myStatus?: string
+  /** Возможно ли «Иду» — true действует, false disabled, undefined скрывает кнопку */
   canJoin?: boolean
-  onJoin?: (e: React.MouseEvent) => void
+  onJoin?: () => void
+  /** Подпись в DateCell: день недели (внутри одного месяца) или сокращение месяца. */
+  dateCaption?: 'weekday' | 'month'
 }
 
-export default function EventListRow({ event, myStatus, canJoin, onJoin }: EventListRowProps) {
+export default function EventListRow({
+  event,
+  myStatus,
+  canJoin,
+  onJoin,
+  dateCaption = 'weekday',
+}: EventListRowProps) {
   const { t } = useTranslation()
-  const confirmedCount = event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
+  const d = new Date(event.date_start)
+  const day = d.getDate()
+  const caption = dateCaption === 'month' ? MONTHS_SHORT_RU[d.getMonth()] : WEEKDAYS_SHORT_RU[d.getDay()]
+  const time = formatRowTime(event.date_start)
+  const accent = eventAccentColor(event)
   const isCompleted = event.status === 'completed'
-  const gradient = getGradient(event.id, event.category)
-  const statusKey = myStatus as keyof typeof statusColors | undefined
-  const colors = statusKey ? statusColors[statusKey] : null
+  const confirmedCount =
+    event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
+
+  const confirmed = event.participants.filter(p => p.status === 'confirmed').slice(0, 3)
+  const more = Math.max(0, confirmedCount - confirmed.length)
+
+  const showPublicTag = event.is_public
+  const showBusinessTag = event.category === 'business'
 
   return (
-    <Box
-      as={Link}
+    <Link
       to={`/events/${event.id}`}
-      display="grid"
-      gridTemplateColumns={{
-        base: '8px 1fr 32px',
-        sm:   '8px 1fr 96px 32px',
-        md:   '8px 1fr 160px 96px 32px',
-        lg:   '8px 1fr 160px 160px 88px 88px 44px',
-      }}
-      alignItems="center"
-      columnGap={4}
-      px={4}
-      py={3}
-      bg="cardBg"
-      borderRadius="xl"
-      border="1px solid"
-      borderColor="cardBorder"
-      boxShadow="0 1px 3px rgba(15,23,42,0.03)"
-      _hover={{
-        borderColor: 'rgba(15,23,42,0.10)',
-        boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
-        bg: 'subtleBg',
-      }}
-      transition="all 0.15s"
-      minH="60px"
+      className={cn(
+        'group relative grid items-center transition cursor-pointer hover:bg-hover',
+        'grid-cols-[4px_64px_minmax(0,1fr)_16px]',
+        'sm:grid-cols-[4px_64px_minmax(0,1fr)_160px_16px]',
+        'lg:grid-cols-[4px_64px_minmax(220px,1fr)_160px_120px_130px_16px]',
+        'gap-4 pr-4 py-3.5',
+        isCompleted && 'opacity-55',
+      )}
     >
-      {/* Col 1: Dot — gray when completed */}
-      <Box
-        w="8px" h="8px" borderRadius="full" flexShrink={0}
-        {...(isCompleted
-          ? { bg: 'gray.400', _dark: { bg: 'gray.500' } }
-          : { bgGradient: gradient }
-        )}
+      {/* Accent bar — full row height, скруглён справа (как в макете) */}
+      <div
+        className={cn('self-stretch rounded-r-[4px]', {
+          'bg-accent': accent === 'blue',
+          'bg-success': accent === 'green',
+          'bg-warning': accent === 'orange',
+          'bg-danger': accent === 'red',
+          'bg-purple': accent === 'purple',
+          'bg-indigo': accent === 'indigo',
+          'bg-ink-4': accent === 'gray',
+        })}
+        aria-hidden
       />
 
-      {/* Col 2: Title + category badges — dimmed when completed */}
-      <Box minW={0} opacity={isCompleted ? 0.6 : 1}>
-        <HStack mb={0.5} spacing={1.5} flexWrap="nowrap" overflow="hidden">
-          {isCompleted && (
-            <Badge colorScheme="gray" variant="solid" fontSize="9px" borderRadius="md" flexShrink={0}>
-              {t('eventCard.statusCompleted')}
-            </Badge>
+      {/* Date */}
+      <div className="flex justify-center">
+        <DateCell day={day} caption={caption} />
+      </div>
+
+      {/* Info — title, tags, description */}
+      <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-nowrap">
+          <span className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink truncate min-w-0">
+            {event.title}
+          </span>
+          {showBusinessTag && <EventTag variant="work">{t('eventCard.categoryBusiness')}</EventTag>}
+          {showPublicTag ? (
+            <EventTag variant="public">
+              <Globe size={10} className="-ml-0.5" />
+              {t('eventCard.publicBadge')}
+            </EventTag>
+          ) : (
+            <EventTag>
+              <Lock size={10} className="-ml-0.5 opacity-70" />
+              {t('eventCard.personalBadge')}
+            </EventTag>
           )}
-          <Badge
-            colorScheme={event.category === 'business' ? 'gray' : 'green'}
-            variant="subtle"
-            fontSize="9px"
-            borderRadius="md"
-            flexShrink={0}
-          >
-            {event.category === 'business' ? t('eventCard.categoryBusiness') : t('eventCard.categoryOrdinary')}
-          </Badge>
-          <Badge
-            colorScheme={event.is_public ? 'teal' : 'purple'}
-            variant="subtle"
-            fontSize="9px"
-            borderRadius="md"
-            display="flex"
-            alignItems="center"
-            gap={0.5}
-            flexShrink={0}
-          >
-            <Icon as={event.is_public ? FiGlobe : FiLock} boxSize={2.5} />
-            {event.is_public ? t('eventCard.publicBadge') : t('eventCard.personalBadge')}
-          </Badge>
-        </HStack>
-        <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1}>
-          {event.title}
-        </Text>
-      </Box>
-
-      {/* Col 3: Date (sm+) */}
-      <HStack spacing={1.5} minW={0} display={{ base: 'none', sm: 'flex' }}>
-        <Icon as={FiCalendar} color="brand.400" boxSize={3.5} flexShrink={0} />
-        <Text fontSize="xs" color="dimText" fontWeight="500" noOfLines={1}>
-          {formatDate(event.date_start)}, {formatTime(event.date_start)}
-        </Text>
-      </HStack>
-
-      {/* Col 4: Location (md+) */}
-      <HStack spacing={1.5} minW={0} display={{ base: 'none', md: 'flex' }}>
-        <Icon as={FiMapPin} color="brand.400" boxSize={3.5} flexShrink={0} />
-        <Text fontSize="xs" color="dimText" fontWeight="500" noOfLines={1}>
-          {event.location}
-        </Text>
-      </HStack>
-
-      {/* Col 5: Status badge (lg+) — always renders to hold the column */}
-      <Box display={{ base: 'none', lg: 'flex' }} justifyContent="flex-start">
-        {colors && statusKey ? (
-          <Box px={2.5} py={1} borderRadius="full" bg={colors.bg}>
-            <Text fontSize="xs" fontWeight="700" color={colors.color} whiteSpace="nowrap">
-              {t(`eventCard.status${statusKey.charAt(0).toUpperCase()}${statusKey.slice(1)}`)}
-            </Text>
-          </Box>
-        ) : null}
-      </Box>
-
-      {/* Col 6: Participants (lg+) */}
-      <HStack spacing={1.5} display={{ base: 'none', lg: 'flex' }}>
-        <Text fontSize="xs" color="faintText">{confirmedCount}</Text>
-        <AvatarGroup size="xs" max={3} spacing="-6px">
-          {event.participants
-            .filter(p => p.status === 'confirmed')
-            .map(p => (
-              <Avatar key={p.id} name={p.user.name} bg="brand.400" color="white" />
-            ))}
-        </AvatarGroup>
-      </HStack>
-
-      {/* Col 7: Action */}
-      <Box display="flex" justifyContent="flex-end">
-        {canJoin != null ? (
-          <Tooltip label={!canJoin ? t('eventInfo.noSpots') : undefined} isDisabled={canJoin}>
-            <Button
-              size="xs"
-              colorScheme="blue"
-              isDisabled={!canJoin}
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onJoin?.(e) }}
-            >
-              {t('eventCard.attendButton')}
-            </Button>
-          </Tooltip>
-        ) : (
-          <Icon as={FiChevronRight} color="faintText" boxSize={4} />
+        </div>
+        {event.location && (
+          <div className="text-[12.5px] text-ink-3 truncate">
+            {event.location}
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+
+      {/* Time + place (≥sm) */}
+      <div className="hidden sm:block">
+        <TimeCell time={time} place={event.location} />
+      </div>
+
+      {/* Avatars (≥lg) */}
+      <div className="hidden lg:flex items-center gap-2 min-w-0">
+        {confirmed.length > 0 && (
+          <AvatarStack>
+            {confirmed.map(p => (
+              <Avatar key={p.id} name={p.user.name} size="sm" />
+            ))}
+          </AvatarStack>
+        )}
+        {more > 0 && <span className="text-[12px] text-ink-3 tnum">+{more}</span>}
+        {confirmed.length === 0 && more === 0 && (
+          <span className="text-[12px] text-ink-3 tnum">0 чел.</span>
+        )}
+      </div>
+
+      {/* Action / status (≥lg) */}
+      <div className="hidden lg:flex justify-end items-center">
+        {(() => {
+          if (isCompleted) {
+            return <StatusPill variant="completed">{t('eventCard.statusCompleted', 'Завершена')}</StatusPill>
+          }
+          if (myStatus === 'confirmed') {
+            return <StatusPill variant="going">{t('eventCard.statusConfirmed', 'Иду')}</StatusPill>
+          }
+          if (myStatus === 'invited' && canJoin) {
+            return (
+              <StatusPillButton
+                variant="invited"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onJoin?.() }}
+              >
+                {t('eventCard.confirmButton', 'Подтвердить')}
+              </StatusPillButton>
+            )
+          }
+          if (canJoin === true) {
+            return (
+              <StatusPillButton
+                variant="action"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onJoin?.() }}
+              >
+                {t('eventCard.attendButton', 'Иду')}
+              </StatusPillButton>
+            )
+          }
+          if (canJoin === false) {
+            return <StatusPill variant="completed">{t('eventInfo.noSpots', 'Мест нет')}</StatusPill>
+          }
+          return null
+        })()}
+      </div>
+
+      {/* Chevron */}
+      <ChevronRight size={14} className="text-ink-4 justify-self-end" />
+    </Link>
   )
 }

@@ -1,4 +1,3 @@
-import { Box, useToken } from '@chakra-ui/react'
 import {
   CartesianGrid,
   Legend,
@@ -23,24 +22,22 @@ interface AdminLineChartProps {
   height?: number
 }
 
+const DEFAULT_COLORS = ['#007AFF', '#5856D6', '#34C759', '#FF9500', '#AF52DE']
+
 export default function AdminLineChart({
   data,
   xKey,
   series,
   height = 280,
 }: AdminLineChartProps) {
-  const [gridColor, axisColor, tooltipBg, tooltipBorder, tooltipText] = useToken('colors', [
-    'cardBorder',
-    'dimText',
-    'cardBg',
-    'cardBorder',
-    'mainText',
-  ])
-  const [brand500, brand600] = useToken('colors', ['brand.500', 'brand.600'])
-  const defaultColors = [brand600, brand500, '#22c55e', '#f97316']
+  const gridColor = 'rgba(60,60,67,0.10)'
+  const axisColor = 'rgba(60,60,67,0.60)'
+  const tooltipBg = '#FFFFFF'
+  const tooltipBorder = 'rgba(60,60,67,0.14)'
+  const tooltipText = '#000000'
 
   return (
-    <Box w="full" h={height}>
+    <div style={{ width: '100%', height }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={[...data]} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
@@ -60,9 +57,10 @@ export default function AdminLineChart({
             contentStyle={{
               background: tooltipBg,
               border: `1px solid ${tooltipBorder}`,
-              borderRadius: 8,
+              borderRadius: 9,
               color: tooltipText,
               fontSize: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
             }}
             labelStyle={{ color: tooltipText, fontWeight: 600 }}
           />
@@ -73,7 +71,7 @@ export default function AdminLineChart({
               type="monotone"
               dataKey={s.dataKey}
               name={s.name}
-              stroke={s.color ?? defaultColors[i % defaultColors.length]}
+              stroke={s.color ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}
@@ -81,6 +79,6 @@ export default function AdminLineChart({
           ))}
         </LineChart>
       </ResponsiveContainer>
-    </Box>
+    </div>
   )
 }

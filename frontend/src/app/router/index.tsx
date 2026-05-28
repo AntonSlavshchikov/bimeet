@@ -6,12 +6,13 @@ import LoginPage from '@/pages/login'
 import RegisterPage from '@/pages/register'
 import ForgotPasswordPage from '@/pages/forgot-password'
 import ResetPasswordPage from '@/pages/reset-password'
-import EventsListPage from '@/pages/events-list'
+import EventsListPage, { EventsListRail } from '@/pages/events-list'
 import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
 import InvitePage from '@/pages/invite'
 import ProfilePage from '@/pages/profile'
 import AdminPanelPage from '@/pages/admin-panel'
+import DesignSystemPage from '@/pages/_design-system'
 
 export default function AppRouter() {
   return (
@@ -25,7 +26,7 @@ export default function AppRouter() {
           path="/events"
           element={
             <ProtectedRoute>
-              <Layout>
+              <Layout rail={<EventsListRail />}>
                 <EventsListPage />
               </Layout>
             </ProtectedRoute>
@@ -82,6 +83,7 @@ export default function AppRouter() {
           }
         />
         <Route path="/invite/:token" element={<InvitePage />} />
+        <Route path="/_design-system" element={<DesignSystemPage />} />
         <Route path="*" element={<Navigate to="/events" replace />} />
       </Routes>
     </BrowserRouter>

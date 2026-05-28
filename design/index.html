@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet · Варианты дизайна</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #FAFAF7;
+    color: #0A0A0B;
+    -webkit-font-smoothing: antialiased;
+    padding: 80px 24px 120px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto }
+  h1 {
+    font-size: 52px; line-height: 1.05; letter-spacing: -0.03em;
+    margin: 0 0 12px; font-weight: 700;
+  }
+  .sub { color: #57534E; font-size: 17px; margin: 0 0 64px; max-width: 560px }
+  .list { display: grid; gap: 12px }
+  a.card {
+    display: flex; align-items: center; gap: 20px;
+    padding: 24px; border-radius: 16px; background: #fff;
+    border: 1px solid rgba(0,0,0,0.06);
+    text-decoration: none; color: inherit;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  a.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+    border-color: rgba(0,0,0,0.10);
+  }
+  .num {
+    flex-shrink: 0;
+    width: 56px; height: 56px; border-radius: 12px;
+    background: #0A0A0B; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 20px; letter-spacing: -0.02em;
+  }
+  .meta h2 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: -0.01em }
+  .meta p  { margin: 0; color: #57534E; font-size: 14px }
+  .arr { margin-left: auto; color: #A8A29E; font-size: 22px }
+  .tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #A8A29E;
+    margin-bottom: 24px; display: block;
+  }
+  footer { margin-top: 72px; color: #A8A29E; font-size: 13px; text-align: center }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">Bimeet · Redesign exploration</span>
+  <h1>Четыре направления для&nbsp;списка встреч</h1>
+  <p class="sub">Сравните визуальные языки. Откройте каждый, поживите с ним пару минут — какие эмоции вызывает, насколько считывается контент, хочется ли провести там много времени.</p>
+
+  <div class="list">
+    <a class="card" href="01-luma.html">
+      <div class="num">01</div>
+      <div class="meta">
+        <h2>Luma — кремовый минимализм</h2>
+        <p>Тёплый фон, большие date-блоки, мягкие карточки без декора. Контент — главный.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="02-partiful.html">
+      <div class="num">02</div>
+      <div class="meta">
+        <h2>Partiful — тёмный неон</h2>
+        <p>Угольный фон, яркие градиенты-обложки, заголовки крупно. Энергия и драма событий.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="03-editorial.html">
+      <div class="num">03</div>
+      <div class="meta">
+        <h2>Editorial Bento — журнальный модерн</h2>
+        <p>Асимметричная сетка, акцент на типографике, миксы размеров карточек. Похоже на арт-журнал.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="04-frosted.html">
+      <div class="num">04</div>
+      <div class="meta">
+        <h2>Frosted Glass — премиум-блюр</h2>
+        <p>Цветной фон, полупрозрачные карточки с blur, мягкие глубокие тени. Apple-style.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="05-app-web.html">
+      <div class="num">05</div>
+      <div class="meta">
+        <h2>App / Web — минимализм для десктопа</h2>
+        <p>Sidebar с навигацией · широкий список встреч · правая панель с «Сегодня», mini-календарём и статистикой. Авто dark/light.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="05-app.html">
+      <div class="num">05<sup style="font-size:11px;color:#A8A29E;margin-left:2px">m</sup></div>
+      <div class="meta">
+        <h2>App / Mobile — тот же язык на телефоне</h2>
+        <p>Узкая колонка, inset-list по дням, bottom tab bar. Адаптивен от телефона до десктопа. Авто dark/light.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+  </div>
+
+  <footer>Все примеры используют один и тот же набор данных, чтобы можно было честно сравнить визуальные решения.</footer>
+</div>
+</body>
+</html>

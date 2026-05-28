@@ -1,151 +1,119 @@
-import {
-  VStack,
-  HStack,
-  Text,
-  Button,
-  Box,
-  Avatar,
-  Badge,
-  Input,
-  FormControl,
-  FormLabel,
-  useDisclosure,
-  Collapse,
-  Icon,
-} from '@chakra-ui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiPlus, FiShoppingBag } from 'react-icons/fi'
+import { Plus, ShoppingBag } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddItem, useAssignItem } from '@/features/items/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { Avatar, Button, Input, StatusPill, StatusPillButton } from '@/shared/ui'
 
 export default function ItemsTab({ event }: { event: Event }) {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const { isOpen, onToggle } = useDisclosure()
-  const [newName, setNewName] = useState('')
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
 
   const addItem = useAddItem(event.id)
   const assignItem = useAssignItem(event.id)
   const isCompleted = event.status === 'completed'
 
   function handleAdd() {
-    if (!newName.trim()) return
-    addItem.mutate(newName.trim(), {
-      onSuccess: () => {
-        setNewName('')
-        onToggle()
-      },
+    if (!name.trim()) return
+    addItem.mutate(name.trim(), {
+      onSuccess: () => { setName(''); setOpen(false) },
     })
   }
 
   return (
-    <VStack align="stretch" spacing={4}>
-      <HStack justify="space-between">
-        <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          {t('items.sectionTitle')}
-        </Text>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+          {t('items.sectionTitle', 'Что брать')}
+        </div>
         {!isCompleted && (
-          <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
-            Добавить
+          <Button variant="outline" size="sm" onClick={() => setOpen(v => !v)}>
+            <Plus size={13} /> {t('common.add', 'Добавить')}
           </Button>
         )}
-      </HStack>
+      </div>
 
-      <Collapse in={isOpen} animateOpacity>
-        <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
-          <VStack spacing={3}>
-            <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('items.fieldName')}</FormLabel>
-              <Input
-                size="sm"
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-                placeholder={t('items.fieldNamePlaceholder')}
-                onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                autoFocus
-              />
-            </FormControl>
-            <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={onToggle}>{t('common.cancel')}</Button>
-              <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addItem.isPending}>{t('common.add')}</Button>
-            </HStack>
-          </VStack>
-        </Box>
-      </Collapse>
-
-      {event.items.length === 0 && (
-        <Box textAlign="center" py={10}>
-          <Icon as={FiShoppingBag} boxSize={8} color="faintText" mb={2} />
-          <Text fontSize="sm" color="dimText">{t('items.empty')}</Text>
-        </Box>
+      {open && (
+        <div className="rounded-[12px] border border-line bg-bg-2 p-3.5 flex flex-col gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
+              {t('items.fieldName', 'Название')}
+            </div>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder={t('items.fieldNamePlaceholder', 'Шашлык, плед, мангал...')}
+              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => { setOpen(false); setName('') }}>
+              {t('common.cancel', 'Отмена')}
+            </Button>
+            <Button size="sm" onClick={handleAdd} disabled={addItem.isPending}>
+              {t('common.add', 'Добавить')}
+            </Button>
+          </div>
+        </div>
       )}
 
-      <VStack align="stretch" spacing={2}>
-        {event.items.map(item => {
-          const isMine = item.assigned_to?.id === user?.id
-          const isTaken = Boolean(item.assigned_to)
-
-          return (
-            <Box
-              key={item.id}
-              p={3.5}
-              borderRadius="xl"
-              border="1px solid"
-              borderColor="subtleBorder"
-              bg="cardBg"
-            >
-              <HStack justify="space-between" mb={1}>
-                <HStack spacing={3} minW={0} flex={1}>
+      {event.items.length === 0 ? (
+        <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
+          <ShoppingBag size={26} className="text-ink-3" />
+          <p className="text-[13px] text-ink-3">{t('items.empty', 'Список пуст — добавьте, что нужно взять.')}</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[12px] border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
+          {event.items.map(item => {
+            const isMine = item.assigned_to?.id === user?.id
+            const isTaken = Boolean(item.assigned_to)
+            return (
+              <div key={item.id} className="flex items-center justify-between gap-3 p-3.5">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   {item.assigned_to ? (
-                    <Avatar size="sm" name={item.assigned_to.name} bg="brand.400" color="white" flexShrink={0} />
+                    <Avatar name={item.assigned_to.name} size="md" />
                   ) : (
-                    <Box w="32px" h="32px" borderRadius="full" bg="subtleBg" border="1px solid" borderColor="subtleBorder" flexShrink={0} />
+                    <div className="w-7 h-7 rounded-full bg-bg-2 border border-line-soft shrink-0" />
                   )}
-                  <Box minW={0}>
-                    <Text fontSize="sm" fontWeight="500" noOfLines={1}>{item.name}</Text>
-                    <Text fontSize="xs" color="dimText" mt={0.5}>
-                      {item.assigned_to ? item.assigned_to.name : t('items.unassigned')}
-                    </Text>
-                  </Box>
-                </HStack>
-
-                <HStack spacing={2} flexShrink={0}>
-                  {isMine && (
-                    <Badge colorScheme="blue" variant="subtle">{t('items.badgeYou')}</Badge>
-                  )}
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-medium text-ink truncate">{item.name}</div>
+                    <div className="text-[12px] text-ink-3 truncate mt-0.5">
+                      {item.assigned_to ? item.assigned_to.name : t('items.unassigned', 'Не занято')}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
                   {isCompleted ? (
-                    isTaken && !isMine && <Badge colorScheme="green" variant="subtle">{t('items.badgeTaken')}</Badge>
+                    isTaken && !isMine && <StatusPill variant="going">{t('items.badgeTaken', 'Взято')}</StatusPill>
                   ) : isMine ? (
-                    <Button
-                      size="sm"
-                      colorScheme="red"
-                      variant="ghost"
+                    <StatusPillButton
+                      variant="completed"
                       onClick={() => assignItem.mutate({ itemId: item.id, userId: null })}
-                      isLoading={assignItem.isPending}
+                      disabled={assignItem.isPending}
                     >
-                      {t('items.buttonGiveUp')}
-                    </Button>
+                      {t('items.buttonGiveUp', 'Отказаться')}
+                    </StatusPillButton>
                   ) : !isTaken ? (
-                    <Button
-                      size="sm"
-                      colorScheme="blue"
-                      variant="outline"
+                    <StatusPillButton
+                      variant="action"
                       onClick={() => user && assignItem.mutate({ itemId: item.id, userId: user.id })}
-                      isLoading={assignItem.isPending}
+                      disabled={assignItem.isPending}
                     >
-                      {t('items.buttonTake')}
-                    </Button>
+                      {t('items.buttonTake', 'Возьму')}
+                    </StatusPillButton>
                   ) : (
-                    <Badge colorScheme="green" variant="subtle">{t('items.badgeTaken')}</Badge>
+                    <StatusPill variant="going">{t('items.badgeTaken', 'Взято')}</StatusPill>
                   )}
-                </HStack>
-              </HStack>
-            </Box>
-          )
-        })}
-      </VStack>
-    </VStack>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

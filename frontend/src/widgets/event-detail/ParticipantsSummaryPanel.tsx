@@ -1,14 +1,7 @@
-import {
-  Box,
-  HStack,
-  Text,
-  VStack,
-  Avatar,
-  AvatarGroup,
-  Badge,
-} from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import type { Event } from '@/entities/event/model/types'
+import { Avatar, AvatarStack } from '@/shared/ui/avatar'
+import { StatusPill } from '@/shared/ui/status-pill'
 
 interface ParticipantsSummaryPanelProps {
   event: Event
@@ -23,54 +16,34 @@ export default function ParticipantsSummaryPanel({ event }: ParticipantsSummaryP
   if (event.participants.length === 0) return null
 
   return (
-    <Box
-      bg="cardBg"
-      borderRadius="xl"
-      border="1px solid"
-      borderColor="cardBorder"
-      boxShadow="0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.05)"
-      p={4}
-    >
-      <Text
-        fontSize="10px"
-        fontWeight="600"
-        color="faintText"
-        textTransform="uppercase"
-        letterSpacing="0.1em"
-        mb={3}
-      >
-        {t('participantsSummary.title')}
-      </Text>
+    <div className="rounded-[14px] border border-line bg-surface p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-3">
+        {t('participantsSummary.title', 'Участники')}
+      </div>
 
-      <VStack align="stretch" spacing={3}>
-        <HStack spacing={2} flexWrap="wrap">
-          <Badge colorScheme="green" variant="subtle" px={2.5} py={1}>
-            {t('participantsSummary.going', { count: confirmed.length })}
-          </Badge>
-          <Badge colorScheme="yellow" variant="subtle" px={2.5} py={1}>
-            {t('participantsSummary.waiting', { count: invited.length })}
-          </Badge>
-          {declined.length > 0 && (
-            <Badge colorScheme="red" variant="subtle" px={2.5} py={1}>
-              {t('participantsSummary.declined', { count: declined.length })}
-            </Badge>
-          )}
-        </HStack>
-
-        {confirmed.length > 0 && (
-          <AvatarGroup size="sm" max={6} spacing="-8px">
-            {confirmed.map(p => (
-              <Avatar
-                key={p.id}
-                name={p.user.name}
-                bg="brand.400"
-                color="white"
-                title={p.user.name}
-              />
-            ))}
-          </AvatarGroup>
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        <StatusPill variant="going">
+          {t('participantsSummary.going', { count: confirmed.length, defaultValue: `${confirmed.length} идут` })}
+        </StatusPill>
+        {invited.length > 0 && (
+          <StatusPill variant="invited">
+            {t('participantsSummary.waiting', { count: invited.length, defaultValue: `${invited.length} раздумывают` })}
+          </StatusPill>
         )}
-      </VStack>
-    </Box>
+        {declined.length > 0 && (
+          <StatusPill variant="completed">
+            {t('participantsSummary.declined', { count: declined.length, defaultValue: `${declined.length} отказались` })}
+          </StatusPill>
+        )}
+      </div>
+
+      {confirmed.length > 0 && (
+        <AvatarStack max={6}>
+          {confirmed.map(p => (
+            <Avatar key={p.id} name={p.user.name} size="md" />
+          ))}
+        </AvatarStack>
+      )}
+    </div>
   )
 }

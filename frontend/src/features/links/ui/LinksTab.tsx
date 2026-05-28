@@ -1,172 +1,140 @@
-import {
-  Box,
-  Button,
-  Collapse,
-  FormControl,
-  FormLabel,
-  HStack,
-  Icon,
-  Input,
-  Link,
-  Text,
-  VStack,
-  IconButton,
-  useDisclosure,
-  useToast,
-} from '@chakra-ui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiLink, FiExternalLink, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { ExternalLink, Link2, Plus, Trash2 } from 'lucide-react'
 import { useAddLink, useRemoveLink } from '@/features/links/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import type { Event } from '@/entities/event/model/types'
+import { Button, Input, useToast } from '@/shared/ui'
 
 export default function LinksTab({ event }: { event: Event }) {
   const { user } = useAuth()
   const toast = useToast()
   const { t } = useTranslation()
-  const { isOpen, onToggle } = useDisclosure()
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [url, setUrl] = useState('')
   const addLink = useAddLink(event.id)
   const removeLink = useRemoveLink(event.id)
 
   const isOrganizer = event.organizer.id === user?.id
   const isCompleted = event.status === 'completed'
-  const [title, setTitle] = useState('')
-  const [url, setUrl] = useState('')
+  const links = event.links ?? []
 
   function handleAdd() {
     if (!title.trim() || !url.trim()) {
-      toast({ title: t('links.validationError'), status: 'warning', duration: 2500 })
+      toast({ title: t('links.validationError', 'Заполните оба поля'), status: 'warning' })
       return
     }
     const fullUrl = url.startsWith('http') ? url : `https://${url}`
-    addLink.mutate({ title: title.trim(), url: fullUrl }, {
-      onSuccess: () => {
-        setTitle('')
-        setUrl('')
-        onToggle()
+    addLink.mutate(
+      { title: title.trim(), url: fullUrl },
+      {
+        onSuccess: () => {
+          setTitle('')
+          setUrl('')
+          setOpen(false)
+        },
+        onError: err => toast({ title: t('common.error', 'Ошибка'), description: err.message, status: 'error' }),
       },
-      onError: (err) => {
-        toast({ title: t('common.error'), description: err.message, status: 'error', duration: 3000 })
-      },
-    })
-  }
-
-  function handleCancel() {
-    setTitle('')
-    setUrl('')
-    onToggle()
+    )
   }
 
   function handleDelete(linkId: string) {
     removeLink.mutate(linkId, {
-      onError: (err) => {
-        toast({ title: t('links.deleteError'), description: err.message, status: 'error', duration: 3000 })
-      },
+      onError: err =>
+        toast({ title: t('links.deleteError', 'Не удалось удалить'), description: err.message, status: 'error' }),
     })
   }
 
-  const links = event.links ?? []
-
   return (
-    <VStack align="stretch" spacing={5}>
-      <HStack justify="space-between">
-        <Text fontSize="xs" fontWeight="600" color="faintText" textTransform="uppercase" letterSpacing="0.06em">
-          {t('links.sectionTitle')}
-        </Text>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+          {t('links.sectionTitle', 'Ссылки')}
+        </div>
         {isOrganizer && !isCompleted && (
-          <Button size="sm" leftIcon={<FiPlus />} colorScheme="blue" variant="outline" onClick={onToggle}>
-            Добавить
+          <Button variant="outline" size="sm" onClick={() => setOpen(v => !v)}>
+            <Plus size={13} /> {t('common.add', 'Добавить')}
           </Button>
         )}
-      </HStack>
+      </div>
 
-      <Collapse in={isOpen} animateOpacity>
-        <Box p={4} borderRadius="xl" bg="subtleBg" border="1px solid" borderColor="subtleBorder">
-          <VStack spacing={3}>
-            <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('links.fieldTitle')}</FormLabel>
-              <Input
-                size="sm"
-                bg="inputBg"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder={t('links.fieldTitlePlaceholder')}
-                autoFocus
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="xs" fontWeight="600" color="dimText">{t('links.fieldUrl')}</FormLabel>
-              <Input
-                size="sm"
-                bg="inputBg"
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                placeholder="https://..."
-              />
-            </FormControl>
-            <HStack w="full" justify="flex-end" spacing={2}>
-              <Button size="sm" variant="ghost" onClick={handleCancel}>{t('common.cancel')}</Button>
-              <Button size="sm" colorScheme="blue" onClick={handleAdd} isLoading={addLink.isPending}>
-                {t('common.create')}
-              </Button>
-            </HStack>
-          </VStack>
-        </Box>
-      </Collapse>
-
-      {links.length === 0 && (
-        <Box textAlign="center" py={10}>
-          <Icon as={FiLink} boxSize={8} color="faintText" mb={2} />
-          <Text fontSize="sm" color="dimText">
-            {isOrganizer ? t('links.emptyOrganizer') : t('links.emptyParticipant')}
-          </Text>
-        </Box>
+      {open && (
+        <div className="rounded-[12px] border border-line bg-bg-2 p-3.5 flex flex-col gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
+              {t('links.fieldTitle', 'Название')}
+            </div>
+            <Input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder={t('links.fieldTitlePlaceholder', 'Zoom-звонок')}
+              autoFocus
+            />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
+              {t('links.fieldUrl', 'URL')}
+            </div>
+            <Input
+              type="url"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => { setOpen(false); setTitle(''); setUrl('') }}>
+              {t('common.cancel', 'Отмена')}
+            </Button>
+            <Button size="sm" onClick={handleAdd} disabled={addLink.isPending}>
+              {t('common.create', 'Создать')}
+            </Button>
+          </div>
+        </div>
       )}
 
-      <VStack align="stretch" spacing={2}>
-        {links.map(link => (
-          <HStack
-            key={link.id}
-            p={3.5}
-            borderRadius="xl"
-            border="1px solid"
-            borderColor="subtleBorder"
-            bg="cardBg"
-            _hover={{ borderColor: 'brand.200', bg: 'navActiveBg' }}
-            transition="all 0.15s"
-          >
-            <Icon as={FiLink} color="brand.400" boxSize={3.5} flexShrink={0} />
-            <Box flex={1} minW={0}>
-              <Text fontSize="sm" fontWeight="600" color="mainText" noOfLines={1}>
-                {link.title}
-              </Text>
-              <Link
-                href={link.url}
-                isExternal
-                fontSize="xs"
-                color="brand.500"
-                noOfLines={1}
-                _hover={{ color: 'brand.600' }}
-              >
-                {link.url} <Icon as={FiExternalLink} boxSize={2.5} mb="1px" />
-              </Link>
-            </Box>
-            {isOrganizer && !isCompleted && (
-              <IconButton
-                aria-label={t('links.deleteButton')}
-                icon={<FiTrash2 />}
-                size="sm"
-                variant="ghost"
-                colorScheme="red"
-                onClick={() => handleDelete(link.id)}
-                isLoading={removeLink.isPending}
-                flexShrink={0}
-              />
-            )}
-          </HStack>
-        ))}
-      </VStack>
-    </VStack>
+      {links.length === 0 ? (
+        <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
+          <Link2 size={26} className="text-ink-3" />
+          <p className="text-[13px] text-ink-3">
+            {isOrganizer
+              ? t('links.emptyOrganizer', 'Пока нет ссылок — добавьте Zoom-звонок или повестку.')
+              : t('links.emptyParticipant', 'Пока нет ссылок.')}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-[12px] border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
+          {links.map(link => (
+            <div key={link.id} className="flex items-center gap-3 p-3.5 group hover:bg-hover transition">
+              <Link2 size={14} className="text-accent shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[14px] font-semibold text-ink truncate">{link.title}</div>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[12.5px] text-accent hover:opacity-80 truncate inline-flex items-center gap-1 max-w-full"
+                >
+                  <span className="truncate">{link.url}</span>
+                  <ExternalLink size={10} className="shrink-0" />
+                </a>
+              </div>
+              {isOrganizer && !isCompleted && (
+                <button
+                  type="button"
+                  aria-label={t('links.deleteButton', 'Удалить')}
+                  onClick={() => handleDelete(link.id)}
+                  disabled={removeLink.isPending}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[7px] text-ink-3 hover:bg-danger/10 hover:text-danger transition disabled:opacity-40 shrink-0"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

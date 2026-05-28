@@ -1,4 +1,3 @@
-import { Box, HStack, Icon, Text, VStack } from '@chakra-ui/react'
 import type { ElementType, ReactNode } from 'react'
 
 interface AdminKpiCardProps {
@@ -8,45 +7,21 @@ interface AdminKpiCardProps {
   hint?: string
 }
 
-export default function AdminKpiCard({ label, value, icon, hint }: AdminKpiCardProps) {
+export default function AdminKpiCard({ label, value, icon: Icon, hint }: AdminKpiCardProps) {
   return (
-    <Box
-      bg="cardBg"
-      borderWidth="1px"
-      borderColor="cardBorder"
-      borderRadius="lg"
-      p={4}
-    >
-      <HStack align="start" justify="space-between" spacing={3}>
-        <VStack align="start" spacing={1} minW={0}>
-          <Text fontSize="xs" color="dimText" textTransform="uppercase" letterSpacing="0.04em">
-            {label}
-          </Text>
-          <Text fontSize="2xl" fontWeight="700" color="mainText" lineHeight={1.1}>
-            {value}
-          </Text>
-          {hint && (
-            <Text fontSize="xs" color="faintText">
-              {hint}
-            </Text>
-          )}
-        </VStack>
-        {icon && (
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            w={9}
-            h={9}
-            borderRadius="md"
-            bg="subtleBg"
-            color="brand.600"
-            flexShrink={0}
-          >
-            <Icon as={icon} boxSize={5} />
-          </Box>
+    <div className="rounded-[12px] border border-line bg-surface p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex flex-col gap-1">
+          <div className="text-[11px] font-semibold text-ink-3 uppercase tracking-[0.04em]">{label}</div>
+          <div className="text-[26px] font-bold leading-[1.1] tracking-[-0.02em] text-ink tnum">{value}</div>
+          {hint && <div className="text-[11.5px] text-ink-3 mt-0.5">{hint}</div>}
+        </div>
+        {Icon && (
+          <div className="flex items-center justify-center w-9 h-9 rounded-[8px] bg-bg-2 text-accent shrink-0">
+            <Icon size={18} />
+          </div>
         )}
-      </HStack>
-    </Box>
+      </div>
+    </div>
   )
 }

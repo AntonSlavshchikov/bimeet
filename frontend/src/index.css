@@ -1,19 +1,90 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..800;1,14..32,300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
 
-* {
-  box-sizing: border-box;
+/* === Design tokens — App-минимализм (light theme) ===
+ * Эталон: design/05-app-web.html, design/05-app.html
+ * Dark variants заготовлены в комментариях для будущего этапа.
+ */
+@theme {
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* Surfaces — light */
+  --color-bg: #FFFFFF;            /* dark: #0A0A0B */
+  --color-bg-2: #F7F7F8;          /* dark: #131316 */
+  --color-surface: #FFFFFF;       /* dark: #161618 */
+  --color-hover: rgba(60,60,67,0.05);   /* dark: rgba(235,235,245,0.04) */
+
+  /* Text + lines */
+  --color-ink: #000000;                  /* dark: #FFFFFF */
+  --color-ink-2: #3C3C43;                /* dark: rgba(235,235,245,0.92) */
+  --color-ink-3: rgba(60,60,67,0.60);    /* dark: rgba(235,235,245,0.55) */
+  --color-ink-4: rgba(60,60,67,0.30);    /* dark: rgba(235,235,245,0.28) */
+  --color-line: rgba(60,60,67,0.14);     /* dark: rgba(235,235,245,0.10) */
+  --color-line-soft: rgba(60,60,67,0.07);/* dark: rgba(235,235,245,0.06) */
+
+  /* Accent + semantic (системные iOS) */
+  --color-accent: #007AFF;        /* dark: #0A84FF */
+  --color-success: #34C759;       /* dark: #30D158 */
+  --color-warning: #FF9500;       /* dark: #FF9F0A */
+  --color-danger: #FF3B30;        /* dark: #FF453A */
+  --color-purple: #AF52DE;        /* dark: #BF5AF2 */
+  --color-indigo: #5856D6;        /* dark: #5E5CE6 */
+
+  /* Avatar palette (a1..a6) */
+  --color-avatar-1: #FF9500;
+  --color-avatar-2: #007AFF;
+  --color-avatar-3: #AF52DE;
+  --color-avatar-4: #FF2D55;
+  --color-avatar-5: #34C759;
+  --color-avatar-6: #5856D6;
+
+  /* Radius scale */
+  --radius-nav: 7px;
+  --radius-control: 9px;
+  --radius-list: 12px;
+  --radius-card: 14px;
+  --radius-frame: 28px;
+}
+
+/* Base reset + global rules */
+*, *::before, *::after { box-sizing: border-box }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
 }
 
 body {
-  margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #F5F5F7;
-  font-feature-settings: 'cv11', 'ss01';
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
   text-rendering: optimizeLegibility;
-}
-
-#root {
   min-height: 100vh;
 }
+
+#root { min-height: 100vh }
+
+/* Tabular numerics utility — широко используется в датах/времени */
+.tnum { font-variant-numeric: tabular-nums }
+
+/* Focus ring — общий стиль для интерактивных элементов на новом дизайне */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+
+/* === Mobile: серый iOS-фон вместо белого ===
+ * Эталон: design/05-app.html — `--bg: #F2F2F7`.
+ * Surface (карточки, popover'ы) остаётся белой. Десктоп — белый bg (1024px+).
+ */
+@media (max-width: 1023.98px) {
+  :root {
+    --color-bg: #F2F2F7;
+    --color-line: rgba(60, 60, 67, 0.18);
+    --color-line-soft: rgba(60, 60, 67, 0.08);
+  }
+}
+
