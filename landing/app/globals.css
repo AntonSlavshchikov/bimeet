@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@theme {
+  --color-paper: #fafaf7;
+  --color-card: #ffffff;
+  --color-ink: #0a0a0b;
+  --color-ink-2: #57534e;
+  --color-ink-3: #a8a29e;
+  --color-soft: #f4f3ee;
+  --color-coal: #18181b;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-feature-settings: "ss01";
+}

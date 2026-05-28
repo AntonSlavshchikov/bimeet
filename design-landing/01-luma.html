@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet · Luma — кремовый минимализм</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  :root {
+    --bg: #FAFAF7;
+    --card: #FFFFFF;
+    --ink: #0A0A0B;
+    --ink-2: #57534E;
+    --ink-3: #A8A29E;
+    --line: rgba(0,0,0,0.06);
+    --line-2: rgba(0,0,0,0.10);
+    --black: #18181B;
+    --soft: #F4F3EE;
+  }
+  html, body { margin: 0; padding: 0 }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01';
+  }
+  a { text-decoration: none; color: inherit }
+
+  /* back ribbon */
+  .topnav {
+    position: sticky; top: 0; z-index: 60;
+    background: rgba(250,250,247,0.82);
+    backdrop-filter: blur(16px) saturate(1.6);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 13px; color: var(--ink-2);
+  }
+  .topnav a { color: var(--ink-2); font-weight: 500 }
+  .topnav a:hover { color: var(--ink) }
+  .topnav .sep { color: var(--ink-3) }
+  .topnav .title { color: var(--ink); font-weight: 600 }
+
+  /* site header */
+  .site-header {
+    max-width: 1180px; margin: 0 auto; padding: 22px 32px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700;
+  }
+  .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--ink-2); font-weight: 500 }
+  .nav-links a:hover { color: var(--ink) }
+  .header-cta { display: flex; gap: 10px; align-items: center }
+  @media (max-width: 860px) { .nav-links { display: none } }
+
+  .btn {
+    border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all .15s ease; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--black); color: #fff; letter-spacing: -0.005em;
+  }
+  .btn:hover { background: #27272A; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.12) }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-2) }
+  .btn-ghost:hover { background: #fff; transform: none; box-shadow: none }
+  .btn-lg { padding: 15px 26px; font-size: 15px; border-radius: 14px }
+
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 32px }
+
+  /* hero */
+  .hero {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px;
+    align-items: center; padding: 64px 0 72px;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+    color: var(--ink-2); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 14px; margin-bottom: 24px;
+  }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: #16A34A }
+  .hero h1 {
+    margin: 0; font-size: 60px; line-height: 1.02; letter-spacing: -0.035em; font-weight: 700;
+  }
+  .hero h1 .muted { color: var(--ink-3) }
+  .hero .lead { color: var(--ink-2); font-size: 18px; line-height: 1.55; margin: 22px 0 0; max-width: 480px }
+  .hero-actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap }
+  .hero-note { margin-top: 18px; font-size: 13px; color: var(--ink-3) }
+
+  /* hero preview — stacked product cards */
+  .preview { position: relative }
+  .preview-panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+    padding: 18px; box-shadow: 0 24px 60px rgba(15,23,42,0.08);
+  }
+  .preview-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2px 4px 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px;
+  }
+  .preview-head .t { font-size: 14px; font-weight: 700; letter-spacing: -0.01em }
+  .preview-head .pill { font-size: 11px; color: var(--ink-2); background: var(--soft); padding: 4px 10px; border-radius: 999px; font-weight: 600 }
+  .ev { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 11px 6px }
+  .ev + .ev { border-top: 1px solid var(--line) }
+  .date {
+    width: 56px; height: 56px; border-radius: 12px; padding: 8px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background: var(--soft); border: 1px solid var(--line);
+  }
+  .date .mon { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2) }
+  .date .day { font-size: 24px; font-weight: 700; line-height: 1; letter-spacing: -0.03em }
+  .date.coral { background: linear-gradient(135deg, #FFE4E6, #FFD0D6) } .date.coral .mon, .date.coral .day { color: #9F1239 }
+  .date.ocean { background: linear-gradient(135deg, #E0F2FE, #BAE6FD) } .date.ocean .mon, .date.ocean .day { color: #075985 }
+  .date.lime  { background: linear-gradient(135deg, #ECFCCB, #D9F99D) } .date.lime .mon, .date.lime .day { color: #3F6212 }
+  .ev .nm { font-size: 14px; font-weight: 600; letter-spacing: -0.01em }
+  .ev .ms { font-size: 12px; color: var(--ink-2); margin-top: 3px }
+  .avatars { display: flex }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 50%; margin-left: -7px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 10px; font-weight: 600; border: 2px solid var(--card);
+    background: linear-gradient(135deg, #FB7185, #F43F5E);
+  }
+  .avatar:first-child { margin-left: 0 }
+  .avatar.g2 { background: linear-gradient(135deg, #38BDF8, #0284C7) }
+  .avatar.g3 { background: linear-gradient(135deg, #A78BFA, #7C3AED) }
+  .avatar.more { background: var(--soft); color: var(--ink-2) }
+  /* floating chip */
+  .float-chip {
+    position: absolute; left: -22px; bottom: 38px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px; box-shadow: 0 12px 32px rgba(15,23,42,0.10);
+    display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;
+  }
+  .float-chip .ic {
+    width: 30px; height: 30px; border-radius: 9px; background: #ECFCCB; color: #3F6212;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .float-chip .sm { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 1px }
+
+  /* trust strip */
+  .trust {
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 26px 0; display: flex; align-items: center; justify-content: center;
+    gap: 14px; flex-wrap: wrap; color: var(--ink-3); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .trust .num-strong { color: var(--ink); font-size: 15px; letter-spacing: -0.01em; text-transform: none }
+  .trust .v-sep { color: var(--line-2) }
+
+  /* section */
+  .section { padding: 88px 0 }
+  .section-head { max-width: 640px; margin: 0 auto 48px; text-align: center }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); display: block; margin-bottom: 14px }
+  .section-head h2 { margin: 0; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 700 }
+  .section-head p { color: var(--ink-2); font-size: 17px; line-height: 1.55; margin: 16px 0 0 }
+
+  /* feature grid */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px }
+  .feature {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 28px;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .feature:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(15,23,42,0.06); border-color: var(--line-2) }
+  .feature .ic {
+    width: 48px; height: 48px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px;
+  }
+  .ic.c1 { background: linear-gradient(135deg, #E0F2FE, #BAE6FD) }
+  .ic.c2 { background: linear-gradient(135deg, #ECFCCB, #D9F99D) }
+  .ic.c3 { background: linear-gradient(135deg, #EDE9FE, #DDD6FE) }
+  .ic.c4 { background: linear-gradient(135deg, #FFE4E6, #FFD0D6) }
+  .ic.c5 { background: linear-gradient(135deg, #FEF3C7, #FDE68A) }
+  .ic.c6 { background: linear-gradient(135deg, #D1FAE5, #A7F3D0) }
+  .feature h3 { margin: 0 0 8px; font-size: 19px; font-weight: 600; letter-spacing: -0.015em }
+  .feature p { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.55 }
+
+  /* how it works */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: step }
+  .step {
+    background: var(--soft); border: 1px solid var(--line); border-radius: 18px; padding: 30px 28px; position: relative;
+  }
+  .step .n {
+    width: 40px; height: 40px; border-radius: 11px; background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; margin-bottom: 18px;
+  }
+  .step h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em }
+  .step p { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.55 }
+
+  /* use cases */
+  .usecases { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 760px; margin: 0 auto }
+  .uc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 12px 20px; font-size: 15px; font-weight: 600; color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 9px;
+    transition: all .15s ease;
+  }
+  .uc:hover { color: var(--ink); border-color: var(--line-2); transform: translateY(-2px) }
+
+  /* CTA band */
+  .cta-band {
+    background: var(--ink); color: #fff; border-radius: 28px;
+    padding: 64px 48px; text-align: center; position: relative; overflow: hidden;
+    margin: 24px 0 0;
+  }
+  .cta-band::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 80% 0%, rgba(212,255,63,0.14), transparent 45%),
+                radial-gradient(circle at 10% 100%, rgba(167,139,250,0.16), transparent 45%);
+    pointer-events: none;
+  }
+  .cta-band > * { position: relative; z-index: 1 }
+  .cta-band h2 { margin: 0; font-size: 44px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 700 }
+  .cta-band p { margin: 18px auto 0; color: rgba(255,255,255,0.7); font-size: 17px; max-width: 460px; line-height: 1.55 }
+  .cta-band .btn { background: #fff; color: var(--ink); margin-top: 30px }
+  .cta-band .btn:hover { background: #F4F3EE }
+
+  /* footer */
+  footer.site {
+    border-top: 1px solid var(--line); margin-top: 96px;
+    padding: 44px 0 60px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    color: var(--ink-3); font-size: 13px;
+  }
+  footer.site .f-brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700 }
+  footer.site .f-links { display: flex; gap: 22px }
+  footer.site .f-links a { color: var(--ink-2); font-weight: 500 }
+  footer.site .f-links a:hover { color: var(--ink) }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding: 40px 0 48px }
+    .hero h1 { font-size: 42px }
+    .features, .steps { grid-template-columns: 1fr }
+    .section { padding: 60px 0 }
+    .section-head h2 { font-size: 32px }
+    .cta-band { padding: 48px 24px } .cta-band h2 { font-size: 32px }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="index.html">← Все лендинги</a>
+  <span class="sep">·</span>
+  <span class="title">01 · Luma — кремовый минимализм</span>
+</nav>
+
+<header class="site-header">
+  <a class="brand" href="#"><span class="brand-mark">B</span> Bimeet</a>
+  <nav class="nav-links">
+    <a href="#features">Возможности</a>
+    <a href="#how">Как это работает</a>
+    <a href="#cases">Сценарии</a>
+  </nav>
+  <div class="header-cta">
+    <a class="btn btn-ghost" href="#">Войти</a>
+    <a class="btn" href="#">Начать бесплатно</a>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <span class="eyebrow"><span class="dot"></span> Бесплатно · без регистрации карты</span>
+      <h1>Организуйте&nbsp;встречи <span class="muted">без хаоса.</span></h1>
+      <p class="lead">Bimeet собирает всё в одном месте: участники, совместные сборы, опросы, карпулинг и история изменений. Никаких десяти чатов и таблиц.</p>
+      <div class="hero-actions">
+        <a class="btn btn-lg" href="#">Попробовать бесплатно →</a>
+        <a class="btn btn-ghost btn-lg" href="#features">Узнать больше</a>
+      </div>
+      <p class="hero-note">Уже используют сотни команд и организаторов</p>
+    </div>
+
+    <div class="preview">
+      <div class="preview-panel">
+        <div class="preview-head">
+          <span class="t">Мои встречи</span>
+          <span class="pill">8 впереди</span>
+        </div>
+        <div class="ev">
+          <div class="date coral"><span class="mon">июн</span><span class="day">8</span></div>
+          <div><div class="nm">Винный вечер у Лены</div><div class="ms">Простые вещи · 20:00 · сбор 2 500 ₽</div></div>
+          <div class="avatars"><div class="avatar">АН</div><div class="avatar g2">МК</div><div class="avatar more">+6</div></div>
+        </div>
+        <div class="ev">
+          <div class="date ocean"><span class="mon">июн</span><span class="day">16</span></div>
+          <div><div class="nm">Пикник в Парке Горького</div><div class="ms">ЦПКиО · 14:00 · 24/50 идут</div></div>
+          <div class="avatars"><div class="avatar g3">ОЛ</div><div class="avatar">ПК</div><div class="avatar more">+22</div></div>
+        </div>
+        <div class="ev">
+          <div class="date lime"><span class="mon">июн</span><span class="day">28</span></div>
+          <div><div class="nm">Поход на Хибины · 3 дня</div><div class="ms">Кировск · карпулинг · 6 в команде</div></div>
+          <div class="avatars"><div class="avatar g3">КС</div><div class="avatar">МД</div><div class="avatar more">+4</div></div>
+        </div>
+      </div>
+      <div class="float-chip">
+        <span class="ic">✓</span>
+        <span>6 из 8 скинулись<span class="sm">Сбор на подарок · 1 500 ₽</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <div class="trust">
+    <span class="num-strong">12 000+</span> встреч собрано
+    <span class="v-sep">·</span>
+    <span class="num-strong">98%</span> доходят до участников
+    <span class="v-sep">·</span>
+    <span class="num-strong">4 мин</span> на запуск события
+  </div>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-head">
+      <span class="kicker">Возможности</span>
+      <h2>Всё, что нужно для встречи</h2>
+      <p>Шесть инструментов, которые избавят от лишних чатов, таблиц и «а кто что несёт?».</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="ic c1">📅</div>
+        <h3>Управление встречами</h3>
+        <p>Личные и публичные события, приглашения по ссылке или email, статус каждого участника на виду.</p>
+      </div>
+      <div class="feature">
+        <div class="ic c2">💰</div>
+        <h3>Совместные сборы</h3>
+        <p>Укажите сумму — Bimeet разделит её поровну и покажет, кто уже скинулся, а кому напомнить.</p>
+      </div>
+      <div class="feature">
+        <div class="ic c3">📊</div>
+        <h3>Опросы и голосования</h3>
+        <p>Дата, место, меню — соберите мнение всех до встречи и закрепите финальный вариант.</p>
+      </div>
+      <div class="feature">
+        <div class="ic c4">🚗</div>
+        <h3>Карпулинг</h3>
+        <p>Водители отмечают свободные места, пассажиры находят попутчиков в пару кликов.</p>
+      </div>
+      <div class="feature">
+        <div class="ic c5">🧺</div>
+        <h3>Списки и вещи</h3>
+        <p>Кто принесёт плед, кто — гриль. Общие списки, чтобы ничего не забыть и не дублировать.</p>
+      </div>
+      <div class="feature">
+        <div class="ic c6">🔔</div>
+        <h3>История изменений</h3>
+        <p>Перенесли время или сменили место — все узнают сразу, а в ленте видно, что и когда поменялось.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how" style="padding-top:0">
+    <div class="section-head">
+      <span class="kicker">Как это работает</span>
+      <h2>Три шага до встречи</h2>
+      <p>От идеи до согласованного плана — без переписки на сорок сообщений.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Создайте встречу</h3>
+        <p>Название, дата, место. Добавьте сбор, опрос или карпулинг — что нужно именно вам.</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Пригласите друзей</h3>
+        <p>Отправьте одну ссылку. Участники присоединяются без регистрации и видят все детали.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>Всё согласовано</h3>
+        <p>Опросы закрыты, деньги собраны, попутчики найдены. Остаётся только прийти.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section class="section" id="cases" style="padding-top:0">
+    <div class="section-head">
+      <span class="kicker">Сценарии</span>
+      <h2>Для любого повода</h2>
+      <p>Личное или деловое — Bimeet подстраивается под тип встречи.</p>
+    </div>
+    <div class="usecases">
+      <span class="uc">🎂 Дни рождения</span>
+      <span class="uc">⛺ Походы и выезды</span>
+      <span class="uc">💍 Свадьбы</span>
+      <span class="uc">🎤 Конференции</span>
+      <span class="uc">🧺 Пикники</span>
+      <span class="uc">💻 Рабочие созвоны</span>
+      <span class="uc">🍷 Дружеские ужины</span>
+      <span class="uc">🏔 Путешествия</span>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="padding-bottom: 8px">
+    <div class="cta-band">
+      <h2>Соберите свою следующую<br>встречу за пару минут</h2>
+      <p>Бесплатно, без карты и без хаоса. Создайте первое событие прямо сейчас.</p>
+      <a class="btn btn-lg" href="#">Начать бесплатно →</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site">
+    <div class="f-brand"><span class="brand-mark">B</span> Bimeet — организуйте встречи легко</div>
+    <div class="f-links">
+      <a href="#features">Возможности</a>
+      <a href="#how">Как это работает</a>
+      <a href="#">Войти</a>
+      <a href="#">Регистрация</a>
+    </div>
+    <div>© 2026 Bimeet. Все права защищены.</div>
+  </footer>
+
+</div>
+</body>
+</html>

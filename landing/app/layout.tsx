@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "Bimeet — организуйте встречи легко",
@@ -15,8 +18,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={geist.className}>
-      <body className="min-h-screen flex flex-col bg-white text-slate-900 antialiased">
+    <html lang="ru" className={inter.variable}>
+      <body className="flex min-h-screen flex-col bg-paper font-sans text-ink antialiased">
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>

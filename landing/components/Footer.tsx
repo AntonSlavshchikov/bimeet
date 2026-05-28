@@ -7,30 +7,36 @@ export default function Footer() {
   const { t } = useLanguage();
   const f = t.footer;
   return (
-    <footer className="bg-white border-t border-slate-100 py-10">
-      <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-extrabold text-indigo-600">Bimeet</span>
-          <span className="text-slate-400 text-sm">{f.tagline}</span>
-        </div>
-
-        <div className="flex items-center gap-6 text-sm">
-          <a
-            href={`${APP_URL}/login`}
-            className="text-slate-500 hover:text-indigo-600 transition-colors font-medium"
-          >
-            {f.login}
-          </a>
-          <a
-            href={`${APP_URL}/register`}
-            className="inline-flex items-center px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors"
-          >
-            {f.register}
-          </a>
-        </div>
+    <footer className="mx-auto mt-24 flex max-w-[1180px] flex-wrap items-center justify-between gap-6 border-t border-black/[0.06] px-6 pb-16 pt-11 text-[13px] text-ink-3 sm:px-8">
+      <div className="flex items-center gap-2.5 font-bold text-ink">
+        <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-ink text-[15px] font-bold text-white">
+          B
+        </span>
+        Bimeet {f.tagline}
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 mt-6 text-center text-xs text-slate-400">
+      <div className="flex flex-wrap gap-[22px]">
+        <a href="#features" className="font-medium text-ink-2 hover:text-ink">
+          {f.links.features}
+        </a>
+        <a href="#how" className="font-medium text-ink-2 hover:text-ink">
+          {f.links.how}
+        </a>
+        <a
+          href={`${APP_URL}/login`}
+          className="font-medium text-ink-2 hover:text-ink"
+        >
+          {f.login}
+        </a>
+        <a
+          href={`${APP_URL}/register`}
+          className="font-medium text-ink-2 hover:text-ink"
+        >
+          {f.register}
+        </a>
+      </div>
+
+      <div>
         © {new Date().getFullYear()} Bimeet. {f.copyright}
       </div>
     </footer>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet · Лендинг — варианты дизайна</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #FAFAF7;
+    color: #0A0A0B;
+    -webkit-font-smoothing: antialiased;
+    padding: 80px 24px 120px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto }
+  h1 {
+    font-size: 52px; line-height: 1.05; letter-spacing: -0.03em;
+    margin: 0 0 12px; font-weight: 700;
+  }
+  .sub { color: #57534E; font-size: 17px; margin: 0 0 64px; max-width: 600px }
+  .list { display: grid; gap: 12px }
+  a.card {
+    display: flex; align-items: center; gap: 20px;
+    padding: 24px; border-radius: 16px; background: #fff;
+    border: 1px solid rgba(0,0,0,0.06);
+    text-decoration: none; color: inherit;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  a.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+    border-color: rgba(0,0,0,0.10);
+  }
+  .num {
+    flex-shrink: 0;
+    width: 56px; height: 56px; border-radius: 12px;
+    background: #0A0A0B; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 20px; letter-spacing: -0.02em;
+  }
+  .num.neon   { background: #0A0A0B; color: #D4FF3F }
+  .num.paper  { background: #DC2626 }
+  .num.glass  { background: linear-gradient(135deg, #5B21B6, #DB2777) }
+  .meta h2 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: -0.01em }
+  .meta p  { margin: 0; color: #57534E; font-size: 14px }
+  .arr { margin-left: auto; color: #A8A29E; font-size: 22px }
+  .tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #A8A29E;
+    margin-bottom: 24px; display: block;
+  }
+  footer { margin-top: 72px; color: #A8A29E; font-size: 13px; text-align: center }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">Bimeet · Landing exploration</span>
+  <h1>Четыре лендинга для&nbsp;Bimeet</h1>
+  <p class="sub">Один и тот же продукт — приложение, которое собирает встречи без хаоса — в четырёх визуальных языках. Откройте каждый, прокрутите до конца и почувствуйте, какой тон ближе бренду.</p>
+
+  <div class="list">
+    <a class="card" href="01-luma.html">
+      <div class="num">01</div>
+      <div class="meta">
+        <h2>Luma — кремовый минимализм</h2>
+        <p>Тёплый фон, продуктовые карточки-превью, спокойная типографика. Доверие и ясность.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="02-partiful.html">
+      <div class="num neon">02</div>
+      <div class="meta">
+        <h2>Partiful — тёмный неон</h2>
+        <p>Угольный фон, неон-лайм, крупный serif-курсив, свечение. Энергия и движ.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="03-editorial.html">
+      <div class="num paper">03</div>
+      <div class="meta">
+        <h2>Editorial — журнальный модерн</h2>
+        <p>Бумажный фон, Fraunces, бенто-сетка, жёсткие тени, красный акцент. Манифест.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="04-frosted.html">
+      <div class="num glass">04</div>
+      <div class="meta">
+        <h2>Frosted Glass — премиум-блюр</h2>
+        <p>Цветной градиент, матовое стекло, мягкие глубокие тени. Премиум в стиле Apple.</p>
+      </div>
+      <div class="arr">→</div>
+    </a>
+  </div>
+
+  <footer>Все варианты используют единое сообщение продукта и общий набор фичей, чтобы сравнение было честным.</footer>
+</div>
+</body>
+</html>

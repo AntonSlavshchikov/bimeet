@@ -1,25 +1,53 @@
 "use client";
 import { useLanguage } from "@/lib/language-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "#";
 
 export default function Header() {
-  const { locale, setLocale } = useLanguage();
-
+  const { t } = useLanguage();
+  const n = t.nav;
   return (
-    <div className="relative max-w-5xl mx-auto px-6 pt-6 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-xs text-white">
-          ✦
-        </div>
-        <span className="text-white font-bold text-base tracking-tight">Bimeet</span>
-      </div>
+    <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-paper/80 backdrop-blur-lg backdrop-saturate-150">
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-6 px-6 py-3.5 sm:px-8">
+        <a
+          href="#"
+          className="flex items-center gap-2.5 text-[18px] font-bold tracking-tight text-ink"
+        >
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-ink text-[15px] font-bold text-white">
+            B
+          </span>
+          Bimeet
+        </a>
 
-      <button
-        onClick={() => setLocale(locale === "ru" ? "en" : "ru")}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 hover:text-white text-sm font-semibold transition-all duration-200 border border-white/20"
-      >
-        <span className="text-xs opacity-60">{locale === "ru" ? "🇬🇧" : "🇷🇺"}</span>
-        {locale === "ru" ? "EN" : "RU"}
-      </button>
-    </div>
+        <nav className="hidden items-center gap-7 text-sm font-medium text-ink-2 md:flex">
+          <a href="#features" className="transition-colors hover:text-ink">
+            {n.features}
+          </a>
+          <a href="#how" className="transition-colors hover:text-ink">
+            {n.how}
+          </a>
+          <a href="#cases" className="transition-colors hover:text-ink">
+            {n.cases}
+          </a>
+        </nav>
+
+        <div className="flex items-center gap-2.5">
+          <LanguageSwitcher />
+          <a
+            href={`${APP_URL}/login`}
+            className="hidden rounded-xl border border-black/10 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-white sm:inline-flex"
+          >
+            {n.login}
+          </a>
+          <a
+            href={`${APP_URL}/register`}
+            className="inline-flex items-center rounded-xl bg-coal px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#27272a] hover:shadow-lg"
+          >
+            {n.start}
+          </a>
+        </div>
+      </div>
+    </header>
   );
 }

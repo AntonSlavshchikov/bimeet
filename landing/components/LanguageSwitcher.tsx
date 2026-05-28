@@ -6,7 +6,7 @@ export default function LanguageSwitcher() {
   return (
     <button
       onClick={() => setLocale(locale === "ru" ? "en" : "ru")}
-      className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100"
+      className="rounded-full border border-black/10 px-3 py-2 text-xs font-semibold text-ink-2 transition-colors hover:bg-white hover:text-ink"
     >
       {locale === "ru" ? "EN" : "RU"}
     </button>
