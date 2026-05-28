@@ -4,6 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
+import NotificationsNavbarActions from '@/features/notifications/ui/NotificationsNavbarActions'
 import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { cn } from '@/shared/lib/cn'
@@ -24,6 +25,7 @@ function useMobileTitle(t: ReturnType<typeof useTranslation>['t']): string {
   if (pathname.startsWith('/events/')) return t('events.title', 'Встреча')
   if (pathname === '/profile') return t('nav.profile', 'Профиль')
   if (pathname === '/admin') return t('nav.admin', 'Админка')
+  if (pathname === '/notifications') return t('nav.notifications', 'Уведомления')
   return ''
 }
 
@@ -60,6 +62,11 @@ function useMobileNavbarActions(t: ReturnType<typeof useTranslation>['t']): Reac
       </>
     )
   }
+
+  if (pathname === '/notifications') {
+    return <NotificationsNavbarActions />
+  }
+
   return null
 }
 

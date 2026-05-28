@@ -11,6 +11,7 @@ import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
 import InvitePage from '@/pages/invite'
 import ProfilePage from '@/pages/profile'
+import NotificationsPage from '@/pages/notifications'
 import AdminPanelPage from '@/pages/admin-panel'
 import DesignSystemPage from '@/pages/_design-system'
 
@@ -68,6 +69,16 @@ export default function AppRouter() {
             <ProtectedRoute>
               <Layout>
                 <ProfilePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <NotificationsPage />
               </Layout>
             </ProtectedRoute>
           }

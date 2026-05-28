@@ -9,7 +9,7 @@ import {
   useMarkRead,
 } from '@/features/notifications/model/hooks'
 import { formatDate } from '@/shared/lib/formatDate'
-import type { Notification } from '@/entities/notification/model/types'
+import { notificationHref } from '@/entities/notification/lib/href'
 import {
   Popover,
   PopoverContent,
@@ -19,12 +19,6 @@ import {
   TooltipTrigger,
 } from '@/shared/ui'
 import { cn } from '@/shared/lib/cn'
-
-function notificationHref(n: Notification): string | null {
-  if (!n.event_id) return null
-  if (n.type === 'collection_contribution_pending') return `/events/${n.event_id}?tab=collections`
-  return `/events/${n.event_id}`
-}
 
 interface NotificationCenterProps {
   /** Кастомный trigger (например, nav-item в sidebar). По умолчанию — Bell icon-button. */

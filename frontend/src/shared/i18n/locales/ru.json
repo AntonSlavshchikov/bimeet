@@ -52,7 +52,9 @@
   "nav": {
     "events": "Встречи",
     "profile": "Профиль",
-    "admin": "Админка"
+    "admin": "Админка",
+    "notifications": "Уведомления",
+    "notificationsShort": "Уведом."
   },
   "layout": {
     "openMenu": "Открыть меню",

@@ -52,7 +52,9 @@
   "nav": {
     "events": "Events",
     "profile": "Profile",
-    "admin": "Admin"
+    "admin": "Admin",
+    "notifications": "Notifications",
+    "notificationsShort": "Alerts"
   },
   "layout": {
     "openMenu": "Open menu",
