@@ -1910,3 +1910,98 @@ dark-mode (для будущего этапа):
 - **Mini-calendar**: `react-day-picker` может оказаться overkill для 7×6 сетки — на 24.1 оценим, не проще ли написать 50 строк собственного компонента
 - **`cmdk` palette**: добавляется новая фича (⌘K-поиск), которой не было раньше — это улучшение, но потенциальный scope creep. Если затягивает 24.2, выносим в отдельный пост-этап 24.9
 - **Тестирование**: автоматических UI-тестов нет, валидируем глазами и `npm run build`. Эталон — `design/05-app-web.html` и `design/05-app.html`
+
+---
+
+## Этап 25 — PWA (устанавливаемое приложение + офлайн)
+
+### Контекст
+
+Приложение Bimeet (Vite 8 + React 19 + Tailwind 4 + Radix) нужно сделать
+**устанавливаемым** на домашний экран (desktop + mobile) с офлайн-фоллбэком и
+корректным обновлением версий. Сейчас PWA нет: ни manifest, ни service worker.
+Backend и слой данных (queries/api-клиент) не меняются.
+
+**Выбранный объём:**
+- Offline scope: **installable + app shell** — прекэш статики (JS/CSS/иконки/шрифты)
+  и офлайн-фоллбэк страницы; запросы к `/api` всегда идут в сеть и **не кэшируются**
+  (безопасно для приложения с JWT в localStorage).
+- Update UX: **тост `sonner` с кнопкой «Обновить»** (`registerType: 'prompt'`).
+  `sonner` уже подключён в `app/providers/index.tsx`.
+
+---
+
+### Подход: `vite-plugin-pwa` + `workbox-window`
+
+Идиоматичный для Vite путь (на базе Workbox): генерирует manifest, service worker,
+precache-манифест. Регистрация SW и тост обновления сделаны вручную через
+`workbox-window` (см. «Отклонение от плана» ниже).
+
+Конфиг `VitePWA` (в `vite.config.ts`, рядом с `react()` + `tailwindcss()`):
+- `registerType: 'prompt'`, `injectRegister: false`
+- `manifest`: name/short_name `Bimeet`, `theme_color: '#0a0a0b'`,
+  `background_color: '#0a0a0b'`, `display: 'standalone'`, `start_url: '/'`,
+  иконки 192 / 512 / 512-maskable
+- `workbox`: `globPatterns: ['**/*.{js,css,html,svg,woff2}']`,
+  `navigateFallback: '/index.html'`, `navigateFallbackDenylist: [/^\/api\//]`
+  (без `runtimeCaching` — `/api` не кэшируется)
+
+---
+
+### Файлы
+
+| Файл | Изменение |
+|---|---|
+| `frontend/package.json` | + `vite-plugin-pwa`, `workbox-window` (devDep) |
+| `frontend/vite.config.ts` | подключить `VitePWA(...)`, `injectRegister: false` |
+| `frontend/index.html` | мета `theme-color` (#0a0a0b), `apple-touch-icon`, `apple-mobile-web-app-*` |
+| `frontend/public/pwa-192.png`, `pwa-512.png`, `pwa-512-maskable.png`, `apple-touch-icon.png` | новые иконки: чёрный фон `#0a0a0b` + белая «B» (как `favicon.svg`) |
+| `frontend/src/shared/pwa/PWAUpdater.tsx` | тост обновления через `workbox-window` + `sonner` |
+| `frontend/src/app/providers/index.tsx` | смонтировать `<PWAUpdater/>` (глобально) |
+| `frontend/src/shared/i18n/locales/ru.json`, `en.json` | секция `pwa` (тексты тостов) |
+| `frontend/nginx.conf` | `Cache-Control: no-cache` для `sw.js` и `manifest.webmanifest` |
+
+**Не меняется:** backend, queries/mutations/api-клиент, router, entities, страницы.
+
+> **Отклонение от плана.** Виртуальный модуль `virtual:pwa-register/react` не
+> использовался: SW регистрируется вручную через `workbox-window`
+> (`new Workbox('/sw.js')` + события `waiting`/`installed`/`controlling`), а у
+> плагина выставлен `injectRegister: false`, чтобы не было двойной регистрации.
+> Сгенерированный `sw.js` слушает `SKIP_WAITING` — кнопка «Обновить» вызывает
+> `wb.messageSkipWaiting()` → `controlling` → `location.reload()`.
+> `<PWAUpdater/>` смонтирован глобально в `providers`; отдельный `<Toaster/>`
+> не добавлялся — он уже есть в `features/auth/ui/AuthShell` и `widgets/layout`,
+> так что тосты обновления отображаются на всех роутах. `tsconfig.app.json` не
+> менялся: типы берутся из `workbox-window`.
+> Иконка и splash сделаны на **чёрном фоне** `#0a0a0b` (как `favicon.svg`),
+> поэтому `theme_color`/`background_color` в манифесте тоже `#0a0a0b`.
+
+---
+
+### Чеклист реализации
+
+- [x] `vite-plugin-pwa` + `workbox-window` установлены (devDep)
+- [x] Подключить `VitePWA` в `vite.config.ts` (manifest + workbox, `/api` в denylist, `injectRegister: false`)
+- [x] Сгенерировать иконки 192 / 512 / 512-maskable + apple-touch-icon (180×180), чёрный фон
+- [x] Мета-теги iOS / theme-color в `index.html`
+- [x] `shared/pwa/PWAUpdater.tsx` (workbox-window) + монтаж в `app/providers/index.tsx`
+- [x] Секция `pwa` в `ru.json` и `en.json`
+- [x] `no-cache` для `sw.js` / manifest в `nginx.conf`
+- [x] `npm run build` (exit 0); в `dist/` — `sw.js` (со `SKIP_WAITING`), `manifest.webmanifest`, `workbox-*.js`, иконки, `<link rel="manifest">` в `index.html`
+- [ ] Ручная проверка: Lighthouse PWA «installable», установка на desktop/mobile (за пользователем)
+
+---
+
+### Верификация
+
+1. `cd frontend && npm run build` — типы и сборка проходят; в `dist/` появились
+   `sw.js`, `manifest.webmanifest`, `workbox-*.js`, иконки.
+2. `npm run preview` → DevTools → Application: manifest валиден, SW `activated`,
+   иконки подхвачены; Lighthouse → PWA «installable».
+3. Кнопка установки в браузере (desktop) и «Добавить на экран» (mobile).
+4. Авторизация и `/api`-запросы работают как раньше (не перехватываются кэшем).
+5. Обновление: пересобрать → перезагрузить preview → тост «Обновить» → клик применяет новую версию.
+6. Офлайн-фоллбэк: DevTools Offline — открытые статические роуты грузятся из кэша.
+
+> Возможное продолжение (вне текущего объёма): NetworkFirst-кэш для GET `/api/events`
+> и подобных, чтобы недавно открытые встречи читались офлайн.

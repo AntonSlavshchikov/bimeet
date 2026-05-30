@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/features/auth/model/AuthContext'
+import { PWAUpdater } from '@/shared/pwa/PWAUpdater'
 import type { ReactNode } from 'react'
 import '@/shared/i18n'
 
@@ -12,6 +13,7 @@ export default function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           {children}
+          <PWAUpdater />
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

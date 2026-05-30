@@ -1,4 +1,9 @@
 {
+  "pwa": {
+    "updateAvailable": "A new version is available",
+    "reload": "Reload",
+    "offlineReady": "App ready to work offline"
+  },
   "common": {
     "cancel": "Cancel",
     "create": "Create",
