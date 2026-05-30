@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -134,7 +135,9 @@ func (s *Service) sendOne(ctx context.Context, sub model.PushSubscription, p pay
 		Endpoint: sub.Endpoint,
 		Keys:     webpush.Keys{P256dh: sub.P256dh, Auth: sub.Auth},
 	}, &webpush.Options{
-		Subscriber:      s.cfg.Subject,
+		// webpush-go сам добавляет "mailto:" к не-https subscriber, поэтому
+		// передаём голый email/URL — иначе выйдет "mailto:mailto:..." → BadJwtToken.
+		Subscriber:      strings.TrimPrefix(s.cfg.Subject, "mailto:"),
 		VAPIDPublicKey:  s.cfg.PublicKey,
 		VAPIDPrivateKey: s.cfg.PrivateKey,
 		TTL:             60,
