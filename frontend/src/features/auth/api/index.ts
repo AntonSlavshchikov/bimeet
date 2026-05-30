@@ -55,6 +55,11 @@ export const authApi = {
       body: form,
     })
     if (!res.ok) {
+      if (res.status === 401 && token) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.dispatchEvent(new Event('auth:unauthorized'))
+      }
       const body = await res.json().catch(() => ({ error: 'Unknown error' }))
       throw new Error(body.error ?? `HTTP ${res.status}`)
     }

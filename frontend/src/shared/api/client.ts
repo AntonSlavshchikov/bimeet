@@ -22,6 +22,13 @@ export async function apiFetch<T>(
     },
   })
   if (!res.ok) {
+    if (res.status === 401 && token) {
+      // Токен был, но отклонён → сессия истекла. login/register идут без токена,
+      // их 401 (неверный пароль и т.п.) сюда не попадает.
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.dispatchEvent(new Event('auth:unauthorized'))
+    }
     const body = await res.json().catch(() => ({ error: 'Unknown error' }))
     throw new Error(body.error ?? `HTTP ${res.status}`)
   }

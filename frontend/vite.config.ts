@@ -10,6 +10,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      // Свой service worker (src/sw.ts) — нужен для обработчиков push / notificationclick.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'prompt',
       // SW регистрируем вручную через workbox-window в PWAUpdater.tsx
       injectRegister: false,
@@ -33,11 +37,8 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-        navigateFallback: '/index.html',
-        // /api всегда идёт в сеть — приватные данные с JWT не кэшируются
-        navigateFallbackDenylist: [/^\/api\//],
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,woff2,png}'],
       },
     }),
   ],

@@ -2005,3 +2005,201 @@ precache-манифест. Регистрация SW и тост обновле�
 
 > Возможное продолжение (вне текущего объёма): NetworkFirst-кэш для GET `/api/events`
 > и подобных, чтобы недавно открытые встречи читались офлайн.
+
+---
+
+## Этап 26 — Багфиксы: авторизация и мобильный выход
+
+Точечные фиксы двух багов, обнаруженных в проде.
+
+### Баг 1 — истёкшая авторизация не редиректит на логин
+
+**Проблема.** `AuthProvider` при старте слепо доверял `localStorage` (`token` + `user`)
+и не валидировал токен. `ProtectedRoute` пускал пользователя дальше, пока в storage
+лежит `user`. Когда токен протухал на бэке, API отвечал `401`, но `apiFetch` просто
+кидал обычную `Error` — запросы тихо падали, страница рисовалась пустой, пользователь
+оказывался «залогинен в никуда» без редиректа.
+
+**Решение.** Глобальный 401-интерсептор в SPA-стиле, без хард-релоада:
+
+- `shared/api/client.ts` — в `apiFetch` при `res.status === 401 && token` (т.е. токен
+  был, но отклонён) чистим `localStorage` (`token` + `user`) и эмитим DOM-событие
+  `window.dispatchEvent(new Event('auth:unauthorized'))`. Условие `token` важно:
+  запросы `login`/`register`/`forgot`/`reset` идут без токена, их `401` (неверный
+  пароль) не вызывает сброс/редирект.
+- `features/auth/model/AuthContext.tsx` — `useEffect` слушает `auth:unauthorized`
+  и обнуляет сессию (`setToken(null)`, `setUser(null)` + очистка storage). После
+  `setUser(null)` `ProtectedRoute` сам рендерит `<Navigate to="/login" replace />`
+  (своего `useNavigate` тут нет — `AuthProvider` выше `BrowserRouter`).
+- `features/auth/api/index.ts` — такой же блок в `uploadAvatar` (он использует «сырой»
+  `fetch` мимо `apiFetch`), для единообразия.
+
+Случай «нет токена» и до этого закрывался `ProtectedRoute`; теперь закрыт и случай
+«токен протух». Публичные роуты (`/login`, `/register`, `/forgot-password`,
+`/reset-password`) остаются доступны неавторизованному пользователю.
+
+### Баг 2 — в мобильной версии нет кнопки «Выход»
+
+**Проблема.** Logout жил только в дропдауне `Sidebar` (десктоп, `lg:` и выше).
+В мобильной нижней навигации (`BottomNav`) его не было — выйти было нельзя.
+
+**Решение.** `pages/profile/index.tsx` — в левой карточке профиля под мета-блоком
+добавлена destructive-кнопка «Выход» (`logout()` + `navigate('/login')`, иконка
+`LogOut`, ключ `common.logout`). Класс `lg:hidden` — кнопка видна только в
+мобильной/планшетной версии, на десктопе выход остаётся в сайдбаре.
+
+### Файлы
+
+- `frontend/src/shared/api/client.ts`
+- `frontend/src/features/auth/model/AuthContext.tsx`
+- `frontend/src/features/auth/api/index.ts`
+- `frontend/src/pages/profile/index.tsx`
+
+### Верификация
+
+1. `cd frontend && npm run build` + `npm run lint` — без ошибок.
+2. Залогиниться → испортить `localStorage.token` → действие с API → редирект на
+   `/login`, storage очищен.
+3. Неверный пароль на `/login` не вызывает редирект-петлю (запрос без токена).
+4. Неавторизованный заход на `/events`, `/profile`, `/events/:id` → редирект на
+   `/login`; `/register`, `/forgot-password`, `/reset-password` доступны.
+5. Мобильный вьюпорт (≤ `lg`) → `/profile` → кнопка «Выход» разлогинивает и ведёт
+   на `/login`; на десктопе кнопки на профиле нет.
+
+---
+
+## Этап 27 — Push-уведомления (Web Push)
+
+> **Статус:** реализовано. Остаётся только сгенерировать VAPID-ключи
+> (`cd backend && go run ./cmd/genvapid`) и прописать их в env (бэк:
+> `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`; фронт опц.: `VITE_VAPID_PUBLIC_KEY`).
+
+### Context
+
+Уведомления (`model.Notification`) сейчас только **поллятся** фронтом
+(`entities/notification/queries` → `useNotifications`) и видны лишь при открытом
+приложении. PWA (Этап 25) устанавливается, но не будит пользователя при закрытой
+вкладке. Нужны **web push**: приглашения на встречу, напоминания за 3 дня / 1 день,
+новые сборы и т.п. должны приходить на устройство даже когда приложение закрыто.
+
+**Ключевая точка интеграции:** все in-app уведомления создаются в одном месте —
+`notificationRepo.Create(ctx, userID, *eventID, type, message)`
+(`repository/notification/repository.go`). Её зовут сервисы `event`, `collection`
+и фоновый `reminder.Runner`. Оборачиваем этот репозиторий декоратором, который
+после записи рассылает web push — и push появляется во всех сценариях без правки
+самих сервисов.
+
+### Стек и платформы
+
+**Стандарт:** Web Push API + VAPID. Единственный кросс-браузерный механизм для PWA
+(браузеры сами проксируют через свои push-сервисы, FCM напрямую не нужен).
+
+**Доставка при закрытом приложении.** Главное требование — пуш должен прилетать,
+даже когда приложение полностью закрыто. Web Push именно это и делает: push-сервис
+браузера (Google FCM endpoint для Chrome, Mozilla autopush, Apple для Safari)
+**будит service worker** в фоне, тот в `push`-обработчике вызывает
+`showNotification` — и системное уведомление появляется без открытой вкладки.
+
+**Почему не Firebase (FCM).** Пользователь предлагал Firebase, но для PWA это не
+даёт ничего сверх Web Push: FCM web SDK работает **поверх того же стандарта
+Web Push** и тех же service worker'ов, а ограничение iOS (только установленная на
+«Домой» PWA, см. ниже) Firebase не снимает. Поэтому берём чистый VAPID —
+self-hosted, без зависимости от Google/Firebase, меньше кода и конфигурации.
+
+Поддержка (определяет UX-гейтинг кнопки «Включить уведомления»):
+- **Chrome / Edge / Firefox** (desktop + Android) — работает в браузере и в
+  установленной PWA. `userVisibleOnly: true` обязателен.
+- **iOS / iPadOS Safari 16.4+** — push **работает**, но **только для PWA,
+  добавленной на экран «Домой»** (standalone); в обычной вкладке Safari пушей нет.
+  Путь пользователя: «Поделиться» → «На экран Домой» → открыть PWA → нажать
+  «Включить уведомления» (разрешение запрашивается строго из жеста) → дальше пуши
+  приходят как обычные системные уведомления iOS, в т.ч. при закрытом приложении.
+- **macOS Safari 16+** — поддерживается.
+- Гейтинг: проверяем `'Notification' in window`, `'PushManager' in window` и
+  `display-mode: standalone`; на iOS вне standalone — подсказка «добавьте на
+  экран Домой».
+
+Библиотеки: backend — `github.com/SherClockHolmes/webpush-go` (VAPID + отправка);
+frontend — нативные `PushManager` / `Notification`; SW — переход vite-plugin-pwa
+со `generateSW` на `injectManifest` (свой `src/sw.ts` с обработчиками `push` /
+`notificationclick`, с сохранением precache + `SKIP_WAITING`).
+
+### Backend
+
+1. **VAPID-ключи** в env (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+   `VAPID_SUBJECT=mailto:...`), сгенерированы один раз. Добавить в `.env.example`,
+   `internal/config`, секреты CI/CD (Этап 16). Публичный ключ — фронту
+   (через эндпоинт или `VITE_VAPID_PUBLIC_KEY`).
+2. **Миграция `013_push_subscriptions`**: таблица `push_subscriptions`
+   (`id`, `user_id` FK ON DELETE CASCADE, `endpoint` UNIQUE, `p256dh`, `auth`,
+   `user_agent`, `created_at`) + индекс по `user_id`; `.down.sql`. Тип
+   `PushSubscription` в `model.go`.
+3. **Репозиторий `repository/pushsub`**: `Upsert` (по уникальному `endpoint`),
+   `ListByUser`, `DeleteByEndpoint`.
+4. **Сервис `service/push`**: `Subscribe` / `Unsubscribe`;
+   `SendToUser(ctx, userID, payload)` — берёт подписки юзера, шлёт через
+   `webpush.SendNotification`; на `404/410` удаляет мёртвую подписку. Отправка в
+   goroutine, ошибки в лог (как в `reminder.sendToAll`). `payload` = JSON
+   `{ title, body, url, tag }`; `url` — по `eventID`/типу (логика как в
+   `entities/notification/lib/href.ts`).
+5. **Декоратор `NotifyingNotificationRepo`** вокруг `notificationRepo` (тот же
+   интерфейс `Create`): после успешной записи `go push.SendToUser(...)`. В
+   `cmd/server/main.go` оборачиваем repo один раз и отдаём в `eventSvc`,
+   `collectionSvc`, `reminderRunner`. Правок в сервисах не требуется.
+6. **Хендлер `handler/push` + роуты** (под auth-middleware):
+   `GET /api/push/vapid-public-key`, `POST /api/push/subscribe`,
+   `POST /api/push/unsubscribe`.
+
+### Frontend
+
+1. **SW → `injectManifest`** (`vite.config.ts`: `strategies: 'injectManifest'`,
+   `srcDir: 'src'`, `filename: 'sw.ts'`). Новый `src/sw.ts`:
+   - `precacheAndRoute(self.__WB_MANIFEST)` — офлайн сохраняем;
+   - `message` → `SKIP_WAITING` (поведение `PWAUpdater` сохранить);
+   - `push` → `showNotification(title, { body, data:{url}, icon, badge, tag })`;
+   - `notificationclick` → фокус существующей вкладки или `clients.openWindow(url)`.
+2. **Модуль `shared/push/`**: `subscribe()` — `Notification.requestPermission()`
+   (из жеста) → `reg.pushManager.subscribe({ userVisibleOnly: true,
+   applicationServerKey })` → `POST /api/push/subscribe`; `unsubscribe()` —
+   `sub.unsubscribe()` + `POST /api/push/unsubscribe`. Гейтинг платформ.
+3. **UI opt-in в профиле** (`pages/profile/index.tsx`): кнопка/тоггл «Уведомления
+   на устройстве» (включить / включены / недоступно + iOS-подсказка), запрос
+   разрешения по клику.
+4. **Отписка при logout** — встроить `unsubscribe()` в `AuthContext.logout()` /
+   `Sidebar.handleLogout` / профильный `handleLogout`.
+5. **i18n** — ключи `push.*` в `shared/i18n/{ru,en}.json`.
+
+### Файлы
+
+Backend: `db/migrations/013_push_subscriptions.{up,down}.sql`, `model/model.go`,
+`repository/pushsub/`, `service/push/`, `handler/push/`, декоратор
+`repository/notification`, `cmd/server/main.go`, `internal/config`, `.env.example`,
+`go.mod`/`go.sum`.
+Frontend: `vite.config.ts`, `src/sw.ts` (новый), `shared/push/`,
+`pages/profile/index.tsx`, `features/auth/model/AuthContext.tsx`,
+`shared/i18n/{ru,en}.json`, `VITE_VAPID_PUBLIC_KEY`.
+
+### Риски
+
+- iOS: push только в установленной PWA (16.4+) и только из жеста — UI обязан это
+  отражать.
+- Декоратор должен совпасть по интерфейсу со всеми потребителями
+  (`service/*/interfaces.go`, `reminder/interfaces.go`).
+- VAPID-ключи — секреты, не коммитить; прокинуть через CI/CD и docker env.
+- `injectManifest` меняет генерацию SW — проверить, что офлайн-precache и кнопка
+  «Обновить» (Этап 25) не сломались.
+- Мёртвые подписки (`410 Gone`) чистить, иначе таблица копит мусор.
+
+### Верификация (будущей реализации)
+
+1. `cd backend && go vet ./...` + `go build ./cmd/server`; `cd frontend &&
+   npm run build` — без ошибок; в `dist/` есть `sw.js` с `push`-обработчиком.
+2. Подписка: в установленной PWA нажать «Включить уведомления» → запись в
+   `push_subscriptions`.
+3. Триггер уведомления (приглашение / напоминание) → приходит system-push при
+   закрытом приложении; клик открывает нужную встречу.
+4. Logout → подписка удалена (на устройстве и в БД).
+5. Мёртвый endpoint (отписка в браузере) → при следующей отправке `410` → запись
+   удалена.
+6. iOS вне standalone → кнопка показывает подсказку про установку, подписка не
+   создаётся.

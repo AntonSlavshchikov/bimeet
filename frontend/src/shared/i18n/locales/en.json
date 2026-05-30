@@ -313,6 +313,19 @@
     "deleteAvatar": "Remove avatar",
     "uploadError": "Failed to upload avatar"
   },
+  "push": {
+    "title": "Push notifications",
+    "description": "Get invites, reminders and event updates even when the app is closed.",
+    "enable": "Enable notifications",
+    "enabled": "Notifications enabled",
+    "disable": "Disable",
+    "enabledToast": "Push notifications enabled",
+    "disabledToast": "Push notifications disabled",
+    "error": "Couldn't enable notifications",
+    "denied": "Notifications are blocked in your browser settings",
+    "unavailable": "Not supported in this browser",
+    "iosHint": "Add the app to your Home Screen (Share → Add to Home Screen) to receive notifications."
+  },
   "admin": {
     "title": "Admin panel",
     "subtitle": "Statistics and key metrics",

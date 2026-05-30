@@ -34,6 +34,10 @@ type Config struct {
 	S3Endpoint       string // custom endpoint for MinIO / S3-compatible services
 	// AdminEmails — whitelist of users (by email) allowed to access /api/admin/*
 	AdminEmails []string
+	// Web Push (VAPID). If VAPIDPublicKey/PrivateKey are empty, push is disabled.
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDSubject    string // "mailto:..." contact for push services
 }
 
 func Load() Config {
@@ -66,6 +70,11 @@ func Load() Config {
 		mailFrom = os.Getenv("SMTP_FROM")
 	}
 
+	vapidSubject := os.Getenv("VAPID_SUBJECT")
+	if vapidSubject == "" {
+		vapidSubject = "mailto:admin@bimeet.pro"
+	}
+
 	return Config{
 		Port:         port,
 		DSN:          os.Getenv("DSN"),
@@ -86,6 +95,9 @@ func Load() Config {
 		S3PublicBaseURL: os.Getenv("S3_PUBLIC_BASE_URL"),
 		S3Endpoint:      os.Getenv("S3_ENDPOINT"),
 		AdminEmails:     parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
+		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
+		VAPIDSubject:    vapidSubject,
 	}
 }
 

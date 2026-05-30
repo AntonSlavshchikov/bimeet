@@ -166,6 +166,29 @@ type PasswordResetToken struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type PushSubscription struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Endpoint  string    `json:"endpoint"`
+	P256dh    string    `json:"p256dh"`
+	Auth      string    `json:"auth"`
+	UserAgent string    `json:"user_agent,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// PushSubscribeRequest mirrors the browser PushSubscription JSON shape.
+type PushSubscribeRequest struct {
+	Endpoint string `json:"endpoint"`
+	Keys     struct {
+		P256dh string `json:"p256dh"`
+		Auth   string `json:"auth"`
+	} `json:"keys"`
+}
+
+type PushUnsubscribeRequest struct {
+	Endpoint string `json:"endpoint"`
+}
+
 // ─── DTOs ──────────────────────────────────────────────────────────────────
 
 type RegisterRequest struct {

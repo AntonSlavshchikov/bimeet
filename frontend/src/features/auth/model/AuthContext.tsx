@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '@/entities/user/model/types'
 import { authApi } from '@/features/auth/api'
+import { disablePush } from '@/shared/push'
 
 interface AuthContextValue {
   user: User | null
@@ -27,6 +28,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(JSON.parse(savedUser))
     }
     setLoading(false)
+  }, [])
+
+  // Сессия истекла (401 от бэка) → обнуляем стейт. ProtectedRoute сам редиректит на /login.
+  useEffect(() => {
+    function onUnauthorized() {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      setToken(null)
+      setUser(null)
+    }
+    window.addEventListener('auth:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', onUnauthorized)
   }, [])
 
   async function login(email: string, password: string): Promise<boolean> {
@@ -56,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
+    // Отписываем устройство от пушей, чтобы чужие уведомления не приходили на
+    // общем девайсе. Локальный unsubscribe инвалидирует endpoint; даже если
+    // серверный DELETE не успеет (токен уже снят), бэк удалит мёртвую подписку
+    // по 410 при следующей отправке.
+    void disablePush().catch(() => {})
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setToken(null)

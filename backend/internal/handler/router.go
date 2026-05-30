@@ -15,6 +15,7 @@ import (
 	notificationhandler "bimeet/internal/handler/notification"
 	pollhandler         "bimeet/internal/handler/poll"
 	profilehandler      "bimeet/internal/handler/profile"
+	pushhandler         "bimeet/internal/handler/push"
 	"bimeet/internal/middleware"
 )
 
@@ -29,6 +30,7 @@ func NewRouter(
 	notification *notificationhandler.Handler,
 	profile      *profilehandler.Handler,
 	admin        *adminhandler.Handler,
+	push         *pushhandler.Handler,
 	userLookup   middleware.UserLookup,
 	adminEmails  []string,
 	jwtSecret    string,
@@ -114,6 +116,11 @@ func NewRouter(
 		r.Post("/api/notifications/read-all", notification.MarkAllRead)
 		r.Delete("/api/notifications/{id}", notification.Delete)
 		r.Delete("/api/notifications", notification.DeleteAll)
+
+		// Web Push subscriptions
+		r.Get("/api/push/vapid-public-key", push.VAPIDPublicKey)
+		r.Post("/api/push/subscribe", push.Subscribe)
+		r.Post("/api/push/unsubscribe", push.Unsubscribe)
 
 		// Profile
 		r.Get("/api/auth/me", profile.GetMe)

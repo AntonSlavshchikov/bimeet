@@ -22,6 +22,8 @@ import (
 	notificationhandler "bimeet/internal/handler/notification"
 	pollhandler         "bimeet/internal/handler/poll"
 	profilehandler      "bimeet/internal/handler/profile"
+	pushhandler         "bimeet/internal/handler/push"
+	"bimeet/internal/notify"
 	adminrepo           "bimeet/internal/repository/admin"
 	carpoolrepo         "bimeet/internal/repository/carpool"
 	collectionrepo      "bimeet/internal/repository/collection"
@@ -31,6 +33,7 @@ import (
 	notificationrepo    "bimeet/internal/repository/notification"
 	passwordresetrepo   "bimeet/internal/repository/passwordreset"
 	pollrepo            "bimeet/internal/repository/poll"
+	pushsubrepo         "bimeet/internal/repository/pushsub"
 	userrepo            "bimeet/internal/repository/user"
 	adminsvc            "bimeet/internal/service/admin"
 	authsvc             "bimeet/internal/service/auth"
@@ -43,6 +46,7 @@ import (
 	notificationsvc     "bimeet/internal/service/notification"
 	pollsvc             "bimeet/internal/service/poll"
 	profilesvc          "bimeet/internal/service/profile"
+	pushsvc             "bimeet/internal/service/push"
 	"bimeet/internal/reminder"
 	"bimeet/internal/storage"
 
@@ -81,7 +85,22 @@ func main() {
 	linkRepo          := eventlinkrepo.New(pool)
 	notificationRepo  := notificationrepo.New(pool)
 	passwordResetRepo := passwordresetrepo.New(pool)
+	pushSubRepo       := pushsubrepo.New(pool)
 	adminRepo         := adminrepo.New(pool)
+
+	// Web Push service + decorator: wrap notificationRepo so every persisted
+	// notification also fans out as a push (works for all existing callers).
+	pushSvc := pushsvc.New(pushSubRepo, pushsvc.Config{
+		PublicKey:  cfg.VAPIDPublicKey,
+		PrivateKey: cfg.VAPIDPrivateKey,
+		Subject:    cfg.VAPIDSubject,
+	})
+	notifyingRepo := notify.New(notificationRepo, pushSvc)
+	if pushSvc.Enabled() {
+		log.Println("web push enabled")
+	} else {
+		log.Println("web push disabled (VAPID keys not set)")
+	}
 
 	// Services
 	m            := mailer.New(mailer.Config{
@@ -95,7 +114,7 @@ func main() {
 		FrontendURL:  cfg.FrontendURL,
 	})
 	authSvc         := authsvc.New(userRepo, passwordResetRepo, m, cfg.JWTSecret, cfg.JWTExpHours)
-	eventSvc        := eventsvc.New(eventRepo, userRepo, notificationRepo, m)
+	eventSvc        := eventsvc.New(eventRepo, userRepo, notifyingRepo, m)
 	pollSvc         := pollsvc.New(pollRepo, eventRepo)
 	itemSvc         := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc      := carpoolsvc.New(carpoolRepo, eventRepo)
@@ -132,7 +151,7 @@ func main() {
 	}
 
 	profileSvc    := profilesvc.New(userRepo, fileStorage)
-	collectionSvc := collectionsvc.New(collectionRepo, eventRepo, notificationRepo, fileStorage)
+	collectionSvc := collectionsvc.New(collectionRepo, eventRepo, notifyingRepo, fileStorage)
 
 	// Handlers
 	authH         := authhandler.New(authSvc)
@@ -145,9 +164,10 @@ func main() {
 	notificationH := notificationhandler.New(notificationSvc)
 	profileH      := profilehandler.New(profileSvc)
 	adminH        := adminhandler.New(adminSvc)
+	pushH         := pushhandler.New(pushSvc)
 
 	// Reminder scheduler
-	reminderRunner := reminder.New(eventRepo, notificationRepo, time.Hour)
+	reminderRunner := reminder.New(eventRepo, notifyingRepo, time.Hour)
 	go reminderRunner.Start(ctx)
 
 	// Router
@@ -162,6 +182,7 @@ func main() {
 		notificationH,
 		profileH,
 		adminH,
+		pushH,
 		userRepo,
 		cfg.AdminEmails,
 		cfg.JWTSecret,

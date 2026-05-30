@@ -1,19 +1,22 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Calendar, Camera, Loader2, Mail, MapPin, Trash2, User } from 'lucide-react'
+import { Calendar, Camera, Loader2, LogOut, Mail, MapPin, Trash2, User } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { formatDate } from '@/shared/lib/formatDate'
 import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
+import PushSettings from '@/features/push/ui/PushSettings'
 import { cn } from '@/shared/lib/cn'
 
 type Tab = 'edit' | 'stats'
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, logout } = useAuth()
   const { t } = useTranslation()
   const toast = useToast()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [tab, setTab] = useState<Tab>('edit')
@@ -67,6 +70,11 @@ export default function ProfilePage() {
 
   function handleSave() {
     updateMutation.mutate(form)
+  }
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
   }
 
   const fullName = [user?.name, user?.last_name].filter(Boolean).join(' ')
@@ -195,6 +203,8 @@ export default function ProfilePage() {
               >
                 {t('profile.save', 'Сохранить')}
               </Button>
+
+              <PushSettings />
             </div>
           )}
 
@@ -208,6 +218,16 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Выход — в самом низу, только в мобильной версии (на десктопе он в сайдбаре) */}
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="lg:hidden w-full inline-flex items-center justify-center gap-2 rounded-[10px] border border-line px-3 py-2.5 text-[13px] font-semibold text-danger hover:bg-hover transition focus-ring"
+      >
+        <LogOut size={15} />
+        {t('common.logout', 'Выйти')}
+      </button>
     </div>
   )
 }
