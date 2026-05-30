@@ -7,6 +7,7 @@ import {
   isPushEnabled,
   enablePush,
   disablePush,
+  sendTestPush,
   type PushState,
 } from '@/shared/push'
 
@@ -57,6 +58,18 @@ export default function PushSettings() {
     }
   }
 
+  async function handleTest() {
+    setBusy(true)
+    try {
+      await sendTestPush()
+      toast({ title: t('push.testSent', 'Тест отправлен'), status: 'success' })
+    } catch (e) {
+      toast({ title: e instanceof Error ? e.message : t('push.error', 'Ошибка'), status: 'error' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="rounded-[12px] border border-line bg-bg-2 p-4 flex flex-col gap-3">
       <div className="flex items-start gap-3">
@@ -81,10 +94,15 @@ export default function PushSettings() {
 
       {(state === 'default' || state === 'granted') && (
         enabled ? (
-          <Button variant="outline" className="self-start" onClick={handleDisable} disabled={busy}>
-            {busy ? <Loader2 size={15} className="animate-spin" /> : <BellOff size={15} />}
-            {t('push.disable', 'Отключить')}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={handleDisable} disabled={busy}>
+              {busy ? <Loader2 size={15} className="animate-spin" /> : <BellOff size={15} />}
+              {t('push.disable', 'Отключить')}
+            </Button>
+            <Button variant="ghost" onClick={handleTest} disabled={busy}>
+              {t('push.test', 'Отправить тест')}
+            </Button>
+          </div>
         ) : (
           <Button className="self-start" onClick={handleEnable} disabled={busy}>
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Bell size={15} />}

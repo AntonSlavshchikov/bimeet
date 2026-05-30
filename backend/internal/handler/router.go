@@ -121,6 +121,7 @@ func NewRouter(
 		r.Get("/api/push/vapid-public-key", push.VAPIDPublicKey)
 		r.Post("/api/push/subscribe", push.Subscribe)
 		r.Post("/api/push/unsubscribe", push.Unsubscribe)
+		r.Post("/api/push/test", push.Test)
 
 		// Profile
 		r.Get("/api/auth/me", profile.GetMe)

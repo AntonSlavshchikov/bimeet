@@ -319,6 +319,8 @@
     "enable": "Enable notifications",
     "enabled": "Notifications enabled",
     "disable": "Disable",
+    "test": "Send test",
+    "testSent": "Test push sent",
     "enabledToast": "Push notifications enabled",
     "disabledToast": "Push notifications disabled",
     "error": "Couldn't enable notifications",

@@ -105,6 +105,11 @@ export async function enablePush(): Promise<boolean> {
   return true
 }
 
+/** Просит бэк прислать тестовый пуш на текущий аккаунт. Бросает ошибку с текстом ответа push-сервиса. */
+export async function sendTestPush(): Promise<void> {
+  await apiFetch<void>('/api/push/test', { method: 'POST' })
+}
+
 /** Отписывает устройство локально и удаляет подписку на бэке. */
 export async function disablePush(): Promise<void> {
   const reg = await getRegistration()

@@ -5,6 +5,8 @@ package pushsvc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -75,32 +77,83 @@ func (s *Service) SendToUser(ctx context.Context, userID uuid.UUID, title, body,
 		return
 	}
 
-	data, err := json.Marshal(payload{Title: title, Body: body, URL: url, Tag: tag})
+	for _, sub := range subs {
+		if err := s.sendOne(ctx, sub, payload{Title: title, Body: body, URL: url, Tag: tag}); err != nil {
+			log.Printf("push: send to %s: %v", userID, err)
+		}
+	}
+}
+
+// Test sends a push to the caller's own subscriptions synchronously and returns
+// the first error (including the push service's status/body). Useful for
+// debugging delivery from the UI.
+func (s *Service) Test(ctx context.Context, userID uuid.UUID) error {
+	if !s.Enabled() {
+		return fmt.Errorf("push disabled: VAPID keys not configured")
+	}
+	subs, err := s.repo.ListByUser(ctx, userID)
 	if err != nil {
-		log.Printf("push: marshal payload: %v", err)
-		return
+		return err
+	}
+	if len(subs) == 0 {
+		return fmt.Errorf("no subscriptions for this account on any device")
 	}
 
+	var firstErr error
+	var ok bool
 	for _, sub := range subs {
-		resp, err := webpush.SendNotification(data, &webpush.Subscription{
-			Endpoint: sub.Endpoint,
-			Keys:     webpush.Keys{P256dh: sub.P256dh, Auth: sub.Auth},
-		}, &webpush.Options{
-			Subscriber:      s.cfg.Subject,
-			VAPIDPublicKey:  s.cfg.PublicKey,
-			VAPIDPrivateKey: s.cfg.PrivateKey,
-			TTL:             60,
-		})
-		if err != nil {
-			log.Printf("push: send to %s: %v", userID, err)
-			continue
-		}
-		// Prune subscriptions the push service no longer recognises.
-		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone {
-			if err := s.repo.DeleteByEndpoint(ctx, sub.Endpoint); err != nil {
-				log.Printf("push: prune dead subscription: %v", err)
+		if err := s.sendOne(ctx, sub, payload{
+			Title: "Bimeet",
+			Body:  "Тестовое push-уведомление ✅",
+			URL:   "/events",
+			Tag:   "push-test",
+		}); err != nil {
+			if firstErr == nil {
+				firstErr = err
 			}
+		} else {
+			ok = true
 		}
-		resp.Body.Close()
 	}
+	// Success if at least one device accepted it (ignore pruned/dead ones).
+	if ok {
+		return nil
+	}
+	return firstErr
+}
+
+// sendOne delivers a single payload to one subscription. Returns an error for
+// transport failures and non-2xx responses; prunes dead (404/410) subscriptions.
+func (s *Service) sendOne(ctx context.Context, sub model.PushSubscription, p payload) error {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return fmt.Errorf("marshal payload: %w", err)
+	}
+
+	resp, err := webpush.SendNotification(data, &webpush.Subscription{
+		Endpoint: sub.Endpoint,
+		Keys:     webpush.Keys{P256dh: sub.P256dh, Auth: sub.Auth},
+	}, &webpush.Options{
+		Subscriber:      s.cfg.Subject,
+		VAPIDPublicKey:  s.cfg.PublicKey,
+		VAPIDPrivateKey: s.cfg.PrivateKey,
+		TTL:             60,
+	})
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Prune subscriptions the push service no longer recognises.
+	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone {
+		if delErr := s.repo.DeleteByEndpoint(ctx, sub.Endpoint); delErr != nil {
+			log.Printf("push: prune dead subscription: %v", delErr)
+		}
+		return fmt.Errorf("subscription expired (%d), pruned", resp.StatusCode)
+	}
+	if resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return fmt.Errorf("push service returned %d: %s", resp.StatusCode, string(b))
+	}
+	return nil
 }

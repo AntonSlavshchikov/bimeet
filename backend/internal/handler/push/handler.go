@@ -46,6 +46,22 @@ func (h *Handler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Test sends a push to the caller's own subscriptions (debugging aid).
+func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	if err := h.svc.Test(r.Context(), userID); err != nil {
+		response.Error(w, http.StatusBadGateway, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) Unsubscribe(w http.ResponseWriter, r *http.Request) {
 	if _, ok := middleware.UserIDFromCtx(r.Context()); !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
