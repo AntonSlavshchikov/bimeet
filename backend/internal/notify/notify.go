@@ -13,13 +13,15 @@ import (
 )
 
 // Creator is the subset of the notification repository the consumers rely on.
+// CountUnread feeds the PWA icon badge carried in the push payload.
 type Creator interface {
 	Create(ctx context.Context, userID uuid.UUID, eventID *uuid.UUID, notifType, message string) (model.Notification, error)
+	CountUnread(ctx context.Context, userID uuid.UUID) (int, error)
 }
 
 // Pusher dispatches a web push to all of a user's subscriptions.
 type Pusher interface {
-	SendToUser(ctx context.Context, userID uuid.UUID, title, body, url, tag string)
+	SendToUser(ctx context.Context, userID uuid.UUID, title, body, url, tag string, badge int)
 }
 
 // Repo wraps a Creator and pushes after each successful Create.
@@ -37,8 +39,14 @@ func (r *Repo) Create(ctx context.Context, userID uuid.UUID, eventID *uuid.UUID,
 	if err != nil {
 		return n, err
 	}
+	// Бейдж на иконке PWA = число непрочитанных. Считаем здесь, до ухода в
+	// goroutine; при ошибке шлём 0 (badge,omitempty → SW не тронет бейдж).
+	badge, err := r.inner.CountUnread(ctx, userID)
+	if err != nil {
+		badge = 0
+	}
 	// Fire-and-forget: a fresh context so it isn't cancelled with the request.
-	go r.push.SendToUser(context.Background(), userID, "Bimeet", message, href(notifType, eventID), n.ID.String())
+	go r.push.SendToUser(context.Background(), userID, "Bimeet", message, href(notifType, eventID), n.ID.String(), badge)
 	return n, nil
 }
 

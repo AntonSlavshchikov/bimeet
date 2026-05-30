@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import type { User } from '@/entities/user/model/types'
 import { authApi } from '@/features/auth/api'
 import { disablePush } from '@/shared/push'
+import { clearBadge } from '@/shared/badge'
 
 interface AuthContextValue {
   user: User | null
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('user')
       setToken(null)
       setUser(null)
+      clearBadge()
     }
     window.addEventListener('auth:unauthorized', onUnauthorized)
     return () => window.removeEventListener('auth:unauthorized', onUnauthorized)
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // серверный DELETE не успеет (токен уже снят), бэк удалит мёртвую подписку
     // по 410 при следующей отправке.
     void disablePush().catch(() => {})
+    clearBadge()
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setToken(null)

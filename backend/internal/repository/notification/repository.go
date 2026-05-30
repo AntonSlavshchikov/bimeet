@@ -54,6 +54,18 @@ func (r *Repository) ListForUser(ctx context.Context, userID uuid.UUID) ([]model
 	return notifications, rows.Err()
 }
 
+func (r *Repository) CountUnread(ctx context.Context, userID uuid.UUID) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*) FROM notifications WHERE user_id=$1 AND is_read=FALSE`,
+		userID,
+	).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count unread notifications: %w", err)
+	}
+	return count, nil
+}
+
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Notification, error) {
 	var n model.Notification
 	err := r.pool.QueryRow(ctx,

@@ -59,12 +59,15 @@ type payload struct {
 	Body  string `json:"body"`
 	URL   string `json:"url,omitempty"`
 	Tag   string `json:"tag,omitempty"`
+	// Badge — число непрочитанных уведомлений; SW ставит его на иконку PWA
+	// через navigator.setAppBadge. 0 опускается (тестовые пуши не трогают бейдж).
+	Badge int `json:"badge,omitempty"`
 }
 
 // SendToUser delivers a push to every subscription of the user. Dead
 // subscriptions (404/410 from the push service) are pruned. Safe to call in a
 // goroutine; it logs errors and never panics.
-func (s *Service) SendToUser(ctx context.Context, userID uuid.UUID, title, body, url, tag string) {
+func (s *Service) SendToUser(ctx context.Context, userID uuid.UUID, title, body, url, tag string, badge int) {
 	if !s.Enabled() {
 		return
 	}
@@ -79,7 +82,7 @@ func (s *Service) SendToUser(ctx context.Context, userID uuid.UUID, title, body,
 	}
 
 	for _, sub := range subs {
-		if err := s.sendOne(ctx, sub, payload{Title: title, Body: body, URL: url, Tag: tag}); err != nil {
+		if err := s.sendOne(ctx, sub, payload{Title: title, Body: body, URL: url, Tag: tag, Badge: badge}); err != nil {
 			log.Printf("push: send to %s: %v", userID, err)
 		}
 	}

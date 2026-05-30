@@ -2203,3 +2203,98 @@ Frontend: `vite.config.ts`, `src/sw.ts` (новый), `shared/push/`,
    удалена.
 6. iOS вне standalone → кнопка показывает подсказку про установку, подписка не
    создаётся.
+
+---
+
+## Этап 28 — Бейдж уведомлений на иконке PWA (Badging API)
+
+> **Статус:** реализовано. Бэкенд (`go build ./...`) и фронтенд (`npm run build`)
+> собираются; в `dist/sw.js` присутствует `setAppBadge`. Ручная проверка бейджа
+> на установленной PWA — за пользователем.
+
+### Контекст
+
+Установленная PWA (Этап 25) с web push (Этап 27) показывает системные
+уведомления, но на иконке приложения нет счётчика непрочитанных. Нужен
+нативный бейдж с числом непрочитанных уведомлений — как у почты/мессенджеров.
+
+### Подход: Badging API
+
+`navigator.setAppBadge(count)` / `navigator.clearAppBadge()` — стандартный API
+для числового бейджа на иконке установленной PWA. Доступен и в window, и в SW
+(`self.navigator.setAppBadge`). Feature-detection: `'setAppBadge' in navigator`;
+вне поддержки — тихий no-op (try/catch).
+
+Поддержка: Chrome/Edge (desktop + Android), macOS Safari, iOS/iPadOS Safari
+16.4+ — те же платформенные ограничения, что у push (на iOS только в PWA,
+установленной на «Домой»).
+
+Бейдж всегда отражает число непрочитанных и синхронизируется из двух источников:
+
+- **Foreground (приложение открыто).** Хук читает `useNotifications()` и в
+  эффекте зовёт `setAppBadge(unread)` / `clearAppBadge()` при 0. Срабатывает
+  после mark-read мутаций (инвалидация → refetch → эффект) и при возврате
+  фокуса на вкладку (`visibilitychange`). `unread` считается так же, как в
+  `NotificationCenter`: `notifications.filter(n => !n.is_read).length`.
+- **Background (приложение закрыто).** Бэкенд кладёт в push-payload `badge`
+  (число непрочитанных юзера на момент отправки); SW в обработчике `push`
+  зовёт `self.navigator.setAppBadge(data.badge)`.
+
+При logout бейдж очищается (`clearAppBadge()`).
+
+### Backend
+
+- `repository/notification`: новый метод `CountUnread(ctx, userID) (int, error)`
+  (`SELECT count(*) ... WHERE user_id=$1 AND is_read=false`).
+- `service/push`: в тип `payload` добавить `Badge int `json:"badge"``;
+  `SendToUser(...)` принимает `badge int` и прокидывает в payload.
+- Декоратор `NotifyingNotificationRepo`: после успешного `Create` посчитать
+  `CountUnread(userID)` и передать в `SendToUser(..., badge)`. Правок в самих
+  сервисах (`event`/`collection`/`reminder`) не требуется.
+
+### Frontend
+
+- `shared/badge/index.ts` (новый): `isBadgeSupported()`, `setBadge(count)`,
+  `clearBadge()` — обёртки с feature-detection и try/catch.
+- `features/notifications/ui/AppBadgeSync.tsx` (новый): компонент без UI —
+  `useNotifications()` + эффект (`setBadge(unread)`/`clearBadge()`) +
+  слушатель `visibilitychange` (refetch при возврате фокуса). TanStack Query
+  дедуплицирует запрос по ключу — лишнего поллинга нет.
+- `app/providers/index.tsx`: смонтировать `<AppBadgeSync/>` глобально (рядом с
+  `<PWAUpdater/>`), чтобы синк работал на всех роутах.
+- `src/sw.ts`: в `PushPayload` добавить `badge?: number`; в обработчике `push`
+  после `showNotification` — `if ('setAppBadge' in self.navigator) ...setAppBadge(data.badge)`.
+- Logout: вызвать `clearBadge()` в `AuthContext.logout()` (рядом с
+  `disablePush()`/отпиской из Этапа 27).
+- i18n: новых пользовательских строк не требуется (бейдж — системный).
+
+### Файлы
+
+Backend: `repository/notification/repository.go`,
+`service/push/service.go`, декоратор `repository/notification` (Notifying-обёртка).
+Frontend: `shared/badge/index.ts` (новый),
+`features/notifications/ui/AppBadgeSync.tsx` (новый),
+`app/providers/index.tsx`, `src/sw.ts`,
+`features/auth/model/AuthContext.tsx`.
+
+### Риски
+
+- iOS: бейдж только в установленной PWA (16.4+); вне standalone — no-op.
+- `badge` в payload отражает счётчик на момент отправки; реальную коррекцию
+  даёт foreground-синк при следующем открытии — это нормально и ожидаемо.
+- Если пользователь отключил уведомления, push не приходит → background-бейдж
+  не обновляется; foreground-синк остаётся источником истины.
+
+### Верификация
+
+1. `cd backend && go vet ./... && go build ./cmd/server`;
+   `cd frontend && npm run build && npm run lint` — без ошибок; в `dist/sw.js`
+   есть `setAppBadge` в `push`-обработчике.
+2. Установленная PWA, есть непрочитанные → на иконке число; «прочитать все» →
+   бейдж исчезает (foreground-синк).
+3. Закрыть PWA → триггер уведомления → системный push приходит и бейдж на
+   иконке обновляется (background-синк из payload).
+4. Возврат на вкладку после чтения с другого устройства → `visibilitychange`
+   → refetch → бейдж скорректирован.
+5. Logout → бейдж очищен.
+6. Браузер без поддержки Badging API / iOS вне standalone → ошибок нет (no-op).

@@ -32,6 +32,7 @@ interface PushPayload {
   body?: string
   url?: string
   tag?: string
+  badge?: number // число непрочитанных → бейдж на иконке PWA (Badging API)
 }
 
 // Приходит web push (даже при закрытом приложении) → показываем системное уведомление.
@@ -46,6 +47,17 @@ self.addEventListener('push', (event) => {
   }
 
   const title = data.title || 'Bimeet'
+
+  // Бейдж на иконке PWA (фоновая установка при закрытом приложении). Когда
+  // приложение открыто, его перекрывает AppBadgeSync. Гейтим по поддержке.
+  if (typeof data.badge === 'number' && 'setAppBadge' in self.navigator) {
+    if (data.badge > 0) {
+      void self.navigator.setAppBadge(data.badge)
+    } else {
+      void self.navigator.clearAppBadge()
+    }
+  }
+
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',
