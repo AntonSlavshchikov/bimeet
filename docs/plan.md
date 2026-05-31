@@ -2531,3 +2531,92 @@ docker compose logs backend | jq 'select(.trace_id=="<из X-Trace-Id>")'
 - [ ] `deploy/observability/grafana-datasources.yml` — Loki + Jaeger datasources
 - [ ] верификация: трейс `POST /api/events` с pg-спанами виден в Jaeger UI;
       те же логи ищутся в Grafana/Loki по `trace_id` из `X-Trace-Id`
+
+---
+
+## Этап 31 — Беспарольный вход по коду из почты (passwordless / OTP)
+
+### Контекст
+
+Сейчас вход устроен классически: регистрация (имя + email + пароль), логин по
+email+паролю, плюс ветка «забыл пароль» → письмо со ссылкой `/reset-password?token=…`.
+Это четыре экрана (`login`, `register`, `forgot-password`, `reset-password`),
+таблица `password_reset_tokens`, колонка `users.password_hash`, bcrypt и весь
+сопутствующий код. Пользователю надо придумывать и помнить пароль.
+
+Переходим на **passwordless-вход по одноразовому коду**: пользователь вводит
+только email → на почту приходит 6-значный код → вводит код → авторизован. Если
+аккаунта с таким email нет — он создаётся автоматически при первом успешном вводе
+кода (имя по умолчанию из локальной части email, правится потом в профиле).
+Пароли убираем полностью: ни регистрации, ни восстановления, ни поля пароля.
+
+Флоу на фронте — два шага в одной форме (а не отдельные роуты): `email → code`.
+
+### Дизайн-решения
+
+| Вопрос | Решение |
+|---|---|
+| Формат кода | 6 цифр (`000000`–`999999`), генерируется `crypto/rand` |
+| Хранение | хеш кода (bcrypt/sha256), не открытый текст — в новой таблице `login_codes` |
+| TTL кода | 10 минут |
+| Попытки | макс. 5 неверных вводов на код → код инвалидируется (защита от перебора) |
+| Повторная отправка | не чаще 1 раза в 60 сек на email (кулдаун) |
+| Анти-энумерация | `POST /request-code` всегда отвечает `200` независимо от существования аккаунта |
+| Авторегистрация | аккаунт создаётся в момент успешной верификации кода, если email новый; `name` = часть email до `@` |
+| Старый код | при запросе нового кода прежние неиспользованные коды этого email помечаются использованными |
+| Rate limit | `request-code`/`verify-code` остаются под строгим per-IP лимитом auth-роутов (`router.go`) |
+
+### Backend — миграции
+
+| Файл | Изменение |
+|---|---|
+| `internal/db/migrations/014_login_codes.up.sql` | `CREATE TABLE login_codes (id UUID PK default gen_random_uuid(), email TEXT NOT NULL, code_hash TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, attempts INT NOT NULL DEFAULT 0, used BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())` + `INDEX idx_login_codes_email ON login_codes(email)` |
+| `internal/db/migrations/014_login_codes.down.sql` | `DROP TABLE login_codes;` |
+| `internal/db/migrations/015_drop_passwords.up.sql` | `ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;` (если был NOT NULL) + `ALTER TABLE users DROP COLUMN IF EXISTS password_hash;`; `DROP TABLE IF EXISTS password_reset_tokens;` |
+| `internal/db/migrations/015_drop_passwords.down.sql` | воссоздать `password_hash` (nullable) и таблицу `password_reset_tokens` (повтор 012) |
+
+> Колонку `password_hash` выпиливаем целиком — она больше нигде не нужна.
+
+### Backend — код
+
+| Файл | Изменение |
+|---|---|
+| `internal/model/model.go` | удалить `RegisterRequest`, `LoginRequest`, `ForgotPasswordRequest`, `ResetPasswordRequest`, `PasswordResetToken`; убрать `PasswordHash` из `User`; добавить `RequestCodeRequest{Email}` и `VerifyCodeRequest{Email, Code}`; `AuthResponse` без изменений |
+| `internal/repository/loginrepo/repository.go` (новый) | `Create(ctx, email, codeHash, expiresAt)`, `GetActiveByEmail(ctx, email)`, `IncAttempts(ctx, id)`, `MarkUsed(ctx, id)`, `InvalidateByEmail(ctx, email)` |
+| `internal/repository/user/repository.go` | `Create` без `passwordHash` (только `name`,`email`); убрать `scanUser`/`userColumns` ссылку на `password_hash`; удалить `UpdatePassword` |
+| `internal/repository/passwordreset/repository.go` | **удалить** пакет целиком |
+| `internal/service/auth/service.go` | переписать: `RequestCode(ctx, RequestCodeRequest)` — кулдаун, генерация кода, инвалидация старых, запись, отправка письма (goroutine, как `ForgotPassword`); `VerifyCode(ctx, VerifyCodeRequest) (AuthResponse, error)` — найти активный код, проверить TTL/used/attempts, сверить хеш, при успехе get-or-create user + JWT; удалить `Register`/`Login`/`ForgotPassword`/`ResetPassword`, bcrypt пароля и `minPasswordLength` |
+| `internal/service/auth/interfaces.go` | `UserRepo`: `GetByEmail`, `GetByID`, `Create(ctx,name,email)`; новый `LoginCodeRepo`; убрать `TokenRepo` |
+| `internal/service/mailer/mailer.go` | заменить `SendPasswordReset` на `SendLoginCode(toEmail, code string)` — письмо «Ваш код для входа: NNNNNN» (текст + краткий HTML), без ссылок |
+| `internal/handler/auth/handler.go` | заменить `Register`/`Login`/`ForgotPassword`/`ResetPassword` на `RequestCode` (всегда `200 {status:ok}`) и `VerifyCode` (`200 AuthResponse` / `400` invalid code / `429`-подобное при кулдауне) |
+| `internal/handler/auth/interfaces.go` | `AuthService`: `RequestCode`, `VerifyCode` |
+| `internal/handler/router.go` | в блоке `/api/auth`: убрать `register`/`login`/`forgot-password`/`reset-password`; добавить `POST /request-code`, `POST /verify-code`; оставить per-IP rate limit |
+| `cmd/server/main.go` | убрать инициализацию `passwordreset` repo; передать `loginrepo` в `authsvc.New`; обновить wiring |
+| `internal/service/auth/service_test.go`, `internal/handler/auth/handler_test.go` + `mock/` | переписать под новые методы; `go generate` для моков (`UserRepo`,`LoginCodeRepo`,`Mailer`,`AuthService`) |
+
+### Frontend
+
+| Файл | Изменение |
+|---|---|
+| `src/features/auth/api/index.ts` | убрать `register`/`login`/`forgotPassword`/`resetPassword`; добавить `requestCode(email)` → `POST /api/auth/request-code`, `verifyCode(email, code)` → `POST /api/auth/verify-code` (возвращает `AuthResponse`) |
+| `src/features/auth/model/AuthContext.tsx` | заменить `login`/`register` на `verifyCode(email, code): Promise<boolean>` (сохраняет token+user); `requestCode` можно дергать прямо из API в странице; обновить тип `AuthContextValue` |
+| `src/pages/login/` | переделать в двухшаговую форму: шаг 1 — поле email + кнопка «Получить код» (зовёт `requestCode`); шаг 2 — поле кода (6 цифр, авто-сабмит, кнопка «Отправить код повторно» с таймером 60с) + «Изменить email». Локальный стейт `step: 'email' \| 'code'` |
+| `src/pages/register/`, `src/pages/forgot-password/`, `src/pages/reset-password/` | **удалить** каталоги |
+| `src/app/router/index.tsx` | убрать импорты и роуты `/register`, `/forgot-password`, `/reset-password`; оставить только `/login` |
+| ссылки в UI | убрать «Нет аккаунта? Регистрация», «Забыли пароль?» из `AuthShell`/login; навигация и redirect-на-`/login` без изменений |
+| i18n (`ru.json`/`en.json`) | добавить ключи `auth.enterEmail`, `auth.getCode`, `auth.enterCode`, `auth.codeSent`, `auth.resendCode`, `auth.resendIn`, `auth.changeEmail`, `auth.invalidCode`, `auth.codeHint`; удалить ключи про пароль/регистрацию/восстановление (через i18n-sync, ru/en синхронно) |
+
+### Чеклист
+
+- [ ] миграция `014_login_codes` (up/down) + `015_drop_passwords` (up/down)
+- [ ] модель: `RequestCodeRequest`/`VerifyCodeRequest`, чистка парольных типов и `User.PasswordHash`
+- [ ] `loginrepo` репозиторий + удаление `passwordreset`; правка `userrepo.Create`/удаление `UpdatePassword`
+- [ ] `authsvc`: `RequestCode` (кулдаун, генерация, инвалидация, письмо) + `VerifyCode` (TTL/attempts/get-or-create/JWT)
+- [ ] `mailer.SendLoginCode` вместо `SendPasswordReset`
+- [ ] handler `RequestCode`/`VerifyCode` + роуты `request-code`/`verify-code`, удаление старых
+- [ ] обновить `main.go` wiring; перегенерить моки; переписать unit-тесты `service`/`handler`
+- [ ] фронт: API `requestCode`/`verifyCode`, `AuthContext.verifyCode`, двухшаговая `login` форма с таймером
+- [ ] удалить страницы `register`/`forgot-password`/`reset-password` и их роуты
+- [ ] i18n ru/en: новые ключи кода, удаление парольных
+- [ ] `go vet ./...`, `go build ./cmd/server`, `npm run build`, `npm run lint`
+- [ ] верификация: новый email → код на почту (или лог mailer) → ввод кода → авторизован и создан аккаунт; существующий email → вход; неверный код 5× → инвалидация; повторная отправка под кулдауном
