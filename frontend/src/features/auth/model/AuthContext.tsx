@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '@/entities/user/model/types'
 import { authApi } from '@/features/auth/api'
-import { disablePush } from '@/shared/push'
+import { syncPushSubscription } from '@/shared/push'
 import { clearBadge } from '@/shared/badge'
 
 interface AuthContextValue {
@@ -51,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(res.user))
       setToken(res.token)
       setUser(res.user)
+      // Если устройство уже было подписано на пуши — тихо перепривязываем
+      // подписку к этому аккаунту (без повторного запроса разрешения).
+      void syncPushSubscription()
       return true
     } catch {
       return false
@@ -58,11 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
-    // Отписываем устройство от пушей, чтобы чужие уведомления не приходили на
-    // общем девайсе. Локальный unsubscribe инвалидирует endpoint; даже если
-    // серверный DELETE не успеет (токен уже снят), бэк удалит мёртвую подписку
-    // по 410 при следующей отправке.
-    void disablePush().catch(() => {})
+    // Подписку на пуши НЕ трогаем: при следующем входе она тихо
+    // перепривязывается к актуальному пользователю (syncPushSubscription) —
+    // так на этом устройстве не приходится заново включать уведомления, а на
+    // общем девайсе владелец подписки сменится на того, кто вошёл (Upsert по
+    // endpoint на бэке переназначает user_id).
     clearBadge()
     localStorage.removeItem('token')
     localStorage.removeItem('user')

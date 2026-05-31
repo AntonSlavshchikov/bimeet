@@ -105,6 +105,37 @@ export async function enablePush(): Promise<boolean> {
   return true
 }
 
+/**
+ * Тихо привязывает уже существующую подписку этого устройства к текущему
+ * пользователю. Вызывается после входа: если устройство уже подписано
+ * (разрешение granted + активная подписка), повторно отправляем её на бэк —
+ * `Upsert` по endpoint переназначит владельца. Без активной подписки ничего не
+ * делаем и НЕ запрашиваем разрешение (никакого промпта при повторном входе).
+ */
+export async function syncPushSubscription(): Promise<void> {
+  if (!isPushSupported()) return
+  if (Notification.permission !== 'granted') return
+
+  const reg = await getRegistration()
+  if (!reg) return
+
+  const sub = await reg.pushManager.getSubscription()
+  if (!sub) return // устройство не подписано — не подписываем и не спрашиваем
+
+  const json = sub.toJSON()
+  try {
+    await apiFetch<void>('/api/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({
+        endpoint: sub.endpoint,
+        keys: { p256dh: json.keys?.p256dh, auth: json.keys?.auth },
+      }),
+    })
+  } catch {
+    // не критично — синхронизируется при следующем входе/включении
+  }
+}
+
 /** Просит бэк прислать тестовый пуш на текущий аккаунт. Бросает ошибку с текстом ответа push-сервиса. */
 export async function sendTestPush(): Promise<void> {
   await apiFetch<void>('/api/push/test', { method: 'POST' })

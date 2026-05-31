@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useEvents, usePublicEvents } from '@/entities/event/queries'
+import { useNotifications } from '@/entities/notification/queries'
 import { Avatar } from '@/shared/ui/avatar'
 import {
   DropdownMenu,
@@ -25,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
-import NotificationCenter from '@/features/notifications/ui/NotificationCenter'
 import { cn } from '@/shared/lib/cn'
 
 interface NavItemProps {
@@ -33,11 +33,13 @@ interface NavItemProps {
   icon: React.ComponentType<{ size?: number; className?: string }>
   label: string
   count?: number
+  /** Badge в акцентном цвете (для непрочитанных уведомлений). */
+  accentBadge?: boolean
   active?: boolean
   onClick?: () => void
 }
 
-function NavItem({ to, icon: Icon, label, count, active, onClick }: NavItemProps) {
+function NavItem({ to, icon: Icon, label, count, accentBadge, active, onClick }: NavItemProps) {
   return (
     <Link
       to={to}
@@ -55,12 +57,14 @@ function NavItem({ to, icon: Icon, label, count, active, onClick }: NavItemProps
         <span
           className={cn(
             'ml-auto rounded-full px-1.5 text-[11px] font-semibold tnum',
-            active
-              ? 'bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-accent'
-              : 'bg-line-soft text-ink-3',
+            accentBadge
+              ? 'bg-accent text-white'
+              : active
+                ? 'bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-accent'
+                : 'bg-line-soft text-ink-3',
           )}
         >
-          {count}
+          {accentBadge && count > 99 ? '99+' : count}
         </span>
       )}
     </Link>
@@ -90,6 +94,8 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
 
   const events = useEvents()
   const publicEvents = usePublicEvents()
+  const { data: notifications = [] } = useNotifications()
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   const myEvents = events.filter(e => e.status !== 'completed')
   const attendingCount = myEvents.filter(e => e.organizer.id !== user?.id).length
@@ -131,25 +137,14 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           onClick={onClose}
         />
 
-        {/* Уведомления — DropdownMenu, не route */}
-        <NotificationCenter
-          renderTrigger={({ count }) => (
-            <button
-              type="button"
-              className={cn(
-                'group w-full flex items-center gap-2.5 rounded-[7px] px-2.5 py-1.5 text-[13.5px] transition select-none cursor-pointer focus-ring',
-                'text-ink-2 font-medium hover:bg-hover hover:text-ink',
-              )}
-            >
-              <Bell size={16} className="shrink-0 text-ink-3" />
-              <span className="truncate">{t('nav.notifications', 'Уведомления')}</span>
-              {count > 0 && (
-                <span className="ml-auto rounded-full px-1.5 text-[11px] font-semibold tnum bg-accent text-white">
-                  {count > 99 ? '99+' : count}
-                </span>
-              )}
-            </button>
-          )}
+        <NavItem
+          to="/notifications"
+          icon={Bell}
+          label={t('nav.notifications', 'Уведомления')}
+          count={unreadCount}
+          accentBadge
+          active={location.pathname.startsWith('/notifications')}
+          onClick={onClose}
         />
 
         <NavItem
