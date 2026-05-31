@@ -76,6 +76,14 @@ body {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
 }
 
+/* iOS Safari зумит страницу при фокусе на input со шрифтом < 16px.
+ * На тач-устройствах поднимаем шрифт form-контролов до 16px — зум исчезает,
+ * pinch-to-zoom сохраняется. Десктоп (мышь) не затрагивается.
+ */
+@media (pointer: coarse) {
+  input, textarea, select { font-size: 16px; }
+}
+
 /* === Mobile: серый iOS-фон вместо белого ===
  * Эталон: design/05-app.html — `--bg: #F2F2F7`.
  * Surface (карточки, popover'ы) остаётся белой. Десктоп — белый bg (1024px+).
