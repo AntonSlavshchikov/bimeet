@@ -1,13 +1,13 @@
 package profilehandler
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
 	"bimeet/internal/handler/response"
 	"bimeet/internal/middleware"
 	"bimeet/internal/model"
+	"bimeet/internal/observability"
 )
 
 type Handler struct {
@@ -91,7 +91,7 @@ func (h *Handler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.svc.DeleteAvatar(r.Context(), userID)
 	if err != nil {
-		log.Printf("delete avatar: %v", err)
+		observability.FromContext(r.Context()).Error("delete avatar", "error", err)
 		response.Error(w, http.StatusInternalServerError, "failed to delete avatar")
 		return
 	}
@@ -122,7 +122,7 @@ func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.svc.UploadAvatar(r.Context(), userID, file, header)
 	if err != nil {
-		log.Printf("upload avatar: %v", err)
+		observability.FromContext(r.Context()).Error("upload avatar", "error", err)
 		if strings.Contains(err.Error(), "unsupported image type") {
 			response.Error(w, http.StatusBadRequest, err.Error())
 			return

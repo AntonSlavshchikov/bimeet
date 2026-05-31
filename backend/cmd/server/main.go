@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"bimeet/internal/config"
+	"bimeet/internal/observability"
 	"bimeet/internal/db"
 	"bimeet/internal/handler"
 	adminhandler        "bimeet/internal/handler/admin"
@@ -58,21 +59,48 @@ import (
 func main() {
 	cfg := config.Load()
 
+	// Structured logging first, so every subsequent line is structured.
+	observability.InitLogger(cfg.LogFormat, cfg.LogLevel)
+
 	if cfg.DSN == "" {
-		log.Fatal("DSN environment variable is required")
+		fatal("DSN environment variable is required")
 	}
 	if cfg.JWTSecret == "" {
-		log.Fatal("JWT_SECRET environment variable is required")
+		fatal("JWT_SECRET environment variable is required")
+	}
+
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+
+	// OpenTelemetry tracing. Disabled by default → no-op provider, zero overhead.
+	shutdownTracing, err := observability.InitTracing(ctx, observability.TracingConfig{
+		Enabled:     cfg.OTelEnabled,
+		ServiceName: cfg.OTelServiceName,
+		Environment: cfg.AppEnv,
+		Endpoint:    cfg.OTelEndpoint,
+	})
+	if err != nil {
+		fatal("init tracing", "error", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownTracing(shutdownCtx); err != nil {
+			slog.Error("shutdown tracing", "error", err)
+		}
+	}()
+	if cfg.OTelEnabled {
+		slog.Info("tracing enabled", "endpoint", cfg.OTelEndpoint, "service", cfg.OTelServiceName)
+	} else {
+		slog.Info("tracing disabled")
 	}
 
 	pool, err := db.Connect(cfg.DSN)
 	if err != nil {
-		log.Fatalf("connect to database: %v", err)
+		fatal("connect to database", "error", err)
 	}
 	defer pool.Close()
 
-	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
 	db.Migrate(ctx, pool)
 
 	// Repositories
@@ -97,9 +125,9 @@ func main() {
 	})
 	notifyingRepo := notify.New(notificationRepo, pushSvc)
 	if pushSvc.Enabled() {
-		log.Println("web push enabled")
+		slog.Info("web push enabled")
 	} else {
-		log.Println("web push disabled (VAPID keys not set)")
+		slog.Info("web push disabled (VAPID keys not set)")
 	}
 
 	// Services
@@ -135,7 +163,7 @@ func main() {
 			)),
 		)
 		if err != nil {
-			log.Fatalf("load aws config: %v", err)
+			fatal("load aws config", "error", err)
 		}
 		s3Opts := []func(*s3.Options){}
 		if cfg.S3Endpoint != "" {
@@ -146,7 +174,7 @@ func main() {
 		}
 		fileStorage = storage.NewS3(s3.NewFromConfig(awsCfg, s3Opts...), cfg.S3Bucket, cfg.S3PublicBaseURL)
 	} else {
-		log.Println("S3_BUCKET not set — file uploads disabled")
+		slog.Info("S3_BUCKET not set — file uploads disabled")
 		fileStorage = &storage.NoopStorage{}
 	}
 
@@ -188,6 +216,7 @@ func main() {
 		cfg.JWTSecret,
 		cfg.CORSAllowedOrigins,
 		cfg.IsProduction(),
+		cfg.OTelServiceName,
 	)
 
 	srv := &http.Server{
@@ -205,22 +234,29 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("server listening on :%s", cfg.Port)
+		slog.Info("server listening", "port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %v", err)
+			fatal("listen", "error", err)
 		}
 	}()
 
 	<-quit
 	stop() // cancel context → stops reminder runner
-	log.Println("shutting down server...")
+	slog.Info("shutting down server...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("server forced to shutdown: %v", err)
+		fatal("server forced to shutdown", "error", err)
 	}
 
-	log.Println("server exited gracefully")
+	slog.Info("server exited gracefully")
+}
+
+// fatal logs a structured error and exits. slog has no Fatal helper, so this
+// mirrors log.Fatal for the handful of unrecoverable startup conditions.
+func fatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
 }

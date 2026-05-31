@@ -1,0 +1,46 @@
+# Promtail config: tail Docker container stdout/stderr and ship to Loki.
+# The backend logs structured slog JSON, so we parse it and lift the
+# correlation fields (trace_id, level, route, user_id) into Loki labels/fields.
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Expose the compose service name as the `service` label.
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_name]
+        regex: "/(.*)"
+        target_label: container
+    pipeline_stages:
+      # Docker json-file driver wraps each line as {"log":"...","stream":...}.
+      - docker: {}
+      # Parse the backend's structured slog JSON line.
+      - json:
+          expressions:
+            level: level
+            trace_id: trace_id
+            request_id: request_id
+            route: route
+            user_id: user_id
+            msg: msg
+      # Promote low-cardinality fields to labels for fast filtering in Grafana.
+      - labels:
+          level:
+          route:
+      # Keep trace_id queryable; use the log's own timestamp when present.
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+          action_on_failure: skip

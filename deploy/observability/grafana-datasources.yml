@@ -1,0 +1,24 @@
+# Grafana provisioned datasources: logs (Loki) + traces (Jaeger).
+# The Loki datasource defines a derived field so a trace_id in a log line links
+# straight to its trace in Jaeger.
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    jsonData:
+      derivedFields:
+        - name: trace_id
+          # Match `trace_id=<hex>` or `"trace_id":"<hex>"` in the log line.
+          matcherRegex: 'trace_id["=:\s]+([a-f0-9]+)'
+          url: '$${__value.raw}'
+          datasourceUid: jaeger
+
+  - name: Jaeger
+    uid: jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686

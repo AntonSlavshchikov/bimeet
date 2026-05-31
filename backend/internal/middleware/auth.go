@@ -7,6 +7,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"bimeet/internal/observability"
 )
 
 type contextKey string
@@ -60,6 +62,13 @@ func Auth(secret string) func(http.Handler) http.Handler {
 			}
 
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
+			// Record the authenticated user for the request-summary log and
+			// enrich the context logger so downstream handler/service logs carry
+			// user_id alongside the trace correlation fields.
+			if rs := reqStateFrom(ctx); rs != nil {
+				rs.userID = userID.String()
+			}
+			ctx = observability.WithLogger(ctx, observability.FromContext(ctx).With("user_id", userID.String()))
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

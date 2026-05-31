@@ -1,7 +1,6 @@
 package collectionhandler
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"bimeet/internal/handler/response"
 	"bimeet/internal/middleware"
 	"bimeet/internal/model"
+	"bimeet/internal/observability"
 )
 
 type Handler struct {
@@ -158,7 +158,7 @@ func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 
 	contrib, err := h.svc.SubmitContribution(r.Context(), eventID, collectionID, userID, file, header)
 	if err != nil {
-		log.Printf("submit contribution: %v", err)
+		observability.FromContext(r.Context()).Error("submit contribution", "error", err)
 		msg := err.Error()
 		if strings.Contains(msg, "forbidden") {
 			response.Error(w, http.StatusForbidden, msg)

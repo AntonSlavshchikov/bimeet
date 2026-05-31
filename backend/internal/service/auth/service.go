@@ -3,7 +3,6 @@ package authsvc
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/mail"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"bimeet/internal/model"
+	"bimeet/internal/observability"
 )
 
 const (
@@ -102,13 +102,13 @@ func (s *Service) ForgotPassword(ctx context.Context, req model.ForgotPasswordRe
 
 	token, err := s.tokenRepo.Create(ctx, user.ID, time.Now().Add(passwordResetTokenTTL))
 	if err != nil {
-		log.Printf("forgot password: create token: %v", err)
+		observability.FromContext(ctx).Error("forgot password: create token", "error", err)
 		return nil
 	}
 
 	go func(email, tok string) {
 		if err := s.mailer.SendPasswordReset(email, tok); err != nil {
-			log.Printf("forgot password: send email to %s: %v", email, err)
+			observability.FromContext(ctx).Error("forgot password: send email", "email", email, "error", err)
 		}
 	}(user.Email, token.Token.String())
 
@@ -146,7 +146,7 @@ func (s *Service) ResetPassword(ctx context.Context, req model.ResetPasswordRequ
 	}
 
 	if err := s.tokenRepo.MarkUsed(ctx, tokenUUID); err != nil {
-		log.Printf("reset password: mark token used: %v", err)
+		observability.FromContext(ctx).Error("reset password: mark token used", "error", err)
 	}
 
 	return nil

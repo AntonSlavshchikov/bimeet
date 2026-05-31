@@ -2353,3 +2353,181 @@ Frontend: `shared/badge/index.ts` (новый),
 - [x] `auth/service.go`: валидация email + длины пароля в `Register`
 - [x] `.env.example`: `APP_ENV`, пример `CORS_ALLOWED_ORIGINS`
 - [x] Unit-тесты: security headers, CORS, rate limit 429, body limit, recoverer
+
+---
+
+## Этап 30 — Observability бэкенда (slog + OpenTelemetry трейсы)
+
+### Контекст
+
+Бэкенд логировал через голый `log.Printf` без уровней, структуры и корреляции
+(~30 разрозненных call-site'ов в `service/*`, `handler/*`, `reminder`, `db`,
+`middleware/logging.go`). `chi` RequestID был подключён в `router.go`, но в логи
+не попадал — связать строки одного запроса нечем. Трейсинга и инструментации БД
+не было: нельзя проследить путь запроса handler→service→repo→pg и найти узкое
+место. Паники ловил `chi.Recoverer`, но писал в свой логгер, без структурного
+stack и без trace_id.
+
+Этап вводит структурированное логирование (`log/slog`) и распределённый трейсинг
+(OpenTelemetry) с единым `trace_id`, связывающим строки логов с waterfall'ом в
+Jaeger. Скоуп — только Go-бэкенд (фронтенд — отдельным этапом позже). Без Sentry:
+ошибки и паники идут в структурированные логи с trace_id.
+
+### Конфигурация (`config.go` + `.env.example`)
+
+| Переменная | Назначение | Дефолт |
+|---|---|---|
+| `LOG_LEVEL` | `debug`/`info`/`warn`/`error` | `info` |
+| `LOG_FORMAT` | `json`/`text`; пусто → `json` в prod, `text` в dev | (по `APP_ENV`) |
+| `OTEL_ENABLED` | включить трейсинг | `false` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | коллектор, напр. `localhost:4318` | — |
+| `OTEL_SERVICE_NAME` | имя сервиса | `bimeet-backend` |
+
+> SDK OpenTelemetry сам читает стандартные `OTEL_*` env, поэтому конфиг тонкий:
+> `OTEL_ENABLED` — единственный кастомный флаг; остальное прокидывается в SDK.
+> Без `OTEL_ENABLED=true` трейсинг — no-op (NoopTracerProvider), нулевой оверхед.
+
+### Решения
+
+| Задача | Реализация |
+|---|---|
+| Структурный логгер | `internal/observability/log.go`: `slog` с JSON/Text handler по `LOG_FORMAT`+`LOG_LEVEL`, `slog.SetDefault` |
+| Логгер из контекста | `obs.FromContext(ctx) *slog.Logger` / `obs.WithLogger(ctx, l)` — логгер с привязанными `trace_id`,`span_id`,`request_id`,`user_id` |
+| Инициализация трейсера | `internal/observability/tracing.go`: `Init(ctx, cfg) (shutdown func(context.Context) error, error)` — `TracerProvider` с OTLP-экспортёром, resource (`service.name`/`version`/`deployment.environment=APP_ENV`), `W3C TraceContext`+`Baggage` пропагаторы |
+| HTTP-спаны | `github.com/riandyrn/otelchi` middleware — спан на каждый запрос с именем по chi-роуту (`POST /api/events/{id}`) |
+| БД-спаны | `github.com/exaring/otelpgx`: `pgxpool.ParseConfig` → `cfg.ConnConfig.Tracer = otelpgx.NewTracer()` → `pgxpool.NewWithConfig`; каждый SQL — дочерний спан |
+| Спаны сервис-слоя | хелпер `obs.Span(ctx, name)`; обернуть ключевые методы (`EventService.Create`, `CollectionService.SubmitContribution` и др.) для промежуточного уровня в waterfall |
+| Корреляция логов↔трейсов | middleware `Observability`: после старта спана достаёт `trace_id`/`span_id` из `trace.SpanContextFromContext`, кладёт обогащённый `slog.Logger` в контекст; на ответ — заголовок `X-Trace-Id` |
+| Request-лог | переписать `middleware/logging.go` на `slog`: `method`,`route`,`status`,`dur_ms`,`bytes`,`remote_ip`,`trace_id`,`user_id` одной структурной строкой по завершении запроса |
+| Recovery паник | свой recover-middleware вместо `chi.Recoverer`: `slog.Error` со `stack`, `trace_id`, помечает спан `span.RecordError`+`StatusError`, отдаёт 500 JSON |
+| Миграция call-site'ов | заменить `log.Printf`→`obs.FromContext(ctx)` в request-scoped местах (`service/*`, `handler/*`); фоновые (`db`, `reminder`, `main`) — на пакетный `slog` |
+| Локальный Jaeger | `docker run jaegertracing/all-in-one` (OTLP `4317/4318`, UI `16686`); опц. сервис `jaeger` в `docker-compose.prod.yml` |
+| Web-UI для логов | **Grafana + Loki** рядом с Jaeger (см. раздел ниже) — логи смотреть/фильтровать в браузере, а не grep |
+
+### Поток одного запроса
+
+```
+RequestID → RealIP → otelchi(span) → Observability(logger+trace_id в ctx)
+  → Recover → SecurityHeaders → CORS → RateLimit → Auth(user_id в ctx) → handler
+handler/service зовут obs.FromContext(ctx).Info(...) → строка с trace_id
+otelpgx добавляет pg-спаны под спаном запроса
+→ Jaeger показывает waterfall, логи грепаются по тому же trace_id
+```
+
+### Где смотреть (UI)
+
+| Что | Интерфейс | Адрес (локально) |
+|---|---|---|
+| Трейсы (waterfall) | Jaeger UI | `http://localhost:16686` |
+| Логи (поиск/фильтр) | Grafana → Loki | `http://localhost:3000` |
+
+Два UI — связь между ними вручную по общему `trace_id` (из ответа `X-Trace-Id`):
+в Grafana нашёл строку лога → скопировал `trace_id` → открыл трейс в Jaeger.
+
+**Сбор логов в Loki.** Бэкенд по-прежнему пишет структурный JSON в stdout —
+менять код приложения не нужно. Логи в Loki доставляет **Promtail** (или
+`loki` docker-driver), который читает stdout контейнера. Promtail парсит JSON и
+поднимает `trace_id`,`level`,`user_id`,`route` в метки/поля Loki — по ним идёт
+фильтрация в Grafana (`{service="bimeet-backend"} | json | trace_id="..."`).
+
+> Loki и Promtail работают с теми же stdout-логами, что и `docker logs` — это
+> просто веб-надстройка поверх них. Локальная разработка без Loki не ломается:
+> `slog` всё так же пишет в терминал, стек логов опционален.
+
+### Стек логов (docker-compose)
+
+Добавить рядом с `jaeger` (всё опционально, профиль `observability`):
+
+| Сервис | Образ | Назначение | Порт |
+|---|---|---|---|
+| `loki` | `grafana/loki` | хранилище логов + запросы (LogQL) | `3100` |
+| `promtail` | `grafana/promtail` | читает stdout контейнеров → шлёт в Loki | — |
+| `grafana` | `grafana/grafana` | UI: датасорсы Loki + Jaeger, дашборды | `3000` |
+
+Конфиги (provisioning, всё в репозиторий, чтобы поднималось из коробки):
+- `deploy/observability/promtail.yml` — scrape docker stdout + JSON-pipeline
+  (`trace_id`,`level`,`route`,`user_id` в labels).
+- `deploy/observability/grafana-datasources.yml` — Loki (`http://loki:3100`) и
+  Jaeger (`http://jaeger:16686`) как provisioned datasources.
+
+### Доступ к логам в проде
+
+Прод — один хост с `docker-compose.prod.yml` за Traefik; бэкенд крутится
+контейнером `backend`. Два уровня доступа:
+
+**1. Baseline — `docker logs` (всегда доступен, даже если Loki лежит).**
+Логи — структурный JSON в stdout, читаются через `jq`:
+```bash
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose logs backend | jq 'select(.level=="ERROR")'
+docker compose logs backend | jq 'select(.trace_id=="<из X-Trace-Id>")'
+```
+> ⚠️ Сейчас в `docker-compose.prod.yml` **не задан logging-драйвер** → дефолтный
+> `json-file` без ротации забьёт диск. Закрыть в этом этапе: на `backend` (и
+> прочих сервисах) добавить
+> `logging: { driver: json-file, options: { max-size: "10m", max-file: "5" } }`.
+
+**2. Grafana + Loki — история и поиск через браузер.** Promtail собирает stdout
+в Loki с ретеншеном. Grafana в проде **не светить публично** (чувствительные
+данные). Доступ — один из:
+- **SSH-туннель** (дефолт, безопаснее): порт `3000` наружу не проброшен,
+  `ssh -L 3000:localhost:3000 user@host` → `http://localhost:3000` локально.
+- **Traefik-роут за basic-auth**: `logs.bimeet.pro` с `basicauth`-middleware
+  (по аналогии с `s3.bimeet.pro`), порт `3000` только во внутренней `app-net`.
+
+Рекомендация: оба уровня — json-file с ротацией как fallback + Loki/Grafana для
+истории; доступ к Grafana через SSH-туннель.
+
+### Файлы
+
+Новые: `internal/observability/log.go`, `internal/observability/tracing.go`,
+`internal/middleware/observability.go`, `internal/middleware/recover.go`.
+
+| Файл | Изменение |
+|---|---|
+| `internal/config/config.go` | `LOG_LEVEL`,`LOG_FORMAT`,`OTEL_ENABLED` в `Config`+`Load` |
+| `.env.example` | блок observability-переменных |
+| `internal/db/db.go` | `ParseConfig`+`otelpgx.NewTracer()`+`NewWithConfig` (сохранить DSN-опции) |
+| `internal/handler/router.go` | вставить `otelchi` + `Observability` + новый recover в стек |
+| `cmd/server/main.go` | `obs.Init`, `defer shutdown`, миграция стартовых `log.*` |
+| `internal/middleware/logging.go` | переписать на структурный slog |
+| `internal/reminder/runner.go`, `service/*`, `handler/*` | request-scoped `log.Printf` → `obs.FromContext(ctx)` |
+| `docker-compose.prod.yml` | `logging` json-file + ротация (`max-size`/`max-file`) на `backend` и др.; опц. сервисы `jaeger`/`loki`/`promtail`/`grafana` (профиль `observability`); опц. Traefik-роут `logs.bimeet.pro` за basic-auth |
+| `deploy/observability/promtail.yml` (новый) | scrape docker stdout + JSON-pipeline (метки `trace_id`/`level`/`route`/`user_id`) |
+| `deploy/observability/grafana-datasources.yml` (новый) | provisioned datasources: Loki + Jaeger |
+
+### Риски
+
+- otelpgx требует перейти с `pgxpool.New` на `ParseConfig`+`NewWithConfig` —
+  следить, чтобы DSN-опции (`sslmode` и пр.) сохранились.
+- `chi.RealIP` стоит до Observability — `remote_ip` в логах берётся уже
+  распарсенный; не доверять `X-Forwarded-For` вне прокси (как в Этапе 29).
+- Спаны сервис-слоя добавляются вручную — начать с нескольких репрезентативных
+  методов, не инструментировать всё разом.
+- `OTEL_ENABLED=false` обязан быть полным no-op (NoopTracerProvider), чтобы
+  локальная разработка без Jaeger не ломалась и не теряла перфоманс.
+
+### Чеклист
+
+- [x] `go get`: `go.opentelemetry.io/otel`, `otel/sdk`,
+      `otel/exporters/otlp/otlptrace/otlptracehttp`, `riandyrn/otelchi`,
+      `exaring/otelpgx`
+- [x] `internal/observability/log.go` — slog-логгер + `FromContext`/`WithLogger`/`Span`
+- [x] `internal/observability/tracing.go` — `InitTracing()` + graceful `shutdown`
+- [x] `config.go`/`.env.example` — `LOG_LEVEL`,`LOG_FORMAT`,`OTEL_*`
+- [x] `db/db.go` — `ParseConfig`+`otelpgx.NewTracer()`+`NewWithConfig`
+- [x] `middleware/observability.go` — корреляция logger↔span (+ `X-Trace-Id` пишет otelchi)
+- [x] `middleware/logging.go` — переписать на структурный slog
+- [x] `middleware/recover.go` — slog + RecordError (заменить `chi.Recoverer`)
+- [x] `router.go` — новый стек middleware (otelchi → Observability → Logging → Recoverer)
+- [x] `main.go` — `obs.Init`, `defer shutdown`, миграция стартовых `log.*`
+- [x] миграция request-scoped `log.Printf` → `obs.FromContext(ctx)`
+- [x] обернуть ключевые сервис-методы в `obs.Span` (`EventService.Create`, `reminder.run`)
+- [x] юнит-тесты: handler пишет `X-Trace-Id`; recover→500+лог; FromContext-фолбэк; request-лог
+- [x] `docker-compose.prod.yml` — `logging` json-file + ротация (anchor на всех сервисах)
+- [x] `docker-compose.prod.yml` — сервисы `jaeger`/`loki`/`promtail`/`grafana` (профиль `observability`) + `deploy/observability/*`
+- [x] прод-доступ к Grafana/Jaeger: порты на `127.0.0.1` → SSH-туннель `:3000`/`:16686`
+- [ ] `deploy/observability/promtail.yml` — scrape stdout + JSON-pipeline
+- [ ] `deploy/observability/grafana-datasources.yml` — Loki + Jaeger datasources
+- [ ] верификация: трейс `POST /api/events` с pg-спанами виден в Jaeger UI;
+      те же логи ищутся в Grafana/Loki по `trace_id` из `X-Trace-Id`

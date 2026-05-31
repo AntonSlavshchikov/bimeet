@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
+	"github.com/riandyrn/otelchi"
 
 	adminhandler        "bimeet/internal/handler/admin"
 	authhandler         "bimeet/internal/handler/auth"
@@ -37,16 +38,28 @@ func NewRouter(
 	jwtSecret    string,
 	corsOrigins  []string,
 	prod         bool,
+	serviceName  string,
 ) http.Handler {
 	r := chi.NewRouter()
 
-	// Global middleware. Order matters: RealIP before Logging so logs and the
-	// rate limiter see the real client address; Recoverer before app handlers so
-	// a panic returns 500 instead of killing the connection.
+	// Global middleware. Order matters:
+	//   - RealIP before tracing/logging so spans, logs and the rate limiter see
+	//     the real client address.
+	//   - otelchi starts the request span (named by chi route) and writes the
+	//     X-Trace-Id response header; Observability then derives the request
+	//     logger from that span's trace_id.
+	//   - Logging wraps (and stays outside) Recoverer so the request-summary line
+	//     captures the 500 a recovered panic produces.
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
+	r.Use(otelchi.Middleware(serviceName,
+		otelchi.WithChiRoutes(r),
+		otelchi.WithRequestMethodInSpanName(true),
+		otelchi.WithTraceResponseHeaders(otelchi.TraceHeaderConfig{}),
+	))
+	r.Use(middleware.Observability)
 	r.Use(middleware.Logging)
-	r.Use(chimw.Recoverer)
+	r.Use(middleware.Recoverer)
 	r.Use(middleware.SecurityHeaders(prod))
 	r.Use(middleware.CORS(corsOrigins))
 	r.Use(middleware.RateLimitGlobal())

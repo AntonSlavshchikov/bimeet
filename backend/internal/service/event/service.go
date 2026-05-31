@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	"bimeet/internal/model"
+	"bimeet/internal/observability"
 )
 
 var (
@@ -43,6 +43,9 @@ func (s *Service) List(ctx context.Context, userID uuid.UUID) ([]model.EventList
 }
 
 func (s *Service) Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error) {
+	ctx, span := observability.Span(ctx, "EventService.Create")
+	defer span.End()
+
 	if req.Title == "" {
 		return model.Event{}, fmt.Errorf("title is required")
 	}
@@ -308,7 +311,7 @@ func (s *Service) InviteParticipant(ctx context.Context, eventID, organizerID uu
 	if err != nil {
 		go func() {
 			if err := s.mailer.SendInvite(req.Email, event.Title, organizer.Name, event.InviteToken.String()); err != nil {
-				log.Printf("send invite to %s: %v", req.Email, err)
+				observability.FromContext(ctx).Error("send invite", "email", req.Email, "error", err)
 			}
 		}()
 		return model.EventParticipant{}, nil
@@ -327,7 +330,7 @@ func (s *Service) InviteParticipant(ctx context.Context, eventID, organizerID uu
 		_, _ = s.notificationRepo.Create(context.Background(), user.ID, &eventID, "event_invite",
 			fmt.Sprintf("You have been invited to event '%s'", event.Title))
 		if err := s.mailer.SendInvite(user.Email, event.Title, organizer.Name, event.InviteToken.String()); err != nil {
-			log.Printf("send invite to %s: %v", user.Email, err)
+			observability.FromContext(ctx).Error("send invite", "email", user.Email, "error", err)
 		}
 	}()
 

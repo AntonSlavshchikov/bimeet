@@ -44,6 +44,15 @@ type Config struct {
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
 	VAPIDSubject    string // "mailto:..." contact for push services
+	// Observability.
+	LogLevel    string // debug/info/warn/error (default info)
+	LogFormat   string // "json"/"text"; empty resolves by AppEnv (json in prod, text in dev)
+	OTelEnabled bool   // enable OpenTelemetry tracing; false → no-op provider
+	// OTelEndpoint / OTelServiceName are read directly by the OTel SDK from the
+	// standard OTEL_EXPORTER_OTLP_ENDPOINT / OTEL_SERVICE_NAME env vars; mirrored
+	// here so the rest of the app can pass them explicitly.
+	OTelEndpoint    string
+	OTelServiceName string
 }
 
 func Load() Config {
@@ -86,6 +95,26 @@ func Load() Config {
 		appEnv = "development"
 	}
 
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
+
+	// Format defaults by environment: structured JSON in prod, human text in dev.
+	logFormat := strings.ToLower(strings.TrimSpace(os.Getenv("LOG_FORMAT")))
+	if logFormat == "" {
+		if appEnv == "production" {
+			logFormat = "json"
+		} else {
+			logFormat = "text"
+		}
+	}
+
+	otelServiceName := os.Getenv("OTEL_SERVICE_NAME")
+	if otelServiceName == "" {
+		otelServiceName = "bimeet-backend"
+	}
+
 	return Config{
 		Port:         port,
 		DSN:          os.Getenv("DSN"),
@@ -111,6 +140,21 @@ func Load() Config {
 		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
 		VAPIDSubject:    vapidSubject,
+		LogLevel:        logLevel,
+		LogFormat:       logFormat,
+		OTelEnabled:     parseBool(os.Getenv("OTEL_ENABLED")),
+		OTelEndpoint:    os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		OTelServiceName: otelServiceName,
+	}
+}
+
+// parseBool reports whether raw is a truthy flag (1/true/yes/on, case-insensitive).
+func parseBool(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
 	}
 }
 

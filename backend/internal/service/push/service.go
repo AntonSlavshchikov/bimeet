@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -16,6 +15,7 @@ import (
 	webpush "github.com/SherClockHolmes/webpush-go"
 
 	"bimeet/internal/model"
+	"bimeet/internal/observability"
 )
 
 // Config holds VAPID credentials. When PublicKey/PrivateKey are empty, the
@@ -74,7 +74,7 @@ func (s *Service) SendToUser(ctx context.Context, userID uuid.UUID, title, body,
 
 	subs, err := s.repo.ListByUser(ctx, userID)
 	if err != nil {
-		log.Printf("push: list subscriptions for %s: %v", userID, err)
+		observability.FromContext(ctx).Error("push: list subscriptions", "user_id", userID, "error", err)
 		return
 	}
 	if len(subs) == 0 {
@@ -83,7 +83,7 @@ func (s *Service) SendToUser(ctx context.Context, userID uuid.UUID, title, body,
 
 	for _, sub := range subs {
 		if err := s.sendOne(ctx, sub, payload{Title: title, Body: body, URL: url, Tag: tag, Badge: badge}); err != nil {
-			log.Printf("push: send to %s: %v", userID, err)
+			observability.FromContext(ctx).Error("push: send", "user_id", userID, "error", err)
 		}
 	}
 }
@@ -153,7 +153,7 @@ func (s *Service) sendOne(ctx context.Context, sub model.PushSubscription, p pay
 	// Prune subscriptions the push service no longer recognises.
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone {
 		if delErr := s.repo.DeleteByEndpoint(ctx, sub.Endpoint); delErr != nil {
-			log.Printf("push: prune dead subscription: %v", delErr)
+			observability.FromContext(ctx).Error("push: prune dead subscription", "error", delErr)
 		}
 		return fmt.Errorf("subscription expired (%d), pruned", resp.StatusCode)
 	}

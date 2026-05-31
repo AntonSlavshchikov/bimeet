@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"log/slog"
 	"sort"
 	"strings"
 
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,9 +18,18 @@ import (
 var migrationsFS embed.FS
 
 func Connect(dsn string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(context.Background(), dsn)
+	// ParseConfig (instead of pgxpool.New) so we can attach the otelpgx tracer:
+	// every query becomes a child span under the request span. When tracing is
+	// disabled the global provider is a no-op, so this adds negligible overhead.
+	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("pgxpool.New: %w", err)
+		return nil, fmt.Errorf("pgxpool.ParseConfig: %w", err)
+	}
+	cfg.ConnConfig.Tracer = otelpgx.NewTracer()
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	if err != nil {
+		return nil, fmt.Errorf("pgxpool.NewWithConfig: %w", err)
 	}
 	if err := pool.Ping(context.Background()); err != nil {
 		return nil, fmt.Errorf("ping: %w", err)
@@ -91,6 +102,6 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) {
 			log.Fatalf("commit migration %s: %v", version, err)
 		}
 
-		log.Printf("applied migration: %s", version)
+		slog.Info("applied migration", "version", version)
 	}
 }
