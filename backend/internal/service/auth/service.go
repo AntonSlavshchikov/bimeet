@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/mail"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,7 +14,10 @@ import (
 	"bimeet/internal/model"
 )
 
-const passwordResetTokenTTL = time.Hour
+const (
+	passwordResetTokenTTL = time.Hour
+	minPasswordLength     = 8
+)
 
 type Service struct {
 	userRepo  UserRepo
@@ -36,6 +40,12 @@ func New(userRepo UserRepo, tokenRepo TokenRepo, mailer Mailer, jwtSecret string
 func (s *Service) Register(ctx context.Context, req model.RegisterRequest) (model.AuthResponse, error) {
 	if req.Name == "" || req.Email == "" || req.Password == "" {
 		return model.AuthResponse{}, fmt.Errorf("name, email and password are required")
+	}
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		return model.AuthResponse{}, fmt.Errorf("invalid email address")
+	}
+	if len(req.Password) < minPasswordLength {
+		return model.AuthResponse{}, fmt.Errorf("password must be at least %d characters", minPasswordLength)
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)

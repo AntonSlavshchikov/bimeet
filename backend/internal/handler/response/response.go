@@ -19,8 +19,14 @@ func Error(w http.ResponseWriter, status int, msg string) {
 	JSON(w, status, map[string]string{"error": msg})
 }
 
-// ParseJSON decodes a JSON request body into v.
+// maxJSONBody caps the size of a JSON request body (1 MiB). Multipart uploads
+// (avatars, receipts) do not use ParseJSON and enforce their own limits.
+const maxJSONBody = 1 << 20
+
+// ParseJSON decodes a JSON request body into v, rejecting bodies larger than
+// maxJSONBody.
 func ParseJSON(r *http.Request, v any) error {
 	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(v)
+	limited := http.MaxBytesReader(nil, r.Body, maxJSONBody)
+	return json.NewDecoder(limited).Decode(v)
 }

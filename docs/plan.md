@@ -2298,3 +2298,58 @@ Frontend: `shared/badge/index.ts` (новый),
    → refetch → бейдж скорректирован.
 5. Logout → бейдж очищен.
 6. Браузер без поддержки Badging API / iOS вне standalone → ошибок нет (no-op).
+
+---
+
+## Этап 29 — Безопасность бэкенда (CORS, rate limiting, защита)
+
+### Контекст
+
+Бэкенд имел минимум защит: CORS открыт на `*`, нет rate limiting (брутфорс `/login`,
+`/register`, `/forgot-password`), нет recovery от паник (паника рвала соединение),
+нет защитных заголовков, нет лимита размера тела запроса, за nginx терялся реальный IP
+клиента. Этап закрывает эти дыры. Что уже было сделано хорошо и не менялось: JWT с
+проверкой HMAC-алгоритма (блокирует `alg=none`), bcrypt, generic-ошибки авторизации.
+
+Решения: переключатель `APP_ENV` (dev/prod), rate limiting на `go-chi/httprate`.
+
+### Конфигурация
+
+- `APP_ENV` (`development` | `production`, дефолт `development`):
+  - prod → строгий CORS из `CORS_ALLOWED_ORIGINS`, включён HSTS;
+  - dev → CORS пермиссивный (`*`), HSTS выключен.
+- `CORS_ALLOWED_ORIGINS` — список доменов через запятую (например `https://app.bimeet.app`).
+
+### Глобальный middleware-стек (router.go)
+
+`RequestID → RealIP → Logging → Recoverer → SecurityHeaders → CORS → RateLimitGlobal`
+
+> RealIP доверяет `X-Forwarded-For` — корректно только за доверенным прокси (nginx).
+> Бэкенд не должен быть напрямую доступен из интернета, иначе rate limit обходится спуфингом IP.
+
+### Защиты
+
+| Защита | Реализация |
+|---|---|
+| CORS lockdown | `middleware/cors.go`: origins из env, dev-фолбэк `*`, credentials off |
+| Rate limiting | `go-chi/httprate`: глобально ~300/мин per-IP; auth-ручки ~10/мин per-IP+endpoint; 429 JSON |
+| Security headers | `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `CSP default-src 'none'`, HSTS (prod) |
+| Panic recovery | `chi/middleware.Recoverer` → 500 вместо разрыва соединения |
+| RealIP | `chi/middleware.RealIP` — реальный IP клиента за nginx для логов и лимитов |
+| Лимит тела | `http.MaxBytesReader` (1 МБ) в `response.ParseJSON` |
+| Валидация входа | `Register`: формат email (`net/mail`) + минимальная длина пароля |
+| Server timeouts | `ReadHeaderTimeout` (Slowloris) + `MaxHeaderBytes` |
+
+### Чеклист
+
+- [x] `go get github.com/go-chi/httprate`
+- [x] `config.go`: `APP_ENV`, `CORS_ALLOWED_ORIGINS`, `IsProduction()`
+- [x] `middleware/cors.go`: env-driven origins + dev-фолбэк
+- [x] `middleware/security_headers.go`: заголовки + HSTS в prod
+- [x] `middleware/ratelimit.go`: global + auth limiters, JSON-429
+- [x] `response.go`: `MaxBytesReader` в `ParseJSON`
+- [x] `router.go`: новый стек middleware + rate limit на auth-группе
+- [x] `main.go`: проброс CORS/env, `ReadHeaderTimeout`, `MaxHeaderBytes`
+- [x] `auth/service.go`: валидация email + длины пароля в `Register`
+- [x] `.env.example`: `APP_ENV`, пример `CORS_ALLOWED_ORIGINS`
+- [x] Unit-тесты: security headers, CORS, rate limit 429, body limit, recoverer

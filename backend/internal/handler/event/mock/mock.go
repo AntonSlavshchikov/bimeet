@@ -10,8 +10,8 @@
 package mock
 
 import (
-	context "context"
 	model "bimeet/internal/model"
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -40,6 +40,20 @@ func NewMockEventService(ctrl *gomock.Controller) *MockEventService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEventService) EXPECT() *MockEventServiceMockRecorder {
 	return m.recorder
+}
+
+// Complete mocks base method.
+func (m *MockEventService) Complete(ctx context.Context, id, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Complete", ctx, id, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Complete indicates an expected call of Complete.
+func (mr *MockEventServiceMockRecorder) Complete(ctx, id, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Complete", reflect.TypeOf((*MockEventService)(nil).Complete), ctx, id, userID)
 }
 
 // Create mocks base method.
@@ -131,6 +145,20 @@ func (mr *MockEventServiceMockRecorder) JoinByInviteToken(ctx, token, userID, re
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JoinByInviteToken", reflect.TypeOf((*MockEventService)(nil).JoinByInviteToken), ctx, token, userID, req)
 }
 
+// JoinPublic mocks base method.
+func (m *MockEventService) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "JoinPublic", ctx, eventID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// JoinPublic indicates an expected call of JoinPublic.
+func (mr *MockEventServiceMockRecorder) JoinPublic(ctx, eventID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JoinPublic", reflect.TypeOf((*MockEventService)(nil).JoinPublic), ctx, eventID, userID)
+}
+
 // List mocks base method.
 func (m *MockEventService) List(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	m.ctrl.T.Helper()
@@ -144,6 +172,21 @@ func (m *MockEventService) List(ctx context.Context, userID uuid.UUID) ([]model.
 func (mr *MockEventServiceMockRecorder) List(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockEventService)(nil).List), ctx, userID)
+}
+
+// ListPublic mocks base method.
+func (m *MockEventService) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPublic", ctx, userID)
+	ret0, _ := ret[0].([]model.PublicEventListItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPublic indicates an expected call of ListPublic.
+func (mr *MockEventServiceMockRecorder) ListPublic(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublic", reflect.TypeOf((*MockEventService)(nil).ListPublic), ctx, userID)
 }
 
 // Update mocks base method.

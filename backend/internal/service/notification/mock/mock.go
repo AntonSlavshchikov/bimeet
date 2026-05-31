@@ -10,8 +10,8 @@
 package mock
 
 import (
-	context "context"
 	model "bimeet/internal/model"
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -42,6 +42,34 @@ func (m *MockNotificationRepo) EXPECT() *MockNotificationRepoMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockNotificationRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockNotificationRepoMockRecorder) Delete(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockNotificationRepo)(nil).Delete), ctx, id)
+}
+
+// DeleteAll mocks base method.
+func (m *MockNotificationRepo) DeleteAll(ctx context.Context, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAll", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAll indicates an expected call of DeleteAll.
+func (mr *MockNotificationRepoMockRecorder) DeleteAll(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAll", reflect.TypeOf((*MockNotificationRepo)(nil).DeleteAll), ctx, userID)
+}
+
 // GetByID mocks base method.
 func (m *MockNotificationRepo) GetByID(ctx context.Context, id uuid.UUID) (model.Notification, error) {
 	m.ctrl.T.Helper()
@@ -70,6 +98,20 @@ func (m *MockNotificationRepo) ListForUser(ctx context.Context, userID uuid.UUID
 func (mr *MockNotificationRepoMockRecorder) ListForUser(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListForUser", reflect.TypeOf((*MockNotificationRepo)(nil).ListForUser), ctx, userID)
+}
+
+// MarkAllRead mocks base method.
+func (m *MockNotificationRepo) MarkAllRead(ctx context.Context, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkAllRead", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkAllRead indicates an expected call of MarkAllRead.
+func (mr *MockNotificationRepoMockRecorder) MarkAllRead(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkAllRead", reflect.TypeOf((*MockNotificationRepo)(nil).MarkAllRead), ctx, userID)
 }
 
 // MarkRead mocks base method.

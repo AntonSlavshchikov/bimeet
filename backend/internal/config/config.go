@@ -34,6 +34,12 @@ type Config struct {
 	S3Endpoint       string // custom endpoint for MinIO / S3-compatible services
 	// AdminEmails — whitelist of users (by email) allowed to access /api/admin/*
 	AdminEmails []string
+	// AppEnv — "development" (default) or "production". In production CORS is
+	// restricted to CORSAllowedOrigins and HSTS is enabled.
+	AppEnv string
+	// CORSAllowedOrigins — explicit list of allowed origins. Empty falls back to
+	// a permissive "*" (development only).
+	CORSAllowedOrigins []string
 	// Web Push (VAPID). If VAPIDPublicKey/PrivateKey are empty, push is disabled.
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
@@ -75,6 +81,11 @@ func Load() Config {
 		vapidSubject = "mailto:admin@bimeet.pro"
 	}
 
+	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
+	if appEnv == "" {
+		appEnv = "development"
+	}
+
 	return Config{
 		Port:         port,
 		DSN:          os.Getenv("DSN"),
@@ -94,23 +105,39 @@ func Load() Config {
 		S3Bucket:        os.Getenv("S3_BUCKET"),
 		S3PublicBaseURL: os.Getenv("S3_PUBLIC_BASE_URL"),
 		S3Endpoint:      os.Getenv("S3_ENDPOINT"),
-		AdminEmails:     parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
+		AdminEmails:        parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
+		AppEnv:             appEnv,
+		CORSAllowedOrigins: parseCSV(os.Getenv("CORS_ALLOWED_ORIGINS")),
 		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
 		VAPIDSubject:    vapidSubject,
 	}
 }
 
+// IsProduction reports whether the service runs with APP_ENV=production.
+func (c Config) IsProduction() bool {
+	return c.AppEnv == "production"
+}
+
 func parseAdminEmails(raw string) []string {
+	emails := parseCSV(raw)
+	for i, e := range emails {
+		emails[i] = strings.ToLower(e)
+	}
+	return emails
+}
+
+// parseCSV splits a comma-separated env value, trimming whitespace and dropping
+// empty entries. Returns nil for an empty input.
+func parseCSV(raw string) []string {
 	if raw == "" {
 		return nil
 	}
 	parts := strings.Split(raw, ",")
 	result := make([]string, 0, len(parts))
 	for _, p := range parts {
-		e := strings.ToLower(strings.TrimSpace(p))
-		if e != "" {
-			result = append(result, e)
+		if v := strings.TrimSpace(p); v != "" {
+			result = append(result, v)
 		}
 	}
 	return result

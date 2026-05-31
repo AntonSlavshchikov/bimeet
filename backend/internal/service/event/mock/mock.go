@@ -10,8 +10,8 @@
 package mock
 
 import (
-	context "context"
 	model "bimeet/internal/model"
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -69,6 +69,20 @@ func (m *MockEventRepo) AddParticipant(ctx context.Context, eventID, userID uuid
 func (mr *MockEventRepoMockRecorder) AddParticipant(ctx, eventID, userID, status any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddParticipant", reflect.TypeOf((*MockEventRepo)(nil).AddParticipant), ctx, eventID, userID, status)
+}
+
+// Complete mocks base method.
+func (m *MockEventRepo) Complete(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Complete", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Complete indicates an expected call of Complete.
+func (mr *MockEventRepoMockRecorder) Complete(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Complete", reflect.TypeOf((*MockEventRepo)(nil).Complete), ctx, id)
 }
 
 // Create mocks base method.
@@ -145,6 +159,21 @@ func (mr *MockEventRepoMockRecorder) GetDetail(ctx, eventID, userID any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDetail", reflect.TypeOf((*MockEventRepo)(nil).GetDetail), ctx, eventID, userID)
 }
 
+// JoinPublic mocks base method.
+func (m *MockEventRepo) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) (model.EventParticipant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "JoinPublic", ctx, eventID, userID)
+	ret0, _ := ret[0].(model.EventParticipant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// JoinPublic indicates an expected call of JoinPublic.
+func (mr *MockEventRepoMockRecorder) JoinPublic(ctx, eventID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JoinPublic", reflect.TypeOf((*MockEventRepo)(nil).JoinPublic), ctx, eventID, userID)
+}
+
 // ListForUserEnriched mocks base method.
 func (m *MockEventRepo) ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	m.ctrl.T.Helper()
@@ -173,6 +202,21 @@ func (m *MockEventRepo) ListParticipants(ctx context.Context, eventID uuid.UUID)
 func (mr *MockEventRepoMockRecorder) ListParticipants(ctx, eventID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListParticipants", reflect.TypeOf((*MockEventRepo)(nil).ListParticipants), ctx, eventID)
+}
+
+// ListPublic mocks base method.
+func (m *MockEventRepo) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPublic", ctx, userID)
+	ret0, _ := ret[0].([]model.PublicEventListItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPublic indicates an expected call of ListPublic.
+func (mr *MockEventRepoMockRecorder) ListPublic(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublic", reflect.TypeOf((*MockEventRepo)(nil).ListPublic), ctx, userID)
 }
 
 // Update mocks base method.

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
 
 	adminhandler        "bimeet/internal/handler/admin"
 	authhandler         "bimeet/internal/handler/auth"
@@ -34,15 +35,25 @@ func NewRouter(
 	userLookup   middleware.UserLookup,
 	adminEmails  []string,
 	jwtSecret    string,
+	corsOrigins  []string,
+	prod         bool,
 ) http.Handler {
 	r := chi.NewRouter()
 
-	// Global middleware
+	// Global middleware. Order matters: RealIP before Logging so logs and the
+	// rate limiter see the real client address; Recoverer before app handlers so
+	// a panic returns 500 instead of killing the connection.
+	r.Use(chimw.RequestID)
+	r.Use(chimw.RealIP)
 	r.Use(middleware.Logging)
-	r.Use(middleware.CORS())
+	r.Use(chimw.Recoverer)
+	r.Use(middleware.SecurityHeaders(prod))
+	r.Use(middleware.CORS(corsOrigins))
+	r.Use(middleware.RateLimitGlobal())
 
-	// Public routes
+	// Public auth routes — strict per-IP rate limit against brute force.
 	r.Route("/api/auth", func(r chi.Router) {
+		r.Use(middleware.RateLimitAuth())
 		r.Post("/register", auth.Register)
 		r.Post("/login", auth.Login)
 		r.Post("/forgot-password", auth.ForgotPassword)

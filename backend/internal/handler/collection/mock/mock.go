@@ -10,8 +10,10 @@
 package mock
 
 import (
-	context "context"
 	model "bimeet/internal/model"
+	context "context"
+	io "io"
+	multipart "mime/multipart"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -40,6 +42,21 @@ func NewMockCollectionService(ctrl *gomock.Controller) *MockCollectionService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCollectionService) EXPECT() *MockCollectionServiceMockRecorder {
 	return m.recorder
+}
+
+// ConfirmContribution mocks base method.
+func (m *MockCollectionService) ConfirmContribution(ctx context.Context, eventID, collectionID, contributionID, organizerID uuid.UUID) (model.CollectionContribution, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmContribution", ctx, eventID, collectionID, contributionID, organizerID)
+	ret0, _ := ret[0].(model.CollectionContribution)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfirmContribution indicates an expected call of ConfirmContribution.
+func (mr *MockCollectionServiceMockRecorder) ConfirmContribution(ctx, eventID, collectionID, contributionID, organizerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmContribution", reflect.TypeOf((*MockCollectionService)(nil).ConfirmContribution), ctx, eventID, collectionID, contributionID, organizerID)
 }
 
 // Create mocks base method.
@@ -86,6 +103,51 @@ func (mr *MockCollectionServiceMockRecorder) List(ctx, eventID, userID any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockCollectionService)(nil).List), ctx, eventID, userID)
 }
 
+// MarkPaid mocks base method.
+func (m *MockCollectionService) MarkPaid(ctx context.Context, eventID, collectionID, targetUserID, organizerID uuid.UUID) (model.CollectionContribution, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkPaid", ctx, eventID, collectionID, targetUserID, organizerID)
+	ret0, _ := ret[0].(model.CollectionContribution)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkPaid indicates an expected call of MarkPaid.
+func (mr *MockCollectionServiceMockRecorder) MarkPaid(ctx, eventID, collectionID, targetUserID, organizerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkPaid", reflect.TypeOf((*MockCollectionService)(nil).MarkPaid), ctx, eventID, collectionID, targetUserID, organizerID)
+}
+
+// RejectContribution mocks base method.
+func (m *MockCollectionService) RejectContribution(ctx context.Context, eventID, collectionID, contributionID, organizerID uuid.UUID) (model.CollectionContribution, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RejectContribution", ctx, eventID, collectionID, contributionID, organizerID)
+	ret0, _ := ret[0].(model.CollectionContribution)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RejectContribution indicates an expected call of RejectContribution.
+func (mr *MockCollectionServiceMockRecorder) RejectContribution(ctx, eventID, collectionID, contributionID, organizerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RejectContribution", reflect.TypeOf((*MockCollectionService)(nil).RejectContribution), ctx, eventID, collectionID, contributionID, organizerID)
+}
+
+// SubmitContribution mocks base method.
+func (m *MockCollectionService) SubmitContribution(ctx context.Context, eventID, collectionID, userID uuid.UUID, file io.Reader, header *multipart.FileHeader) (model.CollectionContribution, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubmitContribution", ctx, eventID, collectionID, userID, file, header)
+	ret0, _ := ret[0].(model.CollectionContribution)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SubmitContribution indicates an expected call of SubmitContribution.
+func (mr *MockCollectionServiceMockRecorder) SubmitContribution(ctx, eventID, collectionID, userID, file, header any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitContribution", reflect.TypeOf((*MockCollectionService)(nil).SubmitContribution), ctx, eventID, collectionID, userID, file, header)
+}
+
 // Summary mocks base method.
 func (m *MockCollectionService) Summary(ctx context.Context, eventID, userID uuid.UUID) (model.EventCollectionsSummaryResponse, error) {
 	m.ctrl.T.Helper()
@@ -99,19 +161,4 @@ func (m *MockCollectionService) Summary(ctx context.Context, eventID, userID uui
 func (mr *MockCollectionServiceMockRecorder) Summary(ctx, eventID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Summary", reflect.TypeOf((*MockCollectionService)(nil).Summary), ctx, eventID, userID)
-}
-
-// ToggleContribution mocks base method.
-func (m *MockCollectionService) ToggleContribution(ctx context.Context, eventID, collectionID, userID uuid.UUID) (model.CollectionContribution, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ToggleContribution", ctx, eventID, collectionID, userID)
-	ret0, _ := ret[0].(model.CollectionContribution)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ToggleContribution indicates an expected call of ToggleContribution.
-func (mr *MockCollectionServiceMockRecorder) ToggleContribution(ctx, eventID, collectionID, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ToggleContribution", reflect.TypeOf((*MockCollectionService)(nil).ToggleContribution), ctx, eventID, collectionID, userID)
 }

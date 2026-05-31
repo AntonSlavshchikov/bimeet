@@ -44,6 +44,28 @@ func TestRegister_MissingFields(t *testing.T) {
 	assert.Contains(t, err.Error(), "required")
 }
 
+func TestRegister_InvalidEmail(t *testing.T) {
+	svc, _ := newService(t)
+	_, err := svc.Register(context.Background(), model.RegisterRequest{
+		Name:     "Alice",
+		Email:    "not-an-email",
+		Password: "pass1234",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "email")
+}
+
+func TestRegister_ShortPassword(t *testing.T) {
+	svc, _ := newService(t)
+	_, err := svc.Register(context.Background(), model.RegisterRequest{
+		Name:     "Alice",
+		Email:    "alice@example.com",
+		Password: "short",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "password")
+}
+
 func TestRegister_HappyPath(t *testing.T) {
 	svc, repo := newService(t)
 
@@ -54,7 +76,7 @@ func TestRegister_HappyPath(t *testing.T) {
 	resp, err := svc.Register(context.Background(), model.RegisterRequest{
 		Name:     "Alice",
 		Email:    "alice@example.com",
-		Password: "pass123",
+		Password: "pass1234",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, userID, resp.User.ID)
@@ -70,7 +92,7 @@ func TestRegister_RepoError(t *testing.T) {
 	_, err := svc.Register(context.Background(), model.RegisterRequest{
 		Name:     "Alice",
 		Email:    "alice@example.com",
-		Password: "pass123",
+		Password: "pass1234",
 	})
 	require.Error(t, err)
 }
