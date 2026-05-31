@@ -1,5 +1,6 @@
 export { Button, buttonVariants, type ButtonProps } from './button'
 export { Input, type InputProps } from './input'
+export { OtpInput } from './otp-input'
 export { Textarea, type TextareaProps } from './textarea'
 export { Avatar, AvatarStack } from './avatar'
 export {

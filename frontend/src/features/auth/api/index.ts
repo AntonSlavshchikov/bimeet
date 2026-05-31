@@ -16,25 +16,15 @@ export interface UpdateProfileData {
 }
 
 export const authApi = {
-  register: (name: string, email: string, password: string) =>
-    apiFetch<AuthResponse>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password }),
-    }),
-  login: (email: string, password: string) =>
-    apiFetch<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    }),
-  forgotPassword: (email: string) =>
-    apiFetch<{ status: string }>('/api/auth/forgot-password', {
+  requestCode: (email: string) =>
+    apiFetch<{ status: string }>('/api/auth/request-code', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
-  resetPassword: (token: string, password: string) =>
-    apiFetch<{ status: string }>('/api/auth/reset-password', {
+  verifyCode: (email: string, code: string) =>
+    apiFetch<AuthResponse>('/api/auth/verify-code', {
       method: 'POST',
-      body: JSON.stringify({ token, password }),
+      body: JSON.stringify({ email, code }),
     }),
   getMe: () =>
     apiFetch<User>('/api/auth/me'),

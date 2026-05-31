@@ -1,11 +1,12 @@
 package authhandler
 
 import (
+	"errors"
 	"net/http"
-	"strings"
 
 	"bimeet/internal/handler/response"
 	"bimeet/internal/model"
+	authsvc "bimeet/internal/service/auth"
 )
 
 type Handler struct {
@@ -16,89 +17,54 @@ func New(svc AuthService) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var req model.RegisterRequest
+// RequestCode sends a one-time login code. Always responds 200 (anti-enumeration),
+// except when the per-email cooldown is hit → 429.
+func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
+	var req model.RequestCodeRequest
 	if err := response.ParseJSON(r, &req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-	req.Name = strings.TrimSpace(req.Name)
-
-	resp, err := h.svc.Register(r.Context(), req)
-	if err != nil {
-		msg := err.Error()
-		if strings.Contains(msg, "unique") || strings.Contains(msg, "duplicate") {
-			response.Error(w, http.StatusConflict, "email already in use")
-			return
+	if err := h.svc.RequestCode(r.Context(), req); err != nil {
+		switch {
+		case errors.Is(err, authsvc.ErrCooldown):
+			response.Error(w, http.StatusTooManyRequests, "please wait before requesting a new code")
+		case isBadRequest(err):
+			response.Error(w, http.StatusBadRequest, err.Error())
+		default:
+			response.Error(w, http.StatusInternalServerError, "failed to send code")
 		}
-		if strings.Contains(msg, "required") {
-			response.Error(w, http.StatusBadRequest, msg)
-			return
-		}
-		response.Error(w, http.StatusInternalServerError, "registration failed")
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, resp)
+	response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req model.LoginRequest
+// VerifyCode verifies a one-time code and returns a JWT + user on success.
+func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
+	var req model.VerifyCodeRequest
 	if err := response.ParseJSON(r, &req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-
-	resp, err := h.svc.Login(r.Context(), req)
+	resp, err := h.svc.VerifyCode(r.Context(), req)
 	if err != nil {
-		response.Error(w, http.StatusUnauthorized, "invalid credentials")
+		if errors.Is(err, authsvc.ErrInvalidCode) {
+			response.Error(w, http.StatusBadRequest, "invalid or expired code")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to verify code")
 		return
 	}
 
 	response.JSON(w, http.StatusOK, resp)
 }
 
-func (h *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
-	var req model.ForgotPasswordRequest
-	if err := response.ParseJSON(r, &req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-
-	if err := h.svc.ForgotPassword(r.Context(), req); err != nil {
-		if strings.Contains(err.Error(), "required") {
-			response.Error(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		response.Error(w, http.StatusInternalServerError, "failed to process request")
-		return
-	}
-
-	response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
-}
-
-func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	var req model.ResetPasswordRequest
-	if err := response.ParseJSON(r, &req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if err := h.svc.ResetPassword(r.Context(), req); err != nil {
-		msg := err.Error()
-		if strings.Contains(msg, "required") || strings.Contains(msg, "invalid token") {
-			response.Error(w, http.StatusBadRequest, msg)
-			return
-		}
-		response.Error(w, http.StatusInternalServerError, "failed to reset password")
-		return
-	}
-
-	response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+// isBadRequest reports whether the error is a client-side validation error
+// (missing/invalid email) rather than a server fault.
+func isBadRequest(err error) bool {
+	msg := err.Error()
+	return msg == "email is required" || msg == "invalid email address"
 }

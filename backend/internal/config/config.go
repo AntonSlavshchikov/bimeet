@@ -13,6 +13,9 @@ type Config struct {
 	DSN         string
 	JWTSecret   string
 	JWTExpHours int
+	// AuthTest — when true, login codes are not emailed; a fixed code is used
+	// instead (see authsvc). Keeps email quotas intact during dev/tests.
+	AuthTest bool
 	// Mail provider:
 	//   1. If ResendAPIKey set → Resend HTTP API (port 443, works on any network)
 	//   2. Else if SMTPHost set → SMTP (mailhog locally / SendGrid etc.)
@@ -26,12 +29,12 @@ type Config struct {
 	SMTPFrom     string
 	FrontendURL  string
 	// S3-compatible storage (optional — if S3Bucket is empty, avatar uploads are disabled)
-	AWSRegion        string
-	AWSAccessKeyID   string
-	AWSSecretKey     string
-	S3Bucket         string
-	S3PublicBaseURL  string
-	S3Endpoint       string // custom endpoint for MinIO / S3-compatible services
+	AWSRegion       string
+	AWSAccessKeyID  string
+	AWSSecretKey    string
+	S3Bucket        string
+	S3PublicBaseURL string
+	S3Endpoint      string // custom endpoint for MinIO / S3-compatible services
 	// AdminEmails — whitelist of users (by email) allowed to access /api/admin/*
 	AdminEmails []string
 	// AppEnv — "development" (default) or "production". In production CORS is
@@ -116,35 +119,36 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:         port,
-		DSN:          os.Getenv("DSN"),
-		JWTSecret:    os.Getenv("JWT_SECRET"),
-		JWTExpHours:  expHours,
-		ResendAPIKey: os.Getenv("RESEND_API_KEY"),
-		MailFrom:     mailFrom,
-		SMTPHost:     os.Getenv("SMTP_HOST"),
-		SMTPPort:     smtpPort,
-		SMTPUser:     os.Getenv("SMTP_USER"),
-		SMTPPass:     os.Getenv("SMTP_PASS"),
-		SMTPFrom:     os.Getenv("SMTP_FROM"),
-		FrontendURL:  frontendURL,
-		AWSRegion:       os.Getenv("AWS_REGION"),
-		AWSAccessKeyID:  os.Getenv("AWS_ACCESS_KEY_ID"),
-		AWSSecretKey:    os.Getenv("AWS_SECRET_ACCESS_KEY"),
-		S3Bucket:        os.Getenv("S3_BUCKET"),
-		S3PublicBaseURL: os.Getenv("S3_PUBLIC_BASE_URL"),
-		S3Endpoint:      os.Getenv("S3_ENDPOINT"),
+		Port:               port,
+		DSN:                os.Getenv("DSN"),
+		JWTSecret:          os.Getenv("JWT_SECRET"),
+		JWTExpHours:        expHours,
+		AuthTest:           parseBool(os.Getenv("AUTH_TEST")),
+		ResendAPIKey:       os.Getenv("RESEND_API_KEY"),
+		MailFrom:           mailFrom,
+		SMTPHost:           os.Getenv("SMTP_HOST"),
+		SMTPPort:           smtpPort,
+		SMTPUser:           os.Getenv("SMTP_USER"),
+		SMTPPass:           os.Getenv("SMTP_PASS"),
+		SMTPFrom:           os.Getenv("SMTP_FROM"),
+		FrontendURL:        frontendURL,
+		AWSRegion:          os.Getenv("AWS_REGION"),
+		AWSAccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+		AWSSecretKey:       os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		S3Bucket:           os.Getenv("S3_BUCKET"),
+		S3PublicBaseURL:    os.Getenv("S3_PUBLIC_BASE_URL"),
+		S3Endpoint:         os.Getenv("S3_ENDPOINT"),
 		AdminEmails:        parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
 		AppEnv:             appEnv,
 		CORSAllowedOrigins: parseCSV(os.Getenv("CORS_ALLOWED_ORIGINS")),
-		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
-		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
-		VAPIDSubject:    vapidSubject,
-		LogLevel:        logLevel,
-		LogFormat:       logFormat,
-		OTelEnabled:     parseBool(os.Getenv("OTEL_ENABLED")),
-		OTelEndpoint:    os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-		OTelServiceName: otelServiceName,
+		VAPIDPublicKey:     os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey:    os.Getenv("VAPID_PRIVATE_KEY"),
+		VAPIDSubject:       vapidSubject,
+		LogLevel:           logLevel,
+		LogFormat:          logFormat,
+		OTelEnabled:        parseBool(os.Getenv("OTEL_ENABLED")),
+		OTelEndpoint:       os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		OTelServiceName:    otelServiceName,
 	}
 }
 

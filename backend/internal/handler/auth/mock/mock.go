@@ -41,60 +41,31 @@ func (m *MockAuthService) EXPECT() *MockAuthServiceMockRecorder {
 	return m.recorder
 }
 
-// ForgotPassword mocks base method.
-func (m *MockAuthService) ForgotPassword(ctx context.Context, req model.ForgotPasswordRequest) error {
+// RequestCode mocks base method.
+func (m *MockAuthService) RequestCode(ctx context.Context, req model.RequestCodeRequest) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ForgotPassword", ctx, req)
+	ret := m.ctrl.Call(m, "RequestCode", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ForgotPassword indicates an expected call of ForgotPassword.
-func (mr *MockAuthServiceMockRecorder) ForgotPassword(ctx, req any) *gomock.Call {
+// RequestCode indicates an expected call of RequestCode.
+func (mr *MockAuthServiceMockRecorder) RequestCode(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForgotPassword", reflect.TypeOf((*MockAuthService)(nil).ForgotPassword), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestCode", reflect.TypeOf((*MockAuthService)(nil).RequestCode), ctx, req)
 }
 
-// Login mocks base method.
-func (m *MockAuthService) Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error) {
+// VerifyCode mocks base method.
+func (m *MockAuthService) VerifyCode(ctx context.Context, req model.VerifyCodeRequest) (model.AuthResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, req)
+	ret := m.ctrl.Call(m, "VerifyCode", ctx, req)
 	ret0, _ := ret[0].(model.AuthResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Login indicates an expected call of Login.
-func (mr *MockAuthServiceMockRecorder) Login(ctx, req any) *gomock.Call {
+// VerifyCode indicates an expected call of VerifyCode.
+func (mr *MockAuthServiceMockRecorder) VerifyCode(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthService)(nil).Login), ctx, req)
-}
-
-// Register mocks base method.
-func (m *MockAuthService) Register(ctx context.Context, req model.RegisterRequest) (model.AuthResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Register", ctx, req)
-	ret0, _ := ret[0].(model.AuthResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Register indicates an expected call of Register.
-func (mr *MockAuthServiceMockRecorder) Register(ctx, req any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockAuthService)(nil).Register), ctx, req)
-}
-
-// ResetPassword mocks base method.
-func (m *MockAuthService) ResetPassword(ctx context.Context, req model.ResetPasswordRequest) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResetPassword", ctx, req)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ResetPassword indicates an expected call of ResetPassword.
-func (mr *MockAuthServiceMockRecorder) ResetPassword(ctx, req any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPassword", reflect.TypeOf((*MockAuthService)(nil).ResetPassword), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyCode", reflect.TypeOf((*MockAuthService)(nil).VerifyCode), ctx, req)
 }

@@ -63,14 +63,13 @@ func (m *Mailer) SendInvite(toEmail, eventTitle, organizerName, inviteToken stri
 	return m.send(toEmail, subject, body)
 }
 
-func (m *Mailer) SendPasswordReset(toEmail, resetToken string) error {
-	resetURL := m.cfg.FrontendURL + "/reset-password?token=" + resetToken
-	subject := "Восстановление пароля"
+func (m *Mailer) SendLoginCode(toEmail, code string) error {
+	subject := "Ваш код для входа: " + code
 	body := fmt.Sprintf(
-		"Привет!\n\nВы запросили восстановление пароля.\n\n"+
-			"Перейдите по ссылке, чтобы задать новый пароль:\n%s\n\n"+
-			"Если вы не запрашивали восстановление, просто проигнорируйте это письмо.",
-		resetURL,
+		"Привет!\n\nВаш код для входа в Bimeet: %s\n\n"+
+			"Код действует 10 минут. Введите его на странице входа.\n\n"+
+			"Если вы не запрашивали вход, просто проигнорируйте это письмо.",
+		code,
 	)
 	return m.send(toEmail, subject, body)
 }

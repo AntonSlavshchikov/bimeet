@@ -2565,6 +2565,15 @@ email+паролю, плюс ветка «забыл пароль» → пись
 | Авторегистрация | аккаунт создаётся в момент успешной верификации кода, если email новый; `name` = часть email до `@` |
 | Старый код | при запросе нового кода прежние неиспользованные коды этого email помечаются использованными |
 | Rate limit | `request-code`/`verify-code` остаются под строгим per-IP лимитом auth-роутов (`router.go`) |
+| Тестовый режим | env `AUTH_TEST` (по умолчанию `false`). При `true` письмо **не** отправляется, код всегда `120401` — чтобы не тратить лимиты почты при разработке/тестах |
+
+### Backend — конфиг
+
+| Файл | Изменение |
+|---|---|
+| `internal/config/config.go` | добавить поле `AuthTest bool` в `Config`; в `Load()` — `AuthTest: parseBool(os.Getenv("AUTH_TEST"))` (хелпер `parseBool` уже есть, понимает `1/true/yes/on`) |
+| `cmd/server/main.go` | пробросить `cfg.AuthTest` в `authsvc.New(...)` |
+| `backend/.env.example` | добавить `AUTH_TEST=true` (для локалки) с комментарием: при `true` код входа всегда `120401` и письмо не отправляется |
 
 ### Backend — миграции
 
@@ -2585,13 +2594,13 @@ email+паролю, плюс ветка «забыл пароль» → пись
 | `internal/repository/loginrepo/repository.go` (новый) | `Create(ctx, email, codeHash, expiresAt)`, `GetActiveByEmail(ctx, email)`, `IncAttempts(ctx, id)`, `MarkUsed(ctx, id)`, `InvalidateByEmail(ctx, email)` |
 | `internal/repository/user/repository.go` | `Create` без `passwordHash` (только `name`,`email`); убрать `scanUser`/`userColumns` ссылку на `password_hash`; удалить `UpdatePassword` |
 | `internal/repository/passwordreset/repository.go` | **удалить** пакет целиком |
-| `internal/service/auth/service.go` | переписать: `RequestCode(ctx, RequestCodeRequest)` — кулдаун, генерация кода, инвалидация старых, запись, отправка письма (goroutine, как `ForgotPassword`); `VerifyCode(ctx, VerifyCodeRequest) (AuthResponse, error)` — найти активный код, проверить TTL/used/attempts, сверить хеш, при успехе get-or-create user + JWT; удалить `Register`/`Login`/`ForgotPassword`/`ResetPassword`, bcrypt пароля и `minPasswordLength` |
+| `internal/service/auth/service.go` | переписать: `New(...)` дополнительно принимает `authTest bool` и хранит в `Service`; ввести `const testLoginCode = "120401"`. `RequestCode(ctx, RequestCodeRequest)` — кулдаун, инвалидация старых, запись хеша; **ветка по `s.authTest`**: при `true` — `code = testLoginCode`, письмо НЕ шлём (только лог), при `false` — `crypto/rand` код + отправка письма (goroutine, как `ForgotPassword`). `VerifyCode(ctx, VerifyCodeRequest) (AuthResponse, error)` — найти активный код, проверить TTL/used/attempts, сверить хеш, при успехе get-or-create user + JWT (общий путь для обоих режимов, без отдельных веток); удалить `Register`/`Login`/`ForgotPassword`/`ResetPassword`, bcrypt пароля и `minPasswordLength` |
 | `internal/service/auth/interfaces.go` | `UserRepo`: `GetByEmail`, `GetByID`, `Create(ctx,name,email)`; новый `LoginCodeRepo`; убрать `TokenRepo` |
 | `internal/service/mailer/mailer.go` | заменить `SendPasswordReset` на `SendLoginCode(toEmail, code string)` — письмо «Ваш код для входа: NNNNNN» (текст + краткий HTML), без ссылок |
 | `internal/handler/auth/handler.go` | заменить `Register`/`Login`/`ForgotPassword`/`ResetPassword` на `RequestCode` (всегда `200 {status:ok}`) и `VerifyCode` (`200 AuthResponse` / `400` invalid code / `429`-подобное при кулдауне) |
 | `internal/handler/auth/interfaces.go` | `AuthService`: `RequestCode`, `VerifyCode` |
 | `internal/handler/router.go` | в блоке `/api/auth`: убрать `register`/`login`/`forgot-password`/`reset-password`; добавить `POST /request-code`, `POST /verify-code`; оставить per-IP rate limit |
-| `cmd/server/main.go` | убрать инициализацию `passwordreset` repo; передать `loginrepo` в `authsvc.New`; обновить wiring |
+| `cmd/server/main.go` | убрать инициализацию `passwordreset` repo; передать `loginrepo` и `cfg.AuthTest` в `authsvc.New`; обновить wiring |
 | `internal/service/auth/service_test.go`, `internal/handler/auth/handler_test.go` + `mock/` | переписать под новые методы; `go generate` для моков (`UserRepo`,`LoginCodeRepo`,`Mailer`,`AuthService`) |
 
 ### Frontend
@@ -2608,15 +2617,16 @@ email+паролю, плюс ветка «забыл пароль» → пись
 
 ### Чеклист
 
-- [ ] миграция `014_login_codes` (up/down) + `015_drop_passwords` (up/down)
-- [ ] модель: `RequestCodeRequest`/`VerifyCodeRequest`, чистка парольных типов и `User.PasswordHash`
-- [ ] `loginrepo` репозиторий + удаление `passwordreset`; правка `userrepo.Create`/удаление `UpdatePassword`
-- [ ] `authsvc`: `RequestCode` (кулдаун, генерация, инвалидация, письмо) + `VerifyCode` (TTL/attempts/get-or-create/JWT)
-- [ ] `mailer.SendLoginCode` вместо `SendPasswordReset`
-- [ ] handler `RequestCode`/`VerifyCode` + роуты `request-code`/`verify-code`, удаление старых
-- [ ] обновить `main.go` wiring; перегенерить моки; переписать unit-тесты `service`/`handler`
-- [ ] фронт: API `requestCode`/`verifyCode`, `AuthContext.verifyCode`, двухшаговая `login` форма с таймером
-- [ ] удалить страницы `register`/`forgot-password`/`reset-password` и их роуты
-- [ ] i18n ru/en: новые ключи кода, удаление парольных
-- [ ] `go vet ./...`, `go build ./cmd/server`, `npm run build`, `npm run lint`
-- [ ] верификация: новый email → код на почту (или лог mailer) → ввод кода → авторизован и создан аккаунт; существующий email → вход; неверный код 5× → инвалидация; повторная отправка под кулдауном
+- [x] миграция `014_login_codes` (up/down) + `015_drop_passwords` (up/down)
+- [x] модель: `RequestCodeRequest`/`VerifyCodeRequest`, чистка парольных типов и `User.PasswordHash`
+- [x] `loginrepo` репозиторий + удаление `passwordreset`; правка `userrepo.Create`/удаление `UpdatePassword`
+- [x] `authsvc`: `RequestCode` (кулдаун, генерация, инвалидация, письмо) + `VerifyCode` (TTL/attempts/get-or-create/JWT)
+- [x] `AUTH_TEST` env: поле в `config` + проброс в `authsvc.New`; при `true` фиксированный код `120401` без отправки письма; запись в `.env.example`
+- [x] `mailer.SendLoginCode` вместо `SendPasswordReset`
+- [x] handler `RequestCode`/`VerifyCode` + роуты `request-code`/`verify-code`, удаление старых
+- [x] обновить `main.go` wiring; перегенерить моки; переписать unit-тесты `service`/`handler`
+- [x] фронт: API `requestCode`/`verifyCode`, `AuthContext.verifyCode`, двухшаговая `login` форма с таймером
+- [x] удалить страницы `register`/`forgot-password`/`reset-password` и их роуты
+- [x] i18n ru/en: новые ключи кода, удаление парольных
+- [x] `go vet ./...`, `go build ./cmd/server`, `npm run build`, `npm run lint` (auth-пакеты чистые; предсуществующие падения в `collection`-тестах не трогали)
+- [ ] верификация: при `AUTH_TEST=true` код всегда `120401`, письмо не уходит (только лог); при `AUTH_TEST=false` новый email → код на почту (или лог mailer) → ввод кода → авторизован и создан аккаунт; существующий email → вход; неверный код 5× → инвалидация; повторная отправка под кулдауном

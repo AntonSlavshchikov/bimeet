@@ -7,38 +7,38 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/riandyrn/otelchi"
 
-	adminhandler        "bimeet/internal/handler/admin"
-	authhandler         "bimeet/internal/handler/auth"
-	carpoolhandler      "bimeet/internal/handler/carpool"
-	collectionhandler   "bimeet/internal/handler/collection"
-	eventhandler        "bimeet/internal/handler/event"
-	eventlinkhandler    "bimeet/internal/handler/eventlink"
-	itemhandler         "bimeet/internal/handler/item"
+	adminhandler "bimeet/internal/handler/admin"
+	authhandler "bimeet/internal/handler/auth"
+	carpoolhandler "bimeet/internal/handler/carpool"
+	collectionhandler "bimeet/internal/handler/collection"
+	eventhandler "bimeet/internal/handler/event"
+	eventlinkhandler "bimeet/internal/handler/eventlink"
+	itemhandler "bimeet/internal/handler/item"
 	notificationhandler "bimeet/internal/handler/notification"
-	pollhandler         "bimeet/internal/handler/poll"
-	profilehandler      "bimeet/internal/handler/profile"
-	pushhandler         "bimeet/internal/handler/push"
+	pollhandler "bimeet/internal/handler/poll"
+	profilehandler "bimeet/internal/handler/profile"
+	pushhandler "bimeet/internal/handler/push"
 	"bimeet/internal/middleware"
 )
 
 func NewRouter(
-	auth         *authhandler.Handler,
-	event        *eventhandler.Handler,
-	collection   *collectionhandler.Handler,
-	poll         *pollhandler.Handler,
-	item         *itemhandler.Handler,
-	carpool      *carpoolhandler.Handler,
-	link         *eventlinkhandler.Handler,
+	auth *authhandler.Handler,
+	event *eventhandler.Handler,
+	collection *collectionhandler.Handler,
+	poll *pollhandler.Handler,
+	item *itemhandler.Handler,
+	carpool *carpoolhandler.Handler,
+	link *eventlinkhandler.Handler,
 	notification *notificationhandler.Handler,
-	profile      *profilehandler.Handler,
-	admin        *adminhandler.Handler,
-	push         *pushhandler.Handler,
-	userLookup   middleware.UserLookup,
-	adminEmails  []string,
-	jwtSecret    string,
-	corsOrigins  []string,
-	prod         bool,
-	serviceName  string,
+	profile *profilehandler.Handler,
+	admin *adminhandler.Handler,
+	push *pushhandler.Handler,
+	userLookup middleware.UserLookup,
+	adminEmails []string,
+	jwtSecret string,
+	corsOrigins []string,
+	prod bool,
+	serviceName string,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -67,10 +67,8 @@ func NewRouter(
 	// Public auth routes — strict per-IP rate limit against brute force.
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Use(middleware.RateLimitAuth())
-		r.Post("/register", auth.Register)
-		r.Post("/login", auth.Login)
-		r.Post("/forgot-password", auth.ForgotPassword)
-		r.Post("/reset-password", auth.ResetPassword)
+		r.Post("/request-code", auth.RequestCode)
+		r.Post("/verify-code", auth.VerifyCode)
 	})
 
 	// Public invite link (GET only)

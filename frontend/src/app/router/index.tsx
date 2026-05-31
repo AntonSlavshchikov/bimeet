@@ -3,9 +3,6 @@ import ProtectedRoute from '@/features/auth/ui/ProtectedRoute'
 import AdminRoute from '@/features/auth/ui/AdminRoute'
 import Layout from '@/widgets/layout'
 import LoginPage from '@/pages/login'
-import RegisterPage from '@/pages/register'
-import ForgotPasswordPage from '@/pages/forgot-password'
-import ResetPasswordPage from '@/pages/reset-password'
 import EventsListPage, { EventsListRail } from '@/pages/events-list'
 import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
@@ -20,9 +17,6 @@ export default function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           path="/events"
           element={

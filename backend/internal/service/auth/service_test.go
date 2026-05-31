@@ -17,222 +17,156 @@ import (
 	"bimeet/internal/service/auth/mock"
 )
 
-func newService(t *testing.T) (*authsvc.Service, *mock.MockUserRepo) {
+func newService(t *testing.T, authTest bool) (*authsvc.Service, *mock.MockUserRepo, *mock.MockLoginCodeRepo, *mock.MockMailer) {
 	t.Helper()
 	ctrl := gomock.NewController(t)
-	repo := mock.NewMockUserRepo(ctrl)
-	tokens := mock.NewMockTokenRepo(ctrl)
+	users := mock.NewMockUserRepo(ctrl)
+	codes := mock.NewMockLoginCodeRepo(ctrl)
 	mailer := mock.NewMockMailer(ctrl)
-	return authsvc.New(repo, tokens, mailer, "secret", 72), repo
+	return authsvc.New(users, codes, mailer, "secret", 72, authTest), users, codes, mailer
 }
 
-func newServiceFull(t *testing.T) (*authsvc.Service, *mock.MockUserRepo, *mock.MockTokenRepo, *mock.MockMailer) {
-	t.Helper()
-	ctrl := gomock.NewController(t)
-	repo := mock.NewMockUserRepo(ctrl)
-	tokens := mock.NewMockTokenRepo(ctrl)
-	mailer := mock.NewMockMailer(ctrl)
-	return authsvc.New(repo, tokens, mailer, "secret", 72), repo, tokens, mailer
-}
+// ─── RequestCode ─────────────────────────────────────────────────────────────
 
-// ─── Register ──────────────────────────────────────────────────────────────
-
-func TestRegister_MissingFields(t *testing.T) {
-	svc, _ := newService(t)
-	_, err := svc.Register(context.Background(), model.RegisterRequest{})
+func TestRequestCode_MissingEmail(t *testing.T) {
+	svc, _, _, _ := newService(t, false)
+	err := svc.RequestCode(context.Background(), model.RequestCodeRequest{})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "required")
 }
 
-func TestRegister_InvalidEmail(t *testing.T) {
-	svc, _ := newService(t)
-	_, err := svc.Register(context.Background(), model.RegisterRequest{
-		Name:     "Alice",
-		Email:    "not-an-email",
-		Password: "pass1234",
-	})
+func TestRequestCode_InvalidEmail(t *testing.T) {
+	svc, _, _, _ := newService(t, false)
+	err := svc.RequestCode(context.Background(), model.RequestCodeRequest{Email: "not-an-email"})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "email")
 }
 
-func TestRegister_ShortPassword(t *testing.T) {
-	svc, _ := newService(t)
-	_, err := svc.Register(context.Background(), model.RegisterRequest{
-		Name:     "Alice",
-		Email:    "alice@example.com",
-		Password: "short",
-	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "password")
+func TestRequestCode_Cooldown(t *testing.T) {
+	svc, _, codes, _ := newService(t, false)
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "alice@example.com").
+		Return(model.LoginCode{CreatedAt: time.Now().Add(-10 * time.Second)}, nil)
+
+	err := svc.RequestCode(context.Background(), model.RequestCodeRequest{Email: "alice@example.com"})
+	require.ErrorIs(t, err, authsvc.ErrCooldown)
 }
 
-func TestRegister_HappyPath(t *testing.T) {
-	svc, repo := newService(t)
+func TestRequestCode_HappyPath_SendsEmail(t *testing.T) {
+	svc, _, codes, mailer := newService(t, false)
 
-	userID := uuid.New()
-	repo.EXPECT().Create(gomock.Any(), "Alice", "alice@example.com", gomock.Any()).
-		Return(model.User{ID: userID, Name: "Alice", Email: "alice@example.com"}, nil)
-
-	resp, err := svc.Register(context.Background(), model.RegisterRequest{
-		Name:     "Alice",
-		Email:    "alice@example.com",
-		Password: "pass1234",
-	})
-	require.NoError(t, err)
-	assert.Equal(t, userID, resp.User.ID)
-	assert.NotEmpty(t, resp.Token)
-}
-
-func TestRegister_RepoError(t *testing.T) {
-	svc, repo := newService(t)
-
-	repo.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(model.User{}, errors.New("duplicate key"))
-
-	_, err := svc.Register(context.Background(), model.RegisterRequest{
-		Name:     "Alice",
-		Email:    "alice@example.com",
-		Password: "pass1234",
-	})
-	require.Error(t, err)
-}
-
-// ─── Login ─────────────────────────────────────────────────────────────────
-
-func TestLogin_MissingFields(t *testing.T) {
-	svc, _ := newService(t)
-	_, err := svc.Login(context.Background(), model.LoginRequest{})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "required")
-}
-
-func TestLogin_UserNotFound(t *testing.T) {
-	svc, repo := newService(t)
-
-	repo.EXPECT().GetByEmail(gomock.Any(), "ghost@x.com").Return(model.User{}, errors.New("not found"))
-
-	_, err := svc.Login(context.Background(), model.LoginRequest{Email: "ghost@x.com", Password: "pass"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid credentials")
-}
-
-func TestLogin_WrongPassword(t *testing.T) {
-	svc, repo := newService(t)
-
-	hash, _ := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
-	repo.EXPECT().GetByEmail(gomock.Any(), "u@x.com").
-		Return(model.User{Email: "u@x.com", PasswordHash: string(hash)}, nil)
-
-	_, err := svc.Login(context.Background(), model.LoginRequest{Email: "u@x.com", Password: "wrong"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid credentials")
-}
-
-func TestLogin_HappyPath(t *testing.T) {
-	svc, repo := newService(t)
-
-	hash, _ := bcrypt.GenerateFromPassword([]byte("pass123"), bcrypt.MinCost)
-	userID := uuid.New()
-	repo.EXPECT().GetByEmail(gomock.Any(), "alice@example.com").
-		Return(model.User{ID: userID, Email: "alice@example.com", PasswordHash: string(hash)}, nil)
-
-	resp, err := svc.Login(context.Background(), model.LoginRequest{Email: "alice@example.com", Password: "pass123"})
-	require.NoError(t, err)
-	assert.Equal(t, userID, resp.User.ID)
-	assert.NotEmpty(t, resp.Token)
-}
-
-// ─── ForgotPassword ────────────────────────────────────────────────────────
-
-func TestForgotPassword_MissingEmail(t *testing.T) {
-	svc, _, _, _ := newServiceFull(t)
-	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{})
-	require.Error(t, err)
-}
-
-func TestForgotPassword_UserNotFound_ReturnsNil(t *testing.T) {
-	svc, repo, _, _ := newServiceFull(t)
-	repo.EXPECT().GetByEmail(gomock.Any(), "ghost@x.com").
-		Return(model.User{}, errors.New("not found"))
-
-	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{Email: "ghost@x.com"})
-	require.NoError(t, err)
-}
-
-func TestForgotPassword_HappyPath(t *testing.T) {
-	svc, repo, tokens, mailer := newServiceFull(t)
-
-	userID := uuid.New()
-	tokenID := uuid.New()
-	repo.EXPECT().GetByEmail(gomock.Any(), "alice@example.com").
-		Return(model.User{ID: userID, Email: "alice@example.com"}, nil)
-	tokens.EXPECT().Create(gomock.Any(), userID, gomock.Any()).
-		Return(model.PasswordResetToken{Token: tokenID, UserID: userID}, nil)
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "alice@example.com").
+		Return(model.LoginCode{}, errors.New("not found"))
+	codes.EXPECT().InvalidateByEmail(gomock.Any(), "alice@example.com").Return(nil)
+	codes.EXPECT().Create(gomock.Any(), "alice@example.com", gomock.Any(), gomock.Any()).
+		Return(model.LoginCode{ID: uuid.New()}, nil)
 
 	done := make(chan struct{})
-	mailer.EXPECT().SendPasswordReset("alice@example.com", tokenID.String()).
-		DoAndReturn(func(string, string) error {
+	mailer.EXPECT().SendLoginCode("alice@example.com", gomock.Any()).
+		DoAndReturn(func(_, code string) error {
+			assert.Len(t, code, 6)
 			close(done)
 			return nil
 		})
 
-	err := svc.ForgotPassword(context.Background(), model.ForgotPasswordRequest{Email: "alice@example.com"})
+	err := svc.RequestCode(context.Background(), model.RequestCodeRequest{Email: "Alice@Example.com"})
 	require.NoError(t, err)
 
 	select {
 	case <-done:
 	case <-time.After(time.Second):
-		t.Fatal("SendPasswordReset was not called")
+		t.Fatal("SendLoginCode was not called")
 	}
 }
 
-// ─── ResetPassword ─────────────────────────────────────────────────────────
+func TestRequestCode_TestMode_NoEmail(t *testing.T) {
+	svc, _, codes, _ := newService(t, true) // authTest = true → no mailer call expected
 
-func TestResetPassword_MissingFields(t *testing.T) {
-	svc, _, _, _ := newServiceFull(t)
-	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{})
-	require.Error(t, err)
-}
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "alice@example.com").
+		Return(model.LoginCode{}, errors.New("not found"))
+	codes.EXPECT().InvalidateByEmail(gomock.Any(), "alice@example.com").Return(nil)
+	// The stored hash must match the fixed test code "120401".
+	codes.EXPECT().Create(gomock.Any(), "alice@example.com", gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, hash string, _ time.Time) (model.LoginCode, error) {
+			require.NoError(t, bcrypt.CompareHashAndPassword([]byte(hash), []byte("120401")))
+			return model.LoginCode{ID: uuid.New()}, nil
+		})
 
-func TestResetPassword_InvalidTokenFormat(t *testing.T) {
-	svc, _, _, _ := newServiceFull(t)
-	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: "not-a-uuid", Password: "new"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid token")
-}
-
-func TestResetPassword_TokenUsed(t *testing.T) {
-	svc, _, tokens, _ := newServiceFull(t)
-	tokenID := uuid.New()
-	tokens.EXPECT().GetByToken(gomock.Any(), tokenID).
-		Return(model.PasswordResetToken{Token: tokenID, Used: true, ExpiresAt: time.Now().Add(time.Hour)}, nil)
-
-	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: tokenID.String(), Password: "new"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid token")
-}
-
-func TestResetPassword_TokenExpired(t *testing.T) {
-	svc, _, tokens, _ := newServiceFull(t)
-	tokenID := uuid.New()
-	tokens.EXPECT().GetByToken(gomock.Any(), tokenID).
-		Return(model.PasswordResetToken{Token: tokenID, ExpiresAt: time.Now().Add(-time.Hour)}, nil)
-
-	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: tokenID.String(), Password: "new"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid token")
-}
-
-func TestResetPassword_HappyPath(t *testing.T) {
-	svc, repo, tokens, _ := newServiceFull(t)
-
-	tokenID := uuid.New()
-	userID := uuid.New()
-	tokens.EXPECT().GetByToken(gomock.Any(), tokenID).
-		Return(model.PasswordResetToken{Token: tokenID, UserID: userID, ExpiresAt: time.Now().Add(time.Hour)}, nil)
-	repo.EXPECT().UpdatePassword(gomock.Any(), userID, gomock.Any()).Return(nil)
-	tokens.EXPECT().MarkUsed(gomock.Any(), tokenID).Return(nil)
-
-	err := svc.ResetPassword(context.Background(), model.ResetPasswordRequest{Token: tokenID.String(), Password: "newpass123"})
+	err := svc.RequestCode(context.Background(), model.RequestCodeRequest{Email: "alice@example.com"})
 	require.NoError(t, err)
+}
+
+// ─── VerifyCode ──────────────────────────────────────────────────────────────
+
+func TestVerifyCode_MissingFields(t *testing.T) {
+	svc, _, _, _ := newService(t, false)
+	_, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{Email: "a@b.com"})
+	require.ErrorIs(t, err, authsvc.ErrInvalidCode)
+}
+
+func TestVerifyCode_NoActiveCode(t *testing.T) {
+	svc, _, codes, _ := newService(t, false)
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "a@b.com").
+		Return(model.LoginCode{}, errors.New("not found"))
+
+	_, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{Email: "a@b.com", Code: "123456"})
+	require.ErrorIs(t, err, authsvc.ErrInvalidCode)
+}
+
+func TestVerifyCode_WrongCode_IncrementsAttempts(t *testing.T) {
+	svc, _, codes, _ := newService(t, false)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("000000"), bcrypt.MinCost)
+	id := uuid.New()
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "a@b.com").
+		Return(model.LoginCode{ID: id, CodeHash: string(hash), Attempts: 1}, nil)
+	codes.EXPECT().IncAttempts(gomock.Any(), id).Return(nil)
+
+	_, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{Email: "a@b.com", Code: "999999"})
+	require.ErrorIs(t, err, authsvc.ErrInvalidCode)
+}
+
+func TestVerifyCode_TooManyAttempts_BurnsCode(t *testing.T) {
+	svc, _, codes, _ := newService(t, false)
+	id := uuid.New()
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "a@b.com").
+		Return(model.LoginCode{ID: id, Attempts: 5}, nil)
+	codes.EXPECT().MarkUsed(gomock.Any(), id).Return(nil)
+
+	_, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{Email: "a@b.com", Code: "123456"})
+	require.ErrorIs(t, err, authsvc.ErrInvalidCode)
+}
+
+func TestVerifyCode_ExistingUser(t *testing.T) {
+	svc, users, codes, _ := newService(t, false)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.MinCost)
+	id := uuid.New()
+	userID := uuid.New()
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "alice@example.com").
+		Return(model.LoginCode{ID: id, CodeHash: string(hash)}, nil)
+	codes.EXPECT().MarkUsed(gomock.Any(), id).Return(nil)
+	users.EXPECT().GetByEmail(gomock.Any(), "alice@example.com").
+		Return(model.User{ID: userID, Email: "alice@example.com"}, nil)
+
+	resp, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{Email: "alice@example.com", Code: "123456"})
+	require.NoError(t, err)
+	assert.Equal(t, userID, resp.User.ID)
+	assert.NotEmpty(t, resp.Token)
+}
+
+func TestVerifyCode_NewUser_AutoCreated(t *testing.T) {
+	svc, users, codes, _ := newService(t, false)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.MinCost)
+	id := uuid.New()
+	userID := uuid.New()
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "new@example.com").
+		Return(model.LoginCode{ID: id, CodeHash: string(hash)}, nil)
+	codes.EXPECT().MarkUsed(gomock.Any(), id).Return(nil)
+	users.EXPECT().GetByEmail(gomock.Any(), "new@example.com").
+		Return(model.User{}, errors.New("not found"))
+	users.EXPECT().Create(gomock.Any(), "new", "new@example.com").
+		Return(model.User{ID: userID, Name: "new", Email: "new@example.com"}, nil)
+
+	resp, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{Email: "new@example.com", Code: "123456"})
+	require.NoError(t, err)
+	assert.Equal(t, userID, resp.User.ID)
+	assert.NotEmpty(t, resp.Token)
 }

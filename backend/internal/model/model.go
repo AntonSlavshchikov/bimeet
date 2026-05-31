@@ -9,15 +9,14 @@ import (
 // ─── Domain structs ────────────────────────────────────────────────────────
 
 type User struct {
-	ID           uuid.UUID  `json:"id"`
-	Name         string     `json:"name"`
-	LastName     string     `json:"last_name"`
-	Email        string     `json:"email"`
-	PasswordHash string     `json:"-"`
-	BirthDate    *time.Time `json:"birth_date"`
-	City         string     `json:"city"`
-	AvatarURL    *string    `json:"avatar_url"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID        uuid.UUID  `json:"id"`
+	Name      string     `json:"name"`
+	LastName  string     `json:"last_name"`
+	Email     string     `json:"email"`
+	BirthDate *time.Time `json:"birth_date"`
+	City      string     `json:"city"`
+	AvatarURL *string    `json:"avatar_url"`
+	CreatedAt time.Time  `json:"created_at"`
 }
 
 type UpdateProfileRequest struct {
@@ -93,7 +92,7 @@ type CollectionContribution struct {
 	UserID       uuid.UUID  `json:"user_id"`
 	Paid         bool       `json:"paid"`
 	PaidAt       *time.Time `json:"paid_at,omitempty"`
-	Status       string     `json:"status"`                  // not_paid | pending | paid
+	Status       string     `json:"status"` // not_paid | pending | paid
 	ReceiptURL   *string    `json:"receipt_url,omitempty"`
 }
 
@@ -126,11 +125,11 @@ type Item struct {
 }
 
 type Carpool struct {
-	ID              uuid.UUID `json:"id"`
-	EventID         uuid.UUID `json:"event_id"`
-	DriverID        uuid.UUID `json:"driver_id"`
-	SeatsAvailable  int       `json:"seats_available"`
-	DeparturePoint  string    `json:"departure_point"`
+	ID             uuid.UUID `json:"id"`
+	EventID        uuid.UUID `json:"event_id"`
+	DriverID       uuid.UUID `json:"driver_id"`
+	SeatsAvailable int       `json:"seats_available"`
+	DeparturePoint string    `json:"departure_point"`
 }
 
 type CarpoolPassenger struct {
@@ -158,10 +157,13 @@ type Notification struct {
 	CreatedAt time.Time  `json:"created_at"`
 }
 
-type PasswordResetToken struct {
-	Token     uuid.UUID `json:"token"`
-	UserID    uuid.UUID `json:"user_id"`
+// LoginCode is a one-time passwordless login code (hashed) for a given email.
+type LoginCode struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	CodeHash  string    `json:"-"`
 	ExpiresAt time.Time `json:"expires_at"`
+	Attempts  int       `json:"attempts"`
 	Used      bool      `json:"used"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -191,29 +193,20 @@ type PushUnsubscribeRequest struct {
 
 // ─── DTOs ──────────────────────────────────────────────────────────────────
 
-type RegisterRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+// RequestCodeRequest asks for a one-time login code to be sent to an email.
+type RequestCodeRequest struct {
+	Email string `json:"email"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+// VerifyCodeRequest verifies a one-time login code for an email.
+type VerifyCodeRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
 }
 
 type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
-}
-
-type ForgotPasswordRequest struct {
-	Email string `json:"email"`
-}
-
-type ResetPasswordRequest struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
 }
 
 type CreateEventRequest struct {
@@ -473,8 +466,8 @@ type AdminDistributionItem struct {
 }
 
 type AdminDistribution struct {
-	ByCategory []AdminDistributionItem `json:"by_category"`
-	ByStatus   []AdminDistributionItem `json:"by_status"`
+	ByCategory   []AdminDistributionItem `json:"by_category"`
+	ByStatus     []AdminDistributionItem `json:"by_status"`
 	ByVisibility []AdminDistributionItem `json:"by_visibility"`
 }
 

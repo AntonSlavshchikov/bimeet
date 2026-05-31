@@ -19,22 +19,22 @@ func New(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const userColumns = `id, name, last_name, email, password_hash, birth_date, city, avatar_url, created_at`
+const userColumns = `id, name, last_name, email, birth_date, city, avatar_url, created_at`
 
 func scanUser(row interface {
 	Scan(...any) error
 }) (model.User, error) {
 	var u model.User
-	err := row.Scan(&u.ID, &u.Name, &u.LastName, &u.Email, &u.PasswordHash, &u.BirthDate, &u.City, &u.AvatarURL, &u.CreatedAt)
+	err := row.Scan(&u.ID, &u.Name, &u.LastName, &u.Email, &u.BirthDate, &u.City, &u.AvatarURL, &u.CreatedAt)
 	return u, err
 }
 
-func (r *Repository) Create(ctx context.Context, name, email, passwordHash string) (model.User, error) {
+func (r *Repository) Create(ctx context.Context, name, email string) (model.User, error) {
 	row := r.pool.QueryRow(ctx,
-		`INSERT INTO users (name, email, password_hash)
-		 VALUES ($1, $2, $3)
+		`INSERT INTO users (name, email)
+		 VALUES ($1, $2)
 		 RETURNING `+userColumns,
-		name, email, passwordHash,
+		name, email,
 	)
 	u, err := scanUser(row)
 	if err != nil {
@@ -111,17 +111,6 @@ func (r *Repository) ClearAvatar(ctx context.Context, id uuid.UUID) (model.User,
 		return model.User{}, fmt.Errorf("clear avatar: %w", err)
 	}
 	return u, nil
-}
-
-func (r *Repository) UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
-	_, err := r.pool.Exec(ctx,
-		`UPDATE users SET password_hash=$1 WHERE id=$2`,
-		passwordHash, id,
-	)
-	if err != nil {
-		return fmt.Errorf("update password: %w", err)
-	}
-	return nil
 }
 
 func (r *Repository) GetStats(ctx context.Context, id uuid.UUID) (model.ProfileStats, error) {
