@@ -12,7 +12,6 @@ import (
 	carpoolhandler "bimeet/internal/handler/carpool"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
-	eventlinkhandler "bimeet/internal/handler/eventlink"
 	itemhandler "bimeet/internal/handler/item"
 	notificationhandler "bimeet/internal/handler/notification"
 	pollhandler "bimeet/internal/handler/poll"
@@ -28,7 +27,6 @@ func NewRouter(
 	poll *pollhandler.Handler,
 	item *itemhandler.Handler,
 	carpool *carpoolhandler.Handler,
-	link *eventlinkhandler.Handler,
 	notification *notificationhandler.Handler,
 	profile *profilehandler.Handler,
 	admin *adminhandler.Handler,
@@ -124,11 +122,6 @@ func NewRouter(
 				r.Get("/carpools", carpool.List)
 				r.Post("/carpools", carpool.Create)
 				r.Post("/carpools/{carpoolId}/join", carpool.Join)
-
-				// Links
-				r.Get("/links", link.List)
-				r.Post("/links", link.Create)
-				r.Delete("/links/{linkId}", link.Delete)
 			})
 		})
 

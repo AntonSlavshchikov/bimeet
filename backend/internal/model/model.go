@@ -61,15 +61,6 @@ type Event struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-type EventLink struct {
-	ID        uuid.UUID `json:"id"`
-	EventID   uuid.UUID `json:"event_id"`
-	Title     string    `json:"title"`
-	URL       string    `json:"url"`
-	CreatedBy uuid.UUID `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
 type EventParticipant struct {
 	ID      uuid.UUID `json:"id"`
 	EventID uuid.UUID `json:"event_id"`
@@ -233,11 +224,6 @@ type UpdateEventRequest struct {
 	MaxGuests   *int       `json:"max_guests,omitempty"`
 }
 
-type CreateEventLinkRequest struct {
-	Title string `json:"title"`
-	URL   string `json:"url"`
-}
-
 type InviteParticipantRequest struct {
 	Email string `json:"email"`
 }
@@ -369,14 +355,6 @@ type CarpoolInfo struct {
 	Passengers     []UserInfo `json:"passengers"`
 }
 
-type EventLinkInfo struct {
-	ID        uuid.UUID `json:"id"`
-	Title     string    `json:"title"`
-	URL       string    `json:"url"`
-	CreatedBy uuid.UUID `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
 type ChangeLogInfo struct {
 	ID        uuid.UUID `json:"id"`
 	ChangedBy UserInfo  `json:"changed_by"`
@@ -408,7 +386,6 @@ type EventDetail struct {
 	Polls          []PollInfo        `json:"polls"`
 	Items          []ItemInfo        `json:"items"`
 	Carpools       []CarpoolInfo     `json:"carpools"`
-	Links          []EventLinkInfo   `json:"links"`
 	ChangeLog      []ChangeLogInfo   `json:"change_log"`
 }
 

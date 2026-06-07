@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
-import type { EventCategory } from '@/entities/event/model/types'
 import { Button, Input, Textarea, useToast } from '@/shared/ui'
 import { cn } from '@/shared/lib/cn'
 
@@ -14,7 +13,6 @@ interface FormValues {
   dateStart: string
   dateEnd: string
   location: string
-  category: EventCategory
   dressCode: string
   isPublic: boolean
   maxGuests: string
@@ -42,7 +40,6 @@ export default function EventFormPage() {
     dateStart: '',
     dateEnd: '',
     location: '',
-    category: 'ordinary',
     dressCode: '',
     isPublic: false,
     maxGuests: '',
@@ -56,7 +53,6 @@ export default function EventFormPage() {
         dateStart: toDatetimeLocal(event.date_start),
         dateEnd: toDatetimeLocal(event.date_end),
         location: event.location,
-        category: event.category ?? 'ordinary',
         dressCode: event.dress_code ?? '',
         isPublic: event.is_public ?? false,
         maxGuests: event.max_guests != null ? String(event.max_guests) : '',
@@ -82,7 +78,6 @@ export default function EventFormPage() {
       date_start: new Date(form.dateStart).toISOString(),
       date_end: new Date(form.dateEnd).toISOString(),
       location: form.location,
-      category: form.category,
       is_public: form.isPublic,
       ...(form.dressCode.trim() ? { dress_code: form.dressCode.trim() } : {}),
       ...(maxGuests != null ? { max_guests: maxGuests } : {}),
@@ -127,24 +122,6 @@ export default function EventFormPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Тип встречи */}
-        <Section title={t('eventForm.sectionType', 'Тип встречи')}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <RadioCard
-              checked={form.category === 'ordinary'}
-              onClick={() => update('category', 'ordinary')}
-              title={t('eventForm.typeOrdinary', 'Личная')}
-              description={t('eventForm.typeOrdinaryDesc', 'Праздник, ужин, поход')}
-            />
-            <RadioCard
-              checked={form.category === 'business'}
-              onClick={() => update('category', 'business')}
-              title={t('eventForm.typeBusiness', 'Деловая')}
-              description={t('eventForm.typeBusinessDesc', 'Совещание, созвон')}
-            />
-          </div>
-        </Section>
-
         <Section title={t('eventForm.sectionVisibility', 'Кто может присоединиться')}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <RadioCard
@@ -219,11 +196,7 @@ export default function EventFormPage() {
             <Input
               value={form.location}
               onChange={e => update('location', e.target.value)}
-              placeholder={
-                form.category === 'business'
-                  ? t('eventForm.fieldLocationPlaceholderBusiness', 'Zoom / адрес офиса')
-                  : t('eventForm.fieldLocationPlaceholderOrdinary', 'Адрес или название места')
-              }
+              placeholder={t('eventForm.fieldLocationPlaceholder', 'Адрес или название места')}
               required
             />
           </Field>

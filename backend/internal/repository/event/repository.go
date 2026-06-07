@@ -259,7 +259,6 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	detail.Polls = []model.PollInfo{}
 	detail.Items = []model.ItemInfo{}
 	detail.Carpools = []model.CarpoolInfo{}
-	detail.Links = []model.EventLinkInfo{}
 	detail.ChangeLog = []model.ChangeLogInfo{}
 
 	// Participants
@@ -479,27 +478,6 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		if err := passRows.Err(); err != nil {
 			return model.EventDetail{}, err
 		}
-	}
-
-	// Links
-	linkRows, err := r.pool.Query(ctx,
-		`SELECT id, title, url, created_by, created_at FROM event_links WHERE event_id = $1 ORDER BY created_at`,
-		eventID,
-	)
-	if err != nil {
-		return model.EventDetail{}, fmt.Errorf("list links detail: %w", err)
-	}
-	for linkRows.Next() {
-		var l model.EventLinkInfo
-		if err := linkRows.Scan(&l.ID, &l.Title, &l.URL, &l.CreatedBy, &l.CreatedAt); err != nil {
-			linkRows.Close()
-			return model.EventDetail{}, fmt.Errorf("scan link detail: %w", err)
-		}
-		detail.Links = append(detail.Links, l)
-	}
-	linkRows.Close()
-	if err := linkRows.Err(); err != nil {
-		return model.EventDetail{}, err
 	}
 
 	// Change log

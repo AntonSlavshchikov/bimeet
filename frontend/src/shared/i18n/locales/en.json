@@ -72,8 +72,6 @@
     "changed": "changed «{{field}}»"
   },
   "eventCard": {
-    "categoryBusiness": "Business",
-    "categoryOrdinary": "Ordinary",
     "statusCompleted": "Completed",
     "statusInvited": "Invited",
     "statusConfirmed": "Going",
@@ -87,11 +85,6 @@
     "titleCreate": "Create event",
     "subtitleEdit": "Editing event",
     "subtitleCreate": "New event",
-    "sectionType": "Event type",
-    "typeOrdinary": "Ordinary",
-    "typeOrdinaryDesc": "Holiday, trip, hike",
-    "typeBusiness": "Business",
-    "typeBusinessDesc": "Meeting, call, negotiations",
     "sectionVisibility": "Visibility",
     "typePersonal": "Personal",
     "typePersonalDesc": "Invite-only",
@@ -108,8 +101,7 @@
     "fieldStart": "Start",
     "fieldEnd": "End",
     "fieldLocation": "Location",
-    "fieldLocationPlaceholderBusiness": "Office address or online",
-    "fieldLocationPlaceholderOrdinary": "Address or place name",
+    "fieldLocationPlaceholder": "Address or place name",
     "fieldDressCode": "Dress code",
     "fieldDressCodePlaceholder": "Smart casual, Business, Casual...",
     "footerHint": "After creating you can add participants and other details",
@@ -120,8 +112,6 @@
     "errorUpdate": "Update error"
   },
   "eventInfo": {
-    "categoryBusiness": "Business meeting",
-    "categoryOrdinary": "Regular meeting",
     "statusCompleted": "Completed",
     "menuActions": "Actions",
     "menuComplete": "Complete",
@@ -172,7 +162,6 @@
     "polls": "Polls",
     "items": "Items",
     "carpools": "Carpools",
-    "links": "Links",
     "history": "History"
   },
   "participants": {
@@ -264,17 +253,6 @@
     "buttonLeave": "Leave carpool",
     "buttonNoSeats": "No seats",
     "buttonJoin": "Join them"
-  },
-  "links": {
-    "sectionTitle": "Links",
-    "fieldTitle": "Title",
-    "fieldTitlePlaceholder": "E.g., Zoom call",
-    "fieldUrl": "URL",
-    "emptyOrganizer": "Add links for participants",
-    "emptyParticipant": "No links yet",
-    "validationError": "Please fill in title and URL",
-    "deleteButton": "Delete link",
-    "deleteError": "Delete error"
   },
   "profile": {
     "title": "Profile",

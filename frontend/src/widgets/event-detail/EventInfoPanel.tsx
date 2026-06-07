@@ -2,7 +2,6 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  Briefcase,
   Calendar,
   ChevronDown,
   ChevronUp,
@@ -109,12 +108,9 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
         <div className={cn('h-1 w-full', ACCENT_TO_BG[accent])} aria-hidden />
 
         <div className="p-5">
-          {/* Header: category + menu */}
+          {/* Header: status + menu */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-accent">
-                {event.category === 'business' ? t('eventInfo.categoryBusiness') : t('eventInfo.categoryOrdinary')}
-              </span>
               {event.status === 'completed' && (
                 <StatusPill variant="completed" size="sm">
                   {t('eventInfo.statusCompleted', 'Завершена')}
@@ -205,10 +201,6 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
               <MetaRow icon={Shirt}>
                 {t('eventInfo.dressCode', { value: event.dress_code, defaultValue: `Дресс-код: ${event.dress_code}` })}
               </MetaRow>
-            )}
-
-            {event.category === 'business' && (
-              <MetaRow icon={Briefcase}>{t('eventInfo.categoryBusiness', 'Деловая')}</MetaRow>
             )}
 
             <MetaRow icon={event.is_public ? Globe : Lock}>

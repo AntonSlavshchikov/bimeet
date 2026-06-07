@@ -50,7 +50,6 @@ export default function EventListRow({
   const more = Math.max(0, confirmedCount - confirmed.length)
 
   const showPublicTag = event.is_public
-  const showBusinessTag = event.category === 'business'
 
   return (
     <Link
@@ -89,7 +88,6 @@ export default function EventListRow({
           <span className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink truncate min-w-0">
             {event.title}
           </span>
-          {showBusinessTag && <EventTag variant="work">{t('eventCard.categoryBusiness')}</EventTag>}
           {showPublicTag ? (
             <EventTag variant="public">
               <Globe size={10} className="-ml-0.5" />

@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   History,
-  Link as LinkIcon,
   ShoppingBag,
   Truck,
   Users,
@@ -21,7 +20,6 @@ import CollectionsTab from '@/features/collections/ui/CollectionsTab'
 import PollsTab from '@/features/polls/ui/PollsTab'
 import ItemsTab from '@/features/items/ui/ItemsTab'
 import CarpoolTab from '@/features/carpools/ui/CarpoolTab'
-import LinksTab from '@/features/links/ui/LinksTab'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import ParticipantsSummaryPanel from '@/widgets/event-detail/ParticipantsSummaryPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
@@ -37,7 +35,7 @@ import {
   SegmentedControl,
 } from '@/shared/ui'
 
-type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'links' | 'changelog'
+type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'changelog'
 
 interface TabDef {
   key: TabKey
@@ -52,12 +50,6 @@ const ORDINARY_TABS: TabDef[] = [
   { key: 'polls',        tKey: 'tabs.polls',        fallback: 'Опросы',      icon: BarChart3 },
   { key: 'items',        tKey: 'tabs.items',        fallback: 'Вещи',        icon: ShoppingBag },
   { key: 'carpools',     tKey: 'tabs.carpools',     fallback: 'Попутчики',   icon: Truck },
-]
-
-const BUSINESS_TABS: TabDef[] = [
-  { key: 'participants', tKey: 'tabs.participants', fallback: 'Участники',   icon: Users },
-  { key: 'polls',        tKey: 'tabs.polls',        fallback: 'Опросы',      icon: BarChart3 },
-  { key: 'links',        tKey: 'tabs.links',        fallback: 'Ссылки',      icon: LinkIcon },
 ]
 
 export default function EventDetailPage() {
@@ -85,13 +77,12 @@ export default function EventDetailPage() {
 
   const isOrganizer = event.organizer.id === user?.id
 
-  const baseTabs = event.category === 'business' ? BUSINESS_TABS : ORDINARY_TABS
   const allTabs: TabDef[] =
     event.change_log.length > 0
-      ? [...baseTabs, { key: 'changelog', tKey: 'tabs.history', fallback: 'История', icon: History }]
-      : baseTabs
+      ? [...ORDINARY_TABS, { key: 'changelog', tKey: 'tabs.history', fallback: 'История', icon: History }]
+      : ORDINARY_TABS
 
-  // Фолбэк: если активный таб не входит в набор для этой категории, переключаемся на первый
+  // Фолбэк: если активный таб не входит в набор, переключаемся на первый
   const activeTab: TabKey = allTabs.some(td => td.key === tab) ? tab : allTabs[0].key
 
   return (
@@ -145,7 +136,6 @@ export default function EventDetailPage() {
             {activeTab === 'polls' && <PollsTab event={event} />}
             {activeTab === 'items' && <ItemsTab event={event} />}
             {activeTab === 'carpools' && <CarpoolTab event={event} />}
-            {activeTab === 'links' && <LinksTab event={event} />}
             {activeTab === 'changelog' && (
               <div className="flex flex-col gap-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">

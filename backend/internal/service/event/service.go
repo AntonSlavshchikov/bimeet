@@ -55,12 +55,9 @@ func (s *Service) Create(ctx context.Context, req model.CreateEventRequest, orga
 	if req.DateEnd.Before(req.DateStart) {
 		return model.Event{}, fmt.Errorf("date_end must be after date_start")
 	}
-	if req.Category == "" {
-		req.Category = "ordinary"
-	}
-	if req.Category != "ordinary" && req.Category != "business" {
-		return model.Event{}, fmt.Errorf("category must be ordinary or business")
-	}
+	// Bimeet for People знает только обычные встречи — деловой тип убран
+	// вместе с разделением продуктов (см. docs/company.md, Этап 32).
+	req.Category = "ordinary"
 	return s.eventRepo.Create(ctx, req, organizerID)
 }
 
@@ -180,10 +177,6 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 		changed bool
 	}
 
-	if req.Category != nil && *req.Category != "ordinary" && *req.Category != "business" {
-		return model.Event{}, fmt.Errorf("category must be ordinary or business")
-	}
-
 	changes := []fieldChange{
 		{name: "title", oldVal: event.Title, newVal: func() string {
 			if req.Title != nil {
@@ -215,12 +208,6 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 			}
 			return event.DateEnd.String()
 		}(), changed: req.DateEnd != nil && !req.DateEnd.Equal(event.DateEnd)},
-		{name: "category", oldVal: event.Category, newVal: func() string {
-			if req.Category != nil {
-				return *req.Category
-			}
-			return event.Category
-		}(), changed: req.Category != nil && *req.Category != event.Category},
 	}
 
 	updated, err := s.eventRepo.Update(ctx, id, req)

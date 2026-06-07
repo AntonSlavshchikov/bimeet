@@ -72,8 +72,6 @@
     "changed": "изменил «{{field}}»"
   },
   "eventCard": {
-    "categoryBusiness": "Деловая",
-    "categoryOrdinary": "Обычная",
     "statusCompleted": "Завершена",
     "statusInvited": "Приглашён",
     "statusConfirmed": "Иду",
@@ -87,11 +85,6 @@
     "titleCreate": "Создать встречу",
     "subtitleEdit": "Редактирование встречи",
     "subtitleCreate": "Новое мероприятие",
-    "sectionType": "Тип встречи",
-    "typeOrdinary": "Обычная",
-    "typeOrdinaryDesc": "Праздник, выезд, поход",
-    "typeBusiness": "Деловая",
-    "typeBusinessDesc": "Совещание, созвон, переговоры",
     "sectionVisibility": "Видимость",
     "typePersonal": "Персональная",
     "typePersonalDesc": "Только для приглашённых",
@@ -108,8 +101,7 @@
     "fieldStart": "Начало",
     "fieldEnd": "Конец",
     "fieldLocation": "Место",
-    "fieldLocationPlaceholderBusiness": "Адрес офиса или онлайн",
-    "fieldLocationPlaceholderOrdinary": "Адрес или название места",
+    "fieldLocationPlaceholder": "Адрес или название места",
     "fieldDressCode": "Дресс-код",
     "fieldDressCodePlaceholder": "Smart casual, Деловой, Свободный...",
     "footerHint": "После создания можно добавить участников и другие детали",
@@ -120,8 +112,6 @@
     "errorUpdate": "Ошибка обновления"
   },
   "eventInfo": {
-    "categoryBusiness": "Деловая встреча",
-    "categoryOrdinary": "Обычная встреча",
     "statusCompleted": "Завершена",
     "menuActions": "Действия",
     "menuComplete": "Завершить",
@@ -172,7 +162,6 @@
     "polls": "Опросы",
     "items": "Вещи",
     "carpools": "Попутчики",
-    "links": "Ссылки",
     "history": "История"
   },
   "participants": {
@@ -264,17 +253,6 @@
     "buttonLeave": "Покинуть поездку",
     "buttonNoSeats": "Мест нет",
     "buttonJoin": "Еду с ними"
-  },
-  "links": {
-    "sectionTitle": "Ссылки",
-    "fieldTitle": "Название",
-    "fieldTitlePlaceholder": "Например: Zoom-звонок",
-    "fieldUrl": "URL",
-    "emptyOrganizer": "Добавьте ссылки для участников",
-    "emptyParticipant": "Ссылок пока нет",
-    "validationError": "Заполните название и ссылку",
-    "deleteButton": "Удалить ссылку",
-    "deleteError": "Ошибка удаления"
   },
   "profile": {
     "title": "Профиль",

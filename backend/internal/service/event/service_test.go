@@ -57,18 +57,28 @@ func TestCreate_DateEndBeforeDateStart(t *testing.T) {
 	assert.Contains(t, err.Error(), "date_end must be after date_start")
 }
 
-func TestCreate_InvalidCategory(t *testing.T) {
-	svc, _, _, _, _ := newService(t)
+// Bimeet for People знает только обычные встречи: любая входящая категория
+// (включая legacy "business") принудительно становится "ordinary".
+func TestCreate_ForcesOrdinary(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	organizerID := uuid.New()
 	now := time.Now()
 	req := model.CreateEventRequest{
-		Title:     "Party",
+		Title:     "Sync",
 		DateStart: now,
 		DateEnd:   now.Add(1 * time.Hour),
-		Category:  "invalid",
+		Category:  "business",
 	}
-	_, err := svc.Create(context.Background(), req, uuid.New())
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "category must be")
+
+	er.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(model.CreateEventRequest{}), organizerID).
+		DoAndReturn(func(_ context.Context, r model.CreateEventRequest, _ uuid.UUID) (model.Event, error) {
+			assert.Equal(t, "ordinary", r.Category)
+			return model.Event{ID: uuid.New()}, nil
+		})
+
+	_, err := svc.Create(context.Background(), req, organizerID)
+	require.NoError(t, err)
 }
 
 func TestCreate_DefaultsToOrdinary(t *testing.T) {

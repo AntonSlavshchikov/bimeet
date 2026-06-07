@@ -4,17 +4,6 @@ import type { Poll } from '@/entities/poll/model/types'
 import type { Item } from '@/entities/item/model/types'
 import type { Carpool } from '@/entities/carpool/model/types'
 
-export type EventCategory = 'ordinary' | 'business'
-
-export interface EventLink {
-  id: string
-  event_id: string
-  title: string
-  url: string
-  created_by: string
-  created_at: string
-}
-
 export interface ChangeLogEntry {
   id: string
   changed_by: User
@@ -31,7 +20,6 @@ export interface Event {
   date_start: string
   date_end: string
   location: string
-  category: EventCategory
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean
@@ -47,7 +35,6 @@ export interface Event {
   polls: Poll[]
   items: Item[]
   carpools: Carpool[]
-  links: EventLink[]
   change_log: ChangeLogEntry[]
 }
 
@@ -58,7 +45,6 @@ export interface EventListItem {
   date_start: string
   date_end: string
   location: string
-  category: EventCategory
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean
@@ -82,7 +68,6 @@ export interface InviteEventInfo {
   date_start: string
   date_end: string
   location: string
-  category: EventCategory
   dress_code?: string
   organizer: { id: string; name: string; email: string }
   confirmed_count: number
@@ -94,7 +79,6 @@ export interface CreateEventData {
   date_start: string
   date_end: string
   location: string
-  category: EventCategory
   dress_code?: string
 }
 
@@ -104,6 +88,5 @@ export interface UpdateEventData {
   date_start?: string
   date_end?: string
   location?: string
-  category?: EventCategory
   dress_code?: string
 }

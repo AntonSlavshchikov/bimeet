@@ -2630,3 +2630,185 @@ email+паролю, плюс ветка «забыл пароль» → пись
 - [x] i18n ru/en: новые ключи кода, удаление парольных
 - [x] `go vet ./...`, `go build ./cmd/server`, `npm run build`, `npm run lint` (auth-пакеты чистые; предсуществующие падения в `collection`-тестах не трогали)
 - [ ] верификация: при `AUTH_TEST=true` код всегда `120401`, письмо не уходит (только лог); при `AUTH_TEST=false` новый email → код на почту (или лог mailer) → ввод кода → авторизован и создан аккаунт; существующий email → вход; неверный код 5× → инвалидация; повторная отправка под кулдауном
+
+---
+
+## Этап 32 — Разделение продуктов: чистка Bimeet for People от деловой составляющей
+
+### Контекст
+
+`docs/company.md` разделяет Bimeet на два независимых продукта: **Bimeet for
+People** (`app.bimeet.pro`, текущее приложение — личные встречи) и **Bimeet for
+Teams** (`{company}.bimeet.pro` — новый изолированный B2B-продукт с брендингом,
+замкнутым контуром компании и парольным входом). Решено: Teams строим в **полной
+изоляции** (отдельный сервис `backend-teams`, отдельный фронт `frontend-teams`,
+отдельная БД `bimeet_teams`); пока **без деплоя** — только локальная разработка.
+Это первый этап разделения — детальный; этапы 33–36 ниже — дорожная карта Teams.
+
+Корректировки к доке: авторизация Teams — **классический логин+пароль** (и owner,
+и сотрудник; People остаётся беспарольным OTP, Этап 31). CLAUDE.md устарел
+(упоминает Chakra/пароли — фактически Tailwind/OTP), обновим при запуске Teams.
+
+Здесь же — первый шаг: в `app.bimeet.pro` понятие «деловой встречи» исчезает
+полностью. Любая новая встреча обычная; выбор типа и вкладка «Ссылки» уходят из
+UI; уже созданные деловые встречи удаляются разовой чисткой. Колонку
+`events.category` **не дропаем** — оставляем `ordinary` ради минимального диффа
+(её удаление рябит по всем SELECT-ам и admin-статистике); полное удаление —
+опциональный follow-up.
+
+### Backend
+
+| Файл | Изменение |
+|---|---|
+| `internal/service/event/service.go` | `Create`: убрать валидацию `business`, жёстко `req.Category = "ordinary"` (входящее значение игнорируем). `Update`: убрать валидацию `category` и его запись в changelog (строки ~183–185, 218–223) |
+| `internal/handler/eventlink/`, `internal/service/eventlink/`, `internal/repository/eventlink/` | **удалить** пакеты целиком (домен ссылок — чисто B2B) |
+| `internal/handler/router.go` | убрать импорт `eventlinkhandler`, параметр `link *eventlinkhandler.Handler` и маршруты `links` (строки ~128–131) |
+| `cmd/server/main.go` | убрать конструирование `eventlink` handler/service/repo из wiring |
+| `internal/model/model.go` | удалить `EventLink`, `EventLinkInfo`, `CreateEventLinkRequest`; убрать поле `Links []EventLinkInfo` из `EventDetail` |
+| `internal/repository/event/repository.go` | убрать сборку `Links` в `GetDetail` (JOIN/назначение поля) |
+| `internal/db/migrations/016_drop_business_events.up.sql` | `DELETE FROM events WHERE category = 'business';` (каскад уносит participants/polls/items/… через FK) + `DROP TABLE IF EXISTS event_links;` |
+| `internal/db/migrations/016_drop_business_events.down.sql` | воссоздать таблицу `event_links` (копия из `002_categories_links`); удалённые события не восстанавливаются — пометить комментарием |
+
+> Нумерация: следующий свободный номер — `016` (последняя миграция — `015_drop_passwords`).
+
+### Frontend
+
+| Файл | Изменение |
+|---|---|
+| `src/pages/event-form/index.tsx` | удалить переключатель «Личная/Деловая» (строки ~134–140) и поле `category` из формы/стейта (~17, 45, 59, 85); `category` в запрос не отправляем (бэк сам ставит `ordinary`) |
+| `src/pages/event-detail/index.tsx` | удалить `BUSINESS_TABS`, импорт и рендер `LinksTab`, ключ `'links'` из `TabKey`, ветку `event.category === 'business'` (строки ~24, 40, 50–60, 88, 148) — только обычные вкладки |
+| `src/features/links/` | **удалить** слайс целиком (`ui/LinksTab.tsx`, `model/hooks.ts`, `api/index.ts`) |
+| `src/widgets/event-detail/EventInfoPanel.tsx` | убрать бейдж/`MetaRow` категории (строки ~112–116, 210–211) |
+| `src/shared/lib/eventAccentColor.ts` | убрать ветку `business` (строки ~15–22), оставить логику public/private ordinary |
+| `src/entities/event/model/types.ts` | убрать тип `EventCategory` и поле `category` (или сделать необязательным, если ломается слишком много мест) |
+| `src/shared/i18n/locales/{ru,en}.json` | удалить осиротевшие ключи `tabs.links`, `eventForm.typeOrdinary*`, `eventForm.typeBusiness*`, `eventInfo.categoryBusiness/categoryOrdinary` (ru/en синхронно, см. i18n-sync) |
+
+> Admin-панель (`pages/admin-panel/*`, `entities/admin-stats`) не трогаем: `category` ещё приходит с бэка (колонка осталась `ordinary`), распределение «по категориям» станет тривиальным — функционально не ломается.
+
+### Чеклист
+
+- [x] backend: `Create`/`Update` — только `ordinary`, без changelog категории
+- [x] backend: удалить домен `eventlink` (handler/service/repository) + маршруты + wiring в `main.go`
+- [x] backend: модель без `EventLink*` и `EventDetail.Links`; repo без сборки `Links`
+- [x] миграция `016_drop_business_events` (up: delete business + drop `event_links`; down)
+- [x] frontend: форма без выбора типа; детальная без вкладки «Ссылки» и ветвления по типу
+- [x] frontend: удалить `features/links`, бейджи категории, ветку `business` в accent-color, тип `EventCategory`
+- [x] i18n ru/en: удалить осиротевшие ключи (links/типы/категория); ru/en по 291 ключу, parity ок
+- [x] `go build ./...` ок, `go test` для event/auth/poll/item/notification зелёные (предсуществующие падения `collection`-тестов не трогали); фронт `tsc -b` чистый, `vite build` ок, новых eslint-ошибок нет (29 предсуществующих в `shared/ui` + `event-form`)
+- [ ] верификация на живой БД: новая встреча без выбора типа; на детальной нет вкладки «Ссылки»; старые деловые встречи исчезли; миграция `016` применилась, `event_links` нет
+
+---
+
+## Этап 33 — Bimeet for Teams: backend-фундамент (компании, пароли, роли)
+
+### Контекст
+
+Старт изолированного B2B-продукта. Новый сервис `backend-teams/` (копия
+трёхслойной структуры handler→service→repository) и отдельная БД `bimeet_teams`.
+Компания — граница всего: учётки, встречи, бренд, права. Авторизация —
+**классический логин+пароль** (в отличие от беспарольного People): owner
+регистрируется с паролем, сотрудник по инвайту ставит пароль. Публичной
+регистрации сотрудников нет — их заводит только owner.
+
+### Состав
+
+- БД `bimeet_teams`, миграции с нуля: `companies` (`id`, `name`, `subdomain`
+  UNIQUE, `brand_color`, `logo_url`, `created_at`), `users` (+`password_hash`,
+  `company_id` FK, `role` `owner|member`, UNIQUE `(company_id, email)` — один
+  email может жить в разных компаниях независимо).
+- Регистрация компании: email+пароль+название+поддомен; проверка, что поддомен
+  свободен и **не зарезервирован** (`app`, `api`, `admin`, `company`, `www`…);
+  owner создаётся автоматически.
+- Инвайт сотрудника owner-ом → письмо со ссылкой → установка пароля → вход.
+- JWT несёт `userID` + `companyID` + `role`; middleware кладёт всё в context.
+- Переиспользовать `bcrypt` и структуру JWT из текущего `authsvc`, но логика —
+  пароль, а не OTP.
+
+### Чеклист
+
+- [ ] скелет `backend-teams/` (cmd/server, config, db, middleware, трёхслойка)
+- [ ] БД `bimeet_teams` + миграции `companies`/`users` (роли, password_hash, company-scoped unique email)
+- [ ] регистрация компании (поддомен свободен/не зарезервирован, owner)
+- [ ] парольный логин + инвайт сотрудника + установка пароля
+- [ ] JWT с `companyID`/`role` + auth/role middleware
+- [ ] `go vet`/`go build`/`go test`
+
+---
+
+## Этап 34 — Bimeet for Teams: backend деловых встреч (скоупинг по company_id)
+
+### Контекст
+
+Деловые встречи Teams со всеми запросами, скоупленными по `company_id`: встречи
+видят только сотрудники своей компании, сотрудники не видят чужие компании. Набор
+фич урезан под B2B — без сборов/попуток/«что принести».
+
+### Состав
+
+- Домены: events / participants / links (материалы) / polls / changelog /
+  notifications — порт из текущих доменов People как образец, **без** collections
+  / items / carpools.
+- Встреча = дата/время/место **или** ссылка на встречу + участники со статусами
+  (приглашён/подтвердил/отказался) + ссылки на материалы + опросы + журнал
+  изменений + in-app уведомления.
+- Каждый запрос фильтрует/проверяет `company_id` из JWT (изоляция контура).
+
+### Чеклист
+
+- [ ] events + participants со скоупингом по `company_id`
+- [ ] links (материалы), polls, changelog, notifications
+- [ ] авторизация: доступ только внутри своей компании; owner/member права
+- [ ] `go vet`/`go build`/`go test`
+
+---
+
+## Этап 35 — Bimeet for Teams: frontend-скелет (поддомены, брендинг, парольный вход)
+
+### Контекст
+
+Новый фронт `frontend-teams/` (Vite + Tailwind + TanStack Query, по образцу
+People). Точка входа `company.bimeet.pro` — регистрация компании; рабочее
+пространство — `{company}.bimeet.pro`. Локально поддомены эмулируем (`*.lvh.me`
+или dev-параметр). Сотрудник видит инструмент **своей компании**, а не Bimeet.
+
+### Состав
+
+- Роутинг по поддомену → определение текущей компании.
+- Динамический брендинг: `brand_color` компании прокидывается в тему в рантайме
+  (CSS-переменные), логотип и название в шапке.
+- Страницы: парольный вход, регистрация компании (email+пароль+название+поддомен),
+  установка пароля по инвайту.
+
+### Чеклист
+
+- [ ] скелет `frontend-teams/` (провайдеры, роутер, тема, apiFetch на `bimeet_teams` API)
+- [ ] определение компании по поддомену (+локальная эмуляция)
+- [ ] динамический brand-color/логотип/название в теме
+- [ ] страницы входа, регистрации компании, установки пароля по инвайту
+- [ ] `npm run lint`/`build`
+
+---
+
+## Этап 36 — Bimeet for Teams: frontend-фичи и панель owner-а
+
+### Контекст
+
+Рабочие экраны Teams и управление пространством компании. Две роли: owner
+(брендинг + управление учётками), member (создаёт встречи, приглашает коллег,
+участвует).
+
+### Состав
+
+- Список / детальная / форма деловых встреч; участники со статусами; ссылки на
+  материалы; опросы; уведомления.
+- Экран owner-а: настройки бренда (название, логотип, цвет) и управление
+  сотрудниками (создать/отключить учётку, инвайты).
+- После запуска — обновить CLAUDE.md (описать второй продукт, актуализировать стек).
+
+### Чеклист
+
+- [ ] встречи: список/детальная/форма (деловой набор вкладок)
+- [ ] участники, ссылки-материалы, опросы, уведомления
+- [ ] панель owner-а: брендинг + управление сотрудниками (создать/отключить/инвайт)
+- [ ] обновить CLAUDE.md под два продукта
+- [ ] `npm run lint`/`build`
