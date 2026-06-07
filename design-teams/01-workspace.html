@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Teams · 01 Workspace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  :root {
+    /* Brand — задаётся компанией; вся палитра акцентов строится отсюда */
+    --brand: #4F46E5;
+    --brand-soft: color-mix(in srgb, var(--brand) 12%, transparent);
+    --brand-tint: color-mix(in srgb, var(--brand) 6%, transparent);
+
+    --bg: #FFFFFF;
+    --bg-2: #F6F7F9;
+    --surface: #FFFFFF;
+    --ink: #0B0B0F;
+    --ink-2: #353841;
+    --ink-3: rgba(40,42,50,0.58);
+    --ink-4: rgba(40,42,50,0.30);
+    --line: rgba(20,22,40,0.10);
+    --line-soft: rgba(20,22,40,0.06);
+    --hover: rgba(20,22,40,0.04);
+    --green: #16A34A;
+    --amber: #D97706;
+    --red: #DC2626;
+  }
+  html, body { margin: 0; padding: 0; height: 100% }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg-2); color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv11','ss01','tnum';
+  }
+  a { text-decoration: none; color: inherit }
+  button { font-family: inherit; cursor: pointer }
+  .topnav {
+    position: fixed; top: 14px; right: 14px; z-index: 100;
+    background: var(--surface); border: 1px solid var(--line-soft);
+    padding: 7px 12px; border-radius: 999px;
+    font-size: 12px; color: var(--ink-2); font-weight: 500;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 248px 1fr 320px;
+    min-height: 100vh; max-width: 1520px; margin: 0 auto;
+  }
+  @media (max-width: 1240px) { .shell { grid-template-columns: 232px 1fr } .rail { display: none } }
+  @media (max-width: 860px) { .shell { grid-template-columns: 1fr } .sidebar { display: none } }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: sticky; top: 0; height: 100vh;
+    background: var(--surface); border-right: 1px solid var(--line);
+    padding: 16px 12px 14px; display: flex; flex-direction: column;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 10px 16px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--brand); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; box-shadow: 0 2px 8px var(--brand-soft);
+  }
+  .brand-name { font-size: 15px; font-weight: 700; letter-spacing: -0.015em }
+  .brand-sub { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 1px }
+
+  .nav-section { margin-top: 10px }
+  .nav-label { padding: 10px 12px 6px; font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 11px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500; color: var(--ink-2);
+    transition: background .12s, color .12s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--hover); color: var(--ink) }
+  .nav-item.active { background: var(--brand-tint); color: var(--brand); font-weight: 600 }
+  .nav-item svg { width: 17px; height: 17px; stroke-width: 2; color: var(--ink-3) }
+  .nav-item.active svg { color: var(--brand) }
+  .nav-item .count { margin-left: auto; font-size: 11px; color: var(--ink-3); font-weight: 600; background: var(--line-soft); padding: 1px 7px; border-radius: 999px }
+  .nav-item.active .count { color: var(--brand); background: var(--brand-soft) }
+
+  .sidebar-footer { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line-soft) }
+  .user-pill { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 9px; transition: background .12s }
+  .user-pill:hover { background: var(--hover) }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: #0EA5A4; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700 }
+  .user-meta .n { font-size: 13px; font-weight: 600; line-height: 1.2 }
+  .user-meta .e { font-size: 11px; color: var(--ink-3); line-height: 1.3 }
+  .role-badge { margin-left: auto; font-size: 10px; font-weight: 700; color: var(--brand); background: var(--brand-soft); padding: 2px 7px; border-radius: 999px; letter-spacing: 0.02em }
+
+  /* MAIN */
+  .main { min-width: 0; padding: 24px 32px 40px; display: flex; flex-direction: column }
+  @media (max-width: 860px) { .main { padding: 18px 16px 30px } }
+  .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px }
+  .page-head h1 { margin: 0; font-size: 26px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 700 }
+  .page-head .sub { margin: 5px 0 0; font-size: 13.5px; color: var(--ink-3); font-weight: 500 }
+  .btn-primary {
+    height: 38px; padding: 0 15px; border-radius: 10px;
+    background: var(--brand); color: #fff; border: 0;
+    font-size: 13.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+    box-shadow: 0 2px 10px var(--brand-soft); transition: opacity .12s;
+  }
+  .btn-primary:hover { opacity: 0.93 }
+  .btn-primary svg { width: 15px; height: 15px; stroke-width: 2.4 }
+
+  .segmented { display: inline-flex; gap: 2px; padding: 3px; background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: 10px; margin-bottom: 22px }
+  .seg { padding: 6px 13px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--ink-2); transition: all .12s }
+  .seg:hover { color: var(--ink) }
+  .seg.active { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.07) }
+
+  .section { margin-bottom: 26px }
+  .section-head { display: flex; align-items: center; gap: 10px; padding: 0 2px 11px }
+  .section-title { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3) }
+  .section-title .live { color: var(--green) }
+  .dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent); display: inline-block }
+
+  .list { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden }
+  .row {
+    display: grid;
+    grid-template-columns: 56px minmax(220px,1fr) 150px 132px 132px;
+    column-gap: 16px; align-items: center;
+    padding: 13px 16px; position: relative; transition: background .12s;
+  }
+  .row:hover { background: var(--hover) }
+  .row + .row::before { content:''; position:absolute; top:0; left:16px; right:16px; height:1px; background: var(--line-soft) }
+  .row.now { background: var(--brand-tint) }
+  .row.now:hover { background: color-mix(in srgb, var(--brand) 9%, transparent) }
+
+  .r-time { display: flex; flex-direction: column; align-items: flex-start }
+  .r-time .t { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums }
+  .r-time .dur { font-size: 11px; color: var(--ink-3); margin-top: 1px }
+
+  .r-info { min-width: 0 }
+  .r-info .title { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+  .r-info .meta { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-size: 12.5px; color: var(--ink-3) }
+  .r-info .meta svg { width: 13px; height: 13px; stroke-width: 2 }
+  .chip { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 5px; color: var(--ink-2); background: var(--line-soft) }
+  .chip.online { color: var(--brand); background: var(--brand-soft) }
+
+  .r-people { display: flex; align-items: center; gap: 8px }
+  .avatars { display: flex }
+  .avatar { width: 25px; height: 25px; border-radius: 50%; border: 2px solid var(--surface); margin-left: -7px; color: #fff; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center }
+  .avatar:first-child { margin-left: 0 }
+  .a1{background:#6366F1}.a2{background:#0EA5A4}.a3{background:#F59E0B}.a4{background:#EC4899}.a5{background:#10B981}.a6{background:#8B5CF6}
+  .r-people .n { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums }
+
+  .r-rsvp { font-size: 12px; color: var(--ink-3) }
+  .r-rsvp b { color: var(--green); font-weight: 700 }
+
+  .r-act { display: flex; justify-content: flex-end }
+  .join { height: 32px; padding: 0 13px; border-radius: 8px; background: var(--brand); color: #fff; font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 0 }
+  .join:hover { opacity: 0.92 }
+  .join svg { width: 13px; height: 13px; stroke-width: 2.4 }
+  .ghost-btn { height: 32px; padding: 0 13px; border-radius: 8px; background: transparent; border: 1px solid var(--line); color: var(--ink-2); font-size: 12.5px; font-weight: 600 }
+  .ghost-btn:hover { background: var(--hover) }
+  .rsvp-pill { font-size: 12px; font-weight: 600; color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 30%, transparent); padding: 5px 11px; border-radius: 999px }
+  .rsvp-pill.wait { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 35%, transparent) }
+
+  @media (max-width: 1100px) { .row { grid-template-columns: 52px 1fr 120px } .r-people, .r-rsvp { display: none } }
+
+  /* RIGHT RAIL */
+  .rail { border-left: 1px solid var(--line); background: var(--surface); padding: 22px 20px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto }
+  .now-card { border-radius: 14px; padding: 16px; background: linear-gradient(160deg, var(--brand) 0%, color-mix(in srgb, var(--brand) 78%, #000) 100%); color: #fff; box-shadow: 0 8px 24px var(--brand-soft) }
+  .now-card .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; display: flex; align-items: center; gap: 7px }
+  .now-card .dot-w { width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.3) }
+  .now-card .t { font-size: 19px; font-weight: 700; letter-spacing: -0.015em; margin: 10px 0 3px }
+  .now-card .m { font-size: 12.5px; opacity: 0.9 }
+  .now-card .join-big { margin-top: 14px; width: 100%; height: 40px; border-radius: 10px; background: #fff; color: var(--brand); border: 0; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px }
+  .now-card .join-big svg { width: 16px; height: 16px; stroke-width: 2.4 }
+
+  .rail-card { background: var(--bg-2); border-radius: 14px; padding: 15px }
+  .rail-title { font-size: 11px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between }
+  .rail-title a { color: var(--brand); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 12px }
+
+  .agenda-row { display: flex; gap: 11px; padding: 9px 0; border-top: 1px solid var(--line-soft) }
+  .agenda-row:first-of-type { border-top: 0 }
+  .agenda-row .ti { font-size: 12px; font-weight: 700; color: var(--ink-2); width: 42px; flex-shrink: 0; font-variant-numeric: tabular-nums; padding-top: 1px }
+  .agenda-row .nm { font-size: 13px; font-weight: 500; line-height: 1.3 }
+  .agenda-row .pl { font-size: 11.5px; color: var(--ink-3); margin-top: 1px }
+
+  .team-row { display: flex; align-items: center; gap: 9px; padding: 7px 0 }
+  .team-av { position: relative; width: 28px; height: 28px; border-radius: 50%; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink: 0 }
+  .pres { position: absolute; bottom: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--bg-2) }
+  .pres.on { background: var(--green) } .pres.busy { background: var(--amber) } .pres.off { background: var(--ink-4) }
+  .team-row .tn { font-size: 13px; font-weight: 500 }
+  .team-row .tr { font-size: 11px; color: var(--ink-3) }
+  .team-row .stt { margin-left: auto; font-size: 11px; color: var(--ink-3) }
+</style>
+</head>
+<body>
+<a href="index.html" class="topnav">← Все варианты · 01 Workspace</a>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">А</div>
+      <div>
+        <div class="brand-name">Атлас</div>
+        <div class="brand-sub">atlas.bimeet.pro</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Встречи <span class="count">6</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Команда <span class="count">12</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        Уведомления <span class="count">3</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Владелец</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Настройки бренда
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <a class="user-pill" href="#">
+        <div class="user-avatar">ИО</div>
+        <div class="user-meta">
+          <div class="n">Илья Орлов</div>
+          <div class="e">ilya@atlas.io</div>
+        </div>
+        <span class="role-badge">Owner</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>Встречи</h1>
+        <p class="sub">Понедельник, 8 июня · 3 сегодня, одна идёт сейчас</p>
+      </div>
+      <button class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Новая встреча
+      </button>
+    </div>
+
+    <div class="segmented">
+      <div class="seg active">Все</div>
+      <div class="seg">Мои</div>
+      <div class="seg">Организую</div>
+      <div class="seg">Прошедшие</div>
+    </div>
+
+    <!-- TODAY -->
+    <div class="section">
+      <div class="section-head">
+        <span class="dot-live"></span>
+        <span class="section-title">Сегодня <span class="live">· идёт сейчас</span></span>
+      </div>
+      <div class="list">
+        <div class="row now">
+          <div class="r-time"><div class="t">10:00</div><div class="dur">30 мин</div></div>
+          <div class="r-info">
+            <div class="title">Дейли продуктовой команды</div>
+            <div class="meta">
+              <span class="chip online">Online · Meet</span>
+              <span>Организатор: вы</span>
+            </div>
+          </div>
+          <div class="r-people">
+            <div class="avatars"><div class="avatar a1">МК</div><div class="avatar a3">СВ</div><div class="avatar a5">АП</div></div>
+            <span class="n">+3</span>
+          </div>
+          <div class="r-rsvp"><b>5 идут</b> · 1 ждёт</div>
+          <div class="r-act"><button class="join"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg> Подключиться</button></div>
+        </div>
+        <div class="row">
+          <div class="r-time"><div class="t">12:30</div><div class="dur">30 мин</div></div>
+          <div class="r-info">
+            <div class="title">1:1 с Мариной</div>
+            <div class="meta"><span class="chip online">Online · Meet</span><span>Организатор: вы</span></div>
+          </div>
+          <div class="r-people"><div class="avatars"><div class="avatar a2">МК</div></div><span class="n">2</span></div>
+          <div class="r-rsvp"><b>2 идут</b></div>
+          <div class="r-act"><button class="ghost-btn">Открыть</button></div>
+        </div>
+        <div class="row">
+          <div class="r-time"><div class="t">16:00</div><div class="dur">1 ч</div></div>
+          <div class="r-info">
+            <div class="title">Ретро спринта №24</div>
+            <div class="meta"><span class="chip">Переговорка «Север»</span><span>3 материала · опрос</span></div>
+          </div>
+          <div class="r-people"><div class="avatars"><div class="avatar a4">ДЛ</div><div class="avatar a6">КС</div><div class="avatar a1">МК</div></div><span class="n">+5</span></div>
+          <div class="r-rsvp"><b>6 идут</b> · 2 ждут</div>
+          <div class="r-act"><span class="rsvp-pill">✓ Иду</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THIS WEEK -->
+    <div class="section">
+      <div class="section-head"><span class="section-title">Эта неделя</span></div>
+      <div class="list">
+        <div class="row">
+          <div class="r-time"><div class="t">Вт</div><div class="dur">11:00</div></div>
+          <div class="r-info"><div class="title">Синк с маркетингом</div><div class="meta"><span class="chip online">Online · Zoom</span><span>Организатор: Сергей В.</span></div></div>
+          <div class="r-people"><div class="avatars"><div class="avatar a3">СВ</div><div class="avatar a2">МК</div></div><span class="n">+4</span></div>
+          <div class="r-rsvp">3 идут · <span style="color:var(--amber)">3 ждут</span></div>
+          <div class="r-act"><span class="rsvp-pill wait">Ответить</span></div>
+        </div>
+        <div class="row">
+          <div class="r-time"><div class="t">Пт</div><div class="dur">14:00</div></div>
+          <div class="r-info"><div class="title">Планирование Q3 — цели и метрики</div><div class="meta"><span class="chip online">Online · Zoom</span><span>повестка опубликована</span></div></div>
+          <div class="r-people"><div class="avatars"><div class="avatar a1">ИО</div><div class="avatar a5">АП</div><div class="avatar a4">ДЛ</div></div><span class="n">+8</span></div>
+          <div class="r-rsvp"><b>9 идут</b></div>
+          <div class="r-act"><span class="rsvp-pill">✓ Иду</span></div>
+        </div>
+        <div class="row">
+          <div class="r-time"><div class="t">Пн</div><div class="dur">17:00</div></div>
+          <div class="r-info"><div class="title">Демо для стейкхолдеров</div><div class="meta"><span class="chip">Конференц-зал · 4 этаж</span></div></div>
+          <div class="r-people"><div class="avatars"><div class="avatar a6">КС</div><div class="avatar a2">МК</div></div><span class="n">+11</span></div>
+          <div class="r-rsvp">12 приглашены</div>
+          <div class="r-act"><span class="rsvp-pill wait">Ответить</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT RAIL -->
+  <aside class="rail">
+    <div class="now-card">
+      <div class="lbl"><span class="dot-w"></span> Идёт сейчас</div>
+      <div class="t">Дейли продуктовой команды</div>
+      <div class="m">10:00–10:30 · 5 из 6 на месте</div>
+      <button class="join-big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg> Подключиться</button>
+    </div>
+
+    <div class="rail-card">
+      <div class="rail-title">Повестка дня</div>
+      <div class="agenda-row"><div class="ti">10:00</div><div><div class="nm">Дейли продуктовой команды</div><div class="pl">Online · идёт</div></div></div>
+      <div class="agenda-row"><div class="ti">12:30</div><div><div class="nm">1:1 с Мариной</div><div class="pl">Online</div></div></div>
+      <div class="agenda-row"><div class="ti">16:00</div><div><div class="nm">Ретро спринта №24</div><div class="pl">Переговорка «Север»</div></div></div>
+    </div>
+
+    <div class="rail-card">
+      <div class="rail-title">Сегодня в команде <a href="#">Вся команда</a></div>
+      <div class="team-row"><div class="team-av a2">МК<span class="pres on"></span></div><div><div class="tn">Марина Котова</div><div class="tr">Дизайн</div></div><span class="stt">в сети</span></div>
+      <div class="team-row"><div class="team-av a3">СВ<span class="pres busy"></span></div><div><div class="tn">Сергей Волков</div><div class="tr">Маркетинг</div></div><span class="stt">на встрече</span></div>
+      <div class="team-row"><div class="team-av a5">АП<span class="pres on"></span></div><div><div class="tn">Аня Петрова</div><div class="tr">Разработка</div></div><span class="stt">в сети</span></div>
+      <div class="team-row"><div class="team-av a4">ДЛ<span class="pres off"></span></div><div><div class="tn">Дмитрий Лебедев</div><div class="tr">Аналитика</div></div><span class="stt">не в сети</span></div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

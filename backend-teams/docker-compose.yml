@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bimeet_teams
+      POSTGRES_USER: bimeet
+      POSTGRES_PASSWORD: bimeet
+    # Port 5433 on the host (People's Postgres uses 5432) so both products can
+    # run side by side during local development.
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    # Host ports shifted off People's MailHog (1025/8025) so both can run together.
+    ports:
+      - "1026:1025"   # SMTP  → backend SMTP_PORT=1026
+      - "8026:8025"   # Web UI → http://localhost:8026
+
+volumes:
+  postgres_data:

@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+/* === Дизайн-токены (light) ===
+ * Базируется на People-фронте. Ключевое отличие Teams: --color-accent — это
+ * БРЕНД-цвет компании, который CompanyProvider переопределяет в рантайме
+ * (document.documentElement.style.setProperty('--color-accent', brandColor)).
+ */
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  --color-bg: #FFFFFF;
+  --color-bg-2: #F7F7F8;
+  --color-surface: #FFFFFF;
+  --color-hover: rgba(60, 60, 67, 0.05);
+
+  --color-ink: #000000;
+  --color-ink-2: #3C3C43;
+  --color-ink-3: rgba(60, 60, 67, 0.60);
+  --color-ink-4: rgba(60, 60, 67, 0.30);
+  --color-line: rgba(60, 60, 67, 0.14);
+  --color-line-soft: rgba(60, 60, 67, 0.07);
+
+  /* Brand accent — дефолт Indigo; компания переопределяет в рантайме. */
+  --color-accent: #4F46E5;
+  --color-success: #34C759;
+  --color-warning: #FF9500;
+  --color-danger: #FF3B30;
+
+  --radius-control: 9px;
+  --radius-list: 12px;
+  --radius-card: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--color-bg-2);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+#root { min-height: 100vh }
+
+.tnum { font-variant-numeric: tabular-nums }
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+
+@media (pointer: coarse) {
+  input, textarea, select { font-size: 16px; }
+}

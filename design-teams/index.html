@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet for Teams · Варианты дизайна</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#F6F7F9;color:#0B0B0F;-webkit-font-smoothing:antialiased;padding:72px 24px 110px}
+  .wrap{max-width:900px;margin:0 auto}
+  .tag{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#8A8F98;margin-bottom:22px;display:block}
+  h1{font-size:46px;line-height:1.05;letter-spacing:-0.03em;margin:0 0 14px;font-weight:800}
+  .sub{color:#535760;font-size:16.5px;line-height:1.55;margin:0 0 14px;max-width:640px}
+  .note{background:#fff;border:1px solid rgba(20,22,40,0.08);border-radius:14px;padding:16px 18px;font-size:13.5px;color:#414550;line-height:1.55;margin:0 0 44px;max-width:660px}
+  .note b{color:#0B0B0F}
+  .list{display:grid;gap:14px}
+  a.card{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:20px;padding:22px 24px;border-radius:18px;background:#fff;border:1px solid rgba(20,22,40,0.07);text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
+  a.card:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(20,22,40,0.08);border-color:rgba(20,22,40,0.12)}
+  .num{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#fff;letter-spacing:-0.02em}
+  .n1{background:#4F46E5}.n2{background:#0E9F6E}.n3{background:#7C3AED}.n4{background:#2563EB}
+  .meta h2{margin:0 0 5px;font-size:19px;font-weight:700;letter-spacing:-0.015em}
+  .meta p{margin:0 0 8px;color:#535760;font-size:14px;line-height:1.5}
+  .meta .lay{font-size:12px;color:#8A8F98;font-weight:500;display:flex;align-items:center;gap:7px}
+  .meta .lay b{color:#414550;font-weight:600}
+  .arr{color:#B5B9C0;font-size:24px}
+  .feat{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .feat span{font-size:11.5px;font-weight:600;color:#535760;background:#F2F3F6;padding:3px 9px;border-radius:999px}
+  footer{margin-top:60px;color:#8A8F98;font-size:13px;line-height:1.6;text-align:center;max-width:620px;margin-left:auto;margin-right:auto}
+  @media(max-width:560px){a.card{grid-template-columns:48px 1fr}.arr{display:none}.num{width:48px;height:48px;font-size:16px}h1{font-size:34px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">Bimeet for Teams · Design exploration</span>
+  <h1>Четыре способа собрать рабочее пространство компании</h1>
+  <p class="sub">Это корпоративный продукт: люди заходят сюда работать, а не развлекаться. Поэтому варианты отличаются не только цветом, но и <b>раскладкой блоков</b> — где живут встречи, где «сейчас идёт», где команда, материалы и повестка.</p>
+  <div class="note">
+    Один набор данных — компания <b>«Атлас»</b>, её сотрудники и встречи — показан во всех четырёх. У каждого варианта <b>свой бренд-цвет</b>: так видно, что палитра целиком строится из одного цвета компании (как в реальном Teams через <code>--color-accent</code>). Сравнивайте, в каком макете удобнее <b>работать внутри компании</b>.
+  </div>
+
+  <div class="list">
+    <a class="card" href="01-workspace.html">
+      <div class="num n1">01</div>
+      <div class="meta">
+        <h2>Workspace — рабочий дашборд</h2>
+        <p>Классическая 3-колоночная рабочая среда. Слева — навигация с брендом компании, в центре — встречи по дням, справа — «идёт сейчас» с большой кнопкой <b>Подключиться</b>, повестка дня и присутствие команды.</p>
+        <div class="lay">Раскладка: <b>сайдбар · лента · правый rail</b></div>
+        <div class="feat"><span>Присутствие команды</span><span>Подключиться в 1 клик</span><span>Повестка дня</span></div>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="02-agenda-split.html">
+      <div class="num n2">02</div>
+      <div class="meta">
+        <h2>Agenda Split — список + детали встречи</h2>
+        <p>Master-detail: тонкий рейл иконок, колонка встреч и широкая панель с открытой встречей — участники, материалы, опрос и повестка <b>не уходя со страницы</b>. Самый «рабочий» сценарий: весь день внутри встреч.</p>
+        <div class="lay">Раскладка: <b>icon-rail · список · панель деталей</b></div>
+        <div class="feat"><span>Master-detail</span><span>Вкладки встречи</span><span>Опрос рядом</span></div>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="03-focus.html">
+      <div class="num n3">03</div>
+      <div class="meta">
+        <h2>Focus — спокойный фокус</h2>
+        <p>Одна центральная колонка, верхняя панель с брендом. Крупная hero-карточка «следующей встречи» с материалами и <b>Подключиться</b>, ниже — чистые карточки на день и неделю. Минимум шума, максимум ясности.</p>
+        <div class="lay">Раскладка: <b>топбар · одна колонка · hero-карточка</b></div>
+        <div class="feat"><span>Hero «следующая встреча»</span><span>Воздух и типографика</span><span>Чипы материалов</span></div>
+      </div>
+      <div class="arr">→</div>
+    </a>
+
+    <a class="card" href="04-command.html">
+      <div class="num n4">04</div>
+      <div class="meta">
+        <h2>Command — плотный контроль</h2>
+        <p>Для команд, где встреч много. Полоса метрик сверху, таблица встреч (время, тема, организатор, участники, место, материалы, статус) и отдельная <b>таблица сотрудников</b> для владельца. Всё видно сразу, как в ops-панели.</p>
+        <div class="lay">Раскладка: <b>сайдбар · метрики · таблицы</b></div>
+        <div class="feat"><span>Таблица встреч</span><span>Метрики компании</span><span>Управление командой</span></div>
+      </div>
+      <div class="arr">→</div>
+    </a>
+  </div>
+
+  <footer>Это статичные HTML-макеты для выбора направления — без логики. После выбора перенесём раскладку и токены в <b>frontend-teams</b> (Tailwind, бренд-цвет в рантайме).</footer>
+</div>
+</body>
+</html>

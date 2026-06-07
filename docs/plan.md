@@ -2695,7 +2695,7 @@ UI; уже созданные деловые встречи удаляются �
 - [x] frontend: удалить `features/links`, бейджи категории, ветку `business` в accent-color, тип `EventCategory`
 - [x] i18n ru/en: удалить осиротевшие ключи (links/типы/категория); ru/en по 291 ключу, parity ок
 - [x] `go build ./...` ок, `go test` для event/auth/poll/item/notification зелёные (предсуществующие падения `collection`-тестов не трогали); фронт `tsc -b` чистый, `vite build` ок, новых eslint-ошибок нет (29 предсуществующих в `shared/ui` + `event-form`)
-- [ ] верификация на живой БД: новая встреча без выбора типа; на детальной нет вкладки «Ссылки»; старые деловые встречи исчезли; миграция `016` применилась, `event_links` нет
+- [x] верификация на живой БД: новая встреча без выбора типа; на детальной нет вкладки «Ссылки»; старые деловые встречи исчезли; миграция `016` применилась, `event_links` нет
 
 ---
 
@@ -2726,12 +2726,15 @@ UI; уже созданные деловые встречи удаляются �
 
 ### Чеклист
 
-- [ ] скелет `backend-teams/` (cmd/server, config, db, middleware, трёхслойка)
-- [ ] БД `bimeet_teams` + миграции `companies`/`users` (роли, password_hash, company-scoped unique email)
-- [ ] регистрация компании (поддомен свободен/не зарезервирован, owner)
-- [ ] парольный логин + инвайт сотрудника + установка пароля
-- [ ] JWT с `companyID`/`role` + auth/role middleware
-- [ ] `go vet`/`go build`/`go test`
+- [x] скелет `backend-teams/` (cmd/server, config, db, middleware, трёхслойка); отдельный go-модуль `bimeet-teams`
+- [x] БД `bimeet_teams` + миграция `001_init` (`companies`/`users`/`invitations`; роли, password_hash, UNIQUE `(company_id, email)`)
+- [x] регистрация компании (валидация поддомена regex + список зарезервированных, owner создаётся атомарно)
+- [x] парольный логин (скоуп по subdomain, проверка `is_active` + bcrypt) + инвайт сотрудника (токен хешируется sha256) + accept-invite с установкой пароля
+- [x] JWT с `sub`/`company`/`role` + middleware `Auth` + `RequireOwner`
+- [x] управление компанией: `GET /api/auth/me`, `GET/PUT /api/companies/me` (бренд), `POST .../invitations`, `GET/PATCH .../members` (owner-only), публичный `GET /api/companies/by-subdomain/{sub}` для брендинга логина
+- [x] `go build`/`go vet` зелёные; unit-тесты `authsvc` (register/login/accept-invite, зарезервированные/занятые поддомены) — `go test ./...` ок
+- [x] `docker-compose.yml` (Postgres-only, host-порт 5433, БД `bimeet_teams`) + `.env`/`.env.example`/`.gitignore` для локалки
+- [x] верификация на живой БД `bimeet_teams`: register-company → reserved/занятый поддомен (409) → public-бренд → login → me → update-бренд → invite → accept-invite (member) → members; роли: member на owner-роутах → 403, без токена → 401
 
 ---
 
@@ -2755,10 +2758,12 @@ UI; уже созданные деловые встречи удаляются �
 
 ### Чеклист
 
-- [ ] events + participants со скоупингом по `company_id`
-- [ ] links (материалы), polls, changelog, notifications
-- [ ] авторизация: доступ только внутри своей компании; owner/member права
-- [ ] `go vet`/`go build`/`go test`
+- [x] миграция `002_events`: events (date_start/end, location/meeting_url, status), event_participants, event_links, polls/options/votes, event_change_logs, notifications
+- [x] events CRUD + complete + participants (invite только своих сотрудников, статусы) со скоупингом по `company_id`
+- [x] links (материалы) CRUD, polls (create/vote с одним голосом на юзера), changelog при update, in-app notifications (invite/rsvp/update/complete)
+- [x] авторизация: события только внутри своей компании (mismatch → 404); мутации события — organizer-only; удаление ссылки — organizer или автор
+- [x] `go build`/`go vet`/`go test` зелёные (unit-тесты `eventsvc`: валидация, organizer-forbidden, cross-company not-found)
+- [x] живой smoke на `bimeet_teams`: создать встречу → пригласить сотрудника → подтвердить → опрос+голос → ссылка → detail (confirmed_count/votes/links) → update растит changelog; **изоляция**: чужая компания на событие/список/инвайт → 404/пусто
 
 ---
 
@@ -2781,11 +2786,13 @@ People). Точка входа `company.bimeet.pro` — регистрация �
 
 ### Чеклист
 
-- [ ] скелет `frontend-teams/` (провайдеры, роутер, тема, apiFetch на `bimeet_teams` API)
-- [ ] определение компании по поддомену (+локальная эмуляция)
-- [ ] динамический brand-color/логотип/название в теме
-- [ ] страницы входа, регистрации компании, установки пароля по инвайту
-- [ ] `npm run lint`/`build`
+- [x] скелет `frontend-teams/` (Vite+Tailwind v4+TanStack Query, `@`-alias, провайдеры, роутер, apiFetch на `VITE_API_URL`→:8090); MVP без PWA/i18n (строки на русском инлайн)
+- [x] `resolveSubdomain()` по `window.location.hostname` (`{sub}.lvh.me` → компания; `localhost`/`company`/зарезервированные → registration host) + `VITE_DEV_SUBDOMAIN` override; vite `allowedHosts:['.lvh.me']`, порт 5174
+- [x] `CompanyProvider`: публичный fetch `by-subdomain` → `applyBrandColor()` переопределяет `--color-accent` в рантайме (логотип/название в `AuthShell`/шапке)
+- [x] страницы: вход (subdomain из хоста), регистрация компании (+редирект на `{sub}` с передачей токена через `#token=` хэш между origin'ами), accept-invite (token из query), home-плейсхолдер, company-not-found
+- [x] `AuthProvider` (token+user+company в localStorage, восстановление через `/me`), ветвящийся роутер (registration host / not-found / гость / авторизован)
+- [x] `npm install` + `tsc -b && vite build` ок, `eslint` чисто (0 ошибок)
+- [x] smoke: dev-сервер отдаёт `localhost:5174` и `acme.lvh.me:5174` (200), backend `by-subdomain/globex` отдаёт бренд, CORS preflight с `acme.lvh.me` → 200
 
 ---
 
@@ -2807,8 +2814,40 @@ People). Точка входа `company.bimeet.pro` — регистрация �
 
 ### Чеклист
 
-- [ ] встречи: список/детальная/форма (деловой набор вкладок)
-- [ ] участники, ссылки-материалы, опросы, уведомления
-- [ ] панель owner-а: брендинг + управление сотрудниками (создать/отключить/инвайт)
-- [ ] обновить CLAUDE.md под два продукта
-- [ ] `npm run lint`/`build`
+- [x] data-слой: `entities/event` (types/api/queries+`eventKeys`), `entities/notification`, расширенный `companyApi` (members/invite/update); UI-примитивы (Button+asChild, Textarea, Modal/ConfirmModal); `shared/lib/date`
+- [x] `widgets/layout`: шапка с брендом/логотипом, навигация (Встречи, Уведомления, owner: Команда/Настройки) с бейджем непрочитанных, выход
+- [x] встречи: список (`useEvents`, статусы/даты/онлайн-метка), форма create/edit (date_start/end, location/meeting_url, валидация «место или ссылка»), детальная с info-картой + RSVP + вкладки
+- [x] вкладки детальной: участники (инвайт по email — organizer), материалы (add/delete по правам), опросы (create + голос с прогресс-барами и подсветкой своего), история изменений; complete/delete для organizer
+- [x] уведомления: список с непрочитанными, mark-read по клику, «прочитать все»; клик по event-уведомлению ведёт на встречу
+- [x] панель owner-а: настройки бренда (название/цвет с live-превью/логотип → `PUT /companies/me` + мгновенное применение `--color-accent`), команда (члены, инвайт с показом ссылки accept-invite, вкл/выкл сотрудника)
+- [x] роутер: owner-guard на `/team` и `/settings`; `tsc -b && vite build` ок, `eslint` чисто (0 ошибок)
+- [x] live-smoke: dev отдаёт `{company}.lvh.me:5174`, все новые модули транслируются Vite без ошибок; owner-эндпоинты (settings PUT, members, invite, events, notifications) отвечают корректно
+- [ ] обновить CLAUDE.md под два продукта (People + Teams) — отдельным шагом
+
+---
+
+## Этап 37 — Teams: MailHog для локальных писем-инвайтов
+
+### Контекст
+
+В Teams появилась реальная отправка писем-инвайтов сотрудникам (раньше токен
+только возвращался в ответе). Для локальной разработки письма ловим в MailHog,
+не отправляя наружу.
+
+### Состав
+
+| Файл | Изменение |
+|---|---|
+| `backend-teams/docker-compose.yml` | сервис `mailhog` на host-портах `1026:1025` (SMTP) и `8026:8025` (UI) — сдвинуты, чтобы не конфликтовать с MailHog People (1025/8025) |
+| `backend-teams/internal/service/mailer/mailer.go` | новый lean-мейлер: SMTP без auth (MailHog) + fallback в лог при пустом `SMTP_HOST`; `SendInvite(to, companyName, inviteURL)` |
+| `backend-teams/internal/config/config.go` | env: `SMTP_HOST/PORT/USER/PASS`, `MAIL_FROM`, `FRONTEND_SCHEME` (http), `FRONTEND_BASE_DOMAIN` (lvh.me:5174) |
+| `internal/service/company/service.go` | `Invite` строит ссылку `{scheme}://{sub}.{base}/accept-invite?token=…` и шлёт письмо (goroutine, best-effort); токен по-прежнему возвращается |
+| `cmd/server/main.go` | сборка мейлера и проброс в `companysvc.New` |
+| `.env`/`.env.example` | секция SMTP/MailHog |
+
+### Чеклист
+
+- [x] MailHog в compose (1026/8026), не конфликтует с People
+- [x] мейлер (SMTP→MailHog, fallback в лог), конфиг и wiring
+- [x] инвайт строит ссылку accept-invite на поддомен компании и шлёт письмо
+- [x] `go build/vet/test` зелёные; live-smoke: инвайт → письмо в MailHog (To/From/Subject/ссылка с верным поддоменом и токеном)

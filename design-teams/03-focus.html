@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Teams · 03 Focus</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --brand:#7C3AED;                  /* бренд компании */
+    --brand-soft:color-mix(in srgb,var(--brand) 13%,transparent);
+    --brand-tint:color-mix(in srgb,var(--brand) 5%,transparent);
+    --bg:#FAF9FC; --surface:#FFFFFF;
+    --ink:#15131D; --ink-2:#3A3745; --ink-3:rgba(40,38,55,0.56); --ink-4:rgba(40,38,55,0.28);
+    --line:rgba(30,20,50,0.10); --line-soft:rgba(30,20,50,0.06); --hover:rgba(30,20,50,0.04);
+    --green:#16A34A; --amber:#D97706;
+  }
+  html,body{margin:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:
+    radial-gradient(1200px 500px at 50% -150px, var(--brand-tint), transparent 70%), var(--bg);
+    color:var(--ink);-webkit-font-smoothing:antialiased;font-feature-settings:'tnum';min-height:100vh}
+  a{text-decoration:none;color:inherit} button{font-family:inherit;cursor:pointer}
+  .topnav{position:fixed;top:14px;right:14px;z-index:100;background:var(--surface);border:1px solid var(--line-soft);padding:7px 12px;border-radius:999px;font-size:12px;color:var(--ink-2);font-weight:500;box-shadow:0 2px 12px rgba(0,0,0,0.05)}
+
+  /* TOP BAR */
+  .bar{position:sticky;top:0;z-index:40;backdrop-filter:saturate(180%) blur(16px);background:color-mix(in srgb,var(--bg) 78%,transparent);border-bottom:1px solid var(--line-soft)}
+  .bar-in{max-width:760px;margin:0 auto;height:62px;display:flex;align-items:center;gap:16px;padding:0 20px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mk{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 2px 10px var(--brand-soft)}
+  .brand .nm{font-size:15px;font-weight:700;letter-spacing:-0.015em}
+  .navpills{margin-left:14px;display:flex;gap:3px}
+  .navpills a{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:500;color:var(--ink-3)}
+  .navpills a:hover{background:var(--hover);color:var(--ink-2)}
+  .navpills a.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
+  .bar .me{margin-left:auto;display:flex;align-items:center;gap:9px}
+  .bar .me .av{width:32px;height:32px;border-radius:50%;background:#6366F1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
+  .wrap{max-width:760px;margin:0 auto;padding:36px 20px 80px}
+  .greet{font-size:15px;color:var(--ink-3);font-weight:500;margin:0 0 4px}
+  h1{margin:0 0 28px;font-size:32px;font-weight:700;letter-spacing:-0.025em}
+
+  .sec-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-3);margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  .sec-lbl .live{color:var(--green);display:inline-flex;align-items:center;gap:6px}
+  .sec-lbl .live::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 22%,transparent)}
+
+  /* HERO next meeting */
+  .hero{border-radius:22px;padding:26px;color:#fff;position:relative;overflow:hidden;
+    background:linear-gradient(150deg,var(--brand),color-mix(in srgb,var(--brand) 70%,#000));
+    box-shadow:0 16px 44px var(--brand-soft);margin-bottom:38px}
+  .hero::after{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,0.10)}
+  .hero .when{font-size:13px;font-weight:600;opacity:0.9;letter-spacing:0.01em}
+  .hero h2{margin:8px 0 0;font-size:26px;font-weight:700;letter-spacing:-0.02em;position:relative}
+  .hero .desc{margin:8px 0 0;font-size:14px;opacity:0.92;max-width:80%}
+  .hero .foot{display:flex;align-items:center;gap:16px;margin-top:22px;flex-wrap:wrap}
+  .hero .join{height:46px;padding:0 22px;border-radius:13px;background:#fff;color:var(--brand);border:0;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:9px}
+  .hero .join svg{width:18px;height:18px;stroke-width:2.4}
+  .hero .att{display:flex;align-items:center;gap:10px}
+  .hero .avs{display:flex}
+  .hero .avs .a{width:30px;height:30px;border-radius:50%;border:2px solid color-mix(in srgb,var(--brand) 60%,#000);margin-left:-9px;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .hero .avs .a:first-child{margin-left:0}
+  .hero .att .txt{font-size:13px;opacity:0.92}
+  .a1{background:#6366F1}.a2{background:#0EA5A4}.a3{background:#F59E0B}.a4{background:#EC4899}.a5{background:#10B981}.a6{background:#A855F7}
+  .hero .mats{display:flex;gap:8px;margin-top:16px;position:relative}
+  .hero .mat{font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,0.16);display:inline-flex;align-items:center;gap:6px}
+
+  /* upcoming cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:14px;display:flex;align-items:center;gap:18px;transition:box-shadow .15s,transform .15s,border-color .15s}
+  .card:hover{box-shadow:0 10px 30px rgba(40,20,80,0.07);transform:translateY(-1px);border-color:var(--line)}
+  .when-col{text-align:center;width:58px;flex-shrink:0}
+  .when-col .day{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--brand)}
+  .when-col .tm{font-size:18px;font-weight:700;letter-spacing:-0.01em;margin-top:2px;font-variant-numeric:tabular-nums}
+  .when-col .du{font-size:11px;color:var(--ink-3);margin-top:1px}
+  .c-body{min-width:0;flex:1}
+  .c-body .t{font-size:16px;font-weight:600;letter-spacing:-0.01em}
+  .c-body .row2{display:flex;align-items:center;gap:9px;margin-top:7px;flex-wrap:wrap}
+  .pchip{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--line-soft);color:var(--ink-2);display:inline-flex;align-items:center;gap:5px}
+  .pchip.on{color:var(--brand);background:var(--brand-soft)}
+  .pchip svg{width:12px;height:12px;stroke-width:2}
+  .c-body .avs{display:flex;margin-left:2px}
+  .c-body .avs .a{width:24px;height:24px;border-radius:50%;border:2px solid var(--surface);margin-left:-7px;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .c-body .avs .a:first-child{margin-left:0}
+  .c-rsvp{flex-shrink:0;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:999px}
+  .c-rsvp.yes{color:var(--green);background:color-mix(in srgb,var(--green) 11%,transparent)}
+  .c-rsvp.wait{color:#fff;background:var(--brand)}
+</style>
+</head>
+<body>
+<a href="index.html" class="topnav">← Все варианты · 03 Focus</a>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><div class="mk">А</div><div class="nm">Атлас</div></div>
+    <nav class="navpills">
+      <a class="on" href="#">Встречи</a>
+      <a href="#">Команда</a>
+      <a href="#">Уведомления</a>
+    </nav>
+    <div class="me"><div class="av">ИО</div></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="greet">Понедельник, 8 июня · доброе утро,</p>
+  <h1>Илья 👋</h1>
+
+  <div class="sec-lbl"><span class="live">Идёт сейчас</span></div>
+  <section class="hero">
+    <div class="when">10:00 – 10:30 · Online · Google Meet</div>
+    <h2>Дейли продуктовой команды</h2>
+    <div class="desc">Статусы по спринту, блокеры релиза и план онбординга новых разработчиков.</div>
+    <div class="mats">
+      <span class="mat">📄 Повестка</span>
+      <span class="mat">📊 Доска спринта</span>
+      <span class="mat">🎨 Макеты</span>
+    </div>
+    <div class="foot">
+      <button class="join"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg> Подключиться</button>
+      <div class="att">
+        <div class="avs"><div class="a a1">МК</div><div class="a a3">СВ</div><div class="a a5">АП</div><div class="a a6">КС</div></div>
+        <span class="txt">5 из 6 на месте</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="sec-lbl">Дальше сегодня</div>
+  <div class="card">
+    <div class="when-col"><div class="day">Сегодня</div><div class="tm">12:30</div><div class="du">30 мин</div></div>
+    <div class="c-body">
+      <div class="t">1:1 с Мариной</div>
+      <div class="row2"><span class="pchip on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>Online</span>
+        <div class="avs"><div class="a a2">МК</div></div></div>
+    </div>
+    <div class="c-rsvp yes">✓ Иду</div>
+  </div>
+  <div class="card">
+    <div class="when-col"><div class="day">Сегодня</div><div class="tm">16:00</div><div class="du">1 час</div></div>
+    <div class="c-body">
+      <div class="t">Ретро спринта №24</div>
+      <div class="row2"><span class="pchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Переговорка «Север»</span>
+        <span class="pchip">опрос · 3 материала</span>
+        <div class="avs"><div class="a a4">ДЛ</div><div class="a a6">КС</div><div class="a a1">МК</div></div></div>
+    </div>
+    <div class="c-rsvp yes">✓ Иду</div>
+  </div>
+
+  <div class="sec-lbl" style="margin-top:30px">Эта неделя</div>
+  <div class="card">
+    <div class="when-col"><div class="day">Вт</div><div class="tm">11:00</div><div class="du">45 мин</div></div>
+    <div class="c-body">
+      <div class="t">Синк с маркетингом</div>
+      <div class="row2"><span class="pchip on">Online · Zoom</span><span class="pchip">Организатор: Сергей В.</span></div>
+    </div>
+    <div class="c-rsvp wait">Ответить</div>
+  </div>
+  <div class="card">
+    <div class="when-col"><div class="day">Пт</div><div class="tm">14:00</div><div class="du">1.5 часа</div></div>
+    <div class="c-body">
+      <div class="t">Планирование Q3 — цели и метрики</div>
+      <div class="row2"><span class="pchip on">Online · Zoom</span>
+        <div class="avs"><div class="a a1">ИО</div><div class="a a5">АП</div><div class="a a4">ДЛ</div><div class="a a2">МК</div></div></div>
+    </div>
+    <div class="c-rsvp yes">✓ Иду</div>
+  </div>
+</main>
+</body>
+</html>
