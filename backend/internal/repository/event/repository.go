@@ -21,11 +21,11 @@ func New(pool *pgxpool.Pool) *Repository {
 func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO events (title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, organizer_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
-		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, req.IsPublic, req.MaxGuests, organizerID,
-	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
+		`INSERT INTO events (title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, organizer_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
+		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.LocationLat, req.LocationLng, req.Category, req.DressCode, req.IsPublic, req.MaxGuests, organizerID,
+	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
 		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("create event: %w", err)
@@ -36,10 +36,10 @@ func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, o
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at
+		`SELECT id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at
 		 FROM events WHERE id=$1`,
 		id,
-	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
+	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
 		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by id: %w", err)
@@ -74,20 +74,22 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateE
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
 		`UPDATE events SET
-		   title       = COALESCE($2, title),
-		   description = COALESCE($3, description),
-		   date_start  = COALESCE($4, date_start),
-		   date_end    = COALESCE($5, date_end),
-		   location    = COALESCE($6, location),
-		   category    = COALESCE($7, category),
-		   dress_code  = COALESCE($8, dress_code),
-		   is_public   = COALESCE($9, is_public),
-		   max_guests  = COALESCE($10, max_guests),
-		   updated_at  = NOW()
+		   title        = COALESCE($2, title),
+		   description  = COALESCE($3, description),
+		   date_start   = COALESCE($4, date_start),
+		   date_end     = COALESCE($5, date_end),
+		   location     = COALESCE($6, location),
+		   location_lat = COALESCE($7, location_lat),
+		   location_lng = COALESCE($8, location_lng),
+		   category     = COALESCE($9, category),
+		   dress_code   = COALESCE($10, dress_code),
+		   is_public    = COALESCE($11, is_public),
+		   max_guests   = COALESCE($12, max_guests),
+		   updated_at   = NOW()
 		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
-		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.Category, req.DressCode, req.IsPublic, req.MaxGuests,
-	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
+		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
+		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.LocationLat, req.LocationLng, req.Category, req.DressCode, req.IsPublic, req.MaxGuests,
+	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
 		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("update event: %w", err)
@@ -235,7 +237,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	var detail model.EventDetail
 	var orgID uuid.UUID
 	err := r.pool.QueryRow(ctx,
-		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
+		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, u.name, u.email,
 		        e.invite_token, e.created_at, e.updated_at
@@ -244,7 +246,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		 WHERE e.id = $1`,
 		eventID,
 	).Scan(
-		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location,
+		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location, &detail.LocationLat, &detail.LocationLng,
 		&detail.Category, &detail.DressCode, &detail.Status, &detail.IsPublic, &detail.MaxGuests,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
 		&detail.InviteToken, &detail.CreatedAt, &detail.UpdatedAt,
@@ -677,6 +679,11 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
 		 WHERE e.is_public = TRUE AND e.status = 'active'
+		   AND e.organizer_id <> $1
+		   AND NOT EXISTS (
+		       SELECT 1 FROM event_participants ep
+		       WHERE ep.event_id = e.id AND ep.user_id = $1
+		   )
 		 ORDER BY e.date_start`,
 		userID,
 	)

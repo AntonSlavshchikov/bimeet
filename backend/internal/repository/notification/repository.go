@@ -66,6 +66,24 @@ func (r *Repository) CountUnread(ctx context.Context, userID uuid.UUID) (int, er
 	return count, nil
 }
 
+// HasUnreadByTypeAndEvent reports whether the user already has an unread
+// notification of the given type for the event. Used to collapse repeated chat
+// notifications into a single "new messages" hint instead of spamming.
+func (r *Repository) HasUnreadByTypeAndEvent(ctx context.Context, userID, eventID uuid.UUID, notifType string) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(
+			SELECT 1 FROM notifications
+			WHERE user_id=$1 AND event_id=$2 AND type=$3 AND is_read=FALSE
+		)`,
+		userID, eventID, notifType,
+	).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("has unread by type and event: %w", err)
+	}
+	return exists, nil
+}
+
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Notification, error) {
 	var n model.Notification
 	err := r.pool.QueryRow(ctx,

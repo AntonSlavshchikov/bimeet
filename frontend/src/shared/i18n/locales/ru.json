@@ -42,7 +42,9 @@
     "profile": "Профиль",
     "admin": "Админка",
     "notifications": "Уведомления",
-    "notificationsShort": "Уведом."
+    "notificationsShort": "Уведом.",
+    "publicEvents": "Найти публичные",
+    "publicEventsShort": "Публичные"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -79,6 +81,11 @@
     "publicBadge": "Публичная",
     "personalBadge": "Персональная",
     "attendButton": "Иду"
+  },
+  "locationPicker": {
+    "hint": "Укажите точку на карте кликом или перетащите метку; адрес впишите вручную",
+    "disabled": "Карта недоступна — введите адрес вручную",
+    "openMap": "Открыть на VK Картах"
   },
   "eventForm": {
     "titleEdit": "Изменить детали",
@@ -162,7 +169,17 @@
     "polls": "Опросы",
     "items": "Вещи",
     "carpools": "Попутчики",
+    "chat": "Чат",
     "history": "История"
+  },
+  "chat": {
+    "sectionTitle": "Чат встречи",
+    "empty": "Сообщений пока нет. Начните общение!",
+    "placeholder": "Написать сообщение…",
+    "deleted": "Сообщение удалено",
+    "delete": "Удалить сообщение",
+    "send": "Отправить",
+    "you": "Вы"
   },
   "participants": {
     "myStatusTitle": "Ваш статус",

@@ -13,6 +13,7 @@ import (
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
+	messagehandler "bimeet/internal/handler/message"
 	notificationhandler "bimeet/internal/handler/notification"
 	pollhandler "bimeet/internal/handler/poll"
 	profilehandler "bimeet/internal/handler/profile"
@@ -27,6 +28,7 @@ func NewRouter(
 	poll *pollhandler.Handler,
 	item *itemhandler.Handler,
 	carpool *carpoolhandler.Handler,
+	message *messagehandler.Handler,
 	notification *notificationhandler.Handler,
 	profile *profilehandler.Handler,
 	admin *adminhandler.Handler,
@@ -112,6 +114,13 @@ func NewRouter(
 				r.Get("/polls", poll.List)
 				r.Post("/polls", poll.Create)
 				r.Post("/polls/{pollId}/vote", poll.Vote)
+
+				// Chat
+				r.Get("/messages", message.List)
+				r.Post("/messages", message.Post)
+				r.Get("/messages/unread-count", message.UnreadCount)
+				r.Post("/messages/read", message.MarkRead)
+				r.Delete("/messages/{messageId}", message.Delete)
 
 				// Items
 				r.Get("/items", item.List)

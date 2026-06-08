@@ -1,0 +1,37 @@
+package messagesvc
+
+//go:generate mockgen -destination=mock/mock.go -package=mock . MessageRepo,EventRepo,Notifier,NotifReader
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+
+	"bimeet/internal/model"
+)
+
+type MessageRepo interface {
+	Create(ctx context.Context, eventID, userID uuid.UUID, body string) (model.Message, error)
+	GetByID(ctx context.Context, id uuid.UUID) (model.Message, error)
+	ListByEvent(ctx context.Context, eventID uuid.UUID, before *time.Time, limit int) ([]model.Message, error)
+	SoftDelete(ctx context.Context, id uuid.UUID) error
+	MarkRead(ctx context.Context, eventID, userID uuid.UUID) error
+	CountUnread(ctx context.Context, eventID, userID uuid.UUID) (int, error)
+}
+
+type EventRepo interface {
+	GetByID(ctx context.Context, id uuid.UUID) (model.Event, error)
+	IsParticipant(ctx context.Context, eventID, userID uuid.UUID) (bool, error)
+	ListParticipants(ctx context.Context, eventID uuid.UUID) ([]model.EventParticipant, error)
+}
+
+// Notifier persists an in-app notification (and fans out a web push).
+type Notifier interface {
+	Create(ctx context.Context, userID uuid.UUID, eventID *uuid.UUID, notifType, message string) (model.Notification, error)
+}
+
+// NotifReader lets the service collapse repeated chat notifications.
+type NotifReader interface {
+	HasUnreadByTypeAndEvent(ctx context.Context, userID, eventID uuid.UUID, notifType string) (bool, error)
+}

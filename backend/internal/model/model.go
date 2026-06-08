@@ -50,6 +50,8 @@ type Event struct {
 	DateStart   time.Time `json:"date_start"`
 	DateEnd     time.Time `json:"date_end"`
 	Location    string    `json:"location"`
+	LocationLat *float64  `json:"location_lat,omitempty"`
+	LocationLng *float64  `json:"location_lng,omitempty"`
 	Category    string    `json:"category"` // ordinary | business
 	DressCode   *string   `json:"dress_code,omitempty"`
 	Status      string    `json:"status"` // active | completed
@@ -148,6 +150,28 @@ type Notification struct {
 	CreatedAt time.Time  `json:"created_at"`
 }
 
+// ─── Chat ──────────────────────────────────────────────────────────────────
+
+// Message is a single chat message in an event. A soft-deleted message keeps its
+// row (Deleted=true) but its Body is blanked before leaving the repository.
+type Message struct {
+	ID        uuid.UUID `json:"id"`
+	EventID   uuid.UUID `json:"event_id"`
+	Author    UserInfo  `json:"author"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+	Deleted   bool      `json:"deleted"`
+}
+
+type PostMessageRequest struct {
+	Body string `json:"body"`
+}
+
+// UnreadCountResponse carries the chat unread badge number.
+type UnreadCountResponse struct {
+	Count int `json:"count"`
+}
+
 // LoginCode is a one-time passwordless login code (hashed) for a given email.
 type LoginCode struct {
 	ID        uuid.UUID `json:"id"`
@@ -206,6 +230,8 @@ type CreateEventRequest struct {
 	DateStart   time.Time `json:"date_start"`
 	DateEnd     time.Time `json:"date_end"`
 	Location    string    `json:"location"`
+	LocationLat *float64  `json:"location_lat,omitempty"`
+	LocationLng *float64  `json:"location_lng,omitempty"`
 	Category    string    `json:"category"` // ordinary | business; defaults to ordinary
 	DressCode   *string   `json:"dress_code,omitempty"`
 	IsPublic    bool      `json:"is_public"`
@@ -218,6 +244,8 @@ type UpdateEventRequest struct {
 	DateStart   *time.Time `json:"date_start,omitempty"`
 	DateEnd     *time.Time `json:"date_end,omitempty"`
 	Location    *string    `json:"location,omitempty"`
+	LocationLat *float64   `json:"location_lat,omitempty"`
+	LocationLng *float64   `json:"location_lng,omitempty"`
 	Category    *string    `json:"category,omitempty"`
 	DressCode   *string    `json:"dress_code,omitempty"`
 	IsPublic    *bool      `json:"is_public,omitempty"`
@@ -371,6 +399,8 @@ type EventDetail struct {
 	DateStart      time.Time         `json:"date_start"`
 	DateEnd        time.Time         `json:"date_end"`
 	Location       string            `json:"location"`
+	LocationLat    *float64          `json:"location_lat,omitempty"`
+	LocationLng    *float64          `json:"location_lng,omitempty"`
 	Category       string            `json:"category"`
 	DressCode      *string           `json:"dress_code,omitempty"`
 	Status         string            `json:"status"`

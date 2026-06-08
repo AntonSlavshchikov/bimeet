@@ -1,12 +1,9 @@
-import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
-  Activity,
   BarChart3,
   Bell,
   Calendar,
-  Clock,
   Globe,
-  Heart,
   LogOut,
   MoreHorizontal,
   Search,
@@ -71,14 +68,6 @@ function NavItem({ to, icon: Icon, label, count, accentBadge, active, onClick }:
   )
 }
 
-function NavLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-2.5 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
-      {children}
-    </div>
-  )
-}
-
 interface SidebarProps {
   /** Колбэк закрытия (если sidebar внутри Drawer). На текущем layout всегда no-op. */
   onClose?: () => void
@@ -88,7 +77,6 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
   const { t, i18n } = useTranslation()
   const isRu = i18n.language === 'ru'
 
@@ -98,17 +86,10 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   const myEvents = events.filter(e => e.status !== 'completed')
-  const attendingCount = myEvents.filter(e => e.organizer.id !== user?.id).length
-  const organizingCount = myEvents.filter(e => e.organizer.id === user?.id).length
-  const pastCount = events.filter(e => e.status === 'completed').length
   const publicCount = (publicEvents ?? []).length
 
   const onEvents = location.pathname.startsWith('/events') && !location.pathname.includes('/new')
-  const currentTab = onEvents ? searchParams.get('tab') : null
-
-  function isFilter(tab: string) {
-    return onEvents && currentTab === tab
-  }
+  const onDiscover = location.pathname.startsWith('/discover')
 
   function handleLogout() {
     logout()
@@ -133,7 +114,7 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           icon={Calendar}
           label={t('nav.events', 'Встречи')}
           count={myEvents.length}
-          active={onEvents && !currentTab}
+          active={onEvents}
           onClick={onClose}
         />
 
@@ -148,11 +129,11 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
         />
 
         <NavItem
-          to="/events?tab=public"
+          to="/discover"
           icon={Search}
           label={t('nav.publicEvents', 'Найти публичные')}
           count={publicCount > 0 ? publicCount : undefined}
-          active={isFilter('public')}
+          active={onDiscover}
           onClick={onClose}
         />
 
@@ -165,35 +146,6 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
             onClick={onClose}
           />
         )}
-      </nav>
-
-      {/* Filters */}
-      <nav className="flex flex-col gap-px px-3">
-        <NavLabel>{t('nav.filtersLabel', 'Фильтры')}</NavLabel>
-        <NavItem
-          to="/events?tab=attending"
-          icon={Heart}
-          label={t('nav.attending', 'Иду')}
-          count={attendingCount}
-          active={isFilter('attending')}
-          onClick={onClose}
-        />
-        <NavItem
-          to="/events?tab=organizing"
-          icon={Activity}
-          label={t('nav.organizing', 'Организую')}
-          count={organizingCount}
-          active={isFilter('organizing')}
-          onClick={onClose}
-        />
-        <NavItem
-          to="/events?tab=past"
-          icon={Clock}
-          label={t('nav.past', 'Прошедшие')}
-          count={pastCount}
-          active={isFilter('past')}
-          onClick={onClose}
-        />
       </nav>
 
       {/* Spacer */}

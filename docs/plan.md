@@ -2851,3 +2851,142 @@ People). Точка входа `company.bimeet.pro` — регистрация �
 - [x] мейлер (SMTP→MailHog, fallback в лог), конфиг и wiring
 - [x] инвайт строит ссылку accept-invite на поддомен компании и шлёт письмо
 - [x] `go build/vet/test` зелёные; live-smoke: инвайт → письмо в MailHog (To/From/Subject/ссылка с верным поддоменом и токеном)
+
+---
+
+## Этап 38 — Чат встречи (People)
+
+### Контекст
+
+У встречи есть вкладки Участники / Сборы / Опросы / Вещи / Попутчики / История, но
+нет места для общения участников. Добавляем чат внутри каждой встречи: лента
+сообщений + отправка, доступ только участникам и организатору.
+
+Решения: хранилище — **PostgreSQL** (таблицы рядом с `events`, та же миграция/pgx —
+без новой инфры; MongoDB не вводим), realtime — **поллинг** TanStack Query
+(`refetchInterval` ~4с, как уведомления; без WebSocket/SSE). В объёме: базовый
+текстовый чат **плюс** модерация (удаление — soft-delete), бейдж непрочитанных на
+вкладке и push на новые сообщения. Без вложений-картинок (следующий этап).
+
+Эталоны: бэкенд-домен — `poll`, фронт-фича — `features/polls`. Следующая миграция — `017`.
+
+### Backend
+
+| Файл | Изменение |
+|---|---|
+| `backend/internal/db/migrations/017_event_chat.{up,down}.sql` | `event_messages` (`id`, `event_id`→events on delete cascade, `user_id`→users, `body`, `created_at`, `deleted_at` для soft-delete; индекс `(event_id, created_at desc)`) и `event_chat_reads` (`event_id`,`user_id`,`last_read_at`, pk пары) |
+| `backend/internal/model/model.go` | `Message` (id, event_id, автор `UserInfo`, body, created_at, deleted), `PostMessageRequest{Body}`, ответы ленты/непрочитанных |
+| `backend/internal/repository/message/repository.go` | pgx: `Create`, `ListByEvent(eventID, before, limit)`, `GetByID`, `SoftDelete`, `MarkRead`, `CountUnread` |
+| `backend/internal/service/message/` (+`mock`) | `PostMessage`/`ListMessages`/`DeleteMessage` (автор\|организатор)/`MarkRead`/`UnreadCount`; проверка членства по паттерну `service/event/service.go` (`IsEventMember`); рассылка уведомлений в goroutine |
+| `backend/internal/handler/message/` (+`mock`) | JSON-слой, как `poll` |
+| `backend/internal/handler/router.go`, `cmd/server/main.go` | роуты `/api/events/{id}/messages` (GET список, POST отправка, DELETE `{messageID}`), `POST …/messages/read`, `GET …/messages/unread-count`; wiring repo→service→handler с прокидыванием `notify` |
+| `backend/internal/notify/notify.go` | `href` для типа `chat_message` → `/events/{id}?tab=chat`; анти-спам: уведомление получателю только если нет непрочитанного `chat_message` по встрече (схлопывание) |
+
+### Frontend (FSD, эталон `features/polls`)
+
+| Файл | Изменение |
+|---|---|
+| `frontend/src/entities/message/model/types.ts` | тип `Message` |
+| `frontend/src/features/chat/api/index.ts` | `apiFetch`: list/post/delete/markRead/unread |
+| `frontend/src/features/chat/model/hooks.ts` | `useMessages` (`refetchInterval ~4000`), `useChatUnread`, `useSendMessage`/`useDeleteMessage` с `invalidateQueries`; `eventKeys` из `entities/event/queries` (не дублировать) |
+| `frontend/src/features/chat/ui/ChatTab.tsx` | лента (аватар/имя/время/тело, свои справа, удалённые → «сообщение удалено», удаление для автора/организатора), композер (Textarea + Enter), автоскролл, optimistic-отправка, mark-read при открытии |
+| `frontend/src/pages/event-detail/index.tsx` | вкладка `chat` в `ORDINARY_TABS` (иконка `MessageCircle`) с бейджем непрочитанных; deep-link `?tab=chat` |
+| `frontend/src/shared/i18n/locales/{ru,en}.json` | `tabs.chat`, плейсхолдер композера, «сообщение удалено», подтверждение удаления (ru/en синхронно) |
+
+### Чеклист
+
+- [x] миграция 017: `event_messages` (soft-delete) + `event_chat_reads` (last-read); up/down
+- [x] домен `message` (repo→service→handler, mockgen); авторизация «только участник/организатор»
+- [x] роуты list/post/delete/read/unread-count; wiring в `main.go`
+- [x] уведомления + web-push на новые сообщения со схлопыванием непрочитанных; href типа `chat_message`
+- [x] фронт: `features/chat` (поллинг ~4с, optimistic-отправка, mark-read), вкладка «Чат» с бейджем
+- [x] i18n ru/en синхронно
+- [x] `go build/vet` + тесты домена `message` зелёные; `npm run build` ок (пред-существующие линт-замечания в `shared/ui` и битые `collection`-тесты — не из этого этапа)
+- [ ] live-smoke: два участника одной встречи видят сообщения друг друга (поллинг), бейдж/удаление/деп-линк `?tab=chat` работают
+
+---
+
+## Этап 39 — Разделение «Мои встречи» vs «Найти публичные»
+
+### Контекст
+
+Список встреч смешивал личные и публичные, а «Найти публичные» был лишь табом-
+фильтром внутри той же страницы. Навели чёткое разделение: «Встречи» — личная
+лента (организатор/приглашён/участвую), «Найти публичные» — отдельный экран-список
+будущих публичных встреч, к которым можно присоединиться. Сегмент «Публичные»
+внутри «Встреч» оставлен, но теперь это **мои** публичные (например, которые я
+организовал). Из сайдбара убрана секция «Фильтры» (Иду/Организую/Прошедшие).
+
+### Состав
+
+| Файл | Изменение |
+|---|---|
+| `backend/internal/repository/event/repository.go` | `ListPublic`: исключить встречи, где пользователь организатор или участник (`AND organizer_id<>$1 AND NOT EXISTS(participant)`) — «найти публичные» = только присоединяемые |
+| `frontend/src/pages/public-events/index.tsx` | **новый** экран `/discover`: просто список будущих публичных встреч + поиск + join, без сегмент-фильтров |
+| `frontend/src/app/router/index.tsx` | роут `/discover` → `PublicEventsPage` |
+| `frontend/src/pages/events-list/index.tsx` | «Все»/rail только из `useEvents()` (мои); сегмент «Публичные» = мои публичные (`is_public`); убрана мёртвая кнопка-иконка «Фильтр» |
+| `frontend/src/widgets/layout/Sidebar.tsx` | удалена секция «Фильтры»; «Найти публичные» → `/discover` |
+| `frontend/src/widgets/layout/BottomNav.tsx` | добавлен пункт «Публичные» → `/discover` |
+| `frontend/src/shared/i18n/locales/{ru,en}.json` | `nav.publicEvents`, `nav.publicEventsShort` |
+
+### Чеклист
+
+- [x] бэк: `ListPublic` отдаёт только публичные, где пользователь не организатор и не участник
+- [x] «Встречи» = только мои (организатор/приглашён/участвую); сегмент «Публичные» = мои публичные
+- [x] отдельный экран `/discover` «Найти публичные» — просто список + join, без фильтров
+- [x] сайдбар без секции «Фильтры»; «Найти публичные» и нижнее меню ведут на `/discover`
+- [x] i18n ru/en; `go build/vet` + `npm run build`/`lint` зелёные (в новых файлах)
+- [ ] live-smoke: организатор видит свою публичную встречу в «Встречи»→«Публичные»; чужая публичная видна в `/discover`; после join уходит из `/discover` и появляется в «Встречи»
+
+---
+
+## Этап 40 — Выбор места через карту (VK Карты)
+
+### Контекст
+
+«Место» было только текстом (`events.location`). Добавили выбор места **точкой на
+карте**, храним **координаты выбранной точки** + адрес-лейбл, на детальной
+показываем карту с меткой. Ручной ввод адреса остаётся.
+
+Провайдер — **VK Карты** (российский), рендерим через `maplibre-gl` (VK Карты
+MapLibre-совместимы). Путь к решению: Яндекс отклонён (бесплатный тариф запрещает
+хранение геоданных и закрытые проекты), OpenStreetMap — как не-российский, 2ГИС —
+рассмотрен, но в итоге выбран VK. В БД кладём только **точку** (координаты — данные
+пользователя), адрес — из ручного ввода (геокодер-кэш не строим). Ключ —
+`VITE_VKMAPS_KEY` (без ключа карта скрыта, работает текстовый ввод); стиль VK по
+умолчанию `https://maps.vk.com/api/styles/main_style.json`, переопределяется
+`VITE_VKMAPS_STYLE_URL`. `maplibre-gl` грузится **динамически** (ленивый чанк),
+чтобы не раздуть основной бандл (PWA precache ≤2 МБ).
+
+**Поиск адреса (suggest) — отложен:** у VK Карт геокодер не подтверждён. Сейчас
+выбор места = клик/перетаскивание точки на карте + ручной адрес. Когда появится
+эндпоинт геокодера VK — вернём поиск с подсказками и обратный геокодинг.
+
+### Состав
+
+| Файл | Изменение |
+|---|---|
+| `backend/internal/db/migrations/018_event_location_coords.*.sql` | `events.location_lat`/`location_lng` (nullable) |
+| `backend/internal/model/model.go` | `LocationLat`/`LocationLng` в `Event`/`EventDetail`/`CreateEventRequest`/`UpdateEventRequest` |
+| `backend/internal/repository/event/repository.go` | координаты в `Create`/`Update`/`GetByID`/`GetDetail` |
+| `frontend/src/shared/lib/vkmaps.ts` | конфиг VK Карт: `isVkMapsEnabled`/`vkStyleUrl`/`vkMapUrl` |
+| `frontend/src/features/location-picker/ui/LocationPicker.tsx` | карта VK (maplibre, динамический импорт) + точка кликом/перетаскиванием + ручной адрес; фолбэк без ключа |
+| `frontend/src/features/location-picker/ui/LocationMap.tsx` | read-only карта с меткой для детальной + «Открыть на VK Картах» |
+| `frontend/src/entities/event/model/types.ts` | `location_lat`/`location_lng` в `Event`/`CreateEventData`/`UpdateEventData` |
+| `frontend/src/pages/event-form/index.tsx` | поле «Место» → `LocationPicker`, координаты в payload, восстановление точки на edit |
+| `frontend/src/widgets/event-detail/EventInfoPanel.tsx` | мини-карта с меткой при наличии координат |
+| `frontend/src/shared/i18n/locales/{ru,en}.json` | ключи карты (`locationPicker.*`) |
+| `frontend/.env.example`, `frontend/.env` | `VITE_VKMAPS_KEY`, `VITE_VKMAPS_STYLE_URL`; зависимость `maplibre-gl` |
+
+### Чеклист
+
+- [x] миграция 018: координаты места (nullable); up/down
+- [x] бэк: координаты в модели/DTO и `Create`/`Update`/`GetByID`/`GetDetail` (храним точку)
+- [x] VK Карты через `maplibre-gl` (динамический импорт, ленивый чанк); конфиг `vkmaps.ts`
+- [x] `LocationPicker`: точка кликом/перетаскиванием, ручной адрес, фолбэк без ключа
+- [x] форма: выбор места пишет адрес+координаты; edit восстанавливает точку
+- [x] детальная: `LocationMap` с меткой + «Открыть на VK Картах» при наличии координат
+- [x] i18n ru/en (`locationPicker.*`); `.env`/`.env.example` (`VITE_VKMAPS_KEY`)
+- [x] `npm run build` зелёный (бандл < precache-лимита, maplibre в отдельном чанке); новые файлы линт-чисто
+- [ ] поиск адреса с подсказками + обратный геокодинг — после подтверждения геокодера VK
+- [ ] live-smoke: с ключом VK — создать встречу выбором точки на карте; на детальной метка в нужной точке; edit центрируется на точке; без ключа форма работает на тексте

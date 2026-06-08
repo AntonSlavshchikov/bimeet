@@ -18,6 +18,7 @@ import (
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
+	messagehandler "bimeet/internal/handler/message"
 	notificationhandler "bimeet/internal/handler/notification"
 	pollhandler "bimeet/internal/handler/poll"
 	profilehandler "bimeet/internal/handler/profile"
@@ -31,6 +32,7 @@ import (
 	eventrepo "bimeet/internal/repository/event"
 	itemrepo "bimeet/internal/repository/item"
 	loginrepo "bimeet/internal/repository/loginrepo"
+	messagerepo "bimeet/internal/repository/message"
 	notificationrepo "bimeet/internal/repository/notification"
 	pollrepo "bimeet/internal/repository/poll"
 	pushsubrepo "bimeet/internal/repository/pushsub"
@@ -42,6 +44,7 @@ import (
 	eventsvc "bimeet/internal/service/event"
 	itemsvc "bimeet/internal/service/item"
 	"bimeet/internal/service/mailer"
+	messagesvc "bimeet/internal/service/message"
 	notificationsvc "bimeet/internal/service/notification"
 	pollsvc "bimeet/internal/service/poll"
 	profilesvc "bimeet/internal/service/profile"
@@ -107,6 +110,7 @@ func main() {
 	pollRepo := pollrepo.New(pool)
 	itemRepo := itemrepo.New(pool)
 	carpoolRepo := carpoolrepo.New(pool)
+	messageRepo := messagerepo.New(pool)
 	notificationRepo := notificationrepo.New(pool)
 	loginCodeRepo := loginrepo.New(pool)
 	pushSubRepo := pushsubrepo.New(pool)
@@ -142,6 +146,7 @@ func main() {
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
 	itemSvc := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc := carpoolsvc.New(carpoolRepo, eventRepo)
+	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo, notificationRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
 	adminSvc := adminsvc.New(adminRepo)
 
@@ -183,6 +188,7 @@ func main() {
 	pollH := pollhandler.New(pollSvc)
 	itemH := itemhandler.New(itemSvc)
 	carpoolH := carpoolhandler.New(carpoolSvc)
+	messageH := messagehandler.New(messageSvc)
 	notificationH := notificationhandler.New(notificationSvc)
 	profileH := profilehandler.New(profileSvc)
 	adminH := adminhandler.New(adminSvc)
@@ -200,6 +206,7 @@ func main() {
 		pollH,
 		itemH,
 		carpoolH,
+		messageH,
 		notificationH,
 		profileH,
 		adminH,

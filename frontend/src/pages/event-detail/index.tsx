@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   History,
+  MessageCircle,
   ShoppingBag,
   Truck,
   Users,
@@ -20,6 +21,8 @@ import CollectionsTab from '@/features/collections/ui/CollectionsTab'
 import PollsTab from '@/features/polls/ui/PollsTab'
 import ItemsTab from '@/features/items/ui/ItemsTab'
 import CarpoolTab from '@/features/carpools/ui/CarpoolTab'
+import ChatTab from '@/features/chat/ui/ChatTab'
+import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import ParticipantsSummaryPanel from '@/widgets/event-detail/ParticipantsSummaryPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
@@ -35,7 +38,7 @@ import {
   SegmentedControl,
 } from '@/shared/ui'
 
-type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'changelog'
+type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'chat' | 'changelog'
 
 interface TabDef {
   key: TabKey
@@ -52,6 +55,8 @@ const ORDINARY_TABS: TabDef[] = [
   { key: 'carpools',     tKey: 'tabs.carpools',     fallback: 'Попутчики',   icon: Truck },
 ]
 
+const CHAT_TAB: TabDef = { key: 'chat', tKey: 'tabs.chat', fallback: 'Чат', icon: MessageCircle }
+
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
@@ -63,6 +68,11 @@ export default function EventDetailPage() {
   const [tab, setTab] = useState<TabKey>(tabParam ?? 'participants')
 
   const completeEvent = useCompleteEvent(id ?? '')
+  // Chat is members-only: the organizer or anyone already on the participant list.
+  const isMember =
+    !!event && !!user &&
+    (event.organizer.id === user.id || event.participants.some(p => p.user.id === user.id))
+  const { data: chatUnread = 0 } = useChatUnread(id ?? '', isMember)
 
   if (!event) {
     return (
@@ -77,10 +87,12 @@ export default function EventDetailPage() {
 
   const isOrganizer = event.organizer.id === user?.id
 
+  // Chat tab only for members; history only when there are changes.
+  const baseTabs: TabDef[] = isMember ? [...ORDINARY_TABS, CHAT_TAB] : ORDINARY_TABS
   const allTabs: TabDef[] =
     event.change_log.length > 0
-      ? [...ORDINARY_TABS, { key: 'changelog', tKey: 'tabs.history', fallback: 'История', icon: History }]
-      : ORDINARY_TABS
+      ? [...baseTabs, { key: 'changelog', tKey: 'tabs.history', fallback: 'История', icon: History }]
+      : baseTabs
 
   // Фолбэк: если активный таб не входит в набор, переключаемся на первый
   const activeTab: TabKey = allTabs.some(td => td.key === tab) ? tab : allTabs[0].key
@@ -116,6 +128,11 @@ export default function EventDetailPage() {
                     <span className="inline-flex items-center gap-1.5">
                       <td.icon size={13} className="shrink-0" />
                       {t(td.tKey, td.fallback)}
+                      {td.key === 'chat' && chatUnread > 0 && (
+                        <span className="ml-0.5 inline-flex min-w-[16px] h-[16px] px-1 items-center justify-center rounded-full bg-danger text-white text-[10px] font-semibold tnum">
+                          {chatUnread}
+                        </span>
+                      )}
                     </span>
                   ),
                 }))}
@@ -136,6 +153,7 @@ export default function EventDetailPage() {
             {activeTab === 'polls' && <PollsTab event={event} />}
             {activeTab === 'items' && <ItemsTab event={event} />}
             {activeTab === 'carpools' && <CarpoolTab event={event} />}
+            {activeTab === 'chat' && <ChatTab event={event} />}
             {activeTab === 'changelog' && (
               <div className="flex flex-col gap-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">

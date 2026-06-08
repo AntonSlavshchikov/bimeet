@@ -42,7 +42,9 @@
     "profile": "Profile",
     "admin": "Admin",
     "notifications": "Notifications",
-    "notificationsShort": "Alerts"
+    "notificationsShort": "Alerts",
+    "publicEvents": "Find public",
+    "publicEventsShort": "Public"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -79,6 +81,11 @@
     "publicBadge": "Public",
     "personalBadge": "Personal",
     "attendButton": "I'm going"
+  },
+  "locationPicker": {
+    "hint": "Click the map or drag the pin to set the point; type the address manually",
+    "disabled": "Map unavailable — enter the address manually",
+    "openMap": "Open in VK Maps"
   },
   "eventForm": {
     "titleEdit": "Edit details",
@@ -162,7 +169,17 @@
     "polls": "Polls",
     "items": "Items",
     "carpools": "Carpools",
+    "chat": "Chat",
     "history": "History"
+  },
+  "chat": {
+    "sectionTitle": "Event chat",
+    "empty": "No messages yet. Start the conversation!",
+    "placeholder": "Write a message…",
+    "deleted": "Message deleted",
+    "delete": "Delete message",
+    "send": "Send",
+    "you": "You"
   },
   "participants": {
     "myStatusTitle": "Your status",

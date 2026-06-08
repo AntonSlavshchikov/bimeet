@@ -4,6 +4,7 @@ import AdminRoute from '@/features/auth/ui/AdminRoute'
 import Layout from '@/widgets/layout'
 import LoginPage from '@/pages/login'
 import EventsListPage, { EventsListRail } from '@/pages/events-list'
+import PublicEventsPage from '@/pages/public-events'
 import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
 import InvitePage from '@/pages/invite'
@@ -23,6 +24,16 @@ export default function AppRouter() {
             <ProtectedRoute>
               <Layout rail={<EventsListRail />}>
                 <EventsListPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/discover"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <PublicEventsPage />
               </Layout>
             </ProtectedRoute>
           }

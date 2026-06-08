@@ -1,5 +1,5 @@
 import { Link, useMatch } from 'react-router-dom'
-import { Calendar, User, BarChart3, Bell } from 'lucide-react'
+import { Calendar, Search, User, BarChart3, Bell } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
@@ -43,6 +43,7 @@ export default function BottomNav() {
   const showAdmin = isAdmin(user)
   const { data: notifications = [] } = useNotifications()
   const unread = notifications.filter(n => !n.is_read).length
+
   return (
     <nav
       className={cn(
@@ -52,10 +53,11 @@ export default function BottomNav() {
       )}
       style={{
         paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
-        gridTemplateColumns: `repeat(${showAdmin ? 4 : 3}, 1fr)`,
+        gridTemplateColumns: `repeat(${showAdmin ? 5 : 4}, 1fr)`,
       }}
     >
       <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
+      <TabLink to="/discover" icon={Search} label={t('nav.publicEventsShort', 'Публичные')} />
       <TabLink to="/notifications" icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
       <TabLink to="/profile" icon={User} label={t('nav.profile')} />
       {showAdmin && <TabLink to="/admin" icon={BarChart3} label={t('nav.admin')} />}

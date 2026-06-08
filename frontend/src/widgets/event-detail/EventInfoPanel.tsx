@@ -19,6 +19,7 @@ import type { Event } from '@/entities/event/model/types'
 import { eventAccentColor } from '@/shared/lib/eventAccentColor'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 import { useDeleteEvent, useJoinPublicEvent } from '@/features/event-manage/model/hooks'
+import LocationMap from '@/features/location-picker/ui/LocationMap'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import {
   Button,
@@ -196,6 +197,12 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
             )}
 
             {event.location && <MetaRow icon={MapPin}>{event.location}</MetaRow>}
+
+            {event.location_lat != null && event.location_lng != null && (
+              <div className="pl-[26px]">
+                <LocationMap lat={event.location_lat} lng={event.location_lng} />
+              </div>
+            )}
 
             {event.dress_code && (
               <MetaRow icon={Shirt}>

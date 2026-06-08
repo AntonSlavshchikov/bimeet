@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
 import { Button, Input, Textarea, useToast } from '@/shared/ui'
+import LocationPicker from '@/features/location-picker/ui/LocationPicker'
 import { cn } from '@/shared/lib/cn'
 
 interface FormValues {
@@ -13,6 +14,8 @@ interface FormValues {
   dateStart: string
   dateEnd: string
   location: string
+  locationLat?: number
+  locationLng?: number
   dressCode: string
   isPublic: boolean
   maxGuests: string
@@ -53,6 +56,8 @@ export default function EventFormPage() {
         dateStart: toDatetimeLocal(event.date_start),
         dateEnd: toDatetimeLocal(event.date_end),
         location: event.location,
+        locationLat: event.location_lat,
+        locationLng: event.location_lng,
         dressCode: event.dress_code ?? '',
         isPublic: event.is_public ?? false,
         maxGuests: event.max_guests != null ? String(event.max_guests) : '',
@@ -79,6 +84,9 @@ export default function EventFormPage() {
       date_end: new Date(form.dateEnd).toISOString(),
       location: form.location,
       is_public: form.isPublic,
+      ...(form.locationLat != null && form.locationLng != null
+        ? { location_lat: form.locationLat, location_lng: form.locationLng }
+        : {}),
       ...(form.dressCode.trim() ? { dress_code: form.dressCode.trim() } : {}),
       ...(maxGuests != null ? { max_guests: maxGuests } : {}),
     }
@@ -193,11 +201,10 @@ export default function EventFormPage() {
             </Field>
           </div>
           <Field label={t('eventForm.fieldLocation', 'Место')} required>
-            <Input
-              value={form.location}
-              onChange={e => update('location', e.target.value)}
+            <LocationPicker
+              value={{ address: form.location, lat: form.locationLat, lng: form.locationLng }}
+              onChange={v => setForm(f => ({ ...f, location: v.address, locationLat: v.lat, locationLng: v.lng }))}
               placeholder={t('eventForm.fieldLocationPlaceholder', 'Адрес или название места')}
-              required
             />
           </Field>
           <Field label={t('eventForm.fieldDressCode', 'Дресс-код')} optional>

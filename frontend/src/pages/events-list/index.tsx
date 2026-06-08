@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CalendarOff, Filter, Plus, SearchX, X } from 'lucide-react'
-import { useEvents, usePublicEvents } from '@/entities/event/queries'
+import { CalendarOff, Plus, SearchX, X } from 'lucide-react'
+import { useEvents } from '@/entities/event/queries'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
 import EventListRow from '@/widgets/event-card/EventListRow'
@@ -18,10 +18,10 @@ import {
   StatCell,
   useToast,
 } from '@/shared/ui'
-type Tab = 'all' | 'attending' | 'organizing' | 'past' | 'public'
+type Tab = 'all' | 'attending' | 'organizing' | 'public' | 'past'
 type EventAny = EventListItem | PublicEventListItem
 
-const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'past', 'public']
+const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'public', 'past']
 
 const MONTHS_LONG_RU = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -230,7 +230,6 @@ function StatsRail({
 
 function EventsListPage() {
   const events = useEvents()
-  const publicEvents = usePublicEvents()
   const { user } = useAuth()
   const { t } = useTranslation()
   const toast = useToast()
@@ -268,17 +267,18 @@ function EventsListPage() {
   const joinPublicEvent = useJoinPublicEvent()
   const confirmAttendance = useConfirmAttendance()
 
-  const allUpcoming = useMemo<EventAny[]>(() => {
-    const map = new Map<string, EventAny>()
-    events.forEach(e => map.set(e.id, e))
-    publicEvents.forEach(e => { if (!map.has(e.id)) map.set(e.id, e) })
-    return [...map.values()].filter(e => e.status !== 'completed')
-  }, [events, publicEvents])
+  // «Встречи» — только мои: организатор, приглашён или участвую. Публичные чужие
+  // встречи живут в отдельной вкладке «Найти публичные».
+  const allUpcoming = useMemo<EventAny[]>(
+    () => events.filter(e => e.status !== 'completed'),
+    [events],
+  )
 
   const attendingEvents = events.filter(e => e.organizer.id !== user?.id && e.status !== 'completed')
   const organizingEvents = events.filter(e => e.organizer.id === user?.id && e.status !== 'completed')
+  // «Публичные» внутри моих встреч = мои публичные (например, которые я организовал).
+  const myPublicEvents = events.filter(e => e.is_public && e.status !== 'completed')
   const pastEvents = events.filter(e => e.status === 'completed')
-  const publicOnly = publicEvents.filter(e => e.status !== 'completed')
 
   function handleAttend(event: EventAny) {
     const myParticipant = event.participants.find(p => p.user.id === user?.id)
@@ -313,8 +313,8 @@ function EventsListPage() {
     all: allUpcoming,
     attending: attendingEvents,
     organizing: organizingEvents,
+    public: myPublicEvents,
     past: pastEvents,
-    public: publicOnly,
   }
 
   const visible: EventAny[] = filterBySearch(sourceForTab[tab])
@@ -340,9 +340,6 @@ function EventsListPage() {
           onChange={e => setSearch(e.target.value)}
         />
         <div className="flex items-center gap-2 justify-self-end">
-          <Button variant="icon" size="icon" aria-label={t('events.filter', 'Фильтр')}>
-            <Filter size={16} />
-          </Button>
           <Button asChild>
             <Link to="/events/new">
               <Plus size={14} strokeWidth={2.4} />
@@ -391,7 +388,7 @@ function EventsListPage() {
             { value: 'all',        label: t('events.tabAll', 'Все'),             count: allUpcoming.length },
             { value: 'attending',  label: t('events.tabAttending', 'Участвую'),   count: attendingEvents.length },
             { value: 'organizing', label: t('events.tabOrganizing', 'Организую'), count: organizingEvents.length },
-            { value: 'public',     label: t('events.tabPublic', 'Публичные'),     count: publicOnly.length },
+            { value: 'public',     label: t('events.tabPublic', 'Публичные'),     count: myPublicEvents.length },
             { value: 'past',       label: t('events.tabPast', 'Прошедшие'),       count: pastEvents.length },
           ]}
         />
@@ -459,15 +456,10 @@ export default EventsListPage
 // Reusable Rail composition for this page — exposed for Router
 export function EventsListRail() {
   const events = useEvents()
-  const publicEvents = usePublicEvents()
   const { user } = useAuth()
 
-  const allEvents = useMemo<EventAny[]>(() => {
-    const map = new Map<string, EventAny>()
-    events.forEach(e => map.set(e.id, e))
-    publicEvents.forEach(e => { if (!map.has(e.id)) map.set(e.id, e) })
-    return [...map.values()]
-  }, [events, publicEvents])
+  // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам.
+  const allEvents = useMemo<EventAny[]>(() => events, [events])
 
   return (
     <>

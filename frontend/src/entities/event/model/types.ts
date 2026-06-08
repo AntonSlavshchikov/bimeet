@@ -20,6 +20,8 @@ export interface Event {
   date_start: string
   date_end: string
   location: string
+  location_lat?: number
+  location_lng?: number
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean
@@ -79,6 +81,8 @@ export interface CreateEventData {
   date_start: string
   date_end: string
   location: string
+  location_lat?: number
+  location_lng?: number
   dress_code?: string
 }
 
@@ -88,5 +92,7 @@ export interface UpdateEventData {
   date_start?: string
   date_end?: string
   location?: string
+  location_lat?: number
+  location_lng?: number
   dress_code?: string
 }

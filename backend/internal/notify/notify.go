@@ -59,5 +59,8 @@ func href(notifType string, eventID *uuid.UUID) string {
 	if notifType == "collection_contribution_pending" {
 		return "/events/" + eventID.String() + "?tab=collections"
 	}
+	if notifType == "chat_message" {
+		return "/events/" + eventID.String() + "?tab=chat"
+	}
 	return "/events/" + eventID.String()
 }
