@@ -178,6 +178,8 @@
     "placeholder": "Write a message…",
     "deleted": "Message deleted",
     "delete": "Delete message",
+    "reply": "Reply",
+    "replyingTo": "Reply to",
     "send": "Send",
     "you": "You"
   },

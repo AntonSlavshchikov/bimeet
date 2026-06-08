@@ -59,18 +59,18 @@ func (mr *MockMessageRepoMockRecorder) CountUnread(ctx, eventID, userID any) *go
 }
 
 // Create mocks base method.
-func (m *MockMessageRepo) Create(ctx context.Context, eventID, userID uuid.UUID, body string) (model.Message, error) {
+func (m *MockMessageRepo) Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID) (model.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, eventID, userID, body)
+	ret := m.ctrl.Call(m, "Create", ctx, eventID, userID, body, replyToID)
 	ret0, _ := ret[0].(model.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockMessageRepoMockRecorder) Create(ctx, eventID, userID, body any) *gomock.Call {
+func (mr *MockMessageRepoMockRecorder) Create(ctx, eventID, userID, body, replyToID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockMessageRepo)(nil).Create), ctx, eventID, userID, body)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockMessageRepo)(nil).Create), ctx, eventID, userID, body, replyToID)
 }
 
 // GetByID mocks base method.

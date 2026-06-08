@@ -53,7 +53,16 @@ func (s *Service) Post(ctx context.Context, eventID, userID uuid.UUID, req model
 		return model.Message{}, fmt.Errorf("message is too long")
 	}
 
-	msg, err := s.repo.Create(ctx, eventID, userID, body)
+	// A reply must point to a message in the same event; an invalid target is
+	// silently ignored (the message is posted without a reply).
+	var replyToID *uuid.UUID
+	if req.ReplyToID != nil {
+		if parent, err := s.repo.GetByID(ctx, *req.ReplyToID); err == nil && parent.EventID == eventID {
+			replyToID = req.ReplyToID
+		}
+	}
+
+	msg, err := s.repo.Create(ctx, eventID, userID, body, replyToID)
 	if err != nil {
 		return model.Message{}, err
 	}

@@ -19,8 +19,6 @@ export function useMessages(eventId: string, enabled = true) {
   })
 }
 
-// useChatUnread is gated by `enabled` so it never polls for non-members (the API
-// returns 403 for users who have not joined the event).
 export function useChatUnread(eventId: string, enabled = true) {
   return useQuery({
     queryKey: chatKeys.unread(eventId),
@@ -31,13 +29,18 @@ export function useChatUnread(eventId: string, enabled = true) {
   })
 }
 
-// useSendMessage optimistically appends the message so the sender sees it
-// instantly, rolling back on error and reconciling on settle.
+interface SendVars {
+  body: string
+  replyTo?: Message
+}
+
+// useSendMessage optimistically appends the message (with its reply quote) so the
+// sender sees it instantly, rolling back on error and reconciling on settle.
 export function useSendMessage(eventId: string, me: MessageAuthor | undefined) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: string) => chatApi.send(eventId, body),
-    onMutate: async (body: string) => {
+    mutationFn: ({ body, replyTo }: SendVars) => chatApi.send(eventId, body, replyTo?.id),
+    onMutate: async ({ body, replyTo }: SendVars) => {
       await qc.cancelQueries({ queryKey: chatKeys.messages(eventId) })
       const previous = qc.getQueryData<Message[]>(chatKeys.messages(eventId))
       if (me) {
@@ -48,12 +51,20 @@ export function useSendMessage(eventId: string, me: MessageAuthor | undefined) {
           body,
           created_at: new Date().toISOString(),
           deleted: false,
+          reply_to: replyTo
+            ? {
+                id: replyTo.id,
+                author_name: replyTo.author.name,
+                body: replyTo.deleted ? '' : replyTo.body,
+                deleted: replyTo.deleted,
+              }
+            : null,
         }
         qc.setQueryData<Message[]>(chatKeys.messages(eventId), [...(previous ?? []), optimistic])
       }
       return { previous }
     },
-    onError: (_e, _body, ctx) => {
+    onError: (_e, _vars, ctx) => {
       if (ctx?.previous) qc.setQueryData(chatKeys.messages(eventId), ctx.previous)
     },
     onSettled: () => {

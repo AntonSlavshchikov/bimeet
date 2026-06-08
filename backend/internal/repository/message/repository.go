@@ -19,30 +19,55 @@ func New(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.created_at, m.deleted_at`
+const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.created_at, m.deleted_at,
+	r.id, ru.name, r.body, r.deleted_at`
 
-// scanRow maps a joined event_messages/users row into a model.Message, blanking
-// the body of soft-deleted messages so deleted content never leaves the server.
+const fromJoins = `FROM event_messages m
+	JOIN users u ON u.id = m.user_id
+	LEFT JOIN event_messages r ON r.id = m.reply_to_id
+	LEFT JOIN users ru ON ru.id = r.user_id`
+
+// scanRow maps a joined event_messages/users row (plus the optional replied-to
+// message) into a model.Message, blanking soft-deleted bodies.
 func scanRow(row interface{ Scan(...any) error }) (model.Message, error) {
 	var (
-		m         model.Message
-		deletedAt *time.Time
+		m              model.Message
+		deletedAt      *time.Time
+		replyID        *uuid.UUID
+		replyAuthor    *string
+		replyBody      *string
+		replyDeletedAt *time.Time
 	)
-	if err := row.Scan(&m.ID, &m.EventID, &m.Author.ID, &m.Author.Name, &m.Author.Email, &m.Body, &m.CreatedAt, &deletedAt); err != nil {
+	if err := row.Scan(
+		&m.ID, &m.EventID, &m.Author.ID, &m.Author.Name, &m.Author.Email, &m.Body, &m.CreatedAt, &deletedAt,
+		&replyID, &replyAuthor, &replyBody, &replyDeletedAt,
+	); err != nil {
 		return model.Message{}, err
 	}
 	if deletedAt != nil {
 		m.Deleted = true
 		m.Body = ""
 	}
+	if replyID != nil {
+		rp := model.ReplyPreview{ID: *replyID}
+		if replyAuthor != nil {
+			rp.AuthorName = *replyAuthor
+		}
+		if replyDeletedAt != nil {
+			rp.Deleted = true
+		} else if replyBody != nil {
+			rp.Body = *replyBody
+		}
+		m.ReplyTo = &rp
+	}
 	return m, nil
 }
 
-func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body string) (model.Message, error) {
+func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID) (model.Message, error) {
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO event_messages (event_id, user_id, body) VALUES ($1, $2, $3) RETURNING id`,
-		eventID, userID, body,
+		`INSERT INTO event_messages (event_id, user_id, body, reply_to_id) VALUES ($1, $2, $3, $4) RETURNING id`,
+		eventID, userID, body, replyToID,
 	).Scan(&id)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("insert message: %w", err)
@@ -51,12 +76,9 @@ func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body
 }
 
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Message, error) {
-	row := r.pool.QueryRow(ctx,
-		`SELECT `+selectCols+`
-		 FROM event_messages m JOIN users u ON u.id = m.user_id
-		 WHERE m.id=$1`,
-		id,
-	)
+	row := r.pool.QueryRow(ctx, `SELECT `+selectCols+`
+		`+fromJoins+`
+		WHERE m.id=$1`, id)
 	m, err := scanRow(row)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("get message: %w", err)
@@ -67,14 +89,11 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Message, 
 // ListByEvent returns up to limit most-recent messages older than `before`
 // (or now when nil), already ordered oldest→newest for direct display.
 func (r *Repository) ListByEvent(ctx context.Context, eventID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
-	rows, err := r.pool.Query(ctx,
-		`SELECT `+selectCols+`
-		 FROM event_messages m JOIN users u ON u.id = m.user_id
-		 WHERE m.event_id=$1 AND ($2::timestamptz IS NULL OR m.created_at < $2)
-		 ORDER BY m.created_at DESC
-		 LIMIT $3`,
-		eventID, before, limit,
-	)
+	rows, err := r.pool.Query(ctx, `SELECT `+selectCols+`
+		`+fromJoins+`
+		WHERE m.event_id=$1 AND ($2::timestamptz IS NULL OR m.created_at < $2)
+		ORDER BY m.created_at DESC
+		LIMIT $3`, eventID, before, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list messages: %w", err)
 	}

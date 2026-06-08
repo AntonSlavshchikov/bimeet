@@ -155,16 +155,26 @@ type Notification struct {
 // Message is a single chat message in an event. A soft-deleted message keeps its
 // row (Deleted=true) but its Body is blanked before leaving the repository.
 type Message struct {
-	ID        uuid.UUID `json:"id"`
-	EventID   uuid.UUID `json:"event_id"`
-	Author    UserInfo  `json:"author"`
-	Body      string    `json:"body"`
-	CreatedAt time.Time `json:"created_at"`
-	Deleted   bool      `json:"deleted"`
+	ID        uuid.UUID     `json:"id"`
+	EventID   uuid.UUID     `json:"event_id"`
+	Author    UserInfo      `json:"author"`
+	Body      string        `json:"body"`
+	CreatedAt time.Time     `json:"created_at"`
+	Deleted   bool          `json:"deleted"`
+	ReplyTo   *ReplyPreview `json:"reply_to,omitempty"`
+}
+
+// ReplyPreview is a lightweight snapshot of the message being replied to.
+type ReplyPreview struct {
+	ID         uuid.UUID `json:"id"`
+	AuthorName string    `json:"author_name"`
+	Body       string    `json:"body"`
+	Deleted    bool      `json:"deleted"`
 }
 
 type PostMessageRequest struct {
-	Body string `json:"body"`
+	Body      string     `json:"body"`
+	ReplyToID *uuid.UUID `json:"reply_to_id,omitempty"`
 }
 
 // UnreadCountResponse carries the chat unread badge number.

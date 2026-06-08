@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MessageCircle, Send, Trash2 } from 'lucide-react'
+import { MessageCircle, Reply, Send, Trash2, X } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
+import type { Message } from '@/entities/message/model/types'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import {
   useMessages,
@@ -24,6 +25,7 @@ export default function ChatTab({ event }: { event: Event }) {
   const markRead = useMarkChatRead(event.id)
 
   const [text, setText] = useState('')
+  const [replyTo, setReplyTo] = useState<Message | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const lastId = messages?.[messages.length - 1]?.id
 
@@ -41,7 +43,8 @@ export default function ChatTab({ event }: { event: Event }) {
     const body = text.trim()
     if (!body || sendMessage.isPending) return
     setText('')
-    sendMessage.mutate(body)
+    sendMessage.mutate({ body, replyTo: replyTo ?? undefined })
+    setReplyTo(null)
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -88,18 +91,43 @@ export default function ChatTab({ event }: { event: Event }) {
                           : 'bg-bg-2 text-ink',
                     )}
                   >
+                    {m.reply_to && (
+                      <div
+                        className={cn(
+                          'mb-1 border-l-2 pl-2 text-[12px] rounded-r',
+                          mine ? 'border-white/60 text-white/85' : 'border-accent text-ink-3',
+                        )}
+                      >
+                        <span className="font-semibold">{m.reply_to.author_name}</span>
+                        <span className="block truncate">
+                          {m.reply_to.deleted ? t('chat.deleted', 'Сообщение удалено') : m.reply_to.body}
+                        </span>
+                      </div>
+                    )}
                     {m.deleted ? t('chat.deleted', 'Сообщение удалено') : m.body}
                   </div>
                 </div>
-                {canDelete && (
-                  <button
-                    type="button"
-                    aria-label={t('chat.delete', 'Удалить сообщение')}
-                    onClick={() => deleteMessage.mutate(m.id)}
-                    className="self-center opacity-0 group-hover:opacity-100 transition inline-flex h-7 w-7 items-center justify-center rounded-[8px] text-ink-3 hover:bg-danger/10 hover:text-danger shrink-0"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                {!m.deleted && (
+                  <div className="self-center flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
+                    <button
+                      type="button"
+                      aria-label={t('chat.reply', 'Ответить')}
+                      onClick={() => setReplyTo(m)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-[8px] text-ink-3 hover:bg-hover hover:text-ink"
+                    >
+                      <Reply size={13} />
+                    </button>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        aria-label={t('chat.delete', 'Удалить сообщение')}
+                        onClick={() => deleteMessage.mutate(m.id)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-[8px] text-ink-3 hover:bg-danger/10 hover:text-danger"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )
@@ -109,18 +137,41 @@ export default function ChatTab({ event }: { event: Event }) {
       </div>
 
       {/* Composer */}
-      <div className="flex items-end gap-2 border-t border-line-soft pt-3">
-        <Textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onKeyDown={onKeyDown}
-          rows={1}
-          placeholder={t('chat.placeholder', 'Написать сообщение…')}
-          className="flex-1 resize-none min-h-[40px] max-h-[120px]"
-        />
-        <Button onClick={submit} disabled={!text.trim() || sendMessage.isPending} aria-label={t('chat.send', 'Отправить')}>
-          <Send size={15} />
-        </Button>
+      <div className="border-t border-line-soft pt-3 flex flex-col gap-2">
+        {replyTo && (
+          <div className="flex items-center gap-2 rounded-[8px] bg-bg-2 border-l-2 border-accent px-2.5 py-1.5">
+            <Reply size={13} className="text-accent shrink-0" />
+            <div className="min-w-0 flex-1 text-[12px]">
+              <span className="font-semibold text-ink">
+                {t('chat.replyingTo', 'Ответ')} {replyTo.author.name}
+              </span>
+              <span className="block truncate text-ink-3">
+                {replyTo.deleted ? t('chat.deleted', 'Сообщение удалено') : replyTo.body}
+              </span>
+            </div>
+            <button
+              type="button"
+              aria-label={t('common.cancel', 'Отмена')}
+              onClick={() => setReplyTo(null)}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover shrink-0"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        <div className="flex items-end gap-2">
+          <Textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={onKeyDown}
+            rows={1}
+            placeholder={t('chat.placeholder', 'Написать сообщение…')}
+            className="flex-1 resize-none min-h-[40px] max-h-[120px]"
+          />
+          <Button onClick={submit} disabled={!text.trim() || sendMessage.isPending} aria-label={t('chat.send', 'Отправить')}>
+            <Send size={15} />
+          </Button>
+        </div>
       </div>
     </div>
   )

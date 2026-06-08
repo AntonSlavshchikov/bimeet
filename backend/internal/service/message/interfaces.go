@@ -12,7 +12,7 @@ import (
 )
 
 type MessageRepo interface {
-	Create(ctx context.Context, eventID, userID uuid.UUID, body string) (model.Message, error)
+	Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID) (model.Message, error)
 	GetByID(ctx context.Context, id uuid.UUID) (model.Message, error)
 	ListByEvent(ctx context.Context, eventID uuid.UUID, before *time.Time, limit int) ([]model.Message, error)
 	SoftDelete(ctx context.Context, id uuid.UUID) error
