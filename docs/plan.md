@@ -2990,3 +2990,41 @@ MapLibre-совместимы). Путь к решению: Яндекс отк�
 - [x] `npm run build` зелёный (бандл < precache-лимита, maplibre в отдельном чанке); новые файлы линт-чисто
 - [ ] поиск адреса с подсказками + обратный геокодинг — после подтверждения геокодера VK
 - [ ] live-smoke: с ключом VK — создать встречу выбором точки на карте; на детальной метка в нужной точке; edit центрируется на точке; без ключа форма работает на тексте
+
+---
+
+## Этап 41 — Чат: ответы на сообщения + шифрование в БД
+
+### Контекст
+
+Развитие чата встречи (Этап 38): добавили **ответы (цитирование)** на сообщения и
+**шифрование тела сообщений at-rest**. Цель шифрования — чтобы в БД сообщения
+лежали зашифрованными (защита от дампа/утечки), но участники видели текст в чате
+(сервер расшифровывает на лету). Это **не E2EE**: ключ у сервера — защита от
+компрометации БД, а не сервера (по согласованию).
+
+### Состав
+
+| Файл | Изменение |
+|---|---|
+| `backend/internal/db/migrations/019_event_message_reply.*.sql` | `event_messages.reply_to_id` (FK на сообщение, `ON DELETE SET NULL`) |
+| `backend/internal/model/model.go` | `Message.ReplyTo *ReplyPreview` (id/автор/сниппет/deleted); `PostMessageRequest.ReplyToID` |
+| `backend/internal/secret/cipher.go` (+тест) | AES-256-GCM `Cipher`: Encrypt/Decrypt, prefix `enc:`, пустой ключ → passthrough, legacy/tamper → as-is |
+| `backend/internal/config/config.go` | `CHAT_ENCRYPTION_KEY` (base64 32 байта) |
+| `backend/internal/repository/message/repository.go` | reply через `LEFT JOIN`; шифрование тела на `Create`, расшифровка в `scanRow` (вкл. тело цитаты); `New(pool, cipher)` |
+| `backend/internal/service/message/{service,interfaces}.go` | reply-валидация «той же встречи»; `Create(..., replyToID)`; mock перегенерирован |
+| `backend/cmd/server/main.go` | сборка `secret.Cipher` из конфига, лог вкл/выкл, проброс в `messageRepo` |
+| `backend/.env.example` | `CHAT_ENCRYPTION_KEY` + подсказка `openssl rand -base64 32` |
+| `frontend/src/entities/message/model/types.ts` | `Message.reply_to?: ReplyPreview` |
+| `frontend/src/features/chat/{api,model/hooks}.ts` | `send(…, replyToId)`; `useSendMessage({ body, replyTo })` + оптимистичная цитата |
+| `frontend/src/features/chat/ui/ChatTab.tsx` | кнопка «Ответить», баннер ответа в композере, цитата над сообщением; выровнены инпут/кнопка (44px) |
+| `frontend/src/shared/i18n/locales/{ru,en}.json` | `chat.reply`, `chat.replyingTo` |
+
+### Чеклист
+
+- [x] миграция 019: `reply_to_id` (up/down)
+- [x] reply: модель/DTO, repo `LEFT JOIN` превью (тело удалённого/зашифрованного — корректно), сервис-валидация той же встречи
+- [x] фронт: «Ответить» → баннер композера → цитата над сообщением; оптимистичная отправка
+- [x] шифрование: `secret.Cipher` (AES-256-GCM), `CHAT_ENCRYPTION_KEY`, шифр на `Create` / расшифровка на чтении; legacy-plaintext совместим
+- [x] `go build/vet` + тесты `secret`/`message` зелёные; `npm run build` ок, файлы чата линт-чисто
+- [ ] live-smoke: ответ виден с цитатой; в БД `body` хранится как `enc:…` при заданном ключе; без ключа — как раньше

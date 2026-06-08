@@ -166,10 +166,16 @@ export default function ChatTab({ event }: { event: Event }) {
             onKeyDown={onKeyDown}
             rows={1}
             placeholder={t('chat.placeholder', 'Написать сообщение…')}
-            className="flex-1 resize-none min-h-[40px] max-h-[120px]"
+            className="flex-1 resize-none min-h-[44px] max-h-[140px] py-2.5 leading-[1.4]"
           />
-          <Button onClick={submit} disabled={!text.trim() || sendMessage.isPending} aria-label={t('chat.send', 'Отправить')}>
-            <Send size={15} />
+          <Button
+            onClick={submit}
+            disabled={!text.trim() || sendMessage.isPending}
+            aria-label={t('chat.send', 'Отправить')}
+            size="icon"
+            className="h-11 w-11 shrink-0"
+          >
+            <Send size={16} />
           </Button>
         </div>
       </div>

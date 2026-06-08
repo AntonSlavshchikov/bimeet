@@ -47,6 +47,9 @@ type Config struct {
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
 	VAPIDSubject    string // "mailto:..." contact for push services
+	// ChatEncryptionKey — base64-encoded 32-byte key (AES-256) for encrypting chat
+	// message bodies at rest. Empty → messages stored as plaintext (dev).
+	ChatEncryptionKey string
 	// Observability.
 	LogLevel    string // debug/info/warn/error (default info)
 	LogFormat   string // "json"/"text"; empty resolves by AppEnv (json in prod, text in dev)
@@ -143,6 +146,7 @@ func Load() Config {
 		CORSAllowedOrigins: parseCSV(os.Getenv("CORS_ALLOWED_ORIGINS")),
 		VAPIDPublicKey:     os.Getenv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey:    os.Getenv("VAPID_PRIVATE_KEY"),
+		ChatEncryptionKey:  os.Getenv("CHAT_ENCRYPTION_KEY"),
 		VAPIDSubject:       vapidSubject,
 		LogLevel:           logLevel,
 		LogFormat:          logFormat,

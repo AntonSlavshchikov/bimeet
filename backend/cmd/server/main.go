@@ -26,6 +26,7 @@ import (
 	"bimeet/internal/notify"
 	"bimeet/internal/observability"
 	"bimeet/internal/reminder"
+	"bimeet/internal/secret"
 	adminrepo "bimeet/internal/repository/admin"
 	carpoolrepo "bimeet/internal/repository/carpool"
 	collectionrepo "bimeet/internal/repository/collection"
@@ -110,7 +111,16 @@ func main() {
 	pollRepo := pollrepo.New(pool)
 	itemRepo := itemrepo.New(pool)
 	carpoolRepo := carpoolrepo.New(pool)
-	messageRepo := messagerepo.New(pool)
+	chatCipher, err := secret.New(cfg.ChatEncryptionKey)
+	if err != nil {
+		fatal("init chat encryption", "error", err)
+	}
+	if chatCipher.Enabled() {
+		slog.Info("chat message encryption enabled")
+	} else {
+		slog.Info("chat message encryption disabled (CHAT_ENCRYPTION_KEY not set)")
+	}
+	messageRepo := messagerepo.New(pool, chatCipher)
 	notificationRepo := notificationrepo.New(pool)
 	loginCodeRepo := loginrepo.New(pool)
 	pushSubRepo := pushsubrepo.New(pool)

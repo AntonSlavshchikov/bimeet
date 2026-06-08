@@ -9,14 +9,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
+	"bimeet/internal/secret"
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	cipher *secret.Cipher
 }
 
-func New(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+func New(pool *pgxpool.Pool, cipher *secret.Cipher) *Repository {
+	return &Repository{pool: pool, cipher: cipher}
 }
 
 const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.created_at, m.deleted_at,
@@ -28,8 +30,8 @@ const fromJoins = `FROM event_messages m
 	LEFT JOIN users ru ON ru.id = r.user_id`
 
 // scanRow maps a joined event_messages/users row (plus the optional replied-to
-// message) into a model.Message, blanking soft-deleted bodies.
-func scanRow(row interface{ Scan(...any) error }) (model.Message, error) {
+// message) into a model.Message, decrypting bodies and blanking soft-deleted ones.
+func (r *Repository) scanRow(row interface{ Scan(...any) error }) (model.Message, error) {
 	var (
 		m              model.Message
 		deletedAt      *time.Time
@@ -47,6 +49,8 @@ func scanRow(row interface{ Scan(...any) error }) (model.Message, error) {
 	if deletedAt != nil {
 		m.Deleted = true
 		m.Body = ""
+	} else {
+		m.Body = r.cipher.Decrypt(m.Body)
 	}
 	if replyID != nil {
 		rp := model.ReplyPreview{ID: *replyID}
@@ -56,7 +60,7 @@ func scanRow(row interface{ Scan(...any) error }) (model.Message, error) {
 		if replyDeletedAt != nil {
 			rp.Deleted = true
 		} else if replyBody != nil {
-			rp.Body = *replyBody
+			rp.Body = r.cipher.Decrypt(*replyBody)
 		}
 		m.ReplyTo = &rp
 	}
@@ -67,7 +71,7 @@ func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx,
 		`INSERT INTO event_messages (event_id, user_id, body, reply_to_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-		eventID, userID, body, replyToID,
+		eventID, userID, r.cipher.Encrypt(body), replyToID,
 	).Scan(&id)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("insert message: %w", err)
@@ -79,7 +83,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Message, 
 	row := r.pool.QueryRow(ctx, `SELECT `+selectCols+`
 		`+fromJoins+`
 		WHERE m.id=$1`, id)
-	m, err := scanRow(row)
+	m, err := r.scanRow(row)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("get message: %w", err)
 	}
@@ -101,7 +105,7 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID uuid.UUID, before 
 
 	var msgs []model.Message
 	for rows.Next() {
-		m, err := scanRow(rows)
+		m, err := r.scanRow(rows)
 		if err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}
