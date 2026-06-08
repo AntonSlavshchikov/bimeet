@@ -108,7 +108,7 @@ export default function ChatTab({ event }: { event: Event }) {
                   </div>
                 </div>
                 {!m.deleted && (
-                  <div className="self-center flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
+                  <div className="self-center flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition shrink-0">
                     <button
                       type="button"
                       aria-label={t('chat.reply', 'Ответить')}
