@@ -45,7 +45,8 @@ type RegisterCompanyRequest struct {
 	Password    string `json:"password"`
 	Name        string `json:"name"` // owner display name
 	CompanyName string `json:"company_name"`
-	Subdomain   string `json:"subdomain"`
+	// Subdomain is no longer accepted from the client — it is auto-generated
+	// from CompanyName (slugified + uniqued) during registration.
 }
 
 type LoginRequest struct {

@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Globe } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthContext'
 import { authApi } from '@/features/auth/api'
 import { workspaceUrl } from '@/shared/lib/subdomain'
+import { slugify } from '@/shared/lib/slugify'
 import { AuthShell } from '@/shared/ui/AuthShell'
 import { Button, Input, Field } from '@/shared/ui'
 
@@ -10,13 +12,16 @@ export default function RegisterCompanyPage() {
 
   const [form, setForm] = useState({
     companyName: '',
-    subdomain: '',
     name: '',
     email: '',
     password: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Live preview of the auto-generated address. The backend decides the final
+  // value (and may add a -2 suffix on collision), so this is informational.
+  const previewSubdomain = slugify(form.companyName) || 'company'
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm(f => ({ ...f, [key]: value }))
@@ -32,7 +37,6 @@ export default function RegisterCompanyPage() {
         password: form.password,
         name: form.name,
         company_name: form.companyName,
-        subdomain: form.subdomain.toLowerCase().trim(),
       })
       setSession(res)
       // The workspace lives on its own origin — hand the token over via the URL
@@ -55,14 +59,23 @@ export default function RegisterCompanyPage() {
         <Field label="Название компании" required>
           <Input value={form.companyName} onChange={e => update('companyName', e.target.value)} required autoFocus />
         </Field>
-        <Field label="Поддомен" hint={`${form.subdomain || 'acme'}.bimeet.pro`} required>
-          <Input
-            value={form.subdomain}
-            onChange={e => update('subdomain', e.target.value)}
-            placeholder="acme"
-            required
-          />
-        </Field>
+
+        {/* Address preview — generated from the company name, shown prominently. */}
+        <div className="rounded-[var(--radius-control)] border border-accent/30 bg-accent/[0.06] px-3.5 py-3 flex items-center gap-3">
+          <Globe size={18} className="text-accent shrink-0" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-3">
+              Адрес рабочего пространства
+            </div>
+            <div className="text-[15px] font-bold truncate">
+              <span className="text-accent">{previewSubdomain}</span>
+              <span className="text-ink-3 font-semibold">.bimeet.pro</span>
+            </div>
+          </div>
+        </div>
+        <p className="-mt-2 text-[12px] text-ink-3">
+          Создаётся автоматически из названия. Если адрес занят, добавим номер (например {previewSubdomain}-2).
+        </p>
         <Field label="Ваше имя" required>
           <Input value={form.name} onChange={e => update('name', e.target.value)} required />
         </Field>

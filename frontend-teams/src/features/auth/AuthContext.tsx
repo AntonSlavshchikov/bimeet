@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from '@/entities/user/types'
 import type { Company } from '@/entities/company/types'
 import { authApi, type AuthResponse } from './api'
-import { applyBrandColor } from '@/features/branding/applyBrand'
 
 interface AuthContextValue {
   user: User | null
@@ -36,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         setUser(user)
         setCompany(company)
-        applyBrandColor(company.brand_color)
       })
       .catch(() => {
         if (cancelled) return
@@ -71,12 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(res.token)
     setUser(res.user)
     setCompany(res.company)
-    applyBrandColor(res.company.brand_color)
   }
 
   function updateCompany(c: Company) {
     setCompany(c)
-    applyBrandColor(c.brand_color)
   }
 
   function logout() {

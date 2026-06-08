@@ -13,7 +13,7 @@ export interface RegisterCompanyData {
   password: string
   name: string
   company_name: string
-  subdomain: string
+  // No subdomain — the backend generates it from company_name.
 }
 
 export const authApi = {

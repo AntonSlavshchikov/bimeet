@@ -107,7 +107,7 @@ func newService() (*Service, *fakeCompanyRepo, *fakeUserRepo, *fakeInviteRepo) {
 func TestRegisterCompany_HappyPath(t *testing.T) {
 	svc, _, _, _ := newService()
 	resp, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
-		Email: "owner@acme.io", Password: "supersecret", CompanyName: "Acme", Subdomain: "acme",
+		Email: "owner@acme.io", Password: "supersecret", CompanyName: "Acme",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -118,49 +118,67 @@ func TestRegisterCompany_HappyPath(t *testing.T) {
 	if resp.User.Role != "owner" {
 		t.Fatalf("expected owner role, got %q", resp.User.Role)
 	}
+	// Subdomain is auto-generated from the company name.
 	if resp.Company.Subdomain != "acme" {
 		t.Fatalf("expected subdomain acme, got %q", resp.Company.Subdomain)
 	}
 }
 
-func TestRegisterCompany_ReservedSubdomain(t *testing.T) {
+// A Cyrillic company name is transliterated into a latin subdomain.
+func TestRegisterCompany_TransliteratesCyrillicName(t *testing.T) {
 	svc, _, _, _ := newService()
-	_, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
-		Email: "a@b.io", Password: "supersecret", CompanyName: "X", Subdomain: "admin",
+	resp, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
+		Email: "owner@atlas.io", Password: "supersecret", CompanyName: "Атлас",
 	})
-	if !errors.Is(err, ErrSubdomainReserved) {
-		t.Fatalf("expected ErrSubdomainReserved, got %v", err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Company.Subdomain != "atlas" {
+		t.Fatalf("expected subdomain atlas, got %q", resp.Company.Subdomain)
 	}
 }
 
-func TestRegisterCompany_InvalidSubdomain(t *testing.T) {
+// A name that slugifies to a reserved word skips it and takes a suffix.
+func TestRegisterCompany_ReservedNameGetsSuffix(t *testing.T) {
 	svc, _, _, _ := newService()
-	_, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
-		Email: "a@b.io", Password: "supersecret", CompanyName: "X", Subdomain: "Ac",
+	resp, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
+		Email: "a@b.io", Password: "supersecret", CompanyName: "Admin",
 	})
-	var verr ValidationError
-	if !errors.As(err, &verr) {
-		t.Fatalf("expected ValidationError, got %v", err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Company.Subdomain != "admin-2" {
+		t.Fatalf("expected subdomain admin-2, got %q", resp.Company.Subdomain)
 	}
 }
 
-func TestRegisterCompany_DuplicateSubdomain(t *testing.T) {
+// Two companies with the same name get distinct subdomains via a numeric suffix.
+func TestRegisterCompany_DuplicateNameGetsSuffix(t *testing.T) {
 	svc, _, _, _ := newService()
-	req := model.RegisterCompanyRequest{Email: "a@b.io", Password: "supersecret", CompanyName: "X", Subdomain: "acme"}
-	if _, err := svc.RegisterCompany(context.Background(), req); err != nil {
+	first, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
+		Email: "a@b.io", Password: "supersecret", CompanyName: "Acme",
+	})
+	if err != nil {
 		t.Fatalf("first register failed: %v", err)
 	}
-	req.Email = "c@d.io"
-	_, err := svc.RegisterCompany(context.Background(), req)
-	if !errors.Is(err, ErrSubdomainTaken) {
-		t.Fatalf("expected ErrSubdomainTaken, got %v", err)
+	if first.Company.Subdomain != "acme" {
+		t.Fatalf("expected first subdomain acme, got %q", first.Company.Subdomain)
+	}
+	second, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
+		Email: "c@d.io", Password: "supersecret", CompanyName: "Acme",
+	})
+	if err != nil {
+		t.Fatalf("second register failed: %v", err)
+	}
+	if second.Company.Subdomain != "acme-2" {
+		t.Fatalf("expected second subdomain acme-2, got %q", second.Company.Subdomain)
 	}
 }
 
 func TestRegisterCompany_ShortPassword(t *testing.T) {
 	svc, _, _, _ := newService()
 	_, err := svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
-		Email: "a@b.io", Password: "short", CompanyName: "X", Subdomain: "acme",
+		Email: "a@b.io", Password: "short", CompanyName: "X",
 	})
 	var verr ValidationError
 	if !errors.As(err, &verr) {
@@ -173,7 +191,7 @@ func TestRegisterCompany_ShortPassword(t *testing.T) {
 func TestLogin_HappyPath(t *testing.T) {
 	svc, _, _, _ := newService()
 	_, _ = svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
-		Email: "owner@acme.io", Password: "supersecret", CompanyName: "Acme", Subdomain: "acme",
+		Email: "owner@acme.io", Password: "supersecret", CompanyName: "Acme",
 	})
 
 	resp, err := svc.Login(context.Background(), model.LoginRequest{
@@ -190,7 +208,7 @@ func TestLogin_HappyPath(t *testing.T) {
 func TestLogin_WrongPassword(t *testing.T) {
 	svc, _, _, _ := newService()
 	_, _ = svc.RegisterCompany(context.Background(), model.RegisterCompanyRequest{
-		Email: "owner@acme.io", Password: "supersecret", CompanyName: "Acme", Subdomain: "acme",
+		Email: "owner@acme.io", Password: "supersecret", CompanyName: "Acme",
 	})
 
 	_, err := svc.Login(context.Background(), model.LoginRequest{

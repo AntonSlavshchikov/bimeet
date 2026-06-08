@@ -3,8 +3,10 @@
 
 /* === Дизайн-токены (light) ===
  * Базируется на People-фронте. Ключевое отличие Teams: --color-accent — это
- * БРЕНД-цвет компании, который CompanyProvider переопределяет в рантайме
- * (document.documentElement.style.setProperty('--color-accent', brandColor)).
+ * БРЕНД-цвет компании. Значение здесь — нейтральный дефолт (Indigo); внутри
+ * контекста компании его переопределяет <BrandScope> (features/branding),
+ * выставляя --color-accent инлайном на обёртке воркспейса. Нейтральные экраны
+ * вне обёртки (регистрация компании, not-found) остаются на этом дефолте.
  */
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;

@@ -97,8 +97,8 @@ func (s *Service) RegisterCompany(ctx context.Context, req model.RegisterCompany
 		return model.AuthResponse{}, ValidationError{"company name is required"}
 	}
 
-	subdomain := strings.ToLower(strings.TrimSpace(req.Subdomain))
-	if err := s.validateSubdomain(ctx, subdomain); err != nil {
+	subdomain, err := s.generateSubdomain(ctx, companyName)
+	if err != nil {
 		return model.AuthResponse{}, err
 	}
 
@@ -217,21 +217,91 @@ func (s *Service) generateToken(user model.User) (string, error) {
 	return signed, nil
 }
 
-func (s *Service) validateSubdomain(ctx context.Context, subdomain string) error {
-	if !subdomainRe.MatchString(subdomain) {
-		return ValidationError{"subdomain must be 3–30 chars: lowercase letters, digits, hyphens"}
+// generateSubdomain derives a unique subdomain from the company name. The name
+// is slugified (Cyrillic transliterated), and if the base slug is reserved or
+// already taken a numeric suffix is appended (acme → acme-2 → acme-3 …) until a
+// free one is found, with a random suffix as a last resort.
+func (s *Service) generateSubdomain(ctx context.Context, companyName string) (string, error) {
+	base := slugify(companyName)
+	if base == "" || !subdomainRe.MatchString(base) {
+		base = "company"
 	}
-	if reservedSubdomains[subdomain] {
-		return ErrSubdomainReserved
+
+	candidate := base
+	for attempt := 2; attempt <= 100; attempt++ {
+		free, err := s.subdomainAvailable(ctx, candidate)
+		if err != nil {
+			return "", err
+		}
+		if free {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, attempt)
 	}
-	taken, err := s.companyRepo.SubdomainTaken(ctx, subdomain)
+
+	// Astronomically unlikely fallback: collide 99 times, then go random.
+	for i := 0; i < 10; i++ {
+		candidate = fmt.Sprintf("%s-%s", base, uuid.New().String()[:6])
+		free, err := s.subdomainAvailable(ctx, candidate)
+		if err != nil {
+			return "", err
+		}
+		if free {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("could not allocate a unique subdomain for %q", companyName)
+}
+
+// subdomainAvailable is true when the subdomain is neither reserved nor taken.
+func (s *Service) subdomainAvailable(ctx context.Context, sub string) (bool, error) {
+	if reservedSubdomains[sub] {
+		return false, nil
+	}
+	taken, err := s.companyRepo.SubdomainTaken(ctx, sub)
 	if err != nil {
-		return err
+		return false, err
 	}
-	if taken {
-		return ErrSubdomainTaken
+	return !taken, nil
+}
+
+// maxBaseSubdomainLen leaves room for a "-NN" / "-xxxxxx" uniqueness suffix
+// under the 30-char subdomain limit.
+const maxBaseSubdomainLen = 24
+
+// translitRU maps lowercase Cyrillic letters to their latin slug equivalents.
+var translitRU = map[rune]string{
+	'а': "a", 'б': "b", 'в': "v", 'г': "g", 'д': "d", 'е': "e", 'ё': "e",
+	'ж': "zh", 'з': "z", 'и': "i", 'й': "i", 'к': "k", 'л': "l", 'м': "m",
+	'н': "n", 'о': "o", 'п': "p", 'р': "r", 'с': "s", 'т': "t", 'у': "u",
+	'ф': "f", 'х': "h", 'ц': "c", 'ч': "ch", 'ш': "sh", 'щ': "sch",
+	'ъ': "", 'ы': "y", 'ь': "", 'э': "e", 'ю': "yu", 'я': "ya",
+}
+
+// slugify turns an arbitrary company name into a subdomain-safe base: lowercased,
+// Cyrillic transliterated, every other non-alphanumeric run collapsed to a single
+// hyphen, trimmed, and capped to maxBaseSubdomainLen.
+func slugify(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	for _, r := range s {
+		if tr, ok := translitRU[r]; ok {
+			b.WriteString(tr)
+			continue
+		}
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('-')
+		}
 	}
-	return nil
+	parts := strings.FieldsFunc(b.String(), func(r rune) bool { return r == '-' })
+	slug := strings.Join(parts, "-")
+	if len(slug) > maxBaseSubdomainLen {
+		slug = strings.Trim(slug[:maxBaseSubdomainLen], "-")
+	}
+	return slug
 }
 
 // ─── helpers ───────────────────────────────────────────────────────────────

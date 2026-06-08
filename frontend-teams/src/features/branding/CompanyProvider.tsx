@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { companyApi } from '@/entities/company/api'
 import type { PublicCompany } from '@/entities/company/types'
 import { resolveSubdomain } from '@/shared/lib/subdomain'
-import { applyBrandColor } from './applyBrand'
 
 interface CompanyContextValue {
   /** Current subdomain, or null on the registration host. */
@@ -12,8 +11,6 @@ interface CompanyContextValue {
   loading: boolean
   /** True when a subdomain was given but no such company exists. */
   notFound: boolean
-  /** Re-apply brand color (e.g. after the owner changes it). */
-  setBrandColor: (color: string) => void
 }
 
 const CompanyContext = createContext<CompanyContextValue | null>(null)
@@ -32,7 +29,6 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       .then(c => {
         if (cancelled) return
         setCompany(c)
-        applyBrandColor(c.brand_color)
       })
       .catch(() => {
         if (!cancelled) setNotFound(true)
@@ -45,13 +41,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     }
   }, [subdomain])
 
-  function setBrandColor(color: string) {
-    applyBrandColor(color)
-    setCompany(prev => (prev ? { ...prev, brand_color: color } : prev))
-  }
-
   return (
-    <CompanyContext.Provider value={{ subdomain, company, loading, notFound, setBrandColor }}>
+    <CompanyContext.Provider value={{ subdomain, company, loading, notFound }}>
       {children}
     </CompanyContext.Provider>
   )

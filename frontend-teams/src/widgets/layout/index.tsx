@@ -4,25 +4,35 @@ import { Bell, Calendar, LogOut, Settings, Users } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useNotifications } from '@/entities/notification/queries'
 import { cn } from '@/shared/lib/cn'
+import { initials } from '@/shared/lib/initials'
 
-const navBase =
-  'inline-flex items-center gap-1.5 h-9 px-3 rounded-[var(--radius-control)] text-[13.5px] font-medium transition'
-
-function NavItem({ to, icon, label, badge }: { to: string; icon: ReactNode; label: string; badge?: number }) {
+function RailIcon({
+  to,
+  icon,
+  label,
+  badge,
+}: {
+  to: string
+  icon: ReactNode
+  label: string
+  badge?: number
+}) {
   return (
     <NavLink
       to={to}
-      end
+      end={to === '/'}
+      title={label}
+      aria-label={label}
       className={({ isActive }) =>
-        cn(navBase, isActive ? 'bg-accent/10 text-accent' : 'text-ink-2 hover:bg-hover')
+        cn(
+          'relative flex items-center justify-center h-[42px] w-[42px] rounded-[11px] transition',
+          isActive ? 'bg-accent/10 text-accent' : 'text-ink-3 hover:bg-hover hover:text-ink-2',
+        )
       }
     >
       {icon}
-      <span>{label}</span>
       {badge ? (
-        <span className="ml-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-danger text-white text-[11px] font-semibold flex items-center justify-center">
-          {badge}
-        </span>
+        <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-danger ring-2 ring-surface" />
       ) : null}
     </NavLink>
   )
@@ -35,41 +45,46 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isOwner = user?.role === 'owner'
 
   return (
-    <div className="min-h-screen">
-      <header className="h-14 border-b border-line bg-surface sticky top-0 z-30">
-        <div className="max-w-[920px] mx-auto h-full px-4 flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            {company?.logo_url ? (
-              <img src={company.logo_url} alt={company.name} className="h-7 object-contain" />
-            ) : (
-              <div className="h-7 w-7 rounded-[8px] bg-accent text-white flex items-center justify-center text-[13px] font-bold">
-                {(company?.name ?? 'B').slice(0, 1).toUpperCase()}
-              </div>
-            )}
-            <span className="text-[14px] font-semibold text-ink hidden sm:block">{company?.name}</span>
-          </Link>
+    <div className="h-screen grid grid-cols-[64px_1fr] overflow-hidden bg-bg-2">
+      {/* ICON RAIL */}
+      <nav className="flex flex-col items-center gap-1 py-3.5 bg-surface border-r border-line">
+        <Link
+          to="/"
+          title={company?.name}
+          className="mb-3 h-[38px] w-[38px] rounded-[11px] bg-accent text-white flex items-center justify-center overflow-hidden shrink-0"
+        >
+          {company?.logo_url ? (
+            <img src={company.logo_url} alt={company.name} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-[17px] font-bold">{(company?.name ?? 'B').slice(0, 1).toUpperCase()}</span>
+          )}
+        </Link>
 
-          <nav className="flex items-center gap-1 ml-2">
-            <NavItem to="/" icon={<Calendar size={15} />} label="Встречи" />
-            <NavItem to="/notifications" icon={<Bell size={15} />} label="Уведомления" badge={unread} />
-            {isOwner && <NavItem to="/team" icon={<Users size={15} />} label="Команда" />}
-            {isOwner && <NavItem to="/settings" icon={<Settings size={15} />} label="Настройки" />}
-          </nav>
+        <RailIcon to="/" icon={<Calendar size={20} />} label="Встречи" />
+        {isOwner && <RailIcon to="/team" icon={<Users size={20} />} label="Команда" />}
+        <RailIcon to="/notifications" icon={<Bell size={20} />} label="Уведомления" badge={unread} />
+        {isOwner && <RailIcon to="/settings" icon={<Settings size={20} />} label="Настройки" />}
 
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-[13px] text-ink-3 hidden sm:block">{user?.name}</span>
-            <button
-              onClick={logout}
-              title="Выйти"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-[var(--radius-control)] text-ink-2 hover:bg-hover transition"
-            >
-              <LogOut size={16} />
-            </button>
+        <div className="mt-auto flex flex-col items-center gap-2">
+          <div
+            title={user?.name}
+            className="h-[34px] w-[34px] rounded-full bg-accent text-white flex items-center justify-center text-[11px] font-bold"
+          >
+            {initials(user?.name)}
           </div>
+          <button
+            onClick={logout}
+            title="Выйти"
+            aria-label="Выйти"
+            className="flex items-center justify-center h-[34px] w-[34px] rounded-[11px] text-ink-3 hover:bg-hover hover:text-ink-2 transition"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-[920px] mx-auto px-4 py-6">{children}</main>
+      {/* MAIN */}
+      <main className="min-w-0 overflow-hidden">{children}</main>
     </div>
   )
 }
