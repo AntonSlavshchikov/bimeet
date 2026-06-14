@@ -291,7 +291,10 @@
     "avatarSaved": "Avatar updated",
     "avatarDeleted": "Avatar removed",
     "deleteAvatar": "Remove avatar",
-    "uploadError": "Failed to upload avatar"
+    "uploadError": "Failed to upload avatar",
+    "theme": "Appearance",
+    "themeLight": "Light",
+    "themeDark": "Dark"
   },
   "push": {
     "title": "Push notifications",

@@ -13,11 +13,26 @@ declare const self: ServiceWorkerGlobalScope & {
 // Precache всех ассетов из манифеста сборки → офлайн-доступ.
 precacheAndRoute(self.__WB_MANIFEST)
 
-// SPA-навигация: любые маршруты отдаём index.html из кэша, кроме /api/*.
+// SPA-навигация: network-first. На каждый переход/перезагрузку берём свежий
+// index.html из сети (важно — он содержит inline-бутстрап темы и ссылки на
+// актуальные ассеты), а офлайн откатываемся на precache-копию shell'а. Без
+// этого SW отдавал бы закэшированный index.html, и правки в <head> (например,
+// применение сохранённой темы до первой отрисовки) не подхватывались бы при
+// перезагрузке, пока не обновится сам SW. /api/* сюда не попадает.
+const cachedShell = createHandlerBoundToURL('/index.html')
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('/index.html'), {
-    denylist: [/^\/api\//],
-  }),
+  new NavigationRoute(
+    async (params) => {
+      try {
+        const fresh = await fetch(params.request)
+        if (fresh && (fresh.ok || fresh.type === 'opaqueredirect')) return fresh
+        return cachedShell(params)
+      } catch {
+        return cachedShell(params)
+      }
+    },
+    { denylist: [/^\/api\//] },
+  ),
 )
 
 // Кнопка «Обновить» в PWAUpdater шлёт SKIP_WAITING — активируем новый SW.

@@ -96,3 +96,37 @@ body {
   }
 }
 
+/* === Dark theme ===
+ * Включается классом `dark` на <html> (см. shared/theme). Переопределяет токены —
+ * остальной UI адаптируется автоматически, т.к. использует переменные.
+ * Объявлено после mobile-блока, чтобы перебивать его на телефоне (равная
+ * специфичность — решает порядок).
+ */
+html { color-scheme: light; }
+
+html.dark {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-bg: #0A0A0B;
+  --color-bg-2: #131316;
+  --color-surface: #161618;
+  --color-hover: rgba(235, 235, 245, 0.04);
+
+  /* Text + lines */
+  --color-ink: #FFFFFF;
+  --color-ink-2: rgba(235, 235, 245, 0.92);
+  --color-ink-3: rgba(235, 235, 245, 0.55);
+  --color-ink-4: rgba(235, 235, 245, 0.28);
+  --color-line: rgba(235, 235, 245, 0.10);
+  --color-line-soft: rgba(235, 235, 245, 0.06);
+
+  /* Accent + semantic (iOS dark) */
+  --color-accent: #0A84FF;
+  --color-success: #30D158;
+  --color-warning: #FF9F0A;
+  --color-danger: #FF453A;
+  --color-purple: #BF5AF2;
+  --color-indigo: #5E5CE6;
+}
+

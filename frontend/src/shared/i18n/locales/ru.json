@@ -291,7 +291,10 @@
     "avatarSaved": "Аватарка обновлена",
     "avatarDeleted": "Аватарка удалена",
     "deleteAvatar": "Удалить аватарку",
-    "uploadError": "Не удалось загрузить аватарку"
+    "uploadError": "Не удалось загрузить аватарку",
+    "theme": "Тема оформления",
+    "themeLight": "Светлая",
+    "themeDark": "Тёмная"
   },
   "push": {
     "title": "Push-уведомления",

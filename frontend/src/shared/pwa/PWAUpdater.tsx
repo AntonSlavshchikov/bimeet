@@ -16,7 +16,22 @@ export function PWAUpdater() {
   const { t } = useTranslation()
 
   useEffect(() => {
-    if (import.meta.env.DEV) return
+    if (import.meta.env.DEV) {
+      // В dev SW не нужен. Снимаем «призрачные» регистрации, оставшиеся от
+      // прошлого `npm run preview`/сборки на этом origin — иначе они отдают
+      // устаревший закэшированный index.html (ломая HMR и, например, применение
+      // сохранённой темы до первой отрисовки). Эффект применится со следующей
+      // перезагрузки.
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister())
+        })
+        if ('caches' in window) {
+          caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
+        }
+      }
+      return
+    }
     if (!('serviceWorker' in navigator)) return
 
     const wb = new Workbox('/sw.js', { scope: '/' })

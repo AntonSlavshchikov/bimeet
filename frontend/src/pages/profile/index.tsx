@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Calendar, Camera, Loader2, LogOut, Mail, MapPin, Trash2, User } from 'lucide-react'
+import { Calendar, Camera, Globe, Loader2, LogOut, Mail, MapPin, Moon, Sun, Trash2, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { formatDate } from '@/shared/lib/formatDate'
+import { useTheme, type Theme } from '@/shared/theme'
 import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
 import PushSettings from '@/features/push/ui/PushSettings'
 import { cn } from '@/shared/lib/cn'
@@ -14,7 +15,9 @@ type Tab = 'edit' | 'stats'
 
 export default function ProfilePage() {
   const { user, updateUser, logout } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isRu = i18n.language === 'ru'
+  const [theme, setTheme] = useTheme()
   const toast = useToast()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -204,6 +207,20 @@ export default function ProfilePage() {
                 {t('profile.save', 'Сохранить')}
               </Button>
 
+              <div className="border-t border-line-soft pt-4">
+                <Field label={t('profile.theme', 'Тема оформления')}>
+                  <SegmentedControl<Theme>
+                    fullWidth
+                    value={theme}
+                    onChange={setTheme}
+                    options={[
+                      { value: 'light', label: <span className="inline-flex items-center gap-1.5"><Sun size={13} />{t('profile.themeLight', 'Светлая')}</span> },
+                      { value: 'dark', label: <span className="inline-flex items-center gap-1.5"><Moon size={13} />{t('profile.themeDark', 'Тёмная')}</span> },
+                    ]}
+                  />
+                </Field>
+              </div>
+
               <PushSettings />
             </div>
           )}
@@ -219,15 +236,25 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Выход — в самом низу, только в мобильной версии (на десктопе он в сайдбаре) */}
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="lg:hidden w-full inline-flex items-center justify-center gap-2 rounded-[10px] border border-line px-3 py-2.5 text-[13px] font-semibold text-danger hover:bg-hover transition focus-ring"
-      >
-        <LogOut size={15} />
-        {t('common.logout', 'Выйти')}
-      </button>
+      {/* Язык и выход — только в мобильной версии (на десктопе они в сайдбаре). */}
+      <div className="lg:hidden flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => i18n.changeLanguage(isRu ? 'en' : 'ru')}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-[10px] border border-line px-3 py-2.5 text-[13px] font-semibold text-ink-2 hover:bg-hover transition focus-ring"
+        >
+          <Globe size={15} className="text-ink-3" />
+          {isRu ? 'English' : 'Русский'}
+        </button>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-[10px] border border-line px-3 py-2.5 text-[13px] font-semibold text-danger hover:bg-hover transition focus-ring"
+        >
+          <LogOut size={15} />
+          {t('common.logout', 'Выйти')}
+        </button>
+      </div>
     </div>
   )
 }

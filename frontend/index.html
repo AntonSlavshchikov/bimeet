@@ -10,6 +10,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Bimeet" />
     <title>Bimeet</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a flash / reset on
+      // reload. Defaults to light. Mirrors src/shared/theme.
+      (function () {
+        try {
+          var dark = localStorage.getItem('theme') === 'dark';
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
