@@ -13,7 +13,7 @@ export default function PollsTab({ event }: { event: Event }) {
   const [open, setOpen] = useState(false)
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
-  const isOrganizer = event.organizer.id === user?.id
+  const isOrganizer = event.organizer.is_me
 
   const addPoll = useAddPoll(event.id)
   const castVote = useVote(event.id)
@@ -113,15 +113,14 @@ export default function PollsTab({ event }: { event: Event }) {
       )}
 
       {event.polls.map(poll => {
-        const totalVotes = poll.options.reduce((s, o) => s + o.votes.length, 0)
-        const myVote = poll.options.find(o => o.votes.includes(user?.id ?? ''))
+        const totalVotes = poll.options.reduce((s, o) => s + o.vote_count, 0)
         return (
           <div key={poll.id} className="rounded-[12px] border border-line bg-surface p-4 flex flex-col gap-2.5">
             <div className="text-[14px] font-medium text-ink">{poll.question}</div>
             <div className="flex flex-col gap-2">
               {poll.options.map(option => {
-                const pct = totalVotes > 0 ? Math.round((option.votes.length / totalVotes) * 100) : 0
-                const isMy = myVote?.id === option.id
+                const pct = totalVotes > 0 ? Math.round((option.vote_count / totalVotes) * 100) : 0
+                const isMy = option.voted
                 return (
                   <button
                     type="button"
@@ -141,7 +140,7 @@ export default function PollsTab({ event }: { event: Event }) {
                         {option.label}
                       </span>
                       <span className="text-[12px] text-ink-3 tnum shrink-0">
-                        {option.votes.length} · {pct}%
+                        {option.vote_count} · {pct}%
                       </span>
                     </div>
                     {/* Progress */}

@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CalendarOff, Plus, SearchX, X } from 'lucide-react'
 import { useEvents } from '@/entities/event/queries'
-import { useAuth } from '@/features/auth/model/AuthContext'
 import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
@@ -99,11 +98,10 @@ function pluralEvents(n: number): string {
 
 function resolveCanAttend(
   event: EventAny,
-  myId: string | undefined,
   myStatus: string | undefined,
   spotsLeft: number | null,
 ): boolean | undefined {
-  if (event.organizer.id === myId) return undefined
+  if (event.organizer.is_me) return undefined
   if (myStatus === 'confirmed') return undefined
   if (myStatus === 'invited') return true
   if (event.is_public) {
@@ -194,10 +192,8 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
 
 function StatsRail({
   events,
-  myId,
 }: {
   events: EventAny[]
-  myId?: string
 }) {
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -206,13 +202,13 @@ function StatsRail({
     const d = new Date(e.date_start)
     return d >= monthStart && d <= monthEnd && e.status !== 'completed'
   })
-  const organizing = thisMonth.filter(e => e.organizer.id === myId).length
+  const organizing = thisMonth.filter(e => e.organizer.is_me).length
   const upcoming = thisMonth.length
 
-  // Уникальные participants в this-month
+  // Уникальные participants в this-month. Без user id дедуплицируем по email.
   const people = new Set<string>()
   thisMonth.forEach(e => {
-    e.participants.forEach(p => { if (p.user.id !== myId) people.add(p.user.id) })
+    e.participants.forEach(p => { if (!p.user.is_me) people.add(p.user.email) })
   })
 
   return (
@@ -230,7 +226,6 @@ function StatsRail({
 
 function EventsListPage() {
   const events = useEvents()
-  const { user } = useAuth()
   const { t } = useTranslation()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -274,19 +269,19 @@ function EventsListPage() {
     [events],
   )
 
-  const attendingEvents = events.filter(e => e.organizer.id !== user?.id && e.status !== 'completed')
-  const organizingEvents = events.filter(e => e.organizer.id === user?.id && e.status !== 'completed')
+  const attendingEvents = events.filter(e => !e.organizer.is_me && e.status !== 'completed')
+  const organizingEvents = events.filter(e => e.organizer.is_me && e.status !== 'completed')
   // «Публичные» внутри моих встреч = мои публичные (например, которые я организовал).
   const myPublicEvents = events.filter(e => e.is_public && e.status !== 'completed')
   const pastEvents = events.filter(e => e.status === 'completed')
 
   function handleAttend(event: EventAny) {
-    const myParticipant = event.participants.find(p => p.user.id === user?.id)
+    const myParticipant = event.participants.find(p => p.user.is_me)
     const myStatus = myParticipant?.status ?? event.my_status
 
-    if (myStatus === 'invited' && user?.id) {
+    if (myStatus === 'invited') {
       confirmAttendance.mutate(
-        { eventId: event.id, userId: user.id },
+        { eventId: event.id },
         {
           onSuccess: () => toast({ title: t('eventCard.statusConfirmed', 'Подтверждено'), status: 'success' }),
           onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
@@ -411,7 +406,6 @@ function EventsListPage() {
       ) : (
         <div className="flex flex-col gap-8">
           {groups.map(g => {
-            const myId = user?.id
             return (
               <section key={g.title} className="flex flex-col gap-2.5">
                 <div className="flex items-center justify-between px-1">
@@ -421,13 +415,13 @@ function EventsListPage() {
                 </div>
                 <ListGroup>
                   {g.events.map(event => {
-                    const myParticipant = event.participants.find(p => p.user.id === myId)
+                    const myParticipant = event.participants.find(p => p.user.is_me)
                     const myStatus =
-                      event.organizer.id !== myId
+                      !event.organizer.is_me
                         ? (myParticipant?.status ?? event.my_status)
                         : undefined
                     const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-                    const canAttend = resolveCanAttend(event, myId, myStatus, spotsLeft)
+                    const canAttend = resolveCanAttend(event, myStatus, spotsLeft)
                     return (
                       <EventListRow
                         key={event.id}
@@ -456,7 +450,6 @@ export default EventsListPage
 // Reusable Rail composition for this page — exposed for Router
 export function EventsListRail() {
   const events = useEvents()
-  const { user } = useAuth()
 
   // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам.
   const allEvents = useMemo<EventAny[]>(() => events, [events])
@@ -464,7 +457,7 @@ export function EventsListRail() {
   return (
     <>
       <UpcomingRail events={allEvents} />
-      <StatsRail events={allEvents} myId={user?.id} />
+      <StatsRail events={allEvents} />
     </>
   )
 }

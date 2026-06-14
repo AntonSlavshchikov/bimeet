@@ -17,7 +17,7 @@ export default function CarpoolTab({ event }: { event: Event }) {
   const addCarpool = useAddCarpool(event.id)
   const joinCarpool = useJoinCarpool(event.id)
 
-  const isDriver = event.carpools.some(c => c.driver.id === user?.id)
+  const isDriver = event.carpools.some(c => c.driver.is_me)
   const isCompleted = event.status === 'completed'
 
   function handleCreate() {
@@ -93,8 +93,8 @@ export default function CarpoolTab({ event }: { event: Event }) {
         <div className="flex flex-col gap-3">
           {event.carpools.map(carpool => {
             const freeSeats = carpool.seats_available - carpool.passengers.length
-            const iAmDriver = carpool.driver.id === user?.id
-            const iAmPassenger = carpool.passengers.some(p => p.id === user?.id)
+            const iAmDriver = carpool.driver.is_me
+            const iAmPassenger = carpool.passengers.some(p => p.is_me)
             const hasFree = freeSeats > 0
             return (
               <div key={carpool.id} className="rounded-[12px] border border-line bg-surface p-4">
@@ -129,7 +129,7 @@ export default function CarpoolTab({ event }: { event: Event }) {
                     <span className="text-[12px] text-ink-3">{t('carpools.passengers', 'Пассажиры:')}</span>
                     <AvatarStack max={6}>
                       {carpool.passengers.map(p => (
-                        <Avatar key={p.id} name={p.name} size="xs" />
+                        <Avatar key={p.email} name={p.name} size="xs" />
                       ))}
                     </AvatarStack>
                   </div>

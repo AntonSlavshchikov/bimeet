@@ -37,7 +37,7 @@ func (s *Service) List(ctx context.Context, eventID, userID uuid.UUID, limit int
 	if limit <= 0 || limit > maxLimit {
 		limit = defaultLimit
 	}
-	return s.repo.ListByEvent(ctx, eventID, nil, limit)
+	return s.repo.ListByEvent(ctx, eventID, userID, nil, limit)
 }
 
 // Post stores a message from a participant and fans out notifications.
@@ -57,7 +57,7 @@ func (s *Service) Post(ctx context.Context, eventID, userID uuid.UUID, req model
 	// silently ignored (the message is posted without a reply).
 	var replyToID *uuid.UUID
 	if req.ReplyToID != nil {
-		if parent, err := s.repo.GetByID(ctx, *req.ReplyToID); err == nil && parent.EventID == eventID {
+		if parent, err := s.repo.GetByID(ctx, *req.ReplyToID, userID); err == nil && parent.EventID == eventID {
 			replyToID = req.ReplyToID
 		}
 	}
@@ -78,14 +78,14 @@ func (s *Service) Post(ctx context.Context, eventID, userID uuid.UUID, req model
 
 // Delete soft-deletes a message; allowed for its author or the organizer.
 func (s *Service) Delete(ctx context.Context, eventID, messageID, userID uuid.UUID) error {
-	msg, err := s.repo.GetByID(ctx, messageID)
+	msg, err := s.repo.GetByID(ctx, messageID, userID)
 	if err != nil {
 		return fmt.Errorf("message not found")
 	}
 	if msg.EventID != eventID {
 		return fmt.Errorf("message does not belong to this event")
 	}
-	if msg.Author.ID != userID {
+	if !msg.IsMine {
 		event, err := s.eventRepo.GetByID(ctx, eventID)
 		if err != nil {
 			return fmt.Errorf("event not found")

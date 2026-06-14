@@ -9,7 +9,6 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
-import type { CollectionContribution } from '@/entities/collection/model/types'
 import {
   useAddCollection,
   useRemoveCollection,
@@ -18,7 +17,6 @@ import {
   useRejectContribution,
   useMarkPaid,
 } from '@/features/collections/model/hooks'
-import { useAuth } from '@/features/auth/model/AuthContext'
 import {
   Avatar,
   Button,
@@ -90,15 +88,7 @@ function ReceiptUploadDialog({ open, onClose, onSubmit, loading }: ReceiptUpload
   )
 }
 
-function ContributionStatusPill({ status }: { status: CollectionContribution['status'] }) {
-  const { t } = useTranslation()
-  if (status === 'paid') return <StatusPill variant="going" size="sm">{t('collections.statusPaid', 'Оплачено')}</StatusPill>
-  if (status === 'pending') return <StatusPill variant="invited" size="sm">{t('collections.statusPending', 'На проверке')}</StatusPill>
-  return null
-}
-
 export default function CollectionsTab({ event }: { event: Event }) {
-  const { user } = useAuth()
   const { t } = useTranslation()
   const toast = useToast()
   const [open, setOpen] = useState(false)
@@ -113,21 +103,17 @@ export default function CollectionsTab({ event }: { event: Event }) {
   const rejectContribution = useRejectContribution(event.id)
   const markPaid = useMarkPaid(event.id)
 
-  const isOrganizer = event.organizer.id === user?.id
+  const isOrganizer = event.organizer.is_me
   const isCompleted = event.status === 'completed'
 
+  // The backend already emits one contribution row per expected member
+  // (organizer + confirmed participants), so collection.contributions is the
+  // authoritative payer list — no client-side matching by user id needed.
   const confirmedParticipants = event.participants.filter(p => p.status === 'confirmed')
-  const isOrganizerParticipant = confirmedParticipants.some(p => p.user.id === event.organizer.id)
-  const contributors = isOrganizerParticipant
-    ? confirmedParticipants
-    : [
-        ...confirmedParticipants,
-        { id: 'organizer', user: event.organizer, status: 'confirmed' as const },
-      ]
 
-  const totalTarget = event.collections.reduce((s, c) => s + c.per_person_amount * contributors.length, 0)
+  const totalTarget = event.collections.reduce((s, c) => s + c.per_person_amount * c.contributions.length, 0)
   const totalPaidCount = event.collections.flatMap(c => c.contributions).filter(c => c.status === 'paid').length
-  const totalSlots = event.collections.length * contributors.length
+  const totalSlots = event.collections.reduce((s, c) => s + c.contributions.length, 0)
   const collectedPct = totalSlots > 0 ? Math.round((totalPaidCount / totalSlots) * 100) : 0
   const perPersonTotal = event.collections.reduce((s, c) => s + c.per_person_amount, 0)
 
@@ -258,10 +244,11 @@ export default function CollectionsTab({ event }: { event: Event }) {
         const contributions = collection.contributions ?? []
         const paidCount = contributions.filter(c => c.status === 'paid').length
         const pendingContribs = contributions.filter(c => c.status === 'pending')
-        const myContribution = contributions.find(c => c.user_id === user?.id)
-        const allPaid = paidCount === contributors.length && contributors.length > 0
+        const myContribution = contributions.find(c => c.user.is_me)
+        const memberTotal = contributions.length
+        const allPaid = paidCount === memberTotal && memberTotal > 0
         const shareAmount = collection.per_person_amount
-        const pct = contributors.length > 0 ? Math.round((paidCount / contributors.length) * 100) : 0
+        const pct = memberTotal > 0 ? Math.round((paidCount / memberTotal) * 100) : 0
 
         return (
           <div
@@ -276,7 +263,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
                 <div className="text-[14px] font-medium text-ink truncate">{collection.title}</div>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   <span className="text-[12px] text-ink-3">
-                    {t('collections.totalAmount', { amount: (collection.per_person_amount * contributors.length).toLocaleString('ru-RU'), defaultValue: `Всего ${(collection.per_person_amount * contributors.length).toLocaleString('ru-RU')} ₽` })}
+                    {t('collections.totalAmount', { amount: (collection.per_person_amount * memberTotal).toLocaleString('ru-RU'), defaultValue: `Всего ${(collection.per_person_amount * memberTotal).toLocaleString('ru-RU')} ₽` })}
                   </span>
                   <span className="text-ink-4">·</span>
                   <span className="text-[12px] font-semibold text-accent">
@@ -291,7 +278,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
                     allPaid ? 'bg-success/12 text-success' : 'bg-warning/12 text-warning',
                   )}
                 >
-                  {paidCount}/{contributors.length}
+                  {paidCount}/{memberTotal}
                 </div>
                 {isOrganizer && !isCompleted && (
                   <Tooltip>
@@ -323,16 +310,15 @@ export default function CollectionsTab({ event }: { event: Event }) {
             </div>
 
             {/* Avatars row with status indicators */}
-            {contributors.length > 0 && (
+            {contributions.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap mb-3">
-                {contributors.map(p => {
-                  const contrib = contributions.find(c => c.user_id === p.user.id)
-                  const status = contrib?.status ?? 'not_paid'
+                {contributions.map(contrib => {
+                  const status = contrib.status
                   return (
-                    <Tooltip key={p.user.id}>
+                    <Tooltip key={contrib.user.email}>
                       <TooltipTrigger asChild>
                         <div className={cn('relative', status === 'not_paid' && 'opacity-50')}>
-                          <Avatar name={p.user.name} src={p.user.avatar_url} size="sm" />
+                          <Avatar name={contrib.user.name} size="sm" />
                           {status === 'paid' && (
                             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-surface" />
                           )}
@@ -343,10 +329,10 @@ export default function CollectionsTab({ event }: { event: Event }) {
                       </TooltipTrigger>
                       <TooltipContent>
                         {status === 'paid'
-                          ? t('collections.tooltipPaid', { name: p.user.name, defaultValue: `${p.user.name} — оплачено` })
+                          ? t('collections.tooltipPaid', { name: contrib.user.name, defaultValue: `${contrib.user.name} — оплачено` })
                           : status === 'pending'
-                            ? t('collections.tooltipPending', { name: p.user.name, defaultValue: `${p.user.name} — на проверке` })
-                            : t('collections.tooltipNotPaid', { name: p.user.name, defaultValue: `${p.user.name} — не оплачено` })}
+                            ? t('collections.tooltipPending', { name: contrib.user.name, defaultValue: `${contrib.user.name} — на проверке` })
+                            : t('collections.tooltipNotPaid', { name: contrib.user.name, defaultValue: `${contrib.user.name} — не оплачено` })}
                       </TooltipContent>
                     </Tooltip>
                   )
@@ -355,13 +341,13 @@ export default function CollectionsTab({ event }: { event: Event }) {
             )}
 
             {/* Participant action */}
-            {user && contributors.find(p => p.user.id === user.id) && !isCompleted && (
+            {contributions.some(c => c.user.is_me) && !isCompleted && (
               <div>
                 {isOrganizer && (!myContribution || myContribution.status === 'not_paid') && (
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => markPaid.mutate({ collectionId: collection.id, userId: user.id })}
+                    onClick={() => markPaid.mutate({ collectionId: collection.id })}
                     disabled={markPaid.isPending}
                   >
                     <Check size={14} /> {t('collections.buttonContribute', 'Я заплатил(а)')}
@@ -389,12 +375,11 @@ export default function CollectionsTab({ event }: { event: Event }) {
                 </div>
                 <div className="flex flex-col gap-2">
                   {pendingContribs.map(contrib => {
-                    const participant = contributors.find(p => p.user.id === contrib.user_id)
                     return (
                       <div key={contrib.id} className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Avatar name={participant?.user.name ?? '?'} src={participant?.user.avatar_url} size="xs" />
-                          <span className="text-[12.5px] font-medium text-ink truncate">{participant?.user.name ?? contrib.user_id}</span>
+                          <Avatar name={contrib.user.name} size="xs" />
+                          <span className="text-[12.5px] font-medium text-ink truncate">{contrib.user.name}</span>
                           {contrib.receipt_url && (
                             <a
                               href={contrib.receipt_url}
@@ -409,7 +394,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
                         <div className="flex items-center gap-1 shrink-0">
                           <Button
                             size="sm"
-                            onClick={() => confirmContribution.mutate({ collectionId: collection.id, contribId: contrib.id })}
+                            onClick={() => contrib.id && confirmContribution.mutate({ collectionId: collection.id, contribId: contrib.id })}
                             disabled={confirmContribution.isPending}
                           >
                             {t('collections.confirm', 'OK')}
@@ -417,7 +402,7 @@ export default function CollectionsTab({ event }: { event: Event }) {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => rejectContribution.mutate({ collectionId: collection.id, contribId: contrib.id })}
+                            onClick={() => contrib.id && rejectContribution.mutate({ collectionId: collection.id, contribId: contrib.id })}
                             disabled={rejectContribution.isPending}
                           >
                             {t('collections.reject', 'Откл.')}
@@ -427,39 +412,6 @@ export default function CollectionsTab({ event }: { event: Event }) {
                     )
                   })}
                 </div>
-              </div>
-            )}
-
-            {/* Organizer: mark-paid for others */}
-            {isOrganizer && !isCompleted && (
-              <div className="mt-3 flex flex-col gap-1">
-                {contributors
-                  .filter(p => {
-                    if (p.user.id === user?.id) return false
-                    const contrib = contributions.find(c => c.user_id === p.user.id)
-                    const status = contrib?.status ?? 'not_paid'
-                    return status === 'not_paid'
-                  })
-                  .map(p => {
-                    const contrib = contributions.find(c => c.user_id === p.user.id)
-                    return (
-                      <div key={p.user.id} className="flex items-center justify-between gap-2 py-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Avatar name={p.user.name} src={p.user.avatar_url} size="xs" />
-                          <span className="text-[12.5px] text-ink-2 truncate">{p.user.name}</span>
-                          <ContributionStatusPill status={contrib?.status ?? 'not_paid'} />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => markPaid.mutate({ collectionId: collection.id, userId: p.user.id })}
-                          disabled={markPaid.isPending}
-                          className="text-[12px] font-semibold text-success hover:opacity-80 transition disabled:opacity-40"
-                        >
-                          {t('collections.markPaid', 'Отметить')}
-                        </button>
-                      </div>
-                    )
-                  })}
               </div>
             )}
           </div>

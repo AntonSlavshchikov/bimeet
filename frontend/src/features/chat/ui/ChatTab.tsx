@@ -17,7 +17,7 @@ import { cn } from '@/shared/lib/cn'
 export default function ChatTab({ event }: { event: Event }) {
   const { user } = useAuth()
   const { t } = useTranslation()
-  const me = user ? { id: user.id, name: user.name, email: user.email } : undefined
+  const me = user ? { name: user.name, email: user.email, is_me: true } : undefined
 
   const { data: messages, isLoading } = useMessages(event.id)
   const sendMessage = useSendMessage(event.id, me)
@@ -37,7 +37,7 @@ export default function ChatTab({ event }: { event: Event }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastId, event.id])
 
-  const isOrganizer = event.organizer.id === user?.id
+  const isOrganizer = event.organizer.is_me
 
   function submit() {
     const body = text.trim()
@@ -71,7 +71,7 @@ export default function ChatTab({ event }: { event: Event }) {
           </div>
         ) : (
           messages.map(m => {
-            const mine = m.author.id === user?.id
+            const mine = m.is_mine
             const canDelete = !m.deleted && (mine || isOrganizer)
             return (
               <div key={m.id} className={cn('flex gap-2.5 group', mine && 'flex-row-reverse')}>

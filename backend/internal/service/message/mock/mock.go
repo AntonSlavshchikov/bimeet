@@ -74,33 +74,33 @@ func (mr *MockMessageRepoMockRecorder) Create(ctx, eventID, userID, body, replyT
 }
 
 // GetByID mocks base method.
-func (m *MockMessageRepo) GetByID(ctx context.Context, id uuid.UUID) (model.Message, error) {
+func (m *MockMessageRepo) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", ctx, id)
+	ret := m.ctrl.Call(m, "GetByID", ctx, id, userID)
 	ret0, _ := ret[0].(model.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockMessageRepoMockRecorder) GetByID(ctx, id any) *gomock.Call {
+func (mr *MockMessageRepoMockRecorder) GetByID(ctx, id, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockMessageRepo)(nil).GetByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockMessageRepo)(nil).GetByID), ctx, id, userID)
 }
 
 // ListByEvent mocks base method.
-func (m *MockMessageRepo) ListByEvent(ctx context.Context, eventID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
+func (m *MockMessageRepo) ListByEvent(ctx context.Context, eventID, userID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListByEvent", ctx, eventID, before, limit)
+	ret := m.ctrl.Call(m, "ListByEvent", ctx, eventID, userID, before, limit)
 	ret0, _ := ret[0].([]model.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListByEvent indicates an expected call of ListByEvent.
-func (mr *MockMessageRepoMockRecorder) ListByEvent(ctx, eventID, before, limit any) *gomock.Call {
+func (mr *MockMessageRepoMockRecorder) ListByEvent(ctx, eventID, userID, before, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByEvent", reflect.TypeOf((*MockMessageRepo)(nil).ListByEvent), ctx, eventID, before, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByEvent", reflect.TypeOf((*MockMessageRepo)(nil).ListByEvent), ctx, eventID, userID, before, limit)
 }
 
 // MarkRead mocks base method.

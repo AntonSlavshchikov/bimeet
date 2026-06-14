@@ -110,7 +110,7 @@ func TestUpdateAssignment_AssignToSelf(t *testing.T) {
 	ir.EXPECT().GetByID(gomock.Any(), itemID).Return(model.Item{ID: itemID, EventID: eventID}, nil)
 	ir.EXPECT().UpdateAssignment(gomock.Any(), itemID, &userID).Return(model.Item{ID: itemID, AssignedTo: &userID}, nil)
 
-	result, err := svc.UpdateAssignment(context.Background(), eventID, itemID, userID, model.UpdateItemRequest{AssignedTo: &userID})
+	result, err := svc.UpdateAssignment(context.Background(), eventID, itemID, userID, model.UpdateItemRequest{Assigned: true})
 	require.NoError(t, err)
 	assert.Equal(t, userID, *result.AssignedTo)
 }

@@ -60,16 +60,12 @@ func (s *Service) UpdateAssignment(ctx context.Context, eventID, itemID, userID 
 		return model.Item{}, fmt.Errorf("item does not belong to this event")
 	}
 
-	// Participants may only assign/unassign themselves
-	if req.AssignedTo != nil && *req.AssignedTo != userID {
-		event, err := s.eventRepo.GetByID(ctx, eventID)
-		if err != nil {
-			return model.Item{}, err
-		}
-		if event.OrganizerID != userID {
-			return model.Item{}, fmt.Errorf("forbidden: can only assign items to yourself")
-		}
+	// A participant may only take an item for themselves; clearing simply
+	// unassigns it. The caller never references another user's ID.
+	var assignedTo *uuid.UUID
+	if req.Assigned {
+		assignedTo = &userID
 	}
 
-	return s.itemRepo.UpdateAssignment(ctx, itemID, req.AssignedTo)
+	return s.itemRepo.UpdateAssignment(ctx, itemID, assignedTo)
 }

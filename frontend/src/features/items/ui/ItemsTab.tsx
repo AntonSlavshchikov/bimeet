@@ -3,11 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Plus, ShoppingBag } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddItem, useAssignItem } from '@/features/items/model/hooks'
-import { useAuth } from '@/features/auth/model/AuthContext'
 import { Avatar, Button, Input, StatusPill, StatusPillButton } from '@/shared/ui'
 
 export default function ItemsTab({ event }: { event: Event }) {
-  const { user } = useAuth()
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
@@ -69,7 +67,7 @@ export default function ItemsTab({ event }: { event: Event }) {
       ) : (
         <div className="overflow-hidden rounded-[12px] border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
           {event.items.map(item => {
-            const isMine = item.assigned_to?.id === user?.id
+            const isMine = item.assigned_to?.is_me ?? false
             const isTaken = Boolean(item.assigned_to)
             return (
               <div key={item.id} className="flex items-center justify-between gap-3 p-3.5">
@@ -92,7 +90,7 @@ export default function ItemsTab({ event }: { event: Event }) {
                   ) : isMine ? (
                     <StatusPillButton
                       variant="completed"
-                      onClick={() => assignItem.mutate({ itemId: item.id, userId: null })}
+                      onClick={() => assignItem.mutate({ itemId: item.id, assigned: false })}
                       disabled={assignItem.isPending}
                     >
                       {t('items.buttonGiveUp', 'Отказаться')}
@@ -100,7 +98,7 @@ export default function ItemsTab({ event }: { event: Event }) {
                   ) : !isTaken ? (
                     <StatusPillButton
                       variant="action"
-                      onClick={() => user && assignItem.mutate({ itemId: item.id, userId: user.id })}
+                      onClick={() => assignItem.mutate({ itemId: item.id, assigned: true })}
                       disabled={assignItem.isPending}
                     >
                       {t('items.buttonTake', 'Возьму')}

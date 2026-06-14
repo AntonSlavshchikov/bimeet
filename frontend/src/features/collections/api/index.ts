@@ -25,10 +25,10 @@ export const collectionsApi = {
       `/api/events/${eventId}/collections/${collectionId}/contributions/${contribId}/reject`,
       { method: 'POST' },
     ),
-  markPaid: (eventId: string, collectionId: string, userId: string) =>
+  markPaid: (eventId: string, collectionId: string) =>
     apiFetch<CollectionContribution>(
       `/api/events/${eventId}/collections/${collectionId}/contributions/mark-paid`,
-      { method: 'POST', body: JSON.stringify({ user_id: userId }) },
+      { method: 'POST' },
     ),
   summary: (eventId: string) => apiFetch<unknown>(`/api/events/${eventId}/collections/summary`),
 }

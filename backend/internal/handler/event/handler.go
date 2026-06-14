@@ -293,19 +293,15 @@ func (h *Handler) UpdateParticipantStatus(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	targetUserID, err := uuid.Parse(chi.URLParam(r, "userId"))
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
+	// A user may only change their own status: the target is always the caller.
+	// Any {userId} path param (kept for route compatibility) is ignored.
 	var req model.UpdateParticipantStatusRequest
 	if err := response.ParseJSON(r, &req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	participant, err := h.svc.UpdateParticipantStatus(r.Context(), eventID, targetUserID, userID, req)
+	participant, err := h.svc.UpdateParticipantStatus(r.Context(), eventID, userID, userID, req)
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "forbidden") {

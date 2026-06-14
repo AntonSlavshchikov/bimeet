@@ -130,7 +130,7 @@ func TestUpdateAssignment_HappyPath(t *testing.T) {
 	svc.EXPECT().UpdateAssignment(gomock.Any(), eventID, itemID, userID, gomock.Any()).
 		Return(model.Item{ID: itemID, AssignedTo: &userID}, nil)
 
-	body, _ := json.Marshal(model.UpdateItemRequest{AssignedTo: &userID})
+	body, _ := json.Marshal(model.UpdateItemRequest{Assigned: true})
 	req := withAuth(httptest.NewRequest(http.MethodPatch, "/events/"+eventID.String()+"/items/"+itemID.String(), bytes.NewBuffer(body)), userID)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()

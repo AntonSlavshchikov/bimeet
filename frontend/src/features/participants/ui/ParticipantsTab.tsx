@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Link2, UserPlus } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useInviteParticipant, useUpdateParticipantStatus } from '@/features/participants/model/hooks'
-import { useAuth } from '@/features/auth/model/AuthContext'
 import {
   Avatar,
   Button,
@@ -16,7 +15,6 @@ import {
 import { cn } from '@/shared/lib/cn'
 
 export default function ParticipantsTab({ event }: { event: Event }) {
-  const { user } = useAuth()
   const toast = useToast()
   const { t } = useTranslation()
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -25,8 +23,8 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   const updateStatus = useUpdateParticipantStatus(event.id)
   const invite = useInviteParticipant(event.id)
 
-  const isOrganizer = event.organizer.id === user?.id
-  const myParticipant = event.participants.find(p => p.user.id === user?.id)
+  const isOrganizer = event.organizer.is_me
+  const myParticipant = event.participants.find(p => p.user.is_me)
 
   const confirmed = event.participants.filter(p => p.status === 'confirmed').length
   const invited = event.participants.filter(p => p.status === 'invited').length
@@ -67,7 +65,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
               variant={myParticipant.status === 'confirmed' ? 'primary' : 'outline'}
               size="sm"
               disabled={updateStatus.isPending}
-              onClick={() => user && updateStatus.mutate({ userId: user.id, status: 'confirmed' })}
+              onClick={() => updateStatus.mutate({ status: 'confirmed' })}
             >
               {t('participants.going', 'Иду')}
             </Button>
@@ -76,7 +74,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
               variant={myParticipant.status === 'declined' ? 'danger' : 'outline'}
               size="sm"
               disabled={updateStatus.isPending}
-              onClick={() => user && updateStatus.mutate({ userId: user.id, status: 'declined' })}
+              onClick={() => updateStatus.mutate({ status: 'declined' })}
             >
               {t('participants.notGoing', 'Не иду')}
             </Button>
@@ -143,13 +141,13 @@ export default function ParticipantsTab({ event }: { event: Event }) {
       {event.participants.length > 0 && (
         <ListGroup>
           {event.participants.map(p => {
-            const isOrg = p.user.id === event.organizer.id
+            const isOrg = p.is_organizer
             const statusVariant =
               p.status === 'confirmed' ? 'going'
               : p.status === 'invited' ? 'invited'
               : 'completed'
             return (
-              <ListRow key={p.id} accent="gray">
+              <ListRow key={p.user.email} accent="gray">
                 <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-3 pr-3 w-full">
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar name={p.user.name} size="md" />

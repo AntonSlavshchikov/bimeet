@@ -31,9 +31,11 @@ const fromJoins = `FROM event_messages m
 
 // scanRow maps a joined event_messages/users row (plus the optional replied-to
 // message) into a model.Message, decrypting bodies and blanking soft-deleted ones.
-func (r *Repository) scanRow(row interface{ Scan(...any) error }) (model.Message, error) {
+// The author's real ID is not exposed; IsMine is set when the caller authored it.
+func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UUID) (model.Message, error) {
 	var (
 		m              model.Message
+		authorID       uuid.UUID
 		deletedAt      *time.Time
 		replyID        *uuid.UUID
 		replyAuthor    *string
@@ -41,11 +43,13 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }) (model.Message
 		replyDeletedAt *time.Time
 	)
 	if err := row.Scan(
-		&m.ID, &m.EventID, &m.Author.ID, &m.Author.Name, &m.Author.Email, &m.Body, &m.CreatedAt, &deletedAt,
+		&m.ID, &m.EventID, &authorID, &m.Author.Name, &m.Author.Email, &m.Body, &m.CreatedAt, &deletedAt,
 		&replyID, &replyAuthor, &replyBody, &replyDeletedAt,
 	); err != nil {
 		return model.Message{}, err
 	}
+	m.IsMine = authorID == userID
+	m.Author.IsMe = m.IsMine
 	if deletedAt != nil {
 		m.Deleted = true
 		m.Body = ""
@@ -76,14 +80,14 @@ func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body
 	if err != nil {
 		return model.Message{}, fmt.Errorf("insert message: %w", err)
 	}
-	return r.GetByID(ctx, id)
+	return r.GetByID(ctx, id, userID)
 }
 
-func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Message, error) {
+func (r *Repository) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Message, error) {
 	row := r.pool.QueryRow(ctx, `SELECT `+selectCols+`
 		`+fromJoins+`
 		WHERE m.id=$1`, id)
-	m, err := r.scanRow(row)
+	m, err := r.scanRow(row, userID)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("get message: %w", err)
 	}
@@ -92,7 +96,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Message, 
 
 // ListByEvent returns up to limit most-recent messages older than `before`
 // (or now when nil), already ordered oldest→newest for direct display.
-func (r *Repository) ListByEvent(ctx context.Context, eventID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
+func (r *Repository) ListByEvent(ctx context.Context, eventID, userID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
 	rows, err := r.pool.Query(ctx, `SELECT `+selectCols+`
 		`+fromJoins+`
 		WHERE m.event_id=$1 AND ($2::timestamptz IS NULL OR m.created_at < $2)
@@ -105,7 +109,7 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID uuid.UUID, before 
 
 	var msgs []model.Message
 	for rows.Next() {
-		m, err := r.scanRow(rows)
+		m, err := r.scanRow(rows, userID)
 		if err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}

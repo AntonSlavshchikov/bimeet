@@ -52,7 +52,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.is_public,
-		        u.id, u.name, u.email,
+		        u.name, u.email,
 		        COUNT(ep.id) FILTER (WHERE ep.status = 'confirmed') AS confirmed_count
 		 FROM events e
 		 JOIN users u ON u.id = e.organizer_id
@@ -62,7 +62,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 		&e.Category, &e.DressCode, &e.IsPublic,
-		&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
+		&e.Organizer.Name, &e.Organizer.Email,
 		&e.ConfirmedCount)
 	if err != nil {
 		return model.InviteEventInfo{}, fmt.Errorf("get event by invite token: %w", err)
@@ -254,7 +254,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	if err != nil {
 		return model.EventDetail{}, fmt.Errorf("get event detail: %w", err)
 	}
-	detail.Organizer.ID = orgID
+	detail.Organizer.IsMe = orgID == userID
 
 	detail.Participants = []model.ParticipantInfo{}
 	detail.Collections = []model.CollectionInfo{}
@@ -265,7 +265,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 
 	// Participants
 	pRows, err := r.pool.Query(ctx,
-		`SELECT ep.id, ep.user_id, u.name, u.email, ep.status
+		`SELECT ep.user_id, u.name, u.email, ep.status
 		 FROM event_participants ep
 		 JOIN users u ON u.id = ep.user_id
 		 WHERE ep.event_id = $1`,
@@ -276,10 +276,13 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	}
 	for pRows.Next() {
 		var p model.ParticipantInfo
-		if err := pRows.Scan(&p.ID, &p.User.ID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
+		var puID uuid.UUID
+		if err := pRows.Scan(&puID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
 			pRows.Close()
 			return model.EventDetail{}, fmt.Errorf("scan participant detail: %w", err)
 		}
+		p.User.IsMe = puID == userID
+		p.IsOrganizer = puID == orgID
 		detail.Participants = append(detail.Participants, p)
 	}
 	pRows.Close()
@@ -316,9 +319,22 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		return model.EventDetail{}, err
 	}
 	for i, col := range detail.Collections {
+		// Emit one contribution row per expected member (organizer + confirmed
+		// participants), defaulting to not_paid when no contribution exists. The
+		// frontend renders these directly without matching on user IDs.
 		ctRows, err := r.pool.Query(ctx,
-			`SELECT id, user_id, paid, paid_at, status, receipt_url FROM collection_contributions WHERE collection_id = $1`,
-			col.ID,
+			`SELECT cc.id, mem.user_id, u.name, u.email,
+			        COALESCE(cc.paid, false), cc.paid_at,
+			        COALESCE(cc.status, 'not_paid'), cc.receipt_url
+			 FROM (
+			     SELECT organizer_id AS user_id FROM events WHERE id = $1
+			     UNION
+			     SELECT user_id FROM event_participants WHERE event_id = $1 AND status = 'confirmed'
+			 ) mem
+			 JOIN users u ON u.id = mem.user_id
+			 LEFT JOIN collection_contributions cc ON cc.collection_id = $2 AND cc.user_id = mem.user_id
+			 ORDER BY u.name`,
+			eventID, col.ID,
 		)
 		if err != nil {
 			return model.EventDetail{}, fmt.Errorf("list contributions detail: %w", err)
@@ -326,10 +342,12 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		detail.Collections[i].Contributions = []model.ContributionInfo{}
 		for ctRows.Next() {
 			var ct model.ContributionInfo
-			if err := ctRows.Scan(&ct.ID, &ct.UserID, &ct.Paid, &ct.PaidAt, &ct.Status, &ct.ReceiptURL); err != nil {
+			var ctuID uuid.UUID
+			if err := ctRows.Scan(&ct.ID, &ctuID, &ct.User.Name, &ct.User.Email, &ct.Paid, &ct.PaidAt, &ct.Status, &ct.ReceiptURL); err != nil {
 				ctRows.Close()
 				return model.EventDetail{}, fmt.Errorf("scan contribution detail: %w", err)
 			}
+			ct.User.IsMe = ctuID == userID
 			detail.Collections[i].Contributions = append(detail.Collections[i].Contributions, ct)
 		}
 		ctRows.Close()
@@ -359,9 +377,14 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		return model.EventDetail{}, err
 	}
 	for i, poll := range detail.Polls {
+		// Aggregate votes instead of exposing voter IDs: a total count plus
+		// whether the caller themselves voted for the option.
 		optRows, err := r.pool.Query(ctx,
-			`SELECT po.id, po.label FROM poll_options po WHERE po.poll_id = $1 ORDER BY po.id`,
-			poll.ID,
+			`SELECT po.id, po.label,
+			        (SELECT COUNT(*) FROM poll_votes pv WHERE pv.poll_option_id = po.id) AS vote_count,
+			        EXISTS(SELECT 1 FROM poll_votes pv WHERE pv.poll_option_id = po.id AND pv.user_id = $2) AS voted
+			 FROM poll_options po WHERE po.poll_id = $1 ORDER BY po.id`,
+			poll.ID, userID,
 		)
 		if err != nil {
 			return model.EventDetail{}, fmt.Errorf("list poll options detail: %w", err)
@@ -369,7 +392,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		detail.Polls[i].Options = []model.PollOptionInfo{}
 		for optRows.Next() {
 			var opt model.PollOptionInfo
-			if err := optRows.Scan(&opt.ID, &opt.Label); err != nil {
+			if err := optRows.Scan(&opt.ID, &opt.Label, &opt.VoteCount, &opt.Voted); err != nil {
 				optRows.Close()
 				return model.EventDetail{}, fmt.Errorf("scan poll option detail: %w", err)
 			}
@@ -378,28 +401,6 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		optRows.Close()
 		if err := optRows.Err(); err != nil {
 			return model.EventDetail{}, err
-		}
-		for j, opt := range detail.Polls[i].Options {
-			voteRows, err := r.pool.Query(ctx,
-				`SELECT user_id FROM poll_votes WHERE poll_option_id = $1`,
-				opt.ID,
-			)
-			if err != nil {
-				return model.EventDetail{}, fmt.Errorf("list poll votes detail: %w", err)
-			}
-			detail.Polls[i].Options[j].Votes = []uuid.UUID{}
-			for voteRows.Next() {
-				var voterID uuid.UUID
-				if err := voteRows.Scan(&voterID); err != nil {
-					voteRows.Close()
-					return model.EventDetail{}, fmt.Errorf("scan poll vote detail: %w", err)
-				}
-				detail.Polls[i].Options[j].Votes = append(detail.Polls[i].Options[j].Votes, voterID)
-			}
-			voteRows.Close()
-			if err := voteRows.Err(); err != nil {
-				return model.EventDetail{}, err
-			}
 		}
 	}
 
@@ -424,9 +425,9 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		}
 		if assignedID != nil {
 			item.AssignedTo = &model.UserInfo{
-				ID:    *assignedID,
 				Name:  *assignedName,
 				Email: *assignedEmail,
+				IsMe:  *assignedID == userID,
 			}
 		}
 		detail.Items = append(detail.Items, item)
@@ -449,10 +450,12 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	}
 	for cpRows.Next() {
 		var cp model.CarpoolInfo
-		if err := cpRows.Scan(&cp.ID, &cp.Driver.ID, &cp.Driver.Name, &cp.Driver.Email, &cp.SeatsAvailable, &cp.DeparturePoint); err != nil {
+		var driverID uuid.UUID
+		if err := cpRows.Scan(&cp.ID, &driverID, &cp.Driver.Name, &cp.Driver.Email, &cp.SeatsAvailable, &cp.DeparturePoint); err != nil {
 			cpRows.Close()
 			return model.EventDetail{}, fmt.Errorf("scan carpool detail: %w", err)
 		}
+		cp.Driver.IsMe = driverID == userID
 		detail.Carpools = append(detail.Carpools, cp)
 	}
 	cpRows.Close()
@@ -470,10 +473,12 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		detail.Carpools[i].Passengers = []model.UserInfo{}
 		for passRows.Next() {
 			var passenger model.UserInfo
-			if err := passRows.Scan(&passenger.ID, &passenger.Name, &passenger.Email); err != nil {
+			var passID uuid.UUID
+			if err := passRows.Scan(&passID, &passenger.Name, &passenger.Email); err != nil {
 				passRows.Close()
 				return model.EventDetail{}, fmt.Errorf("scan carpool passenger detail: %w", err)
 			}
+			passenger.IsMe = passID == userID
 			detail.Carpools[i].Passengers = append(detail.Carpools[i].Passengers, passenger)
 		}
 		passRows.Close()
@@ -495,10 +500,12 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	}
 	for clRows.Next() {
 		var cl model.ChangeLogInfo
-		if err := clRows.Scan(&cl.ID, &cl.ChangedBy.ID, &cl.ChangedBy.Name, &cl.ChangedBy.Email, &cl.FieldName, &cl.OldValue, &cl.NewValue, &cl.ChangedAt); err != nil {
+		var changedByID uuid.UUID
+		if err := clRows.Scan(&cl.ID, &changedByID, &cl.ChangedBy.Name, &cl.ChangedBy.Email, &cl.FieldName, &cl.OldValue, &cl.NewValue, &cl.ChangedAt); err != nil {
 			clRows.Close()
 			return model.EventDetail{}, fmt.Errorf("scan change log detail: %w", err)
 		}
+		cl.ChangedBy.IsMe = changedByID == userID
 		detail.ChangeLog = append(detail.ChangeLog, cl)
 	}
 	clRows.Close()
@@ -531,17 +538,21 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 	defer rows.Close()
 
 	var events []model.EventListItem
+	var orgIDs []uuid.UUID
 	for rows.Next() {
 		var e model.EventListItem
+		var orgID uuid.UUID
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
-			&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
+			&orgID, &e.Organizer.Name, &e.Organizer.Email,
 			&e.InviteToken, &e.CreatedAt, &e.MyStatus,
 		); err != nil {
 			return nil, fmt.Errorf("scan event list item: %w", err)
 		}
+		e.Organizer.IsMe = orgID == userID
 		events = append(events, e)
+		orgIDs = append(orgIDs, orgID)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -549,7 +560,7 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 
 	for i, e := range events {
 		pRows, err := r.pool.Query(ctx,
-			`SELECT ep.id, ep.user_id, u.name, u.email, ep.status
+			`SELECT ep.user_id, u.name, u.email, ep.status
 			 FROM event_participants ep
 			 JOIN users u ON u.id = ep.user_id
 			 WHERE ep.event_id = $1`,
@@ -561,10 +572,13 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 		events[i].Participants = []model.ParticipantInfo{}
 		for pRows.Next() {
 			var p model.ParticipantInfo
-			if err := pRows.Scan(&p.ID, &p.User.ID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
+			var puID uuid.UUID
+			if err := pRows.Scan(&puID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
 				pRows.Close()
 				return nil, fmt.Errorf("scan participant list item: %w", err)
 			}
+			p.User.IsMe = puID == userID
+			p.IsOrganizer = puID == orgIDs[i]
 			events[i].Participants = append(events[i].Participants, p)
 		}
 		pRows.Close()
@@ -693,19 +707,23 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 	defer rows.Close()
 
 	var events []model.PublicEventListItem
+	var orgIDs []uuid.UUID
 	for rows.Next() {
 		var e model.PublicEventListItem
+		var orgID uuid.UUID
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
-			&e.Organizer.ID, &e.Organizer.Name, &e.Organizer.Email,
+			&orgID, &e.Organizer.Name, &e.Organizer.Email,
 			&e.InviteToken, &e.CreatedAt,
 			&e.IsParticipant,
 		); err != nil {
 			return nil, fmt.Errorf("scan public event list item: %w", err)
 		}
+		e.Organizer.IsMe = orgID == userID
 		e.MyStatus = ""
 		events = append(events, e)
+		orgIDs = append(orgIDs, orgID)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -713,7 +731,7 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 
 	for i, e := range events {
 		pRows, err := r.pool.Query(ctx,
-			`SELECT ep.id, ep.user_id, u.name, u.email, ep.status
+			`SELECT ep.user_id, u.name, u.email, ep.status
 			 FROM event_participants ep
 			 JOIN users u ON u.id = ep.user_id
 			 WHERE ep.event_id = $1`,
@@ -725,10 +743,13 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 		events[i].Participants = []model.ParticipantInfo{}
 		for pRows.Next() {
 			var p model.ParticipantInfo
-			if err := pRows.Scan(&p.ID, &p.User.ID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
+			var puID uuid.UUID
+			if err := pRows.Scan(&puID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
 				pRows.Close()
 				return nil, fmt.Errorf("scan participant public event: %w", err)
 			}
+			p.User.IsMe = puID == userID
+			p.IsOrganizer = puID == orgIDs[i]
 			events[i].Participants = append(events[i].Participants, p)
 		}
 		pRows.Close()

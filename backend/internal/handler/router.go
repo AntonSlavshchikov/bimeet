@@ -96,8 +96,10 @@ func NewRouter(
 				r.Post("/complete", event.Complete)
 				r.Post("/join", event.JoinPublic)
 
-				// Participants
+				// Participants. The status update always targets the caller; the
+				// {userId} variant is kept for backward compatibility.
 				r.Post("/participants", event.InviteParticipant)
+				r.Patch("/participants", event.UpdateParticipantStatus)
 				r.Patch("/participants/{userId}", event.UpdateParticipantStatus)
 
 				// Collections

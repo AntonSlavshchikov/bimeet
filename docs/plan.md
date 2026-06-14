@@ -3028,3 +3028,90 @@ MapLibre-совместимы). Путь к решению: Яндекс отк�
 - [x] шифрование: `secret.Cipher` (AES-256-GCM), `CHAT_ENCRYPTION_KEY`, шифр на `Create` / расшифровка на чтении; legacy-plaintext совместим
 - [x] `go build/vet` + тесты `secret`/`message` зелёные; `npm run build` ок, файлы чата линт-чисто
 - [ ] live-smoke: ответ виден с цитатой; в БД `body` хранится как `enc:…` при заданном ключе; без ключа — как раньше
+
+---
+
+## Этап 42 — Приватность: не отдавать чужие user ID
+
+### Контекст
+
+Сейчас любой участник встречи через API видит **реальные UUID всех остальных пользователей**, привязанных к встрече: организатора, участников (confirmed/invited/declined), плательщиков сборов, голосовавших в опросах, водителей и пассажиров карпула, исполнителей вещей, авторов изменений и авторов сообщений в чате. Это утечка идентификаторов — по ним можно перечислять пользователей и сопоставлять одного человека между разными встречами.
+
+**Цель:** полностью убрать чужие user ID из ответов API. Для отображения достаточно имён/аватаров — с другими пользователями фронт напрямую не взаимодействует. Идентификатор нужен только чтобы понять «это я» (подсветка своего голоса, своё сообщение, свой взнос, бейдж организатора). Это решается булевыми флагами, которые вычисляет бэкенд по `userID` из JWT.
+
+**Ключевое наблюдение:** ни одна мутация не ссылается на чужой id — все три «отправки user_id» с фронта (`updateParticipantStatus`, `markPaid`, назначение вещи) передают **собственный id вызывающего**, который бэкенд и так знает из JWT. Операции организатора над чужими взносами (`confirm`/`reject`) уже работают по `contribId`, а не по user_id. Значит, удаление чужих id ничего не ломает в мутациях — нужно лишь перевести эти три self-мутации на `userID` из контекста.
+
+Итог: из ответов исчезают все реальные user UUID; вместо них — флаги `is_me` / `is_organizer` / `is_mine` и агрегаты (`vote_count`, `voted`). Email и аватары пока остаются как есть (вне охвата). Admin-эндпоинты (`TopOrganizers` / `RecentUsers` / `RecentEvents`) — вне охвата (доступны только админам), опциональный follow-up.
+
+### Backend
+
+**`internal/model/model.go` — DTO**
+- `UserInfo` — удалить `ID uuid.UUID`, добавить `IsMe bool` (`json:"is_me"`); оставить `Name`, `Email`.
+- `ParticipantInfo` — добавить `IsOrganizer bool` (`json:"is_organizer"`) взамен фронтового сравнения `p.user.id === organizer.id`.
+- `ContributionInfo` — удалить `UserID`, добавить вложенный `User UserInfo` (имя/email + `is_me`); `ID` сделать nullable (`*uuid.UUID`).
+- `PollOptionInfo` — удалить `Votes []uuid.UUID`, добавить `VoteCount int` (`json:"vote_count"`) и `Voted bool` (`json:"voted"`).
+- `Message` — удалить `Author.ID` (через изменение `UserInfo`), добавить `IsMine bool` (`json:"is_mine"`).
+- `ItemInfo.AssignedTo`, `CarpoolInfo.Driver`/`Passengers`, `ChangeLogInfo.ChangedBy` — структурно те же, но через `UserInfo` несут `is_me` вместо id.
+
+**`internal/repository/event/repository.go` — `GetDetail`, `ListForUserEnriched`, `ListPublic`** (все уже получают `userID`)
+- При скане каждого user-поля сканировать реальный `user_id` во временную переменную, **не класть в DTO**, выставлять `IsMe = (scanned == userID)`.
+- `ParticipantInfo.IsOrganizer = (participant.user_id == event.organizer_id)`.
+- Сборы: сейчас `ContributionInfo` собирается разрежённо (строка есть только если оплатил/подал). Переписать — для каждого подтверждённого участника эмитить один `ContributionInfo` с вложенным `User` и статусом (`not_paid` по умолчанию). Фронт рендерит взносы напрямую, без матчинга по user_id.
+- Опросы: вместо списка голосовавших — `COUNT(*)` (→ `VoteCount`) и `EXISTS(... user_id = userID)` (→ `Voted`).
+
+**`internal/repository/message/repository.go`**
+- Перестать отдавать `Author.ID`; выставлять `Message.IsMine = (author_user_id == userID)`. Пробросить `userID` в `scanRow` (`ListByEvent`/`GetByID` вызываются из сервиса, где `userID` есть).
+
+**Self-мутации → `userID` из контекста (handler/service)**
+- `UpdateParticipantStatus` (`PATCH /participants/{userId}`) — пользователь меняет свой статус; брать `userID` из `middleware.UserIDFromCtx`, path-param игнорировать (маршрут оставить ради совместимости).
+- `MarkPaid` (`POST /collections/{id}/contributions/mark-paid`) — организатор отмечает себя; убрать `user_id` из тела, брать ctx userID.
+- `UpdateAssignment` (`PATCH /items/{itemId}`) — пользователь берёт вещь на себя; назначать на ctx userID, снятие — очистка.
+- `confirm`/`reject` взносов уже по `contribId` — не трогаем.
+
+**Тесты:** обновить unit-тесты `service/event` и `handler/event` под новые поля/сигнатуры; `go generate ./...` если менялись интерфейсы.
+
+### Frontend
+
+**Типы (`entities/*/model/types.ts`)**
+- event-scoped `User`/`UserInfo` — убрать `id`, добавить `is_me`. (Auth-`User` из `/api/auth/me` сохраняет реальный `id` — нужен только в профиле/own-контексте.)
+- `Participant` — добавить `is_organizer`.
+- `PollOption` — заменить `votes: string[]` на `vote_count: number` + `voted: boolean`.
+- `CollectionContribution` — убрать `user_id`, добавить вложенный `user` (+`is_me`), `id?` nullable.
+- `Message`/`MessageAuthor` — убрать `author.id`, добавить `is_mine`.
+
+**Замена сравнений `=== user?.id` на флаги** (паттерн один и тот же)
+- Организатор: `event.organizer.id === user?.id` → `event.organizer.is_me`.
+- Бейдж организатора: `p.user.id === event.organizer.id` → `p.is_organizer`.
+- Членство: `participants.some(p => p.user.id === user?.id)` → `...some(p => p.user.is_me)`.
+- Чат: `m.author.id === user?.id` → `m.is_mine`.
+- Опросы: `options.find(o => o.votes.includes(user?.id))` / `votes.length` → `options.find(o => o.voted)` и `o.vote_count`.
+- Карпул: `c.driver.id === user?.id` → `c.driver.is_me`; пассажиры → `...some(p => p.is_me)`.
+- Вещи: `item.assigned_to?.id === user?.id` → `item.assigned_to?.is_me`.
+- Сборы: `contributions.find(c => c.user_id === user?.id)` → `...find(c => c.user.is_me)`; рендер взносов — итерировать `collection.contributions` напрямую, убрать матчинг `c.user_id === p.user.id`.
+- `events-list`: аналогично через `is_me`; подсчёт уникальных людей `people.add(p.user.id)` — по `name` или упростить (низкий приоритет).
+
+Затрагиваемые файлы (репрезентативно): `features/participants/ui/ParticipantsTab.tsx`, `features/chat/ui/ChatTab.tsx`, `features/polls/ui/PollsTab.tsx`, `features/carpools/ui/CarpoolTab.tsx`, `features/items/ui/ItemsTab.tsx`, `features/collections/ui/CollectionsTab.tsx`, `pages/event-detail/index.tsx`, `pages/events-list/index.tsx`, `widgets/event-detail/EventInfoPanel.tsx`.
+
+**Мутации (`features/*/api/index.ts`)**
+- `updateParticipantStatus(eventId, status)` — убрать `userId` из сигнатуры/URL, тело `{ status }`.
+- `markPaid(eventId, collectionId)` — убрать `userId`/тело `user_id`.
+- Назначение вещи — убрать передачу `user.id`, вызывать take/clear.
+
+### Чеклист
+
+**Backend**
+- [x] `model.go`: `UserInfo.IsMe`, `ParticipantInfo.IsOrganizer`, `ContributionInfo.User`+nullable `ID`, `PollOptionInfo.VoteCount`/`Voted`, `Message.IsMine`; убрать реальные UUID
+- [x] `repository/event`: вычисление флагов в `GetDetail`/`ListForUserEnriched`/`ListPublic`; взносы — по участникам; голоса — count + voted
+- [x] `repository/message`: `IsMine`, убрать `Author.ID`
+- [x] self-мутации `UpdateParticipantStatus`/`MarkPaid`/`UpdateAssignment` на ctx `userID`
+- [x] обновить unit-тесты, `go build/vet/test` зелёные (кроме предсуществующих сломанных тестов `service/collection` и `handler/collection`, ссылающихся на удалённые `TargetAmount`/`ToggleContribution` — вне охвата этапа)
+
+**Frontend**
+- [x] типы: `is_me`/`is_organizer`/`is_mine`/`vote_count`/`voted`, contribution `user` (введён `EventUser` без `id`)
+- [x] заменить все `=== user?.id` на флаги; взносы рендерить напрямую (убран блок «отметить чужой взнос» — `MarkPaid` теперь только про себя)
+- [x] 3 мутации без user id
+- [x] `npm run build` чисто; `npm run lint` — без новых ошибок (остаются предсуществующие react-refresh/setState-in-effect в `shared/ui`, `AuthContext`, `event-form`)
+
+**Проверка**
+- [x] в JSON `GET /api/events/{id}`, `/messages`, `/events`, `/events/public` нет поля `id` у вложенных user-объектов; есть `is_me`/`is_organizer`/`is_mine`/`vote_count`/`voted`
+- [ ] во фронте работают: бейдж организатора, подсветка своего голоса/сообщения/взноса, смена своего статуса, take/drop вещи, join карпула, confirm/reject чеков организатором (ручная проверка)

@@ -51,6 +51,7 @@ export function useSendMessage(eventId: string, me: MessageAuthor | undefined) {
           body,
           created_at: new Date().toISOString(),
           deleted: false,
+          is_mine: true,
           reply_to: replyTo
             ? {
                 id: replyTo.id,

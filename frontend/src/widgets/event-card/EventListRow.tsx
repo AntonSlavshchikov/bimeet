@@ -117,7 +117,7 @@ export default function EventListRow({
         {confirmed.length > 0 && (
           <AvatarStack>
             {confirmed.map(p => (
-              <Avatar key={p.id} name={p.user.name} size="sm" />
+              <Avatar key={p.user.email} name={p.user.name} size="sm" />
             ))}
           </AvatarStack>
         )}

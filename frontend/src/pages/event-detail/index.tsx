@@ -14,7 +14,6 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
-import { useAuth } from '@/features/auth/model/AuthContext'
 import { useCompleteEvent } from '@/features/event-manage/model/hooks'
 import ParticipantsTab from '@/features/participants/ui/ParticipantsTab'
 import CollectionsTab from '@/features/collections/ui/CollectionsTab'
@@ -61,7 +60,6 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const event = useEvent(id!)
-  const { user } = useAuth()
   const { t } = useTranslation()
   const [completeOpen, setCompleteOpen] = useState(false)
   const tabParam = searchParams.get('tab') as TabKey | null
@@ -70,8 +68,8 @@ export default function EventDetailPage() {
   const completeEvent = useCompleteEvent(id ?? '')
   // Chat is members-only: the organizer or anyone already on the participant list.
   const isMember =
-    !!event && !!user &&
-    (event.organizer.id === user.id || event.participants.some(p => p.user.id === user.id))
+    !!event &&
+    (event.organizer.is_me || event.participants.some(p => p.user.is_me))
   const { data: chatUnread = 0 } = useChatUnread(id ?? '', isMember)
 
   if (!event) {
@@ -85,7 +83,7 @@ export default function EventDetailPage() {
     )
   }
 
-  const isOrganizer = event.organizer.id === user?.id
+  const isOrganizer = event.organizer.is_me
 
   // Chat tab only for members; history only when there are changes.
   const baseTabs: TabDef[] = isMember ? [...ORDINARY_TABS, CHAT_TAB] : ORDINARY_TABS

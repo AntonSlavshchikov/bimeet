@@ -48,8 +48,8 @@ export function useRejectContribution(eventId: string) {
 export function useMarkPaid(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ collectionId, userId }: { collectionId: string; userId: string }) =>
-      collectionsApi.markPaid(eventId, collectionId, userId),
+    mutationFn: ({ collectionId }: { collectionId: string }) =>
+      collectionsApi.markPaid(eventId, collectionId),
     onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) }),
   })
 }

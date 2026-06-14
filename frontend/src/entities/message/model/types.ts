@@ -1,7 +1,7 @@
 export interface MessageAuthor {
-  id: string
   name: string
   email: string
+  is_me: boolean
 }
 
 // ReplyPreview is a lightweight snapshot of the message being replied to.
@@ -19,5 +19,6 @@ export interface Message {
   body: string
   created_at: string
   deleted: boolean
+  is_mine: boolean
   reply_to?: ReplyPreview | null
 }

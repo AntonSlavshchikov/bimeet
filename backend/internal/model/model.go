@@ -161,6 +161,7 @@ type Message struct {
 	Body      string        `json:"body"`
 	CreatedAt time.Time     `json:"created_at"`
 	Deleted   bool          `json:"deleted"`
+	IsMine    bool          `json:"is_mine"`
 	ReplyTo   *ReplyPreview `json:"reply_to,omitempty"`
 }
 
@@ -311,7 +312,7 @@ type CreateItemRequest struct {
 }
 
 type UpdateItemRequest struct {
-	AssignedTo *uuid.UUID `json:"assigned_to"` // null to unassign
+	Assigned bool `json:"assigned"` // true = take for self, false = unassign
 }
 
 type CreateCarpoolRequest struct {
@@ -335,21 +336,24 @@ type InviteEventInfo struct {
 	ConfirmedCount int       `json:"confirmed_count"`
 }
 
+// UserInfo carries display fields for a user shown to other event members.
+// It deliberately omits the real user ID so participants cannot enumerate or
+// cross-reference each other; IsMe lets the caller recognise their own records.
 type UserInfo struct {
-	ID    uuid.UUID `json:"id"`
-	Name  string    `json:"name"`
-	Email string    `json:"email"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	IsMe  bool   `json:"is_me"`
 }
 
 type ParticipantInfo struct {
-	ID     uuid.UUID `json:"id"`
-	User   UserInfo  `json:"user"`
-	Status string    `json:"status"`
+	User        UserInfo `json:"user"`
+	Status      string   `json:"status"`
+	IsOrganizer bool     `json:"is_organizer"`
 }
 
 type ContributionInfo struct {
-	ID         uuid.UUID  `json:"id"`
-	UserID     uuid.UUID  `json:"user_id"`
+	ID         *uuid.UUID `json:"id"` // nil when the member has no contribution row yet
+	User       UserInfo   `json:"user"`
 	Paid       bool       `json:"paid"`
 	PaidAt     *time.Time `json:"paid_at,omitempty"`
 	Status     string     `json:"status"`
@@ -366,9 +370,10 @@ type CollectionInfo struct {
 }
 
 type PollOptionInfo struct {
-	ID    uuid.UUID   `json:"id"`
-	Label string      `json:"label"`
-	Votes []uuid.UUID `json:"votes"` // voter IDs
+	ID        uuid.UUID `json:"id"`
+	Label     string    `json:"label"`
+	VoteCount int       `json:"vote_count"`
+	Voted     bool      `json:"voted"` // whether the caller voted for this option
 }
 
 type PollInfo struct {

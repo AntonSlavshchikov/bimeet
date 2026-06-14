@@ -273,11 +273,9 @@ func (h *Handler) RejectContribution(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, contrib)
 }
 
-type markPaidRequest struct {
-	UserID uuid.UUID `json:"user_id"`
-}
-
 func (h *Handler) MarkPaid(w http.ResponseWriter, r *http.Request) {
+	// The organizer marks their own contribution as paid; the target is the
+	// caller, taken from the JWT rather than the request body.
 	organizerID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
@@ -296,17 +294,7 @@ func (h *Handler) MarkPaid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req markPaidRequest
-	if err := response.ParseJSON(r, &req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if req.UserID == uuid.Nil {
-		response.Error(w, http.StatusBadRequest, "user_id is required")
-		return
-	}
-
-	contrib, err := h.svc.MarkPaid(r.Context(), eventID, collectionID, req.UserID, organizerID)
+	contrib, err := h.svc.MarkPaid(r.Context(), eventID, collectionID, organizerID, organizerID)
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "forbidden") {

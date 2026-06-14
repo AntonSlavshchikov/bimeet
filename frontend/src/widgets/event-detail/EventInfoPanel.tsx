@@ -20,7 +20,6 @@ import { eventAccentColor } from '@/shared/lib/eventAccentColor'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 import { useDeleteEvent, useJoinPublicEvent } from '@/features/event-manage/model/hooks'
 import LocationMap from '@/features/location-picker/ui/LocationMap'
-import { useAuth } from '@/features/auth/model/AuthContext'
 import {
   Button,
   Dialog,
@@ -61,7 +60,6 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
   const navigate = useNavigate()
   const { t } = useTranslation()
   const toast = useToast()
-  const { user } = useAuth()
   const [descExpanded, setDescExpanded] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const cancelRef = useRef<HTMLButtonElement>(null)
@@ -69,7 +67,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
   const deleteEvent = useDeleteEvent()
   const joinPublicEvent = useJoinPublicEvent()
 
-  const isParticipant = event.participants.some(p => p.user?.id === user?.id)
+  const isParticipant = event.participants.some(p => p.user?.is_me)
   const confirmedCount =
     event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
   const spotsLeft = event.max_guests != null ? event.max_guests - confirmedCount : null

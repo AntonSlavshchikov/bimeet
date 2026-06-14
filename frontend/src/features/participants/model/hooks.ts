@@ -13,8 +13,8 @@ export function useInviteParticipant(eventId: string) {
 export function useUpdateParticipantStatus(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ userId, status }: { userId: string; status: 'confirmed' | 'declined' }) =>
-      eventMutationsApi.updateParticipantStatus(eventId, userId, status),
+    mutationFn: ({ status }: { status: 'confirmed' | 'declined' }) =>
+      eventMutationsApi.updateParticipantStatus(eventId, status),
     onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) }),
   })
 }

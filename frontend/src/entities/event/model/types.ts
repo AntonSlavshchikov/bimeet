@@ -1,4 +1,4 @@
-import type { User, Participant } from '@/entities/user/model/types'
+import type { EventUser, Participant } from '@/entities/user/model/types'
 import type { Collection } from '@/entities/collection/model/types'
 import type { Poll } from '@/entities/poll/model/types'
 import type { Item } from '@/entities/item/model/types'
@@ -6,7 +6,7 @@ import type { Carpool } from '@/entities/carpool/model/types'
 
 export interface ChangeLogEntry {
   id: string
-  changed_by: User
+  changed_by: EventUser
   field_name: string
   old_value: string
   new_value: string
@@ -27,7 +27,7 @@ export interface Event {
   is_public: boolean
   max_guests?: number
   confirmed_count: number
-  organizer: User
+  organizer: EventUser
   invite_token: string
   created_at: string
   updated_at: string
@@ -52,11 +52,11 @@ export interface EventListItem {
   is_public: boolean
   max_guests?: number
   confirmed_count: number
-  organizer: { id: string; name: string; email: string }
+  organizer: EventUser
   invite_token: string
   created_at: string
   my_status: string
-  participants: Array<{ id: string; user: { id: string; name: string; email: string }; status: string }>
+  participants: Array<{ user: EventUser; status: string; is_organizer: boolean }>
 }
 
 export interface PublicEventListItem extends EventListItem {
@@ -71,7 +71,7 @@ export interface InviteEventInfo {
   date_end: string
   location: string
   dress_code?: string
-  organizer: { id: string; name: string; email: string }
+  organizer: EventUser
   confirmed_count: number
 }
 

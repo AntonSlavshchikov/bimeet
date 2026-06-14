@@ -68,10 +68,10 @@ func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Even
 	}
 
 	if !detail.IsPublic {
-		if detail.Organizer.ID != userID {
+		if !detail.Organizer.IsMe {
 			isParticipant := false
 			for _, p := range detail.Participants {
-				if p.User.ID == userID {
+				if p.User.IsMe {
 					isParticipant = true
 					break
 				}
@@ -100,11 +100,18 @@ func (s *Service) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) err
 	if detail.Status != "active" {
 		return fmt.Errorf("event is not active")
 	}
-	if detail.Organizer.ID == userID {
+	if detail.Organizer.IsMe {
 		return fmt.Errorf("you are the organizer")
 	}
 	if detail.MaxGuests != nil && detail.ConfirmedCount >= *detail.MaxGuests {
 		return ErrFull
+	}
+
+	// The enriched detail no longer carries the organizer's real ID; fetch the
+	// base event to address the join notification.
+	ev, err := s.eventRepo.GetByID(ctx, eventID)
+	if err != nil {
+		return fmt.Errorf("event not found")
 	}
 
 	if _, err := s.eventRepo.JoinPublic(ctx, eventID, userID); err != nil {
@@ -117,7 +124,7 @@ func (s *Service) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) err
 		if err != nil {
 			return
 		}
-		_, _ = s.notificationRepo.Create(bgCtx, detail.Organizer.ID, &eventID,
+		_, _ = s.notificationRepo.Create(bgCtx, ev.OrganizerID, &eventID,
 			"event_joined", fmt.Sprintf("%s joined your event '%s'", user.Name, detail.Title))
 	}()
 
@@ -134,7 +141,13 @@ func (s *Service) JoinByInviteToken(ctx context.Context, token, userID uuid.UUID
 		return model.EventParticipant{}, fmt.Errorf("event not found")
 	}
 
-	if event.Organizer.ID == userID {
+	// InviteEventInfo no longer exposes the organizer's real ID; load the base
+	// event to check whether the caller is the organizer.
+	base, err := s.eventRepo.GetByID(ctx, event.ID)
+	if err != nil {
+		return model.EventParticipant{}, fmt.Errorf("event not found")
+	}
+	if base.OrganizerID == userID {
 		return model.EventParticipant{}, fmt.Errorf("you are the organizer of this event")
 	}
 

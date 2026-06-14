@@ -40,7 +40,7 @@ export default function ParticipantsSummaryPanel({ event }: ParticipantsSummaryP
       {confirmed.length > 0 && (
         <AvatarStack max={6}>
           {confirmed.map(p => (
-            <Avatar key={p.id} name={p.user.name} size="md" />
+            <Avatar key={p.user.email} name={p.user.name} size="md" />
           ))}
         </AvatarStack>
       )}

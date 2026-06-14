@@ -13,8 +13,8 @@ export function useAddItem(eventId: string) {
 export function useAssignItem(eventId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ itemId, userId }: { itemId: string; userId: string | null }) =>
-      itemsApi.assign(eventId, itemId, userId),
+    mutationFn: ({ itemId, assigned }: { itemId: string; assigned: boolean }) =>
+      itemsApi.assign(eventId, itemId, assigned),
     onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) }),
   })
 }

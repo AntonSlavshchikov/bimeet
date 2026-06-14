@@ -1,7 +1,8 @@
 export interface PollOption {
   id: string
   label: string
-  votes: string[] // voter user IDs
+  vote_count: number
+  voted: boolean // whether the current user voted for this option
 }
 
 export interface Poll {

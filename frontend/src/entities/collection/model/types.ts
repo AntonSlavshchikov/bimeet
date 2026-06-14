@@ -1,7 +1,8 @@
+import type { EventUser } from '@/entities/user/model/types'
+
 export interface CollectionContribution {
-  id: string
-  collection_id: string
-  user_id: string
+  id?: string // absent until a contribution row exists for the member
+  user: EventUser
   paid: boolean
   paid_at?: string
   status: 'not_paid' | 'pending' | 'paid'
