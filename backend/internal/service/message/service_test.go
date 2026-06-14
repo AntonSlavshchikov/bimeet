@@ -14,18 +14,17 @@ import (
 	"bimeet/internal/service/message/mock"
 )
 
-func newService(t *testing.T) (*messagesvc.Service, *mock.MockMessageRepo, *mock.MockEventRepo, *mock.MockNotifier, *mock.MockNotifReader) {
+func newService(t *testing.T) (*messagesvc.Service, *mock.MockMessageRepo, *mock.MockEventRepo, *mock.MockNotifier) {
 	t.Helper()
 	ctrl := gomock.NewController(t)
 	mr := mock.NewMockMessageRepo(ctrl)
 	er := mock.NewMockEventRepo(ctrl)
 	nf := mock.NewMockNotifier(ctrl)
-	nr := mock.NewMockNotifReader(ctrl)
-	return messagesvc.New(mr, er, nf, nr), mr, er, nf, nr
+	return messagesvc.New(mr, er, nf), mr, er, nf
 }
 
 func TestList_Forbidden(t *testing.T) {
-	svc, _, er, _, _ := newService(t)
+	svc, _, er, _ := newService(t)
 	eventID, userID := uuid.New(), uuid.New()
 	er.EXPECT().IsParticipant(gomock.Any(), eventID, userID).Return(false, nil)
 
@@ -35,7 +34,7 @@ func TestList_Forbidden(t *testing.T) {
 }
 
 func TestList_HappyPath(t *testing.T) {
-	svc, mr, er, _, _ := newService(t)
+	svc, mr, er, _ := newService(t)
 	eventID, userID := uuid.New(), uuid.New()
 	er.EXPECT().IsParticipant(gomock.Any(), eventID, userID).Return(true, nil)
 	mr.EXPECT().ListByEvent(gomock.Any(), eventID, userID, gomock.Nil(), 50).Return([]model.Message{}, nil)
@@ -45,7 +44,7 @@ func TestList_HappyPath(t *testing.T) {
 }
 
 func TestPost_EmptyBody(t *testing.T) {
-	svc, _, er, _, _ := newService(t)
+	svc, _, er, _ := newService(t)
 	eventID, userID := uuid.New(), uuid.New()
 	er.EXPECT().IsParticipant(gomock.Any(), eventID, userID).Return(true, nil)
 
@@ -55,7 +54,7 @@ func TestPost_EmptyBody(t *testing.T) {
 }
 
 func TestPost_Forbidden(t *testing.T) {
-	svc, _, er, _, _ := newService(t)
+	svc, _, er, _ := newService(t)
 	eventID, userID := uuid.New(), uuid.New()
 	er.EXPECT().IsParticipant(gomock.Any(), eventID, userID).Return(false, nil)
 
@@ -65,7 +64,7 @@ func TestPost_Forbidden(t *testing.T) {
 }
 
 func TestDelete_ByAuthor(t *testing.T) {
-	svc, mr, _, _, _ := newService(t)
+	svc, mr, _, _ := newService(t)
 	eventID, userID, msgID := uuid.New(), uuid.New(), uuid.New()
 	mr.EXPECT().GetByID(gomock.Any(), msgID, userID).Return(model.Message{ID: msgID, EventID: eventID, IsMine: true}, nil)
 	mr.EXPECT().SoftDelete(gomock.Any(), msgID).Return(nil)
@@ -74,7 +73,7 @@ func TestDelete_ByAuthor(t *testing.T) {
 }
 
 func TestDelete_ByOrganizer(t *testing.T) {
-	svc, mr, er, _, _ := newService(t)
+	svc, mr, er, _ := newService(t)
 	eventID, organizerID, msgID := uuid.New(), uuid.New(), uuid.New()
 	mr.EXPECT().GetByID(gomock.Any(), msgID, organizerID).Return(model.Message{ID: msgID, EventID: eventID, IsMine: false}, nil)
 	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: organizerID}, nil)
@@ -84,7 +83,7 @@ func TestDelete_ByOrganizer(t *testing.T) {
 }
 
 func TestDelete_Forbidden(t *testing.T) {
-	svc, mr, er, _, _ := newService(t)
+	svc, mr, er, _ := newService(t)
 	eventID, strangerID, msgID := uuid.New(), uuid.New(), uuid.New()
 	mr.EXPECT().GetByID(gomock.Any(), msgID, strangerID).Return(model.Message{ID: msgID, EventID: eventID, IsMine: false}, nil)
 	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: uuid.New()}, nil)

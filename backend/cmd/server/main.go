@@ -156,7 +156,7 @@ func main() {
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
 	itemSvc := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc := carpoolsvc.New(carpoolRepo, eventRepo)
-	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo, notificationRepo)
+	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
 	adminSvc := adminsvc.New(adminRepo)
 

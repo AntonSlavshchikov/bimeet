@@ -101,6 +101,11 @@ export default function NotificationsPage() {
                       )}
                     >
                       {n.message}
+                      {n.count > 1 && (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-accent/15 px-1.5 text-[11.5px] font-semibold text-accent align-middle tnum">
+                          ×{n.count}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-1 text-[12px] text-ink-3">
                       {formatDate(n.created_at)}

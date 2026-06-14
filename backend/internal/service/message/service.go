@@ -19,14 +19,13 @@ const (
 )
 
 type Service struct {
-	repo        MessageRepo
-	eventRepo   EventRepo
-	notifier    Notifier
-	notifReader NotifReader
+	repo      MessageRepo
+	eventRepo EventRepo
+	notifier  Notifier
 }
 
-func New(repo MessageRepo, eventRepo EventRepo, notifier Notifier, notifReader NotifReader) *Service {
-	return &Service{repo: repo, eventRepo: eventRepo, notifier: notifier, notifReader: notifReader}
+func New(repo MessageRepo, eventRepo EventRepo, notifier Notifier) *Service {
+	return &Service{repo: repo, eventRepo: eventRepo, notifier: notifier}
 }
 
 // List returns the most recent messages of an event for a participant.
@@ -101,7 +100,13 @@ func (s *Service) MarkRead(ctx context.Context, eventID, userID uuid.UUID) error
 	if err := s.assertParticipant(ctx, eventID, userID); err != nil {
 		return err
 	}
-	return s.repo.MarkRead(ctx, eventID, userID)
+	if err := s.repo.MarkRead(ctx, eventID, userID); err != nil {
+		return err
+	}
+	// Clear the collapsed chat notification too, so its counter restarts fresh on
+	// the next message instead of carrying over what the user just read.
+	_ = s.notifier.MarkReadByEventAndType(ctx, userID, eventID, notifTypeChat)
+	return nil
 }
 
 func (s *Service) UnreadCount(ctx context.Context, eventID, userID uuid.UUID) (int, error) {
@@ -149,9 +154,8 @@ func (s *Service) notifyMembers(eventID, senderID uuid.UUID) {
 
 	message := fmt.Sprintf("Новое сообщение в «%s»", event.Title)
 	for uid := range recipients {
-		if has, err := s.notifReader.HasUnreadByTypeAndEvent(ctx, uid, eventID, notifTypeChat); err == nil && has {
-			continue // collapse: they already have an unread chat hint
-		}
-		_, _ = s.notifier.Create(ctx, uid, &eventID, notifTypeChat, message)
+		// Upsert collapses repeats into one row per (user, event) with a counter,
+		// so a chatty event yields a single growing notification, not a flood.
+		_, _ = s.notifier.UpsertChatNotification(ctx, uid, eventID, notifTypeChat, message)
 	}
 }

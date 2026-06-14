@@ -1,6 +1,6 @@
 package messagesvc
 
-//go:generate mockgen -destination=mock/mock.go -package=mock . MessageRepo,EventRepo,Notifier,NotifReader
+//go:generate mockgen -destination=mock/mock.go -package=mock . MessageRepo,EventRepo,Notifier
 
 import (
 	"context"
@@ -26,12 +26,9 @@ type EventRepo interface {
 	ListParticipants(ctx context.Context, eventID uuid.UUID) ([]model.EventParticipant, error)
 }
 
-// Notifier persists an in-app notification (and fans out a web push).
+// Notifier upserts a collapsed chat notification (and fans out a web push):
+// repeated messages for the same event bump a counter instead of stacking.
 type Notifier interface {
-	Create(ctx context.Context, userID uuid.UUID, eventID *uuid.UUID, notifType, message string) (model.Notification, error)
-}
-
-// NotifReader lets the service collapse repeated chat notifications.
-type NotifReader interface {
-	HasUnreadByTypeAndEvent(ctx context.Context, userID, eventID uuid.UUID, notifType string) (bool, error)
+	UpsertChatNotification(ctx context.Context, userID, eventID uuid.UUID, notifType, message string) (model.Notification, error)
+	MarkReadByEventAndType(ctx context.Context, userID, eventID uuid.UUID, notifType string) error
 }

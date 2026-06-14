@@ -147,6 +147,7 @@ type Notification struct {
 	Type      string     `json:"type"`
 	Message   string     `json:"message"`
 	IsRead    bool       `json:"is_read"`
+	Count     int        `json:"count"` // collapsed events of the same kind (e.g. chat messages)
 	CreatedAt time.Time  `json:"created_at"`
 }
 

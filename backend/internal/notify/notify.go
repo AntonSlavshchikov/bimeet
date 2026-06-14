@@ -16,6 +16,8 @@ import (
 // CountUnread feeds the PWA icon badge carried in the push payload.
 type Creator interface {
 	Create(ctx context.Context, userID uuid.UUID, eventID *uuid.UUID, notifType, message string) (model.Notification, error)
+	UpsertChatNotification(ctx context.Context, userID, eventID uuid.UUID, notifType, message string) (model.Notification, error)
+	MarkReadByEventAndType(ctx context.Context, userID, eventID uuid.UUID, notifType string) error
 	CountUnread(ctx context.Context, userID uuid.UUID) (int, error)
 }
 
@@ -39,15 +41,37 @@ func (r *Repo) Create(ctx context.Context, userID uuid.UUID, eventID *uuid.UUID,
 	if err != nil {
 		return n, err
 	}
+	r.fanOutPush(ctx, n, message)
+	return n, nil
+}
+
+// UpsertChatNotification collapses chat notifications (see the repository) and
+// still fans out a push. The push reuses the notification id as its tag, so the
+// OS replaces the previous chat push for this event instead of stacking them.
+func (r *Repo) UpsertChatNotification(ctx context.Context, userID, eventID uuid.UUID, notifType, message string) (model.Notification, error) {
+	n, err := r.inner.UpsertChatNotification(ctx, userID, eventID, notifType, message)
+	if err != nil {
+		return n, err
+	}
+	r.fanOutPush(ctx, n, message)
+	return n, nil
+}
+
+// MarkReadByEventAndType passes through to the repository (no push needed).
+func (r *Repo) MarkReadByEventAndType(ctx context.Context, userID, eventID uuid.UUID, notifType string) error {
+	return r.inner.MarkReadByEventAndType(ctx, userID, eventID, notifType)
+}
+
+// fanOutPush sends a web push for a freshly persisted notification.
+func (r *Repo) fanOutPush(ctx context.Context, n model.Notification, body string) {
 	// Бейдж на иконке PWA = число непрочитанных. Считаем здесь, до ухода в
 	// goroutine; при ошибке шлём 0 (badge,omitempty → SW не тронет бейдж).
-	badge, err := r.inner.CountUnread(ctx, userID)
+	badge, err := r.inner.CountUnread(ctx, n.UserID)
 	if err != nil {
 		badge = 0
 	}
 	// Fire-and-forget: a fresh context so it isn't cancelled with the request.
-	go r.push.SendToUser(context.Background(), userID, "Bimeet", message, href(notifType, eventID), n.ID.String(), badge)
-	return n, nil
+	go r.push.SendToUser(context.Background(), n.UserID, "Bimeet", body, href(n.Type, n.EventID), n.ID.String(), badge)
 }
 
 // href mirrors frontend entities/notification/lib/href.ts so the push opens the

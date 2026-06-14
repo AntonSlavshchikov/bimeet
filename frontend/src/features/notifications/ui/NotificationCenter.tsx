@@ -134,6 +134,11 @@ export default function NotificationCenter({ renderTrigger }: NotificationCenter
                         )}
                       >
                         {n.message}
+                        {n.count > 1 && (
+                          <span className="ml-1.5 inline-flex items-center rounded-full bg-accent/15 px-1.5 text-[11px] font-semibold text-accent align-middle tnum">
+                            ×{n.count}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-0.5 text-[11.5px] text-ink-3">
                         {formatDate(n.created_at)}
