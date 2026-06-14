@@ -264,14 +264,17 @@ func (s *Service) Summary(ctx context.Context, eventID, userID uuid.UUID) (model
 		return model.EventCollectionsSummaryResponse{}, err
 	}
 
+	// Paid counts for all collections in one query instead of one per collection.
+	paidCounts, err := s.collectionRepo.PaidCountsByEvent(ctx, eventID)
+	if err != nil {
+		return model.EventCollectionsSummaryResponse{}, err
+	}
+
 	var summaries []model.CollectionSummary
 	var grandTotal, totalPaid float64
 
 	for _, col := range collections {
-		paidCount, err := s.collectionRepo.CountPaidContributions(ctx, col.ID)
-		if err != nil {
-			return model.EventCollectionsSummaryResponse{}, err
-		}
+		paidCount := paidCounts[col.ID]
 
 		perPerson := col.PerPersonAmount
 		expectedTotal := perPerson * float64(confirmedCount)

@@ -89,14 +89,46 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID uuid.UUID) ([]mode
 		if err := rows.Scan(&p.ID, &p.EventID, &p.Question, &p.CreatedBy, &p.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan poll: %w", err)
 		}
-		opts, err := r.listOptionsWithVotes(ctx, p.ID)
-		if err != nil {
-			return nil, err
-		}
-		p.Options = opts
+		p.Options = []model.PollOption{}
 		polls = append(polls, p)
 	}
-	return polls, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(polls) == 0 {
+		return polls, nil
+	}
+
+	// Options + vote counts for every poll of the event in one query, grouped
+	// onto each poll in Go (avoids an options query per poll).
+	idx := make(map[uuid.UUID]int, len(polls))
+	for i := range polls {
+		idx[polls[i].ID] = i
+	}
+	optRows, err := r.pool.Query(ctx,
+		`SELECT po.poll_id, po.id, po.label, COUNT(pv.user_id) AS votes
+		 FROM poll_options po
+		 JOIN polls p ON p.id = po.poll_id
+		 LEFT JOIN poll_votes pv ON pv.poll_option_id = po.id
+		 WHERE p.event_id = $1
+		 GROUP BY po.poll_id, po.id, po.label
+		 ORDER BY po.poll_id, po.id`,
+		eventID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list poll options with votes: %w", err)
+	}
+	defer optRows.Close()
+	for optRows.Next() {
+		var o model.PollOption
+		if err := optRows.Scan(&o.PollID, &o.ID, &o.Label, &o.Votes); err != nil {
+			return nil, fmt.Errorf("scan poll option: %w", err)
+		}
+		if i, ok := idx[o.PollID]; ok {
+			polls[i].Options = append(polls[i].Options, o)
+		}
+	}
+	return polls, optRows.Err()
 }
 
 func (r *Repository) listOptionsWithVotes(ctx context.Context, pollID uuid.UUID) ([]model.PollOption, error) {

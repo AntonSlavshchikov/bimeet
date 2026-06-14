@@ -176,6 +176,21 @@ func (mr *MockCollectionRepoMockRecorder) MarkPaid(ctx, collectionID, userID any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkPaid", reflect.TypeOf((*MockCollectionRepo)(nil).MarkPaid), ctx, collectionID, userID)
 }
 
+// PaidCountsByEvent mocks base method.
+func (m *MockCollectionRepo) PaidCountsByEvent(ctx context.Context, eventID uuid.UUID) (map[uuid.UUID]int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PaidCountsByEvent", ctx, eventID)
+	ret0, _ := ret[0].(map[uuid.UUID]int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PaidCountsByEvent indicates an expected call of PaidCountsByEvent.
+func (mr *MockCollectionRepoMockRecorder) PaidCountsByEvent(ctx, eventID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PaidCountsByEvent", reflect.TypeOf((*MockCollectionRepo)(nil).PaidCountsByEvent), ctx, eventID)
+}
+
 // RejectContribution mocks base method.
 func (m *MockCollectionRepo) RejectContribution(ctx context.Context, id uuid.UUID) (model.CollectionContribution, error) {
 	m.ctrl.T.Helper()

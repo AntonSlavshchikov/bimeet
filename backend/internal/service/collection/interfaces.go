@@ -23,6 +23,7 @@ type CollectionRepo interface {
 	RejectContribution(ctx context.Context, id uuid.UUID) (model.CollectionContribution, error)
 	MarkPaid(ctx context.Context, collectionID, userID uuid.UUID) (model.CollectionContribution, error)
 	CountPaidContributions(ctx context.Context, collectionID uuid.UUID) (int, error)
+	PaidCountsByEvent(ctx context.Context, eventID uuid.UUID) (map[uuid.UUID]int, error)
 }
 
 type EventRepo interface {

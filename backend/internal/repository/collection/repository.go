@@ -201,6 +201,34 @@ func (r *Repository) ListContributions(ctx context.Context, collectionID uuid.UU
 	return contribs, rows.Err()
 }
 
+// PaidCountsByEvent returns the number of paid contributions per collection for
+// an event in a single query, avoiding an N+1 over the event's collections.
+func (r *Repository) PaidCountsByEvent(ctx context.Context, eventID uuid.UUID) (map[uuid.UUID]int, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT cc.collection_id, COUNT(*)
+		 FROM collection_contributions cc
+		 JOIN collections c ON c.id = cc.collection_id
+		 WHERE c.event_id = $1 AND cc.status = 'paid'
+		 GROUP BY cc.collection_id`,
+		eventID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("paid counts by event: %w", err)
+	}
+	defer rows.Close()
+
+	counts := make(map[uuid.UUID]int)
+	for rows.Next() {
+		var id uuid.UUID
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return nil, fmt.Errorf("scan paid count: %w", err)
+		}
+		counts[id] = n
+	}
+	return counts, rows.Err()
+}
+
 func (r *Repository) CountPaidContributions(ctx context.Context, collectionID uuid.UUID) (int, error) {
 	var count int
 	err := r.pool.QueryRow(ctx,
