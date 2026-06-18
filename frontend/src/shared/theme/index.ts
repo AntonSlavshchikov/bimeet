@@ -1,45 +1,54 @@
-import { useSyncExternalStore } from 'react'
+import { create } from 'zustand'
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
 
-// Theme preference. The resolved mode is applied as a `dark` class on <html>;
-// CSS token overrides (index.css) do the rest. Persisted in localStorage.
+// Тема оформления на Zustand+persist. Resolved-режим применяется классом `dark`
+// на <html>; CSS-токены (index.css → html.dark) делают остальное.
 export type Theme = 'light' | 'dark'
 
-const STORAGE_KEY = 'theme'
-const listeners = new Set<() => void>()
-
-let current: Theme = readStored()
-
-function readStored(): Theme {
-  return localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light'
+// Тему храним в сыром ключе localStorage 'theme' ('light'/'dark') — тот же ключ
+// читает инлайн-бутстрап в index.html (вешает класс до первой отрисовки, чтобы
+// не было мигания). Кастомное storage держит значение сырым, без JSON-обёртки.
+const themeStorage: StateStorage = {
+  getItem: (name) => {
+    const v = localStorage.getItem(name)
+    return v ? JSON.stringify({ state: { theme: v }, version: 0 }) : null
+  },
+  setItem: (name, value) => {
+    const { state } = JSON.parse(value) as { state: { theme: Theme } }
+    localStorage.setItem(name, state.theme)
+  },
+  removeItem: (name) => localStorage.removeItem(name),
 }
 
-function apply() {
-  document.documentElement.classList.toggle('dark', current === 'dark')
+interface ThemeState {
+  theme: Theme
+  setTheme: (t: Theme) => void
 }
 
-function getTheme(): Theme {
-  return current
+function applyClass(theme: Theme) {
+  document.documentElement.classList.toggle('dark', theme === 'dark')
 }
 
-export function setTheme(theme: Theme) {
-  current = theme
-  localStorage.setItem(STORAGE_KEY, theme)
-  apply()
-  listeners.forEach(l => l())
-}
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set) => ({
+      theme: 'light',
+      setTheme: (theme) => set({ theme }),
+    }),
+    {
+      name: 'theme',
+      storage: createJSONStorage(() => themeStorage),
+    },
+  ),
+)
 
-function subscribe(cb: () => void): () => void {
-  listeners.add(cb)
-  return () => {
-    listeners.delete(cb)
-  }
-}
+// Применяем класс на загрузке (после гидратации persist) и на каждое изменение.
+applyClass(useThemeStore.getState().theme)
+useThemeStore.subscribe((s) => applyClass(s.theme))
 
-// Apply on module load so the class is set before first paint.
-apply()
-
-/** Reactive theme preference + setter. */
+/** Реактивная тема + сеттер. Сигнатура сохранена для совместимости. */
 export function useTheme(): [Theme, (t: Theme) => void] {
-  const theme = useSyncExternalStore(subscribe, getTheme, getTheme)
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
   return [theme, setTheme]
 }
