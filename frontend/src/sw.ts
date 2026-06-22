@@ -3,12 +3,21 @@
 // Сохраняет precache/офлайн + SKIP_WAITING (как было в generateSW) и добавляет
 // обработчики Web Push: `push` (показ уведомления) и `notificationclick`.
 
+import { clientsClaim } from 'workbox-core'
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>
 }
+
+// Авто-обновление: свежий SW активируется сразу (не ждёт закрытия вкладок) и
+// перехватывает управление уже открытыми страницами. Без этого новый деплой
+// (например, добавление сохранения темы) не доходил бы до пользователя, пока он
+// вручную не закроет все вкладки — старый SW продолжал бы отдавать старый кэш.
+// PWAUpdater при перехвате (controlling) перезагружает страницу один раз.
+self.skipWaiting()
+clientsClaim()
 
 // Precache всех ассетов из манифеста сборки → офлайн-доступ.
 precacheAndRoute(self.__WB_MANIFEST)
@@ -34,13 +43,6 @@ registerRoute(
     { denylist: [/^\/api\//] },
   ),
 )
-
-// Кнопка «Обновить» в PWAUpdater шлёт SKIP_WAITING — активируем новый SW.
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
-  }
-})
 
 interface PushPayload {
   title?: string

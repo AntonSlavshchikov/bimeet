@@ -2,6 +2,7 @@ package collectionsvc_test
 
 import (
 	"context"
+	"io"
 	"testing"
 
 	"github.com/google/uuid"
@@ -14,12 +15,22 @@ import (
 	"bimeet/internal/service/collection/mock"
 )
 
+// noopUploader — заглушка Uploader для тестов, которые не доходят до загрузки файла
+// (List/Create/Delete/Summary). Пути с реальной загрузкой (SubmitContribution)
+// здесь не покрываются.
+type noopUploader struct{}
+
+func (noopUploader) Upload(_ context.Context, _, _ string, _ io.Reader) (string, error) {
+	return "", nil
+}
+
 func newService(t *testing.T) (*collectionsvc.Service, *mock.MockCollectionRepo, *mock.MockEventRepo) {
 	t.Helper()
 	ctrl := gomock.NewController(t)
 	cr := mock.NewMockCollectionRepo(ctrl)
 	er := mock.NewMockEventRepo(ctrl)
-	return collectionsvc.New(cr, er), cr, er
+	nr := mock.NewMockNotificationRepo(ctrl)
+	return collectionsvc.New(cr, er, nr, noopUploader{}), cr, er
 }
 
 // ─── List ──────────────────────────────────────────────────────────────────
@@ -72,7 +83,7 @@ func TestCreate_HappyPath(t *testing.T) {
 	svc, cr, er := newService(t)
 	organizerID := uuid.New()
 	eventID := uuid.New()
-	req := model.CreateCollectionRequest{Title: "Venue", TargetAmount: 500}
+	req := model.CreateCollectionRequest{Title: "Venue", PerPersonAmount: 500}
 	expected := model.Collection{ID: uuid.New(), EventID: eventID, Title: "Venue"}
 
 	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{OrganizerID: organizerID}, nil)
@@ -114,29 +125,6 @@ func TestDelete_HappyPath(t *testing.T) {
 	require.NoError(t, svc.Delete(context.Background(), eventID, collectionID, organizerID))
 }
 
-// ─── ToggleContribution ────────────────────────────────────────────────────
-
-func TestToggleContribution_NotConfirmed(t *testing.T) {
-	svc, _, er := newService(t)
-	eventID, collectionID, userID := uuid.New(), uuid.New(), uuid.New()
-	er.EXPECT().IsConfirmedParticipant(gomock.Any(), eventID, userID).Return(false, nil)
-
-	_, err := svc.ToggleContribution(context.Background(), eventID, collectionID, userID)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "forbidden")
-}
-
-func TestToggleContribution_WrongEvent(t *testing.T) {
-	svc, cr, er := newService(t)
-	eventID, collectionID, userID := uuid.New(), uuid.New(), uuid.New()
-	er.EXPECT().IsConfirmedParticipant(gomock.Any(), eventID, userID).Return(true, nil)
-	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{EventID: uuid.New()}, nil)
-
-	_, err := svc.ToggleContribution(context.Background(), eventID, collectionID, userID)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "does not belong")
-}
-
 // ─── Summary ───────────────────────────────────────────────────────────────
 
 func TestSummary_Forbidden(t *testing.T) {
@@ -157,12 +145,15 @@ func TestSummary_HappyPath(t *testing.T) {
 	er.EXPECT().IsParticipant(gomock.Any(), eventID, userID).Return(true, nil)
 	er.EXPECT().CountConfirmedParticipants(gomock.Any(), eventID).Return(4, nil)
 	cr.EXPECT().ListByEvent(gomock.Any(), eventID).Return([]model.Collection{
-		{ID: colID, EventID: eventID, Title: "Cake", TargetAmount: 200},
+		{ID: colID, EventID: eventID, Title: "Cake", PerPersonAmount: 200},
 	}, nil)
-	cr.EXPECT().CountPaidContributions(gomock.Any(), colID).Return(2, nil)
+	// Paid counts батчем по событию (1 запрос вместо N).
+	cr.EXPECT().PaidCountsByEvent(gomock.Any(), eventID).Return(map[uuid.UUID]int{colID: 2}, nil)
 
 	result, err := svc.Summary(context.Background(), eventID, userID)
 	require.NoError(t, err)
 	assert.Len(t, result.Collections, 1)
-	assert.Equal(t, float64(200), result.GrandTotal)
+	// 4 подтверждённых × 200 = 800 ожидается; 2 оплатили × 200 = 400 собрано.
+	assert.Equal(t, float64(800), result.GrandTotal)
+	assert.Equal(t, float64(400), result.TotalPaid)
 }

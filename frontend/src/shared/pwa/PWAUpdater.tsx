@@ -36,27 +36,20 @@ export function PWAUpdater() {
 
     const wb = new Workbox('/sw.js', { scope: '/' })
     let reloading = false
+    // Был ли контроллер на момент загрузки. Если да — перехват управления новым
+    // SW означает обновление, и страницу нужно перезагрузить, чтобы подтянуть
+    // свежую сборку. Если нет (самая первая установка) — перезагрузка не нужна,
+    // страница уже работает на актуальной версии.
+    const hadController = !!navigator.serviceWorker.controller
 
-    const promptUpdate = () => {
-      toast(t('pwa.updateAvailable'), {
-        duration: Infinity,
-        action: {
-          label: t('pwa.reload'),
-          // sw.js (registerType: 'prompt') слушает SKIP_WAITING
-          onClick: () => wb.messageSkipWaiting(),
-        },
-      })
-    }
-
-    // Новый SW встал в ожидание (есть активный контроллер) — предлагаем обновиться
-    wb.addEventListener('waiting', promptUpdate)
     // Первая установка без контроллера — приложение готово к офлайну
     wb.addEventListener('installed', (event) => {
       if (!event.isUpdate) toast.success(t('pwa.offlineReady'))
     })
-    // Новый SW взял управление — перезагружаем страницу один раз
+    // Новый SW взял управление (skipWaiting + clientsClaim в sw.ts) —
+    // перезагружаем один раз, только если это обновление, а не первый визит.
     wb.addEventListener('controlling', () => {
-      if (reloading) return
+      if (reloading || !hadController) return
       reloading = true
       window.location.reload()
     })

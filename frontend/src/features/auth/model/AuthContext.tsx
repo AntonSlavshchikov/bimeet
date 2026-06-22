@@ -1,10 +1,15 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { create } from 'zustand'
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
 import type { User } from '@/entities/user/model/types'
 import { authApi } from '@/features/auth/api'
 import { syncPushSubscription } from '@/shared/push'
 import { clearBadge } from '@/shared/badge'
 
-interface AuthContextValue {
+// Состояние аутентификации. Раньше жило в React Context (AuthProvider), теперь —
+// Zustand store с persist. Хук useAuth() сохранил прежнюю сигнатуру, поэтому
+// потребители не меняются. Провайдер больше не нужен (Zustand без провайдера).
+
+interface AuthState {
   user: User | null
   token: string | null
   loading: boolean
@@ -14,79 +19,86 @@ interface AuthContextValue {
   updateUser: (user: User) => void
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token')
-    const savedUser = localStorage.getItem('user')
-    if (savedToken && savedUser) {
-      setToken(savedToken)
-      setUser(JSON.parse(savedUser))
-    }
-    setLoading(false)
-  }, [])
-
-  // Сессия истекла (401 от бэка) → обнуляем стейт. ProtectedRoute сам редиректит на /login.
-  useEffect(() => {
-    function onUnauthorized() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      setToken(null)
-      setUser(null)
-      clearBadge()
-    }
-    window.addEventListener('auth:unauthorized', onUnauthorized)
-    return () => window.removeEventListener('auth:unauthorized', onUnauthorized)
-  }, [])
-
-  async function verifyCode(email: string, code: string): Promise<boolean> {
+// Совместимость: apiFetch (shared/api/client.ts) читает токен из сырого ключа
+// localStorage 'token', а старые сессии лежат в 'token' (строка) + 'user' (JSON).
+// Кастомное storage мапит persist на эти же ключи — запросы продолжают видеть
+// токен, а пользователи не разлогиниваются при деплое.
+const authStorage: StateStorage = {
+  getItem: () => {
+    const token = localStorage.getItem('token')
+    const userRaw = localStorage.getItem('user')
+    if (!token || !userRaw) return null
     try {
-      const res = await authApi.verifyCode(email, code)
-      localStorage.setItem('token', res.token)
-      localStorage.setItem('user', JSON.stringify(res.user))
-      setToken(res.token)
-      setUser(res.user)
-      // Если устройство уже было подписано на пуши — тихо перепривязываем
-      // подписку к этому аккаунту (без повторного запроса разрешения).
-      void syncPushSubscription()
-      return true
+      return JSON.stringify({ state: { token, user: JSON.parse(userRaw) }, version: 0 })
     } catch {
-      return false
+      return null
     }
-  }
-
-  function logout() {
-    // Подписку на пуши НЕ трогаем: при следующем входе она тихо
-    // перепривязывается к актуальному пользователю (syncPushSubscription) —
-    // так на этом устройстве не приходится заново включать уведомления, а на
-    // общем девайсе владелец подписки сменится на того, кто вошёл (Upsert по
-    // endpoint на бэке переназначает user_id).
-    clearBadge()
+  },
+  setItem: (_name, value) => {
+    const { state } = JSON.parse(value) as { state: { token: string | null; user: User | null } }
+    if (state.token) localStorage.setItem('token', state.token)
+    else localStorage.removeItem('token')
+    if (state.user) localStorage.setItem('user', JSON.stringify(state.user))
+    else localStorage.removeItem('user')
+  },
+  removeItem: () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    setToken(null)
-    setUser(null)
-  }
-
-  function updateUser(updated: User) {
-    localStorage.setItem('user', JSON.stringify(updated))
-    setUser(updated)
-  }
-
-  return (
-    <AuthContext.Provider value={{ user, token, loading, verifyCode, logout, updateUser }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  },
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be inside AuthProvider')
-  return ctx
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      // Хранилище синхронное (localStorage), persist гидратирует token/user уже
+      // при создании стора — отдельная фаза загрузки не нужна.
+      loading: false,
+      async verifyCode(email, code) {
+        try {
+          const res = await authApi.verifyCode(email, code)
+          set({ token: res.token, user: res.user })
+          // Если устройство уже было подписано на пуши — тихо перепривязываем
+          // подписку к этому аккаунту (без повторного запроса разрешения).
+          void syncPushSubscription()
+          return true
+        } catch {
+          return false
+        }
+      },
+      logout() {
+        // Подписку на пуши НЕ трогаем: при следующем входе она тихо
+        // перепривязывается к актуальному пользователю (syncPushSubscription).
+        clearBadge()
+        set({ token: null, user: null })
+      },
+      updateUser(user) {
+        set({ user })
+      },
+    }),
+    {
+      // Имя для persist; фактические данные кастомное storage кладёт в 'token'/'user'.
+      name: 'auth',
+      storage: createJSONStorage(() => authStorage),
+      partialize: (s) => ({ token: s.token, user: s.user }),
+    },
+  ),
+)
+
+// Сессия истекла: client.ts на 401 уже очистил localStorage и шлёт событие —
+// обнуляем стор. ProtectedRoute сам редиректит на /login.
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:unauthorized', () => {
+    clearBadge()
+    useAuthStore.setState({ token: null, user: null })
+  })
+}
+
+/**
+ * Прежний Context-совместимый хук: тот же набор полей.
+ * Новый код может селектить точечно: useAuthStore(s => s.user).
+ */
+export function useAuth(): AuthState {
+  return useAuthStore()
 }

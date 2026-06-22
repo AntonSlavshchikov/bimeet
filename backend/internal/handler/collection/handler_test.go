@@ -30,7 +30,6 @@ func newRouter(t *testing.T) (http.Handler, *mock.MockCollectionService) {
 	r.Post("/events/{id}/collections", h.Create)
 	r.Get("/events/{id}/collections/summary", h.Summary)
 	r.Delete("/events/{id}/collections/{collectionId}", h.Delete)
-	r.Patch("/events/{id}/collections/{collectionId}/contribute", h.ToggleContribution)
 	return r, svc
 }
 
@@ -88,7 +87,7 @@ func TestCreate_Forbidden(t *testing.T) {
 	eventID, userID := uuid.New(), uuid.New()
 	svc.EXPECT().Create(gomock.Any(), eventID, userID, gomock.Any()).Return(model.Collection{}, errors.New("forbidden"))
 
-	body, _ := json.Marshal(model.CreateCollectionRequest{Title: "T", TargetAmount: 100})
+	body, _ := json.Marshal(model.CreateCollectionRequest{Title: "T", PerPersonAmount: 100})
 	req := withAuth(httptest.NewRequest(http.MethodPost, "/events/"+eventID.String()+"/collections", bytes.NewBuffer(body)), userID)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -103,7 +102,7 @@ func TestCreate_HappyPath(t *testing.T) {
 	svc.EXPECT().Create(gomock.Any(), eventID, userID, gomock.Any()).
 		Return(model.Collection{ID: colID, EventID: eventID, Title: "Cake"}, nil)
 
-	body, _ := json.Marshal(model.CreateCollectionRequest{Title: "Cake", TargetAmount: 200})
+	body, _ := json.Marshal(model.CreateCollectionRequest{Title: "Cake", PerPersonAmount: 200})
 	req := withAuth(httptest.NewRequest(http.MethodPost, "/events/"+eventID.String()+"/collections", bytes.NewBuffer(body)), userID)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()

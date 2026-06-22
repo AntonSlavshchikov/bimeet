@@ -14,7 +14,9 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
-      registerType: 'prompt',
+      // Авто-обновление: новый SW активируется и перехватывает управление сам
+      // (см. skipWaiting + clientsClaim в src/sw.ts), без ручного «Обновить».
+      registerType: 'autoUpdate',
       // SW регистрируем вручную через workbox-window в PWAUpdater.tsx
       injectRegister: false,
       includeAssets: ['favicon.svg', 'icons.svg', 'apple-touch-icon.png'],
