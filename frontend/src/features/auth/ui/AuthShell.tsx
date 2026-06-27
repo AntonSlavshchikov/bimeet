@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
 import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
+import { BrandMark } from '@/shared/ui/brand-mark'
 
 interface AuthShellProps {
   title: string
@@ -23,10 +24,8 @@ export default function AuthShell({ title, subtitle, footer, children }: AuthShe
       <div className="min-h-screen bg-bg flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-[400px] flex flex-col gap-6">
           {/* Brand */}
-          <Link to="/login" className="flex items-center gap-2.5 self-center">
-            <div className="w-8 h-8 rounded-[9px] bg-ink text-bg flex items-center justify-center font-bold text-[16px] tracking-[-0.02em]">
-              B
-            </div>
+          <Link to="/login" className="flex items-center gap-2 self-center">
+            <BrandMark size={46} />
             <div className="text-[17px] font-semibold tracking-[-0.015em] text-ink">Bimeet</div>
           </Link>
 

@@ -15,6 +15,7 @@ import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useEvents, usePublicEvents } from '@/entities/event/queries'
 import { useNotifications } from '@/entities/notification/queries'
 import { Avatar } from '@/shared/ui/avatar'
+import { BrandMark } from '@/shared/ui/brand-mark'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,10 +101,8 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   return (
     <aside className="h-full flex flex-col bg-bg border-r border-line">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 px-3 pt-5 pb-4">
-        <div className="w-7 h-7 rounded-lg bg-ink text-bg flex items-center justify-center font-bold text-[14px] tracking-[-0.02em]">
-          B
-        </div>
+      <div className="flex items-center gap-2 px-3 pt-5 pb-4">
+        <BrandMark size={34} />
         <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Bimeet</div>
       </div>
 

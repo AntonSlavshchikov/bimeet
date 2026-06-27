@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet · Bond (43) — графит</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{ box-sizing:border-box }
+  :root{ --page:#FAFAF7; --txt:#0A0A0B; --muted:#6B6B73; --line:rgba(0,0,0,.08); --card:#fff }
+  body.dark{ --page:#0A0A0B; --txt:#F2F2F7; --muted:#9A9AA2; --line:rgba(255,255,255,.10); --card:#131316 }
+  body{ margin:0; font-family:'Inter',system-ui,sans-serif; background:var(--page); color:var(--txt);
+    -webkit-font-smoothing:antialiased; padding:60px 24px 120px; transition:background .2s,color .2s }
+  .wrap{ max-width:1000px; margin:0 auto }
+  .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:24px }
+  .tag{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+  h1{ font-size:44px; line-height:1.06; letter-spacing:-0.03em; margin:10px 0 12px; font-weight:700 }
+  .sub{ color:var(--muted); font-size:16px; margin:0; max-width:640px }
+  .toggle{ flex-shrink:0; margin-top:8px; cursor:pointer; border:1px solid var(--line); background:var(--card);
+    color:var(--txt); border-radius:10px; padding:9px 14px; font:600 13px Inter }
+  .hero{ margin:34px 0 10px; padding:34px; border-radius:24px; background:var(--card); border:1px solid var(--line);
+    display:grid; grid-template-columns:auto auto 1fr; gap:30px; align-items:center }
+  .big{ width:150px; height:150px; border-radius:24%; display:grid; place-items:center; overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.06) }
+  .big svg{ width:100%; height:100% }
+  .hero h2{ margin:0 0 10px; font-size:24px; font-weight:700; letter-spacing:-0.02em }
+  .hero p{ margin:0 0 8px; color:var(--muted); font-size:14.5px; line-height:1.55; max-width:460px }
+  .sizes{ display:flex; align-items:flex-end; gap:16px; margin-top:14px }
+  .sizes .s{ display:flex; flex-direction:column; align-items:center; gap:6px }
+  .sizes .s span{ font-size:10px; color:var(--muted) }
+  .sizes .tile{ border-radius:24%; display:grid; place-items:center; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06) }
+  .sizes .tile svg{ width:100%; height:100% }
+  h2.sec{ font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:54px 0 4px }
+  .secdesc{ color:var(--muted); font-size:14px; margin:0 0 22px }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:20px }
+  .sw{ display:flex; flex-direction:column; gap:12px }
+  .tile{ aspect-ratio:1/1; border-radius:24%; display:grid; place-items:center; overflow:hidden }
+  .tile svg{ width:100%; height:100% }
+  .nm{ font-size:13.5px; font-weight:600; letter-spacing:-0.01em }
+  footer{ margin-top:72px; color:var(--muted); font-size:13px; text-align:center; line-height:1.6 }
+  footer code{ background:rgba(120,120,130,.14); padding:2px 6px; border-radius:5px; font-size:12px }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <span class="tag">Bimeet · знак 43 «Bond» · графит</span>
+      <h1>Графитовая версия — без выпуклости</h1>
+      <p class="sub">Чистое переплетение через разрывы: кольца просто прерываются там, где уходят друг за друга. Никакой перемычки в центре. Дымчатые серо-стальные градиенты — строго и дорого.</p>
+    </div>
+    <button class="toggle" id="modeBtn" type="button">◐ Тёмный фон</button>
+  </div>
+  <div id="hero"></div>
+  <div id="app"></div>
+  <footer>
+    Inline-SVG на сетке <code>0 0 100 100</code>. Понравившийся оттенок вынимается прямо в <code>favicon.svg</code> и PWA-иконки.
+  </footer>
+</div>
+
+<script>
+let uid = 0;
+function resolveColor(c, defs){
+  if (typeof c === 'string') return c;
+  const id='grad'+(uid++); const a=c.angle??45, r=a*Math.PI/180, x=Math.cos(r), y=Math.sin(r), R=30;
+  const x1=(50-x*R).toFixed(2), y1=(50-y*R).toFixed(2), x2=(50+x*R).toFixed(2), y2=(50+y*R).toFixed(2);
+  defs.push(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${c.stops.map(s=>`<stop offset="${s[0]}" stop-color="${s[1]}"/>`).join('')}</linearGradient>`);
+  return `url(#${id})`;
+}
+// Два сплошных кольца + длинная дуга-перехлёст левого поверх правого внизу.
+function svgMark(p){
+  const defs=[]; const a=resolveColor(p.ring1,defs), b=resolveColor(p.ring2,defs);
+  return `<svg viewBox="0 0 100 100"><defs>${defs.join('')}</defs>
+    <circle cx="39" cy="50" r="16" fill="none" stroke="${a}" stroke-width="11"/>
+    <circle cx="61" cy="50" r="16" fill="none" stroke="${b}" stroke-width="11"/>
+    <path d="M54.86 52.09 A16 16 0 0 1 40.26 65.95" fill="none" stroke="${a}" stroke-width="11" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// Главный — графит как на присланном макете
+const GRAPHITE = { ring1:{angle:55,stops:[[0,'#0B0C0E'],[1,'#3A4250']]}, ring2:{angle:55,stops:[[0,'#5A6473'],[1,'#AEB6C2']]} };
+
+document.getElementById('hero').innerHTML = `
+  <div class="hero">
+    <div class="big" style="background:#F4F5F7">${svgMark(GRAPHITE)}</div>
+    <div class="big" style="background:#0A0A0B;box-shadow:none">${svgMark({ring1:{angle:55,stops:[[0,'#6B7280'],[1,'#E5E7EB']]},ring2:{angle:55,stops:[[0,'#374151'],[1,'#9CA3AF']]}})}</div>
+    <div>
+      <h2>Graphite</h2>
+      <p>Два кольца в дымчатом стальном градиенте: левое уходит в графит, правое — в светлое серебро. Сдержанно, технологично, вне трендов. На тёмном фоне — инвертированная стальная пара.</p>
+      <div class="sizes">
+        <div class="s"><div class="tile" style="width:64px;height:64px;background:#F4F5F7">${svgMark(GRAPHITE)}</div><span>64</span></div>
+        <div class="s"><div class="tile" style="width:40px;height:40px;background:#F4F5F7">${svgMark(GRAPHITE)}</div><span>40</span></div>
+        <div class="s"><div class="tile" style="width:28px;height:28px;background:#F4F5F7">${svgMark(GRAPHITE)}</div><span>28</span></div>
+        <div class="s"><div class="tile" style="width:18px;height:18px;background:#F4F5F7">${svgMark(GRAPHITE)}</div><span>16</span></div>
+      </div>
+    </div>
+  </div>`;
+
+const SECTIONS = [
+ { title:'Оттенки графита', desc:'Та же идея в разной светлоте и температуре серого.', items:[
+   { nm:'Graphite (макет)', bg:'#F4F5F7', ring1:{angle:55,stops:[[0,'#0B0C0E'],[1,'#3A4250']]}, ring2:{angle:55,stops:[[0,'#5A6473'],[1,'#AEB6C2']]} },
+   { nm:'Onyx (темнее)', bg:'#F4F5F7', ring1:{angle:55,stops:[[0,'#000000'],[1,'#1F2937']]}, ring2:{angle:55,stops:[[0,'#374151'],[1,'#6B7280']]} },
+   { nm:'Steel (светлее)', bg:'#F5F7F9', ring1:{angle:55,stops:[[0,'#334155'],[1,'#64748B']]}, ring2:{angle:55,stops:[[0,'#94A3B8'],[1,'#CBD5E1']]} },
+   { nm:'Slate warm', bg:'#F6F5F3', ring1:{angle:55,stops:[[0,'#2A2622'],[1,'#4B463F']]}, ring2:{angle:55,stops:[[0,'#7A726A'],[1,'#BBB1A6']]} },
+   { nm:'Slate cool', bg:'#F2F5F8', ring1:{angle:55,stops:[[0,'#10212E'],[1,'#2C4356']]}, ring2:{angle:55,stops:[[0,'#5C7A91'],[1,'#A9C3D4']]} },
+   { nm:'Gunmetal', bg:'#F3F4F5', ring1:{angle:55,stops:[[0,'#1C1F26'],[1,'#363B45']]}, ring2:{angle:55,stops:[[0,'#525866'],[1,'#8A92A1']]} },
+ ]},
+ { title:'Графит на тёмном', desc:'Инверсия — светлое серебро на угольной плитке.', items:[
+   { nm:'Silver / dark', bg:'#0A0A0B', ring1:{angle:55,stops:[[0,'#6B7280'],[1,'#E5E7EB']]}, ring2:{angle:55,stops:[[0,'#374151'],[1,'#9CA3AF']]} },
+   { nm:'Steel / dark', bg:'#101216', ring1:{angle:55,stops:[[0,'#7C8696'],[1,'#D7DCE3']]}, ring2:{angle:55,stops:[[0,'#454C58'],[1,'#8A92A1']]} },
+   { nm:'Chrome / dark', bg:'#0B0D12', ring1:{angle:55,stops:[[0,'#FFFFFF'],[1,'#9AA3B2']]}, ring2:{angle:55,stops:[[0,'#C2C9D4'],[1,'#5B6470']]} },
+   { nm:'Cool steel / dark', bg:'#0A0F14', ring1:{angle:55,stops:[[0,'#A9C3D4'],[1,'#E6EEF4']]}, ring2:{angle:55,stops:[[0,'#3C5466'],[1,'#7E97A8']]} },
+ ]},
+ { title:'Плоский графит (без градиента)', desc:'Для favicon, печати и ч/б — один или два ровных тона.', items:[
+   { nm:'Ink × Slate', bg:'#F4F5F7', ring1:'#111418', ring2:'#8A92A1' },
+   { nm:'Charcoal mono', bg:'#F4F5F7', ring1:'#2B2F36', ring2:'#6B7280' },
+   { nm:'Silver / dark flat', bg:'#0A0A0B', ring1:'#E5E7EB', ring2:'#8A92A1' },
+   { nm:'White / dark flat', bg:'#0A0A0B', ring1:'#FFFFFF', ring2:'#FFFFFF' },
+ ]},
+];
+
+document.getElementById('app').innerHTML = SECTIONS.map(sec=>`
+  <h2 class="sec">${sec.title}</h2>
+  <p class="secdesc">${sec.desc}</p>
+  <div class="grid">
+    ${sec.items.map(p=>`
+      <div class="sw">
+        <div class="tile" style="background:${p.bg}; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)">${svgMark(p)}</div>
+        <span class="nm">${p.nm}</span>
+      </div>`).join('')}
+  </div>`).join('');
+
+document.getElementById('modeBtn').addEventListener('click', function(){
+  const d=document.body.classList.toggle('dark');
+  this.textContent = d ? '◑ Светлый фон' : '◐ Тёмный фон';
+});
+</script>
+</body>
+</html>
