@@ -1,5 +1,6 @@
 "use client";
 import { useLanguage } from "@/lib/language-context";
+import BrandMark from "@/components/BrandMark";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "#";
 
@@ -9,9 +10,7 @@ export default function Footer() {
   return (
     <footer className="mx-auto mt-24 flex max-w-[1180px] flex-wrap items-center justify-between gap-6 border-t border-black/[0.06] px-6 pb-16 pt-11 text-[13px] text-ink-3 sm:px-8">
       <div className="flex items-center gap-2.5 font-bold text-ink">
-        <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-ink text-[15px] font-bold text-white">
-          B
-        </span>
+        <BrandMark size={34} />
         Bimeet {f.tagline}
       </div>
 

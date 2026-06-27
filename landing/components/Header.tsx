@@ -1,6 +1,7 @@
 "use client";
 import { useLanguage } from "@/lib/language-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import BrandMark from "@/components/BrandMark";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "#";
 
@@ -14,9 +15,7 @@ export default function Header() {
           href="#"
           className="flex items-center gap-2.5 text-[18px] font-bold tracking-tight text-ink"
         >
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-ink text-[15px] font-bold text-white">
-            B
-          </span>
+          <BrandMark size={34} />
           Bimeet
         </a>
 

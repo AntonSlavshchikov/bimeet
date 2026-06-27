@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "gen:splash:light": "pwa-asset-generator public/favicon.svg public/splash --splash-only --type png --background \"#ffffff\" --padding \"30%\" --path \"/splash\"",
-    "gen:splash:dark": "pwa-asset-generator public/favicon.svg public/splash --splash-only --dark-mode --type png --background \"#0a0a0b\" --padding \"30%\" --path \"/splash\"",
+    "gen:splash:light": "pwa-asset-generator branding/splash-light.svg public/splash --splash-only --type png --background \"#ffffff\" --padding \"22%\" --path \"/splash\"",
+    "gen:splash:dark": "pwa-asset-generator branding/splash-dark.svg public/splash --splash-only --dark-mode --type png --background \"#0a0a0b\" --padding \"22%\" --path \"/splash\"",
     "gen:splash": "npm run gen:splash:light && npm run gen:splash:dark"
   },
   "dependencies": {
