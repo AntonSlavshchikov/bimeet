@@ -49,8 +49,8 @@ func (s *Service) Subscribe(ctx context.Context, userID uuid.UUID, req model.Pus
 	return s.repo.Upsert(ctx, userID, req.Endpoint, req.Keys.P256dh, req.Keys.Auth, userAgent)
 }
 
-func (s *Service) Unsubscribe(ctx context.Context, endpoint string) error {
-	return s.repo.DeleteByEndpoint(ctx, endpoint)
+func (s *Service) Unsubscribe(ctx context.Context, userID uuid.UUID, endpoint string) error {
+	return s.repo.DeleteByEndpoint(ctx, userID, endpoint)
 }
 
 // payload is the JSON body the service worker receives in its `push` handler.
@@ -152,7 +152,7 @@ func (s *Service) sendOne(ctx context.Context, sub model.PushSubscription, p pay
 
 	// Prune subscriptions the push service no longer recognises.
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone {
-		if delErr := s.repo.DeleteByEndpoint(ctx, sub.Endpoint); delErr != nil {
+		if delErr := s.repo.DeleteByEndpoint(ctx, sub.UserID, sub.Endpoint); delErr != nil {
 			observability.FromContext(ctx).Error("push: prune dead subscription", "error", delErr)
 		}
 		return fmt.Errorf("subscription expired (%d), pruned", resp.StatusCode)

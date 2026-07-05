@@ -85,15 +85,15 @@ func (mr *MockPushServiceMockRecorder) Test(ctx, userID any) *gomock.Call {
 }
 
 // Unsubscribe mocks base method.
-func (m *MockPushService) Unsubscribe(ctx context.Context, endpoint string) error {
+func (m *MockPushService) Unsubscribe(ctx context.Context, userID uuid.UUID, endpoint string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Unsubscribe", ctx, endpoint)
+	ret := m.ctrl.Call(m, "Unsubscribe", ctx, userID, endpoint)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Unsubscribe indicates an expected call of Unsubscribe.
-func (mr *MockPushServiceMockRecorder) Unsubscribe(ctx, endpoint any) *gomock.Call {
+func (mr *MockPushServiceMockRecorder) Unsubscribe(ctx, userID, endpoint any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unsubscribe", reflect.TypeOf((*MockPushService)(nil).Unsubscribe), ctx, endpoint)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unsubscribe", reflect.TypeOf((*MockPushService)(nil).Unsubscribe), ctx, userID, endpoint)
 }

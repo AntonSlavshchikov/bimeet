@@ -205,10 +205,16 @@ function StatsRail({
   const organizing = thisMonth.filter(e => e.organizer.is_me).length
   const upcoming = thisMonth.length
 
-  // Уникальные participants в this-month. Без user id дедуплицируем по email.
+  // Уникальные participants в this-month. В приватных событиях дедуплицируем по email,
+  // в публичных безопасных DTO email отсутствует, поэтому используем display name.
   const people = new Set<string>()
   thisMonth.forEach(e => {
-    e.participants.forEach(p => { if (!p.user.is_me) people.add(p.user.email) })
+    e.participants.forEach(p => {
+      if (!p.user.is_me) {
+        const key = 'email' in p.user && typeof p.user.email === 'string' ? p.user.email : p.user.name
+        people.add(key)
+      }
+    })
   })
 
   return (
@@ -461,4 +467,3 @@ export function EventsListRail() {
     </>
   )
 }
-

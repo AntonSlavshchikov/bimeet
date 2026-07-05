@@ -63,7 +63,8 @@ func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Unsubscribe(w http.ResponseWriter, r *http.Request) {
-	if _, ok := middleware.UserIDFromCtx(r.Context()); !ok {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
@@ -78,7 +79,7 @@ func (h *Handler) Unsubscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.Unsubscribe(r.Context(), req.Endpoint); err != nil {
+	if err := h.svc.Unsubscribe(r.Context(), userID, req.Endpoint); err != nil {
 		response.Error(w, http.StatusInternalServerError, "failed to remove subscription")
 		return
 	}

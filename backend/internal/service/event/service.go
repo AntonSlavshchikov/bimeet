@@ -62,18 +62,16 @@ func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Even
 		return model.EventDetail{}, fmt.Errorf("event not found")
 	}
 
-	if !detail.IsPublic {
-		if !detail.Organizer.IsMe {
-			isParticipant := false
-			for _, p := range detail.Participants {
-				if p.User.IsMe {
-					isParticipant = true
-					break
-				}
+	if !detail.Organizer.IsMe {
+		isParticipant := false
+		for _, p := range detail.Participants {
+			if p.User.IsMe {
+				isParticipant = true
+				break
 			}
-			if !isParticipant {
-				return model.EventDetail{}, ErrForbidden
-			}
+		}
+		if !isParticipant {
+			return model.EventDetail{}, ErrForbidden
 		}
 	}
 

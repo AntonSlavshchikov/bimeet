@@ -53,7 +53,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.is_public,
-		        u.name, u.email,
+		        u.name,
 		        COUNT(ep.id) FILTER (WHERE ep.status = 'confirmed') AS confirmed_count
 		 FROM events e
 		 JOIN users u ON u.id = e.organizer_id
@@ -63,7 +63,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 		&e.Category, &e.DressCode, &e.IsPublic,
-		&e.Organizer.Name, &e.Organizer.Email,
+		&e.Organizer.Name,
 		&e.ConfirmedCount)
 	if err != nil {
 		return model.InviteEventInfo{}, fmt.Errorf("get event by invite token: %w", err)
@@ -735,8 +735,7 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 	rows, err := r.pool.Query(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
-		        e.organizer_id, ou.name, ou.email,
-		        e.invite_token, e.created_at,
+		        e.organizer_id, ou.name, e.created_at,
 		        EXISTS(
 		            SELECT 1 FROM event_participants ep
 		            WHERE ep.event_id = e.id AND ep.user_id = $1
@@ -765,8 +764,7 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
-			&orgID, &e.Organizer.Name, &e.Organizer.Email,
-			&e.InviteToken, &e.CreatedAt,
+			&orgID, &e.Organizer.Name, &e.CreatedAt,
 			&e.IsParticipant,
 		); err != nil {
 			return nil, fmt.Errorf("scan public event list item: %w", err)
@@ -785,13 +783,13 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 	orgByEvent := make(map[uuid.UUID]uuid.UUID, len(events))
 	idxByEvent := make(map[uuid.UUID]int, len(events))
 	for i := range events {
-		events[i].Participants = []model.ParticipantInfo{}
+		events[i].Participants = []model.PublicParticipantInfo{}
 		orgByEvent[events[i].ID] = orgIDs[i]
 		idxByEvent[events[i].ID] = i
 	}
 	if len(events) > 0 {
 		pRows, err := r.pool.Query(ctx,
-			`SELECT ep.event_id, ep.user_id, u.name, u.email, ep.status
+			`SELECT ep.event_id, ep.user_id, u.name, ep.status
 			 FROM event_participants ep
 			 JOIN users u ON u.id = ep.user_id
 			 WHERE ep.event_id IN (
@@ -809,9 +807,9 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 			return nil, fmt.Errorf("list participants for public event: %w", err)
 		}
 		for pRows.Next() {
-			var p model.ParticipantInfo
+			var p model.PublicParticipantInfo
 			var evID, puID uuid.UUID
-			if err := pRows.Scan(&evID, &puID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
+			if err := pRows.Scan(&evID, &puID, &p.User.Name, &p.Status); err != nil {
 				pRows.Close()
 				return nil, fmt.Errorf("scan participant public event: %w", err)
 			}

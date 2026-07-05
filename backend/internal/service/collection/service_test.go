@@ -1,8 +1,11 @@
 package collectionsvc_test
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"io"
+	"mime/multipart"
 	"testing"
 
 	"github.com/google/uuid"
@@ -24,6 +27,21 @@ func (noopUploader) Upload(_ context.Context, _, _ string, _ io.Reader) (string,
 	return "", nil
 }
 
+type captureUploader struct {
+	contentType string
+	body        []byte
+}
+
+func (u *captureUploader) Upload(_ context.Context, _, contentType string, body io.Reader) (string, error) {
+	u.contentType = contentType
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
+	u.body = data
+	return "https://cdn.example/receipt", nil
+}
+
 func newService(t *testing.T) (*collectionsvc.Service, *mock.MockCollectionRepo, *mock.MockEventRepo) {
 	t.Helper()
 	ctrl := gomock.NewController(t)
@@ -31,6 +49,19 @@ func newService(t *testing.T) (*collectionsvc.Service, *mock.MockCollectionRepo,
 	er := mock.NewMockEventRepo(ctrl)
 	nr := mock.NewMockNotificationRepo(ctrl)
 	return collectionsvc.New(cr, er, nr, noopUploader{}), cr, er
+}
+
+func newServiceWithUploader(t *testing.T, uploader collectionsvc.Uploader) (*collectionsvc.Service, *mock.MockCollectionRepo, *mock.MockEventRepo, *mock.MockNotificationRepo) {
+	t.Helper()
+	ctrl := gomock.NewController(t)
+	cr := mock.NewMockCollectionRepo(ctrl)
+	er := mock.NewMockEventRepo(ctrl)
+	nr := mock.NewMockNotificationRepo(ctrl)
+	return collectionsvc.New(cr, er, nr, uploader), cr, er, nr
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
 
 // ─── List ──────────────────────────────────────────────────────────────────
@@ -123,6 +154,49 @@ func TestDelete_HappyPath(t *testing.T) {
 	cr.EXPECT().Delete(gomock.Any(), collectionID).Return(nil)
 
 	require.NoError(t, svc.Delete(context.Background(), eventID, collectionID, organizerID))
+}
+
+// ─── SubmitContribution ───────────────────────────────────────────────────
+
+func TestSubmitContribution_RejectsSVGDespiteMultipartContentType(t *testing.T) {
+	uploader := &captureUploader{}
+	svc, cr, er, _ := newServiceWithUploader(t, uploader)
+
+	eventID, collectionID, userID := uuid.New(), uuid.New(), uuid.New()
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: uuid.New()}, nil)
+	er.EXPECT().IsConfirmedParticipant(gomock.Any(), eventID, userID).Return(true, nil)
+	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: eventID}, nil)
+	cr.EXPECT().GetContribution(gomock.Any(), collectionID, userID).Return(model.CollectionContribution{}, errors.New("not found"))
+
+	header := &multipart.FileHeader{Header: map[string][]string{"Content-Type": {"image/png"}}}
+	file := bytes.NewReader([]byte(`<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>`))
+	_, err := svc.SubmitContribution(context.Background(), eventID, collectionID, userID, file, header)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported file type")
+	assert.Empty(t, uploader.contentType)
+}
+
+func TestSubmitContribution_UploadsSniffedPNG(t *testing.T) {
+	uploader := &captureUploader{}
+	svc, cr, er, nr := newServiceWithUploader(t, uploader)
+
+	eventID, collectionID, userID, organizerID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: organizerID}, nil)
+	er.EXPECT().IsConfirmedParticipant(gomock.Any(), eventID, userID).Return(true, nil)
+	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: eventID, Title: "Cake"}, nil)
+	cr.EXPECT().GetContribution(gomock.Any(), collectionID, userID).Return(model.CollectionContribution{}, errors.New("not found"))
+	cr.EXPECT().SubmitContribution(gomock.Any(), collectionID, userID, "https://cdn.example/receipt").
+		Return(model.CollectionContribution{CollectionID: collectionID, UserID: userID, ReceiptURL: ptr("https://cdn.example/receipt")}, nil)
+	nr.EXPECT().Create(gomock.Any(), organizerID, &eventID, "collection_contribution_pending", gomock.Any()).AnyTimes()
+
+	png := []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 0, 'I', 'E', 'N', 'D'}
+	header := &multipart.FileHeader{Header: map[string][]string{"Content-Type": {"image/svg+xml"}}}
+	_, err := svc.SubmitContribution(context.Background(), eventID, collectionID, userID, bytes.NewReader(png), header)
+
+	require.NoError(t, err)
+	assert.Equal(t, "image/png", uploader.contentType)
+	assert.Equal(t, png, uploader.body)
 }
 
 // ─── Summary ───────────────────────────────────────────────────────────────

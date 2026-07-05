@@ -123,7 +123,10 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-const maxReceiptSize = 10 << 20 // 10 MB
+const (
+	maxReceiptSize        = 10 << 20 // 10 MB
+	maxReceiptRequestSize = maxReceiptSize + 1<<20
+)
 
 func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
@@ -144,6 +147,7 @@ func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxReceiptRequestSize)
 	if err := r.ParseMultipartForm(maxReceiptSize); err != nil {
 		response.Error(w, http.StatusBadRequest, "file too large or invalid form")
 		return
