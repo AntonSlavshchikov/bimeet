@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
@@ -170,27 +171,32 @@ func (r *Repository) GetOption(ctx context.Context, optionID uuid.UUID) (model.P
 }
 
 func (r *Repository) Vote(ctx context.Context, optionID, userID uuid.UUID) error {
-	_, err := r.pool.Exec(ctx,
-		`DELETE FROM poll_votes
-		 WHERE user_id=$1
-		   AND poll_option_id IN (
-		       SELECT id FROM poll_options WHERE poll_id=(
-		           SELECT poll_id FROM poll_options WHERE id=$2
-		       )
-		   )`,
-		userID, optionID,
-	)
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return fmt.Errorf("delete previous vote: %w", err)
+		return fmt.Errorf("begin vote tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var pollID uuid.UUID
+	if err := tx.QueryRow(ctx,
+		`SELECT poll_id FROM poll_options WHERE id=$1`,
+		optionID,
+	).Scan(&pollID); err != nil {
+		return fmt.Errorf("get poll option: %w", err)
 	}
 
-	_, err = r.pool.Exec(ctx,
-		`INSERT INTO poll_votes (poll_option_id, user_id) VALUES ($1, $2)
-		 ON CONFLICT DO NOTHING`,
-		optionID, userID,
+	_, err = tx.Exec(ctx,
+		`INSERT INTO poll_votes (poll_id, poll_option_id, user_id)
+		 VALUES ($1, $2, $3)
+		 ON CONFLICT (poll_id, user_id)
+		 DO UPDATE SET poll_option_id = EXCLUDED.poll_option_id`,
+		pollID, optionID, userID,
 	)
 	if err != nil {
-		return fmt.Errorf("insert vote: %w", err)
+		return fmt.Errorf("upsert vote: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit vote tx: %w", err)
 	}
 	return nil
 }

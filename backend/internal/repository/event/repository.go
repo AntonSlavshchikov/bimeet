@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
@@ -840,8 +841,52 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 
 // JoinPublic adds a user as a confirmed participant of a public event.
 func (r *Repository) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) (model.EventParticipant, error) {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return model.EventParticipant{}, fmt.Errorf("begin join public tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var isPublic bool
+	var status string
+	var organizerID uuid.UUID
+	var maxGuests *int
+	if err := tx.QueryRow(ctx,
+		`SELECT is_public, status, organizer_id, max_guests
+		 FROM events WHERE id=$1 FOR UPDATE`,
+		eventID,
+	).Scan(&isPublic, &status, &organizerID, &maxGuests); err != nil {
+		return model.EventParticipant{}, fmt.Errorf("event not found: %w", err)
+	}
+	if !isPublic {
+		return model.EventParticipant{}, fmt.Errorf("forbidden")
+	}
+	if status != "active" {
+		return model.EventParticipant{}, fmt.Errorf("event is not active")
+	}
+	if organizerID == userID {
+		return model.EventParticipant{}, fmt.Errorf("you are the organizer")
+	}
+
+	if maxGuests != nil {
+		var confirmedCount int
+		if err := tx.QueryRow(ctx,
+			`SELECT COUNT(*) FROM (
+				SELECT organizer_id AS user_id FROM events WHERE id=$1
+				UNION
+				SELECT user_id FROM event_participants WHERE event_id=$1 AND status='confirmed'
+			) t`,
+			eventID,
+		).Scan(&confirmedCount); err != nil {
+			return model.EventParticipant{}, fmt.Errorf("count confirmed participants: %w", err)
+		}
+		if confirmedCount >= *maxGuests {
+			return model.EventParticipant{}, fmt.Errorf("event is full")
+		}
+	}
+
 	var p model.EventParticipant
-	err := r.pool.QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO event_participants (event_id, user_id, status)
 		 VALUES ($1, $2, 'confirmed')
 		 ON CONFLICT (event_id, user_id) DO UPDATE SET status = 'confirmed'
@@ -850,6 +895,9 @@ func (r *Repository) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) 
 	).Scan(&p.ID, &p.EventID, &p.UserID, &p.Status)
 	if err != nil {
 		return model.EventParticipant{}, fmt.Errorf("join public event: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return model.EventParticipant{}, fmt.Errorf("commit join public tx: %w", err)
 	}
 	return p, nil
 }

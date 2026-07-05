@@ -35,9 +35,15 @@ export default function LocationPicker({
 
   // Keep latest onChange/value in refs so the once-bound map handlers aren't stale.
   const onChangeRef = useRef(onChange)
-  onChangeRef.current = onChange
   const valueRef = useRef(value)
-  valueRef.current = value
+
+  useEffect(() => {
+    onChangeRef.current = onChange
+  }, [onChange])
+
+  useEffect(() => {
+    valueRef.current = value
+  }, [value])
 
   const showMap = isVkMapsEnabled()
 

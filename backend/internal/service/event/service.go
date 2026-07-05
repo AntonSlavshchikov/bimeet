@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -46,14 +47,8 @@ func (s *Service) Create(ctx context.Context, req model.CreateEventRequest, orga
 	ctx, span := observability.Span(ctx, "EventService.Create")
 	defer span.End()
 
-	if req.Title == "" {
-		return model.Event{}, fmt.Errorf("title is required")
-	}
-	if req.DateStart.IsZero() || req.DateEnd.IsZero() {
-		return model.Event{}, fmt.Errorf("date_start and date_end are required")
-	}
-	if req.DateEnd.Before(req.DateStart) {
-		return model.Event{}, fmt.Errorf("date_end must be after date_start")
+	if err := validateCreateEvent(req); err != nil {
+		return model.Event{}, err
 	}
 	// Bimeet for People знает только обычные встречи — деловой тип убран
 	// вместе с разделением продуктов (см. docs/company.md, Этап 32).
@@ -115,6 +110,9 @@ func (s *Service) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) err
 	}
 
 	if _, err := s.eventRepo.JoinPublic(ctx, eventID, userID); err != nil {
+		if strings.Contains(err.Error(), "event is full") {
+			return ErrFull
+		}
 		return err
 	}
 
@@ -181,6 +179,9 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 
 	if event.OrganizerID != userID {
 		return model.Event{}, fmt.Errorf("forbidden")
+	}
+	if err := validateUpdateEvent(event, req); err != nil {
+		return model.Event{}, err
 	}
 
 	type fieldChange struct {
@@ -363,4 +364,44 @@ func (s *Service) UpdateParticipantStatus(ctx context.Context, eventID, targetUs
 
 func isNotFound(err error) bool {
 	return err == pgx.ErrNoRows
+}
+
+func validateCreateEvent(req model.CreateEventRequest) error {
+	if strings.TrimSpace(req.Title) == "" {
+		return fmt.Errorf("title is required")
+	}
+	if req.DateStart.IsZero() || req.DateEnd.IsZero() {
+		return fmt.Errorf("date_start and date_end are required")
+	}
+	if req.DateEnd.Before(req.DateStart) {
+		return fmt.Errorf("date_end must be after date_start")
+	}
+	if req.MaxGuests != nil && *req.MaxGuests <= 0 {
+		return fmt.Errorf("max_guests must be positive")
+	}
+	return nil
+}
+
+func validateUpdateEvent(event model.Event, req model.UpdateEventRequest) error {
+	if req.Title != nil && strings.TrimSpace(*req.Title) == "" {
+		return fmt.Errorf("title is required")
+	}
+	start := event.DateStart
+	if req.DateStart != nil {
+		start = *req.DateStart
+	}
+	end := event.DateEnd
+	if req.DateEnd != nil {
+		end = *req.DateEnd
+	}
+	if start.IsZero() || end.IsZero() {
+		return fmt.Errorf("date_start and date_end are required")
+	}
+	if end.Before(start) {
+		return fmt.Errorf("date_end must be after date_start")
+	}
+	if req.MaxGuests != nil && *req.MaxGuests <= 0 {
+		return fmt.Errorf("max_guests must be positive")
+	}
+	return nil
 }

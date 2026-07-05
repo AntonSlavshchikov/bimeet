@@ -176,6 +176,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusNotFound, "event not found")
 			return
 		}
+		if strings.Contains(msg, "required") || strings.Contains(msg, "must be") {
+			response.Error(w, http.StatusBadRequest, msg)
+			return
+		}
 		response.Error(w, http.StatusInternalServerError, "failed to update event")
 		return
 	}

@@ -88,7 +88,7 @@ export default function InvitePage() {
       ) : (
         <div className="flex flex-col gap-2">
           <Button asChild className="w-full">
-            <Link to={`/register?token=${token}`}>{t('invite.registerAndAccept', 'Зарегистрироваться и принять')}</Link>
+            <Link to={`/login?token=${token}`}>{t('invite.registerAndAccept', 'Зарегистрироваться и принять')}</Link>
           </Button>
           <Button asChild variant="outline" className="w-full">
             <Link to={`/login?token=${token}`}>{t('invite.signIn', 'Войти')}</Link>
