@@ -730,24 +730,18 @@ func (r *Repository) MarkReminder1dSent(ctx context.Context, id uuid.UUID) error
 	return err
 }
 
-// ListPublic returns active public events with confirmed_count and is_participant flag.
+// ListPublic returns all active public events with confirmed_count and current-user state.
 func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, e.created_at,
-		        EXISTS(
-		            SELECT 1 FROM event_participants ep
-		            WHERE ep.event_id = e.id AND ep.user_id = $1
-		        ) AS is_participant
+		        COALESCE(me.status, '') AS my_status,
+		        me.user_id IS NOT NULL AS is_participant
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
+		 LEFT JOIN event_participants me ON me.event_id = e.id AND me.user_id = $1
 		 WHERE e.is_public = TRUE AND e.status = 'active'
-		   AND e.organizer_id <> $1
-		   AND NOT EXISTS (
-		       SELECT 1 FROM event_participants ep
-		       WHERE ep.event_id = e.id AND ep.user_id = $1
-		   )
 		 ORDER BY e.date_start`,
 		userID,
 	)
@@ -765,12 +759,11 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
 			&orgID, &e.Organizer.Name, &e.CreatedAt,
-			&e.IsParticipant,
+			&e.MyStatus, &e.IsParticipant,
 		); err != nil {
 			return nil, fmt.Errorf("scan public event list item: %w", err)
 		}
 		e.Organizer.IsMe = orgID == userID
-		e.MyStatus = ""
 		events = append(events, e)
 		orgIDs = append(orgIDs, orgID)
 	}
@@ -795,13 +788,7 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 			 WHERE ep.event_id IN (
 			     SELECT e.id FROM events e
 			     WHERE e.is_public = TRUE AND e.status = 'active'
-			       AND e.organizer_id <> $1
-			       AND NOT EXISTS (
-			           SELECT 1 FROM event_participants x
-			           WHERE x.event_id = e.id AND x.user_id = $1
-			       )
 			 )`,
-			userID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("list participants for public event: %w", err)
