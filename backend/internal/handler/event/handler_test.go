@@ -111,6 +111,7 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	organizer, ok := got[0]["organizer"].(map[string]any)
 	require.True(t, ok)
 	assert.NotContains(t, organizer, "email")
+	assert.NotContains(t, organizer, "id")
 	participants, ok := got[0]["participants"].([]any)
 	require.True(t, ok)
 	require.Len(t, participants, 1)
@@ -119,6 +120,7 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	user, ok := participant["user"].(map[string]any)
 	require.True(t, ok)
 	assert.NotContains(t, user, "email")
+	assert.NotContains(t, user, "id")
 }
 
 // ─── GetByID ───────────────────────────────────────────────────────────────

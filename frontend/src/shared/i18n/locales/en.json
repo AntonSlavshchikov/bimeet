@@ -43,7 +43,7 @@
     "admin": "Admin",
     "notifications": "Notifications",
     "notificationsShort": "Alerts",
-    "publicEvents": "Find public",
+    "publicEvents": "Public events",
     "publicEventsShort": "Public"
   },
   "layout": {
@@ -72,6 +72,10 @@
     "completedAlert": "Event completed — editing and actions are unavailable",
     "changeHistory": "Change history",
     "changed": "changed «{{field}}»"
+  },
+  "publicEvents": {
+    "subtitle": "{{count}} active public events",
+    "empty": "There are no active public events right now"
   },
   "eventCard": {
     "statusCompleted": "Completed",

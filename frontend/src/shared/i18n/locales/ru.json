@@ -43,7 +43,7 @@
     "admin": "Админка",
     "notifications": "Уведомления",
     "notificationsShort": "Уведом.",
-    "publicEvents": "Найти публичные",
+    "publicEvents": "Публичные встречи",
     "publicEventsShort": "Публичные"
   },
   "layout": {
@@ -72,6 +72,10 @@
     "completedAlert": "Встреча завершена — редактирование и действия недоступны",
     "changeHistory": "История изменений",
     "changed": "изменил «{{field}}»"
+  },
+  "publicEvents": {
+    "subtitle": "{{count}} активных публичных встреч",
+    "empty": "Сейчас нет активных публичных встреч"
   },
   "eventCard": {
     "statusCompleted": "Завершена",

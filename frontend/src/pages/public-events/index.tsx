@@ -7,9 +7,8 @@ import EventListRow from '@/widgets/event-card/EventListRow'
 import type { PublicEventListItem } from '@/entities/event/model/types'
 import { ListGroup, SearchInput, useToast } from '@/shared/ui'
 
-// PublicEventsPage — самостоятельный экран «Найти публичные»: просто список
-// будущих публичных встреч, в которых пользователь не участвует и не организатор
-// (бэкенд уже исключает их в ListPublic). Без вкладок-фильтров.
+// PublicEventsPage — самостоятельный экран «Найти публичные»: каталог
+// будущих публичных встреч для всех авторизованных пользователей.
 export default function PublicEventsPage() {
   const publicEvents = usePublicEvents()
   const { t } = useTranslation()
@@ -42,10 +41,10 @@ export default function PublicEventsPage() {
       {/* Head */}
       <div>
         <h1 className="text-[34px] lg:text-[28px] font-bold tracking-[-0.022em] leading-[1.05] lg:leading-[1.15]">
-          {t('nav.publicEvents', 'Найти публичные')}
+          {t('nav.publicEvents')}
         </h1>
         <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">
-          {t('publicEvents.subtitle', { count: upcoming.length, defaultValue: `${upcoming.length} публичных встреч поблизости` })}
+          {t('publicEvents.subtitle', { count: upcoming.length })}
         </p>
       </div>
 
@@ -69,7 +68,7 @@ export default function PublicEventsPage() {
             <>
               <Compass size={28} className="text-ink-3" />
               <div className="text-[13.5px] text-ink-3">
-                {t('publicEvents.empty', 'Сейчас нет публичных встреч, к которым можно присоединиться')}
+                {t('publicEvents.empty')}
               </div>
             </>
           )}
@@ -78,11 +77,16 @@ export default function PublicEventsPage() {
         <ListGroup>
           {visible.map(event => {
             const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-            const canJoin = spotsLeft == null || spotsLeft > 0
+            const canRequestJoin =
+              !event.organizer.is_me &&
+              !event.is_participant &&
+              event.status === 'active'
+            const canJoin = canRequestJoin ? spotsLeft == null || spotsLeft > 0 : undefined
             return (
               <EventListRow
                 key={event.id}
                 event={event}
+                myStatus={event.my_status}
                 canJoin={canJoin}
                 onJoin={canJoin ? () => handleJoin(event) : undefined}
                 dateCaption="month"
