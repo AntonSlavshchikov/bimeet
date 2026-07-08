@@ -20,6 +20,17 @@ func New(svc ItemService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// @Summary List event items
+// @Tags items
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {array} model.Item
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/items [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -49,6 +60,18 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, items)
 }
 
+// @Summary Create an event item
+// @Tags items
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param request body model.CreateItemRequest true "Item payload"
+// @Success 201 {object} model.Item
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Router /events/{id}/items [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -82,6 +105,21 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, item)
 }
 
+// @Summary Assign or unassign an event item
+// @Tags items
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param itemId path string true "Item ID"
+// @Param request body model.UpdateItemRequest true "Assignment payload"
+// @Success 200 {object} model.Item
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/items/{itemId} [patch]
 func (h *Handler) UpdateAssignment(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

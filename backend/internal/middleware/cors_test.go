@@ -1,6 +1,7 @@
 package middleware_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,7 @@ import (
 func corsResponse(t *testing.T, origins []string, reqOrigin string) string {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	req.Header.Set("Origin", reqOrigin)
 	middleware.CORS(origins)(okHandler()).ServeHTTP(rec, req)
 	return rec.Header().Get("Access-Control-Allow-Origin")

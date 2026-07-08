@@ -20,6 +20,14 @@ func New(svc NotificationService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// @Summary List notifications
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} model.Notification
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /notifications [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -38,6 +46,18 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, notifications)
 }
 
+// @Summary Mark a notification as read
+// @Tags notifications
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Notification ID"
+// @Success 200 {object} model.Notification
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /notifications/{id}/read [patch]
 func (h *Handler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -69,6 +89,13 @@ func (h *Handler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, n)
 }
 
+// @Summary Mark all notifications as read
+// @Tags notifications
+// @Security BearerAuth
+// @Success 204 "No Content"
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /notifications/read-all [post]
 func (h *Handler) MarkAllRead(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -84,6 +111,17 @@ func (h *Handler) MarkAllRead(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Delete a notification
+// @Tags notifications
+// @Security BearerAuth
+// @Param id path string true "Notification ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /notifications/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -114,6 +152,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Delete all notifications
+// @Tags notifications
+// @Security BearerAuth
+// @Success 204 "No Content"
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /notifications [delete]
 func (h *Handler) DeleteAll(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

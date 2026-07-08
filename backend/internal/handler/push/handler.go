@@ -17,10 +17,26 @@ func New(svc PushService) *Handler {
 }
 
 // VAPIDPublicKey returns the public VAPID key the browser needs to subscribe.
+// @Summary Get the public VAPID key
+// @Tags push
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} response.VAPIDKeyResponse
+// @Router /push/vapid-public-key [get]
 func (h *Handler) VAPIDPublicKey(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]string{"key": h.svc.PublicKey()})
 }
 
+// @Summary Subscribe to web push notifications
+// @Tags push
+// @Accept json
+// @Security BearerAuth
+// @Param request body model.PushSubscribeRequest true "Browser push subscription"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /push/subscribe [post]
 func (h *Handler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -47,6 +63,13 @@ func (h *Handler) Subscribe(w http.ResponseWriter, r *http.Request) {
 }
 
 // Test sends a push to the caller's own subscriptions (debugging aid).
+// @Summary Send a test push notification
+// @Tags push
+// @Security BearerAuth
+// @Success 204 "No Content"
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 502 {object} response.ErrorResponse
+// @Router /push/test [post]
 func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -62,6 +85,16 @@ func (h *Handler) Test(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Unsubscribe from web push notifications
+// @Tags push
+// @Accept json
+// @Security BearerAuth
+// @Param request body model.PushUnsubscribeRequest true "Push endpoint to remove"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /push/unsubscribe [post]
 func (h *Handler) Unsubscribe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

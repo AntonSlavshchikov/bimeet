@@ -26,7 +26,6 @@ import (
 	"bimeet/internal/notify"
 	"bimeet/internal/observability"
 	"bimeet/internal/reminder"
-	"bimeet/internal/secret"
 	adminrepo "bimeet/internal/repository/admin"
 	carpoolrepo "bimeet/internal/repository/carpool"
 	collectionrepo "bimeet/internal/repository/collection"
@@ -38,6 +37,7 @@ import (
 	pollrepo "bimeet/internal/repository/poll"
 	pushsubrepo "bimeet/internal/repository/pushsub"
 	userrepo "bimeet/internal/repository/user"
+	"bimeet/internal/secret"
 	adminsvc "bimeet/internal/service/admin"
 	authsvc "bimeet/internal/service/auth"
 	carpoolsvc "bimeet/internal/service/carpool"
@@ -57,6 +57,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+// @title Bimeet API
+// @version 1.0
+// @description Backend API for Bimeet events, invitations, collections, polls, chat, profile, push notifications, and admin dashboards.
+// @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer " followed by a JWT token.
 func main() {
 	cfg := config.Load()
 

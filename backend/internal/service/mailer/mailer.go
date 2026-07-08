@@ -2,6 +2,7 @@ package mailer
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -126,7 +127,7 @@ func (m *Mailer) sendResend(toEmail, subject, body string) error {
 		return fmt.Errorf("marshal resend payload: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, resendEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, resendEndpoint, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -137,7 +138,7 @@ func (m *Mailer) sendResend(toEmail, subject, body string) error {
 	if err != nil {
 		return fmt.Errorf("resend request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil
@@ -177,7 +178,7 @@ func (m *Mailer) sendSMTP(toEmail, subject, body string) error {
 
 	addr := m.cfg.SMTPHost + ":" + m.cfg.SMTPPort
 
-	conn, err := net.DialTimeout("tcp", addr, smtpDialTimeout)
+	conn, err := (&net.Dialer{Timeout: smtpDialTimeout}).DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		return fmt.Errorf("dial %s: %w", addr, err)
 	}
@@ -187,7 +188,7 @@ func (m *Mailer) sendSMTP(toEmail, subject, body string) error {
 		_ = conn.Close()
 		return fmt.Errorf("smtp client: %w", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err := c.StartTLS(&tls.Config{ServerName: m.cfg.SMTPHost}); err != nil {

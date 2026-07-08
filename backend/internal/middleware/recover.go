@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -24,7 +25,7 @@ func Recoverer(next http.Handler) http.Handler {
 			}
 			// http.ErrAbortHandler is an intentional abort — let it propagate so
 			// the server handles it without logging it as a crash.
-			if rec == http.ErrAbortHandler {
+			if err, ok := rec.(error); ok && errors.Is(err, http.ErrAbortHandler) {
 				panic(rec)
 			}
 

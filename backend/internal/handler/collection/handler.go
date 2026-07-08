@@ -21,6 +21,17 @@ func New(svc CollectionService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// @Summary List event collections
+// @Tags collections
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {array} model.Collection
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/collections [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -50,6 +61,19 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, collections)
 }
 
+// @Summary Create an event collection
+// @Tags collections
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param request body model.CreateCollectionRequest true "Collection payload"
+// @Success 201 {object} model.Collection
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/collections [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -87,6 +111,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, col)
 }
 
+// @Summary Delete an event collection
+// @Tags collections
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param collectionId path string true "Collection ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/collections/{collectionId} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -128,6 +164,22 @@ const (
 	maxReceiptRequestSize = maxReceiptSize + 1<<20
 )
 
+// @Summary Submit a collection contribution receipt
+// @Tags collections
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param collectionId path string true "Collection ID"
+// @Param receipt formData file true "Receipt file"
+// @Success 200 {object} model.CollectionContribution
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 409 {object} response.ErrorResponse
+// @Failure 503 {object} response.ErrorResponse
+// @Router /events/{id}/collections/{collectionId}/contribute [post]
 func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -158,7 +210,7 @@ func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "receipt file is required")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	contrib, err := h.svc.SubmitContribution(r.Context(), eventID, collectionID, userID, file, header)
 	if err != nil {
@@ -191,6 +243,19 @@ func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, contrib)
 }
 
+// @Summary Confirm a collection contribution
+// @Tags collections
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param collectionId path string true "Collection ID"
+// @Param contribId path string true "Contribution ID"
+// @Success 200 {object} model.CollectionContribution
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/collections/{collectionId}/contributions/{contribId}/confirm [post]
 func (h *Handler) ConfirmContribution(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -234,6 +299,19 @@ func (h *Handler) ConfirmContribution(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, contrib)
 }
 
+// @Summary Reject a collection contribution
+// @Tags collections
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param collectionId path string true "Collection ID"
+// @Param contribId path string true "Contribution ID"
+// @Success 200 {object} model.CollectionContribution
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/collections/{collectionId}/contributions/{contribId}/reject [post]
 func (h *Handler) RejectContribution(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -277,6 +355,18 @@ func (h *Handler) RejectContribution(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, contrib)
 }
 
+// @Summary Mark the organizer's contribution as paid
+// @Tags collections
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param collectionId path string true "Collection ID"
+// @Success 200 {object} model.CollectionContribution
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/collections/{collectionId}/contributions/mark-paid [post]
 func (h *Handler) MarkPaid(w http.ResponseWriter, r *http.Request) {
 	// The organizer marks their own contribution as paid; the target is the
 	// caller, taken from the JWT rather than the request body.
@@ -316,6 +406,17 @@ func (h *Handler) MarkPaid(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, contrib)
 }
 
+// @Summary Get event collections summary
+// @Tags collections
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {object} model.EventCollectionsSummaryResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/collections/summary [get]
 func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

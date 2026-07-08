@@ -36,6 +36,19 @@ func writeErr(w http.ResponseWriter, err error, fallbackMsg string) {
 	}
 }
 
+// @Summary List event chat messages
+// @Tags messages
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param limit query int false "Maximum number of messages"
+// @Success 200 {array} model.Message
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -63,6 +76,20 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, msgs)
 }
 
+// @Summary Post an event chat message
+// @Tags messages
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param request body model.PostMessageRequest true "Message payload"
+// @Success 201 {object} model.Message
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages [post]
 func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -88,6 +115,18 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, msg)
 }
 
+// @Summary Delete an event chat message
+// @Tags messages
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param messageId path string true "Message ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages/{messageId} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -112,6 +151,17 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Mark event chat as read
+// @Tags messages
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages/read [post]
 func (h *Handler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -131,6 +181,18 @@ func (h *Handler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Get event chat unread count
+// @Tags messages
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {object} model.UnreadCountResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages/unread-count [get]
 func (h *Handler) UnreadCount(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

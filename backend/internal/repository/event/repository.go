@@ -843,7 +843,7 @@ func (r *Repository) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) 
 	if err != nil {
 		return model.EventParticipant{}, fmt.Errorf("begin join public tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	var isPublic bool
 	var status string

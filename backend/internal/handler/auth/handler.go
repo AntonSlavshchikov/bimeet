@@ -19,6 +19,16 @@ func New(svc AuthService) *Handler {
 
 // RequestCode sends a one-time login code. Always responds 200 (anti-enumeration),
 // except when the per-email cooldown is hit → 429.
+// @Summary Request a one-time login code
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body model.RequestCodeRequest true "Email for login code delivery"
+// @Success 200 {object} response.StatusResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 429 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/request-code [post]
 func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 	var req model.RequestCodeRequest
 	if err := response.ParseJSON(r, &req); err != nil {
@@ -42,6 +52,15 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifyCode verifies a one-time code and returns a JWT + user on success.
+// @Summary Verify a one-time login code
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body model.VerifyCodeRequest true "Email and one-time code"
+// @Success 200 {object} model.AuthResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/verify-code [post]
 func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
 	var req model.VerifyCodeRequest
 	if err := response.ParseJSON(r, &req); err != nil {

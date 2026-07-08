@@ -18,6 +18,14 @@ func New(svc ProfileService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// @Summary Get current user profile
+// @Tags profile
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} model.User
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/me [get]
 func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -34,6 +42,17 @@ func (h *Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, user)
 }
 
+// @Summary Update current user profile
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body model.UpdateProfileRequest true "Profile payload"
+// @Success 200 {object} model.User
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/me [put]
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -66,6 +85,14 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, user)
 }
 
+// @Summary Get current user profile statistics
+// @Tags profile
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} model.ProfileStats
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/me/stats [get]
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -82,6 +109,14 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, stats)
 }
 
+// @Summary Delete current user avatar
+// @Tags profile
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} model.User
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/me/avatar [delete]
 func (h *Handler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -101,6 +136,18 @@ func (h *Handler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 
 const maxAvatarSize = 5 << 20 // 5 MB
 
+// @Summary Upload current user avatar
+// @Tags profile
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param avatar formData file true "Avatar image"
+// @Success 200 {object} model.User
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 503 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/me/avatar [post]
 func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -118,7 +165,7 @@ func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "avatar file is required")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	user, err := h.svc.UploadAvatar(r.Context(), userID, file, header)
 	if err != nil {

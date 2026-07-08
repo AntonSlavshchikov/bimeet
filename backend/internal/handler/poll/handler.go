@@ -20,6 +20,17 @@ func New(svc PollService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// @Summary List event polls
+// @Tags polls
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {array} model.Poll
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/polls [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -49,6 +60,19 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, polls)
 }
 
+// @Summary Create an event poll
+// @Tags polls
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param request body model.CreatePollRequest true "Poll payload"
+// @Success 201 {object} model.Poll
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/polls [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -86,6 +110,19 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, poll)
 }
 
+// @Summary Vote in an event poll
+// @Tags polls
+// @Accept json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param pollId path string true "Poll ID"
+// @Param request body model.VoteRequest true "Vote payload"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/polls/{pollId}/vote [post]
 func (h *Handler) Vote(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

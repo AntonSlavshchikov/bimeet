@@ -20,6 +20,17 @@ func New(svc CarpoolService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// @Summary List event carpools
+// @Tags carpools
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {array} model.Carpool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/carpools [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -49,6 +60,18 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, carpools)
 }
 
+// @Summary Create an event carpool
+// @Tags carpools
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param request body model.CreateCarpoolRequest true "Carpool payload"
+// @Success 201 {object} model.Carpool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Router /events/{id}/carpools [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {
@@ -82,6 +105,19 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, carpool)
 }
 
+// @Summary Join an event carpool
+// @Tags carpools
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param carpoolId path string true "Carpool ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 409 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/carpools/{carpoolId}/join [post]
 func (h *Handler) Join(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.UserIDFromCtx(r.Context())
 	if !ok {

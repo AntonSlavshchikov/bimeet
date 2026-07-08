@@ -148,7 +148,7 @@ func (s *Service) sendOne(ctx context.Context, sub model.PushSubscription, p pay
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Prune subscriptions the push service no longer recognises.
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone {

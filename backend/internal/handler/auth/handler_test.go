@@ -2,6 +2,7 @@ package authhandler_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +34,7 @@ func newRouter(t *testing.T) (http.Handler, *mock.MockAuthService) {
 func post(t *testing.T, router http.Handler, path string, body any) *httptest.ResponseRecorder {
 	t.Helper()
 	b, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPost, path, bytes.NewBuffer(b))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, path, bytes.NewBuffer(b))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -44,7 +45,7 @@ func post(t *testing.T, router http.Handler, path string, body any) *httptest.Re
 
 func TestRequestCode_InvalidBody(t *testing.T) {
 	router, _ := newRouter(t)
-	req := httptest.NewRequest(http.MethodPost, "/auth/request-code", bytes.NewBufferString("bad"))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/request-code", bytes.NewBufferString("bad"))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)

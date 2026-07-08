@@ -228,6 +228,6 @@ func TestSummary_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, result.Collections, 1)
 	// 4 подтверждённых × 200 = 800 ожидается; 2 оплатили × 200 = 400 собрано.
-	assert.Equal(t, float64(800), result.GrandTotal)
-	assert.Equal(t, float64(400), result.TotalPaid)
+	assert.InEpsilon(t, 800, result.GrandTotal, 0.001)
+	assert.InEpsilon(t, 400, result.TotalPaid, 0.001)
 }

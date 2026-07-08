@@ -24,7 +24,7 @@ func (r *Repository) Create(ctx context.Context, eventID uuid.UUID, req model.Cr
 	if err != nil {
 		return model.Poll{}, fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	var p model.Poll
 	err = tx.QueryRow(ctx,
@@ -175,7 +175,7 @@ func (r *Repository) Vote(ctx context.Context, optionID, userID uuid.UUID) error
 	if err != nil {
 		return fmt.Errorf("begin vote tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	var pollID uuid.UUID
 	if err := tx.QueryRow(ctx,

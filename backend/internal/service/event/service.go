@@ -361,7 +361,7 @@ func (s *Service) UpdateParticipantStatus(ctx context.Context, eventID, targetUs
 }
 
 func isNotFound(err error) bool {
-	return err == pgx.ErrNoRows
+	return errors.Is(err, pgx.ErrNoRows)
 }
 
 func validateCreateEvent(req model.CreateEventRequest) error {

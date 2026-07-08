@@ -71,7 +71,7 @@ func (r *Repository) AddPassenger(ctx context.Context, carpoolID, userID uuid.UU
 	if err != nil {
 		return fmt.Errorf("begin carpool join tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	var seatsAvailable int
 	if err := tx.QueryRow(ctx,
