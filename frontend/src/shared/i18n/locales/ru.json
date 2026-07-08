@@ -38,13 +38,13 @@
     "invalidCode": "Неверный или просроченный код"
   },
   "nav": {
-    "events": "Встречи",
+    "events": "Мои встречи",
     "profile": "Профиль",
     "admin": "Админка",
     "notifications": "Уведомления",
     "notificationsShort": "Уведом.",
-    "publicEvents": "Публичные встречи",
-    "publicEventsShort": "Публичные"
+    "publicEvents": "Все встречи",
+    "publicEventsShort": "Все"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -111,6 +111,13 @@
     "sectionWhenWhere": "Когда и где",
     "fieldStart": "Начало",
     "fieldEnd": "Конец",
+    "fieldDates": "Даты",
+    "fieldStartTime": "Время начала",
+    "fieldEndTime": "Время конца",
+    "dateRangePlaceholder": "Выберите период",
+    "dateRangeClear": "Сбросить даты",
+    "dateRangePreviousMonth": "Предыдущий месяц",
+    "dateRangeNextMonth": "Следующий месяц",
     "fieldLocation": "Место",
     "fieldLocationPlaceholder": "Адрес или название места",
     "fieldDressCode": "Дресс-код",

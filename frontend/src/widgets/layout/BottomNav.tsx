@@ -56,8 +56,8 @@ export default function BottomNav() {
         gridTemplateColumns: `repeat(${showAdmin ? 5 : 4}, 1fr)`,
       }}
     >
+      <TabLink to="/discover" icon={Search} label={t('nav.publicEventsShort', 'Все')} />
       <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
-      <TabLink to="/discover" icon={Search} label={t('nav.publicEventsShort', 'Публичные')} />
       <TabLink to="/notifications" icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
       <TabLink to="/profile" icon={User} label={t('nav.profile')} />
       {showAdmin && <TabLink to="/admin" icon={BarChart3} label={t('nav.admin')} />}
