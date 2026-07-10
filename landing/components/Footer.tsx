@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useLanguage } from "@/lib/language-context";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "#";
@@ -9,10 +10,8 @@ export default function Footer() {
   return (
     <footer className="mx-auto mt-24 flex max-w-[1180px] flex-wrap items-center justify-between gap-6 border-t border-black/[0.06] px-6 pb-16 pt-11 text-[13px] text-ink-3 sm:px-8">
       <div className="flex items-center gap-2.5 font-bold text-ink">
-        <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-ink text-[15px] font-bold text-white">
-          B
-        </span>
-        Bimeet {f.tagline}
+        <Image src="/logo-mark.svg" alt="Bimeet" width={914} height={534} className="h-[36px] w-auto shrink-0" />
+        <span className="font-wordmark">bimeet</span> {f.tagline}
       </div>
 
       <div className="flex flex-wrap gap-[22px]">
