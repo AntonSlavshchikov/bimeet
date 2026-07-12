@@ -14,7 +14,6 @@ import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useNotifications } from '@/entities/notification/queries'
 import { Avatar } from '@/shared/ui/avatar'
-import { BrandMark } from '@/shared/ui/brand-mark'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,8 +95,10 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
     <aside className="h-full flex flex-col bg-bg border-r border-line">
       {/* Brand */}
       <div className="flex items-center gap-2 px-3 pt-5 pb-4">
-        <BrandMark size={34} />
-        <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Bimeet</div>
+        <img src="/logo-mark.svg" alt="" className="w-10 h-auto shrink-0" />
+        <div className="text-[15.5px] font-bold tracking-[-0.01em] text-ink" style={{ fontFamily: 'var(--font-wordmark)' }}>
+          bimeet
+        </div>
       </div>
 
       {/* Main nav */}

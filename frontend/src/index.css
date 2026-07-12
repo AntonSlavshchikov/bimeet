@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@700&display=swap');
 @import 'tailwindcss';
 
 /* === Design tokens — App-минимализм (light theme) ===
@@ -8,6 +8,7 @@
 @theme {
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-wordmark: 'Quicksand', 'Inter', sans-serif;
 
   /* Surfaces — light */
   --color-bg: #FFFFFF;            /* dark: #0A0A0B */
@@ -23,8 +24,8 @@
   --color-line: rgba(60,60,67,0.14);     /* dark: rgba(235,235,245,0.10) */
   --color-line-soft: rgba(60,60,67,0.07);/* dark: rgba(235,235,245,0.06) */
 
-  /* Accent + semantic (системные iOS) */
-  --color-accent: #007AFF;        /* dark: #0A84FF */
+  /* Accent — brand violet (was iOS blue #007AFF / #0A84FF). Semantic colors below stay iOS-system on purpose. */
+  --color-accent: #7C3AED;        /* dark: #A78BFA */
   --color-success: #34C759;       /* dark: #30D158 */
   --color-warning: #FF9500;       /* dark: #FF9F0A */
   --color-danger: #FF3B30;        /* dark: #FF453A */
@@ -121,25 +122,12 @@ html.dark {
   --color-line: rgba(235, 235, 245, 0.10);
   --color-line-soft: rgba(235, 235, 245, 0.06);
 
-  /* Accent + semantic (iOS dark) */
-  --color-accent: #0A84FF;
+  /* Accent — brand violet, lightened for dark bg. Semantic colors stay iOS-system. */
+  --color-accent: #A78BFA;
   --color-success: #30D158;
   --color-warning: #FF9F0A;
   --color-danger: #FF453A;
   --color-purple: #BF5AF2;
   --color-indigo: #5E5CE6;
-}
-
-/* === Логотип (BrandMark) ===
- * Графитовые кольца без плитки. На светлой теме — тёмное+серебро; на тёмной
- * перекрашиваем в серебро/сталь, чтобы знак читался на любом фоне.
- * (html.dark переопределяет :root — выше специфичность.) */
-:root {
-  --logo-1a: #0B0C0E; --logo-1b: #3A4250;
-  --logo-2a: #5A6473; --logo-2b: #AEB6C2;
-}
-html.dark {
-  --logo-1a: #8A93A1; --logo-1b: #E8ECF1;
-  --logo-2a: #3B4351; --logo-2b: #9CA3AF;
 }
 
