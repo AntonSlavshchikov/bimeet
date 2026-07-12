@@ -90,7 +90,7 @@ export default function Header() {
             {n.login}
           </a>
           <a
-            href={`${APP_URL}/register`}
+            href={`${APP_URL}/login`}
             className="gradient-button-mono px-4 py-2.5 text-sm font-semibold"
           >
             {n.start}

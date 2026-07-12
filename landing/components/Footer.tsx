@@ -28,7 +28,7 @@ export default function Footer() {
           {f.login}
         </a>
         <a
-          href={`${APP_URL}/register`}
+          href={`${APP_URL}/login`}
           className="font-medium text-ink-2 hover:text-ink"
         >
           {f.register}

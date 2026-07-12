@@ -93,7 +93,7 @@ export default function Hero() {
         </p>
 
         <div className="hero-enter hero-enter-delay-3 mt-8">
-          <a href={APP_URL} className="gradient-button">
+          <a href={`${APP_URL}/login`} className="gradient-button">
             <span className="text-[15px] font-semibold">{h.ctaRegister}</span>
           </a>
         </div>

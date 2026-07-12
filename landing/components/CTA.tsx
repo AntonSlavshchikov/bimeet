@@ -21,7 +21,7 @@ export default function CTA() {
           {c.subtitle}
         </p>
         <a
-          href={APP_URL}
+          href={`${APP_URL}/login`}
           className="liquid-glass-btn mt-[30px] inline-flex items-center gap-2 rounded-[14px] px-6 py-3.5 text-[15px] font-semibold text-ink transition-all hover:-translate-y-0.5"
         >
           {c.button}
