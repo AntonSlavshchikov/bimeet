@@ -424,7 +424,7 @@ type EventDetail struct {
 	MaxGuests      *int              `json:"max_guests,omitempty"`
 	ConfirmedCount int               `json:"confirmed_count"`
 	Organizer      UserInfo          `json:"organizer"`
-	InviteToken    uuid.UUID         `json:"invite_token"`
+	InviteToken    *uuid.UUID        `json:"invite_token,omitempty"`
 	CreatedAt      time.Time         `json:"created_at"`
 	UpdatedAt      time.Time         `json:"updated_at"`
 	Participants   []ParticipantInfo `json:"participants"`

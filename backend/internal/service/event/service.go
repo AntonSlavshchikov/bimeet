@@ -73,6 +73,16 @@ func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Even
 		if !isParticipant {
 			return model.EventDetail{}, ErrForbidden
 		}
+
+		detail.InviteToken = nil
+		for i := range detail.Collections {
+			for j := range detail.Collections[i].Contributions {
+				contribution := &detail.Collections[i].Contributions[j]
+				if !contribution.User.IsMe {
+					contribution.ReceiptURL = nil
+				}
+			}
+		}
 	}
 
 	return detail, nil

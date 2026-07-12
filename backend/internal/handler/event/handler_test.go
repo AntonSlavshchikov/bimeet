@@ -167,6 +167,50 @@ func TestGetByID_HappyPath(t *testing.T) {
 	assert.Equal(t, eventID, got.ID)
 }
 
+func TestGetByID_OmitsParticipantSecretsFromJSON(t *testing.T) {
+	router, svc := newRouter(t)
+
+	userID := uuid.New()
+	eventID := uuid.New()
+	ownReceipt := "https://cdn.example/receipts/own.pdf"
+	detail := model.EventDetail{
+		ID:          eventID,
+		InviteToken: nil,
+		Collections: []model.CollectionInfo{{
+			ID: uuid.New(),
+			Contributions: []model.ContributionInfo{
+				{User: model.UserInfo{Name: "Caller", IsMe: true}, ReceiptURL: &ownReceipt},
+				{User: model.UserInfo{Name: "Bob", IsMe: false}, ReceiptURL: nil},
+			},
+		}},
+	}
+	svc.EXPECT().GetByID(gomock.Any(), eventID, userID).Return(detail, nil)
+
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/"+eventID.String(), nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var got map[string]any
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
+	assert.NotContains(t, got, "invite_token")
+
+	collections, ok := got["collections"].([]any)
+	require.True(t, ok)
+	require.Len(t, collections, 1)
+	collection, ok := collections[0].(map[string]any)
+	require.True(t, ok)
+	contributions, ok := collection["contributions"].([]any)
+	require.True(t, ok)
+	require.Len(t, contributions, 2)
+	ownContribution, ok := contributions[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, ownReceipt, ownContribution["receipt_url"])
+	otherContribution, ok := contributions[1].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, otherContribution, "receipt_url")
+}
+
 // ─── Delete ────────────────────────────────────────────────────────────────
 
 func TestDelete_Forbidden(t *testing.T) {

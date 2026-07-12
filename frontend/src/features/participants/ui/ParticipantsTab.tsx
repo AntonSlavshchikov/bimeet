@@ -45,6 +45,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   }
 
   function handleCopyLink() {
+    if (!event.invite_token) return
     const link = `${window.location.origin}/invite/${event.invite_token}`
     navigator.clipboard.writeText(link).then(() => {
       toast({ title: t('participants.linkCopied', 'Ссылка скопирована'), status: 'success' })

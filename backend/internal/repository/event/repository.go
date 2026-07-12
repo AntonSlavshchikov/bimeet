@@ -237,6 +237,7 @@ func (r *Repository) ListChangeLogs(ctx context.Context, eventID uuid.UUID) ([]m
 func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (model.EventDetail, error) {
 	var detail model.EventDetail
 	var orgID uuid.UUID
+	var inviteToken uuid.UUID
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
@@ -250,11 +251,12 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location, &detail.LocationLat, &detail.LocationLng,
 		&detail.Category, &detail.DressCode, &detail.Status, &detail.IsPublic, &detail.MaxGuests,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
-		&detail.InviteToken, &detail.CreatedAt, &detail.UpdatedAt,
+		&inviteToken, &detail.CreatedAt, &detail.UpdatedAt,
 	)
 	if err != nil {
 		return model.EventDetail{}, fmt.Errorf("get event detail: %w", err)
 	}
+	detail.InviteToken = &inviteToken
 	detail.Organizer.IsMe = orgID == userID
 
 	detail.Participants = []model.ParticipantInfo{}

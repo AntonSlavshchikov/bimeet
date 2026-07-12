@@ -140,6 +140,65 @@ func TestGetByID_PublicEventAllowsParticipant(t *testing.T) {
 	assert.Equal(t, eventID, got.ID)
 }
 
+func TestGetByID_RedactsParticipantSecrets(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	eventID := uuid.New()
+	userID := uuid.New()
+	inviteToken := uuid.New()
+	ownReceipt := "https://cdn.example/receipts/own.pdf"
+	otherReceipt := "https://cdn.example/receipts/other.pdf"
+	detail := model.EventDetail{
+		ID:          eventID,
+		Organizer:   model.UserInfo{Name: "Alice", IsMe: false},
+		InviteToken: &inviteToken,
+		Participants: []model.ParticipantInfo{
+			{User: model.UserInfo{Name: "Caller", IsMe: true}, Status: "confirmed"},
+		},
+		Collections: []model.CollectionInfo{{
+			ID: uuid.New(),
+			Contributions: []model.ContributionInfo{
+				{User: model.UserInfo{Name: "Caller", IsMe: true}, ReceiptURL: &ownReceipt},
+				{User: model.UserInfo{Name: "Bob", IsMe: false}, ReceiptURL: &otherReceipt},
+			},
+		}},
+	}
+	er.EXPECT().GetDetail(gomock.Any(), eventID, userID).Return(detail, nil)
+
+	got, err := svc.GetByID(context.Background(), eventID, userID)
+	require.NoError(t, err)
+	assert.Nil(t, got.InviteToken)
+	require.Len(t, got.Collections, 1)
+	require.Len(t, got.Collections[0].Contributions, 2)
+	assert.Equal(t, &ownReceipt, got.Collections[0].Contributions[0].ReceiptURL)
+	assert.Nil(t, got.Collections[0].Contributions[1].ReceiptURL)
+}
+
+func TestGetByID_PreservesOrganizerSecrets(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	eventID := uuid.New()
+	organizerID := uuid.New()
+	inviteToken := uuid.New()
+	participantReceipt := "https://cdn.example/receipts/participant.pdf"
+	detail := model.EventDetail{
+		ID:          eventID,
+		Organizer:   model.UserInfo{Name: "Alice", IsMe: true},
+		InviteToken: &inviteToken,
+		Collections: []model.CollectionInfo{{
+			ID: uuid.New(),
+			Contributions: []model.ContributionInfo{
+				{User: model.UserInfo{Name: "Bob"}, ReceiptURL: &participantReceipt},
+			},
+		}},
+	}
+	er.EXPECT().GetDetail(gomock.Any(), eventID, organizerID).Return(detail, nil)
+
+	got, err := svc.GetByID(context.Background(), eventID, organizerID)
+	require.NoError(t, err)
+	assert.Equal(t, detail, got)
+}
+
 // ─── Delete ────────────────────────────────────────────────────────────────
 
 func TestDelete_NotFound(t *testing.T) {

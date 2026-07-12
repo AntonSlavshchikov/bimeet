@@ -28,7 +28,7 @@ export interface Event {
   max_guests?: number
   confirmed_count: number
   organizer: EventUser
-  invite_token: string
+  invite_token?: string
   created_at: string
   updated_at: string
   my_status?: string
@@ -53,7 +53,7 @@ export interface EventListItem {
   max_guests?: number
   confirmed_count: number
   organizer: EventUser
-  invite_token: string
+  invite_token?: string
   created_at: string
   my_status: string
   participants: Array<{ user: EventUser; status: string; is_organizer: boolean }>
