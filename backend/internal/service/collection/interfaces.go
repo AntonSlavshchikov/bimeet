@@ -5,6 +5,7 @@ package collectionsvc
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -39,4 +40,5 @@ type NotificationRepo interface {
 
 type Uploader interface {
 	Upload(ctx context.Context, key, contentType string, body io.Reader) (string, error)
+	PresignDownload(ctx context.Context, storedURL string, ttl time.Duration) (string, error)
 }

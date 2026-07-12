@@ -29,6 +29,7 @@ func newRouter(t *testing.T) (http.Handler, *mock.MockCollectionService) {
 	r.Get("/events/{id}/collections", h.List)
 	r.Post("/events/{id}/collections", h.Create)
 	r.Get("/events/{id}/collections/summary", h.Summary)
+	r.Get("/events/{id}/collections/{collectionId}/contributions/{contribId}/receipt", h.GetReceiptURL)
 	r.Delete("/events/{id}/collections/{collectionId}", h.Delete)
 	return r, svc
 }
@@ -121,6 +122,40 @@ func TestDelete_HappyPath(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+// ─── Receipt URL ───────────────────────────────────────────────────────────
+
+func TestGetReceiptURL_HappyPath(t *testing.T) {
+	router, svc := newRouter(t)
+	eventID, collectionID := uuid.New(), uuid.New()
+	contributionID, userID := uuid.New(), uuid.New()
+	signedURL := "https://s3.example/receipt?X-Amz-Expires=300"
+	svc.EXPECT().GetReceiptURL(gomock.Any(), eventID, collectionID, contributionID, userID).Return(signedURL, nil)
+
+	path := "/events/" + eventID.String() + "/collections/" + collectionID.String() + "/contributions/" + contributionID.String() + "/receipt"
+	req := withAuth(httptest.NewRequest(http.MethodGet, path, nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var got model.ReceiptURLResponse
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
+	assert.Equal(t, signedURL, got.URL)
+}
+
+func TestGetReceiptURL_Forbidden(t *testing.T) {
+	router, svc := newRouter(t)
+	eventID, collectionID := uuid.New(), uuid.New()
+	contributionID, userID := uuid.New(), uuid.New()
+	svc.EXPECT().GetReceiptURL(gomock.Any(), eventID, collectionID, contributionID, userID).Return("", errors.New("forbidden"))
+
+	path := "/events/" + eventID.String() + "/collections/" + collectionID.String() + "/contributions/" + contributionID.String() + "/receipt"
+	req := withAuth(httptest.NewRequest(http.MethodGet, path, nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 // ─── Summary ───────────────────────────────────────────────────────────────

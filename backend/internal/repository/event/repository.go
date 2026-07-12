@@ -3,6 +3,7 @@ package eventrepo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -24,10 +25,10 @@ func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, o
 	err := r.pool.QueryRow(ctx,
 		`INSERT INTO events (title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, organizer_id)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
+		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, invite_token_expires_at, created_at, updated_at`,
 		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.LocationLat, req.LocationLng, req.Category, req.DressCode, req.IsPublic, req.MaxGuests, organizerID,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.InviteTokenExpiresAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("create event: %w", err)
 	}
@@ -37,11 +38,11 @@ func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, o
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at
+		`SELECT id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, invite_token_expires_at, created_at, updated_at
 		 FROM events WHERE id=$1`,
 		id,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.InviteTokenExpiresAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by id: %w", err)
 	}
@@ -59,6 +60,8 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 		 JOIN users u ON u.id = e.organizer_id
 		 LEFT JOIN event_participants ep ON ep.event_id = e.id
 		 WHERE e.invite_token = $1
+		   AND e.status = 'active'
+		   AND e.invite_token_expires_at > NOW()
 		 GROUP BY e.id, u.id`,
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
@@ -88,10 +91,10 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateE
 		   max_guests   = COALESCE($12, max_guests),
 		   updated_at   = NOW()
 		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, created_at, updated_at`,
+		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, invite_token_expires_at, created_at, updated_at`,
 		id, req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.LocationLat, req.LocationLng, req.Category, req.DressCode, req.IsPublic, req.MaxGuests,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.CreatedAt, &e.UpdatedAt)
+		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.InviteTokenExpiresAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("update event: %w", err)
 	}
@@ -100,7 +103,12 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateE
 
 func (r *Repository) Complete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx,
-		`UPDATE events SET status='completed', updated_at=NOW() WHERE id=$1`,
+		`UPDATE events
+		 SET status='completed',
+		     invite_token=gen_random_uuid(),
+		     invite_token_expires_at=NOW(),
+		     updated_at=NOW()
+		 WHERE id=$1`,
 		id,
 	)
 	if err != nil {
@@ -132,6 +140,44 @@ func (r *Repository) AddParticipant(ctx context.Context, eventID, userID uuid.UU
 		return model.EventParticipant{}, fmt.Errorf("add participant: %w", err)
 	}
 	return p, nil
+}
+
+// JoinByInviteToken atomically revalidates token status and expiry in the same
+// statement that creates or updates membership.
+func (r *Repository) JoinByInviteToken(ctx context.Context, token, userID uuid.UUID, status string) (model.EventParticipant, error) {
+	var p model.EventParticipant
+	err := r.pool.QueryRow(ctx,
+		`INSERT INTO event_participants (event_id, user_id, status)
+		 SELECT e.id, $2, $3
+		 FROM events e
+		 WHERE e.invite_token = $1
+		   AND e.status = 'active'
+		   AND e.invite_token_expires_at > NOW()
+		 ON CONFLICT (event_id, user_id) DO UPDATE SET status = EXCLUDED.status
+		 RETURNING id, event_id, user_id, status`,
+		token, userID, status,
+	).Scan(&p.ID, &p.EventID, &p.UserID, &p.Status)
+	if err != nil {
+		return model.EventParticipant{}, fmt.Errorf("join by invite token: %w", err)
+	}
+	return p, nil
+}
+
+func (r *Repository) RotateInviteToken(ctx context.Context, eventID uuid.UUID) (model.InviteTokenResponse, error) {
+	var result model.InviteTokenResponse
+	err := r.pool.QueryRow(ctx,
+		`UPDATE events
+		 SET invite_token = gen_random_uuid(),
+		     invite_token_expires_at = NOW() + INTERVAL '24 hours',
+		     updated_at = NOW()
+		 WHERE id = $1 AND status = 'active'
+		 RETURNING invite_token, invite_token_expires_at`,
+		eventID,
+	).Scan(&result.InviteToken, &result.ExpiresAt)
+	if err != nil {
+		return model.InviteTokenResponse{}, fmt.Errorf("rotate invite token: %w", err)
+	}
+	return result, nil
 }
 
 func (r *Repository) UpdateParticipantStatus(ctx context.Context, eventID, userID uuid.UUID, status string) (model.EventParticipant, error) {
@@ -238,11 +284,12 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 	var detail model.EventDetail
 	var orgID uuid.UUID
 	var inviteToken uuid.UUID
+	var inviteTokenExpiresAt time.Time
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, u.name, u.email,
-		        e.invite_token, e.created_at, e.updated_at
+		        e.invite_token, e.invite_token_expires_at, e.created_at, e.updated_at
 		 FROM events e
 		 JOIN users u ON u.id = e.organizer_id
 		 WHERE e.id = $1`,
@@ -251,12 +298,13 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location, &detail.LocationLat, &detail.LocationLng,
 		&detail.Category, &detail.DressCode, &detail.Status, &detail.IsPublic, &detail.MaxGuests,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
-		&inviteToken, &detail.CreatedAt, &detail.UpdatedAt,
+		&inviteToken, &inviteTokenExpiresAt, &detail.CreatedAt, &detail.UpdatedAt,
 	)
 	if err != nil {
 		return model.EventDetail{}, fmt.Errorf("get event detail: %w", err)
 	}
 	detail.InviteToken = &inviteToken
+	detail.InviteTokenExpiresAt = &inviteTokenExpiresAt
 	detail.Organizer.IsMe = orgID == userID
 
 	detail.Participants = []model.ParticipantInfo{}
@@ -559,7 +607,7 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, ou.email,
-		        e.invite_token, e.created_at,
+		        e.invite_token, e.invite_token_expires_at, e.created_at,
 		        COALESCE(ep2.status, '') AS my_status
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
@@ -579,15 +627,19 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 	for rows.Next() {
 		var e model.EventListItem
 		var orgID uuid.UUID
+		var inviteToken uuid.UUID
+		var inviteTokenExpiresAt time.Time
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
 			&orgID, &e.Organizer.Name, &e.Organizer.Email,
-			&e.InviteToken, &e.CreatedAt, &e.MyStatus,
+			&inviteToken, &inviteTokenExpiresAt, &e.CreatedAt, &e.MyStatus,
 		); err != nil {
 			return nil, fmt.Errorf("scan event list item: %w", err)
 		}
 		e.Organizer.IsMe = orgID == userID
+		e.InviteToken = &inviteToken
+		e.InviteTokenExpiresAt = &inviteTokenExpiresAt
 		events = append(events, e)
 		orgIDs = append(orgIDs, orgID)
 	}

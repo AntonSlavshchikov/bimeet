@@ -190,7 +190,22 @@ func main() {
 				o.UsePathStyle = true // required for MinIO
 			})
 		}
-		fileStorage = storage.NewS3(s3.NewFromConfig(awsCfg, s3Opts...), cfg.S3Bucket, cfg.S3PublicBaseURL)
+		uploadClient := s3.NewFromConfig(awsCfg, s3Opts...)
+		presignClient := uploadClient
+		if cfg.S3PresignEndpoint != "" {
+			presignClient = s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+				o.BaseEndpoint = &cfg.S3PresignEndpoint
+				o.UsePathStyle = true
+			})
+		} else if cfg.IsProduction() && cfg.S3Endpoint != "" {
+			fatal("S3_PRESIGN_ENDPOINT is required in production when S3_ENDPOINT is internal")
+		}
+		fileStorage = storage.NewS3WithPresigner(
+			uploadClient,
+			s3.NewPresignClient(presignClient),
+			cfg.S3Bucket,
+			cfg.S3PublicBaseURL,
+		)
 	} else {
 		slog.Info("S3_BUCKET not set — file uploads disabled")
 		fileStorage = &storage.NoopStorage{}

@@ -243,6 +243,64 @@ func (h *Handler) SubmitContribution(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, contrib)
 }
 
+// @Summary Get a short-lived receipt download URL
+// @Tags collections
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param collectionId path string true "Collection ID"
+// @Param contribId path string true "Contribution ID"
+// @Success 200 {object} model.ReceiptURLResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/collections/{collectionId}/contributions/{contribId}/receipt [get]
+func (h *Handler) GetReceiptURL(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	eventID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+	collectionID, err := uuid.Parse(chi.URLParam(r, "collectionId"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid collection id")
+		return
+	}
+	contributionID, err := uuid.Parse(chi.URLParam(r, "contribId"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid contribution id")
+		return
+	}
+
+	url, err := h.svc.GetReceiptURL(r.Context(), eventID, collectionID, contributionID, userID)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "forbidden") {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if strings.Contains(msg, "not found") || strings.Contains(msg, "does not belong") {
+			response.Error(w, http.StatusNotFound, "receipt not found")
+			return
+		}
+		if strings.Contains(msg, "not configured") {
+			response.Error(w, http.StatusServiceUnavailable, "receipt storage is not configured")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to create receipt URL")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, model.ReceiptURLResponse{URL: url})
+}
+
 // @Summary Confirm a collection contribution
 // @Tags collections
 // @Produce json

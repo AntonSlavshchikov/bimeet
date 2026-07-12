@@ -101,6 +101,7 @@ func NewRouter(
 				r.Put("/", event.Update)
 				r.Delete("/", event.Delete)
 				r.Post("/complete", event.Complete)
+				r.Post("/invite-token/rotate", event.RotateInviteToken)
 				r.Post("/join", event.JoinPublic)
 
 				// Participants. The status update always targets the caller; the
@@ -115,6 +116,7 @@ func NewRouter(
 				r.Get("/collections/summary", collection.Summary)
 				r.Delete("/collections/{collectionId}", collection.Delete)
 				r.Post("/collections/{collectionId}/contribute", collection.SubmitContribution)
+				r.Get("/collections/{collectionId}/contributions/{contribId}/receipt", collection.GetReceiptURL)
 				r.Post("/collections/{collectionId}/contributions/{contribId}/confirm", collection.ConfirmContribution)
 				r.Post("/collections/{collectionId}/contributions/{contribId}/reject", collection.RejectContribution)
 				r.Post("/collections/{collectionId}/contributions/mark-paid", collection.MarkPaid)

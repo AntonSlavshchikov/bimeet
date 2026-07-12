@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -33,6 +34,7 @@ func newRouter(t *testing.T) (http.Handler, *mock.MockEventService) {
 	r.Post("/events", h.Create)
 	r.Get("/events/public", h.ListPublic)
 	r.Get("/events/{id}", h.GetByID)
+	r.Post("/events/{id}/invite-token/rotate", h.RotateInviteToken)
 	r.Put("/events/{id}", h.Update)
 	r.Delete("/events/{id}", h.Delete)
 	r.Post("/events/{id}/participants", h.InviteParticipant)
@@ -83,6 +85,27 @@ func TestList_HappyPath(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestList_OmitsRedactedInviteToken(t *testing.T) {
+	router, svc := newRouter(t)
+
+	userID := uuid.New()
+	items := []model.EventListItem{{
+		ID: uuid.New(), Organizer: model.UserInfo{Name: "Alice", IsMe: false}, InviteToken: nil,
+	}}
+	svc.EXPECT().List(gomock.Any(), userID).Return(items, nil)
+
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events", nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var got []map[string]any
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
+	require.Len(t, got, 1)
+	assert.NotContains(t, got[0], "invite_token")
+	assert.NotContains(t, got[0], "invite_token_expires_at")
 }
 
 func TestListPublic_OmitsPrivateFields(t *testing.T) {
@@ -179,8 +202,8 @@ func TestGetByID_OmitsParticipantSecretsFromJSON(t *testing.T) {
 		Collections: []model.CollectionInfo{{
 			ID: uuid.New(),
 			Contributions: []model.ContributionInfo{
-				{User: model.UserInfo{Name: "Caller", IsMe: true}, ReceiptURL: &ownReceipt},
-				{User: model.UserInfo{Name: "Bob", IsMe: false}, ReceiptURL: nil},
+				{User: model.UserInfo{Name: "Caller", IsMe: true}, ReceiptURL: &ownReceipt, HasReceipt: true},
+				{User: model.UserInfo{Name: "Bob", IsMe: false}, ReceiptURL: nil, HasReceipt: false},
 			},
 		}},
 	}
@@ -205,10 +228,30 @@ func TestGetByID_OmitsParticipantSecretsFromJSON(t *testing.T) {
 	require.Len(t, contributions, 2)
 	ownContribution, ok := contributions[0].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, ownReceipt, ownContribution["receipt_url"])
+	assert.NotContains(t, ownContribution, "receipt_url")
+	assert.Equal(t, true, ownContribution["has_receipt"])
 	otherContribution, ok := contributions[1].(map[string]any)
 	require.True(t, ok)
 	assert.NotContains(t, otherContribution, "receipt_url")
+	assert.Equal(t, false, otherContribution["has_receipt"])
+}
+
+func TestRotateInviteToken_HappyPath(t *testing.T) {
+	router, svc := newRouter(t)
+
+	userID, eventID := uuid.New(), uuid.New()
+	expected := model.InviteTokenResponse{InviteToken: uuid.New(), ExpiresAt: time.Now().Add(24 * time.Hour)}
+	svc.EXPECT().RotateInviteToken(gomock.Any(), eventID, userID).Return(expected, nil)
+
+	req := withAuth(httptest.NewRequest(http.MethodPost, "/events/"+eventID.String()+"/invite-token/rotate", nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var got model.InviteTokenResponse
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
+	assert.Equal(t, expected.InviteToken, got.InviteToken)
+	assert.WithinDuration(t, expected.ExpiresAt, got.ExpiresAt, time.Second)
 }
 
 // ─── Delete ────────────────────────────────────────────────────────────────

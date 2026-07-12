@@ -9,6 +9,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
+import { collectionsApi } from '@/features/collections/api'
 import {
   useAddCollection,
   useRemoveCollection,
@@ -134,6 +135,23 @@ export default function CollectionsTab({ event }: { event: Event }) {
       { collectionId: activeCollectionId, file },
       { onSuccess: () => setActiveCollectionId(null) },
     )
+  }
+
+  async function handleViewReceipt(collectionId: string, contributionId: string) {
+    const popup = window.open('about:blank', '_blank')
+    if (popup) popup.opener = null
+    try {
+      const { url } = await collectionsApi.receiptURL(event.id, collectionId, contributionId)
+      if (popup) {
+        popup.location.href = url
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    } catch (err) {
+      popup?.close()
+      const message = err instanceof Error ? err.message : t('common.error')
+      toast({ title: t('common.error'), description: message, status: 'error' })
+    }
   }
 
   return (
@@ -364,6 +382,15 @@ export default function CollectionsTab({ event }: { event: Event }) {
                 {myContribution?.status === 'paid' && (
                   <StatusPill variant="going">{t('collections.statusPaid', 'Оплачено')}</StatusPill>
                 )}
+                {myContribution?.has_receipt && myContribution.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewReceipt(collection.id, myContribution.id!)}
+                  >
+                    <ExternalLink size={10} /> {t('collections.viewReceipt')}
+                  </Button>
+                )}
               </div>
             )}
 
@@ -380,15 +407,14 @@ export default function CollectionsTab({ event }: { event: Event }) {
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Avatar name={contrib.user.name} size="xs" />
                           <span className="text-[12.5px] font-medium text-ink truncate">{contrib.user.name}</span>
-                          {contrib.receipt_url && (
-                            <a
-                              href={contrib.receipt_url}
-                              target="_blank"
-                              rel="noreferrer"
+                          {contrib.has_receipt && contrib.id && (
+                            <button
+                              type="button"
+                              onClick={() => handleViewReceipt(collection.id, contrib.id!)}
                               className="inline-flex items-center gap-1 text-[12px] text-accent hover:opacity-80"
                             >
-                              <ExternalLink size={10} /> {t('collections.viewReceipt', 'чек')}
-                            </a>
+                              <ExternalLink size={10} /> {t('collections.viewReceipt')}
+                            </button>
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">

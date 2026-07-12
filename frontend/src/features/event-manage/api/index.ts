@@ -14,6 +14,9 @@ export const eventMutationsApi = {
   complete: (id: string) =>
     apiFetch<void>(`/api/events/${id}/complete`, { method: 'POST' }),
 
+  rotateInviteToken: (id: string) =>
+    apiFetch<{ invite_token: string; expires_at: string }>(`/api/events/${id}/invite-token/rotate`, { method: 'POST' }),
+
   inviteParticipant: (eventId: string, email: string) =>
     apiFetch<{ status: string; message: string }>(`/api/events/${eventId}/participants`, { method: 'POST', body: JSON.stringify({ email }) }),
 

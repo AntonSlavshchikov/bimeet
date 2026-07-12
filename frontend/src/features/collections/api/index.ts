@@ -25,6 +25,10 @@ export const collectionsApi = {
       `/api/events/${eventId}/collections/${collectionId}/contributions/${contribId}/reject`,
       { method: 'POST' },
     ),
+  receiptURL: (eventId: string, collectionId: string, contribId: string) =>
+    apiFetch<{ url: string }>(
+      `/api/events/${eventId}/collections/${collectionId}/contributions/${contribId}/receipt`,
+    ),
   markPaid: (eventId: string, collectionId: string) =>
     apiFetch<CollectionContribution>(
       `/api/events/${eventId}/collections/${collectionId}/contributions/mark-paid`,

@@ -334,6 +334,46 @@ func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Rotate the event invite token
+// @Tags events
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {object} model.InviteTokenResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /events/{id}/invite-token/rotate [post]
+func (h *Handler) RotateInviteToken(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	eventID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	result, err := h.svc.RotateInviteToken(r.Context(), eventID, userID)
+	if err != nil {
+		if errors.Is(err, eventsvc.ErrForbidden) || strings.Contains(err.Error(), "forbidden") {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if strings.Contains(err.Error(), "not found") {
+			response.Error(w, http.StatusNotFound, "event not found")
+			return
+		}
+		response.Error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, result)
+}
+
 // @Summary Invite a participant by email
 // @Tags participants
 // @Accept json

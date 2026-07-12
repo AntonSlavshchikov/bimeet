@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link2, UserPlus } from 'lucide-react'
+import { Link2, RefreshCw, UserPlus } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useInviteParticipant, useUpdateParticipantStatus } from '@/features/participants/model/hooks'
+import { useRotateInviteToken } from '@/features/event-manage/model/hooks'
 import {
   Avatar,
   Button,
@@ -22,6 +23,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
 
   const updateStatus = useUpdateParticipantStatus(event.id)
   const invite = useInviteParticipant(event.id)
+  const rotateInviteToken = useRotateInviteToken(event.id)
 
   const isOrganizer = event.organizer.is_me
   const myParticipant = event.participants.find(p => p.user.is_me)
@@ -31,6 +33,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   const declined = event.participants.filter(p => p.status === 'declined').length
 
   const isCompleted = event.status === 'completed'
+  const inviteExpired = !event.invite_token
 
   function handleInvite() {
     if (!email.trim()) return
@@ -45,10 +48,22 @@ export default function ParticipantsTab({ event }: { event: Event }) {
   }
 
   function handleCopyLink() {
-    if (!event.invite_token) return
+	if (!event.invite_token || inviteExpired) return
     const link = `${window.location.origin}/invite/${event.invite_token}`
     navigator.clipboard.writeText(link).then(() => {
       toast({ title: t('participants.linkCopied', 'Ссылка скопирована'), status: 'success' })
+    })
+  }
+
+  function handleRefreshLink() {
+    rotateInviteToken.mutate(undefined, {
+      onSuccess: result => {
+        const link = `${window.location.origin}/invite/${result.invite_token}`
+        navigator.clipboard.writeText(link).then(() => {
+          toast({ title: t('participants.linkRefreshed'), status: 'success' })
+        })
+      },
+      onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
     })
   }
 
@@ -86,13 +101,17 @@ export default function ParticipantsTab({ event }: { event: Event }) {
       {/* Действия организатора */}
       {isOrganizer && !isCompleted && (
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" size="md" className="flex-1" onClick={() => setInviteOpen(v => !v)}>
+          <Button variant="outline" size="md" className="flex-1" onClick={() => setInviteOpen(v => !v)} disabled={inviteExpired}>
             <UserPlus size={14} />
             {t('participants.inviteByEmail', 'Пригласить по email')}
           </Button>
-          <Button variant="outline" size="md" className="flex-1" onClick={handleCopyLink}>
+          <Button variant="outline" size="md" className="flex-1" onClick={handleCopyLink} disabled={inviteExpired}>
             <Link2 size={14} />
-            {t('participants.copyLink', 'Скопировать ссылку')}
+            {inviteExpired ? t('participants.linkExpired') : t('participants.copyLink')}
+          </Button>
+          <Button variant="outline" size="md" className="flex-1" onClick={handleRefreshLink} disabled={rotateInviteToken.isPending}>
+            <RefreshCw size={14} />
+            {t('participants.refreshLink')}
           </Button>
         </div>
       )}

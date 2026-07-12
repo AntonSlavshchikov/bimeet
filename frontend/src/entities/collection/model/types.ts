@@ -6,7 +6,7 @@ export interface CollectionContribution {
   paid: boolean
   paid_at?: string
   status: 'not_paid' | 'pending' | 'paid'
-  receipt_url?: string
+  has_receipt: boolean
 }
 
 export interface Collection {

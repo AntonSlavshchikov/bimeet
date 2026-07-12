@@ -14,6 +14,8 @@ type EventRepo interface {
 	Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error)
 	GetByID(ctx context.Context, id uuid.UUID) (model.Event, error)
 	GetByInviteToken(ctx context.Context, token uuid.UUID) (model.InviteEventInfo, error)
+	JoinByInviteToken(ctx context.Context, token, userID uuid.UUID, status string) (model.EventParticipant, error)
+	RotateInviteToken(ctx context.Context, eventID uuid.UUID) (model.InviteTokenResponse, error)
 	GetDetail(ctx context.Context, eventID, userID uuid.UUID) (model.EventDetail, error)
 	ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error)
 	ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error)

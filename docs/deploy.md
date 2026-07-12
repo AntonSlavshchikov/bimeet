@@ -103,6 +103,7 @@ AWS_SECRET_ACCESS_KEY=<надёжный пароль>
 S3_BUCKET=avatars
 S3_ENDPOINT=http://minio:9000
 S3_PUBLIC_BASE_URL=https://s3.bimeet.pro/avatars
+S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=<тот же пароль>
 ```

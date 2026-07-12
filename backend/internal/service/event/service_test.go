@@ -100,6 +100,36 @@ func TestCreate_DefaultsToOrdinary(t *testing.T) {
 	assert.Equal(t, expected.ID, result.ID)
 }
 
+// ─── List ──────────────────────────────────────────────────────────────────
+
+func TestList_RedactsInviteTokenForNonOrganizers(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	userID := uuid.New()
+	participantToken := uuid.New()
+	organizerToken := uuid.New()
+	organizerTokenExpiresAt := time.Now().Add(time.Hour)
+	er.EXPECT().ListForUserEnriched(gomock.Any(), userID).Return([]model.EventListItem{
+		{
+			ID:          uuid.New(),
+			Organizer:   model.UserInfo{Name: "Alice", IsMe: false},
+			InviteToken: &participantToken,
+		},
+		{
+			ID:                   uuid.New(),
+			Organizer:            model.UserInfo{Name: "Caller", IsMe: true},
+			InviteToken:          &organizerToken,
+			InviteTokenExpiresAt: &organizerTokenExpiresAt,
+		},
+	}, nil)
+
+	got, err := svc.List(context.Background(), userID)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	assert.Nil(t, got[0].InviteToken)
+	assert.Equal(t, &organizerToken, got[1].InviteToken)
+}
+
 // ─── GetByID ───────────────────────────────────────────────────────────────
 
 func TestGetByID_PublicEventRequiresMembership(t *testing.T) {
@@ -181,10 +211,12 @@ func TestGetByID_PreservesOrganizerSecrets(t *testing.T) {
 	organizerID := uuid.New()
 	inviteToken := uuid.New()
 	participantReceipt := "https://cdn.example/receipts/participant.pdf"
+	inviteTokenExpiresAt := time.Now().Add(time.Hour)
 	detail := model.EventDetail{
-		ID:          eventID,
-		Organizer:   model.UserInfo{Name: "Alice", IsMe: true},
-		InviteToken: &inviteToken,
+		ID:                   eventID,
+		Organizer:            model.UserInfo{Name: "Alice", IsMe: true},
+		InviteToken:          &inviteToken,
+		InviteTokenExpiresAt: &inviteTokenExpiresAt,
 		Collections: []model.CollectionInfo{{
 			ID: uuid.New(),
 			Contributions: []model.ContributionInfo{
@@ -197,6 +229,100 @@ func TestGetByID_PreservesOrganizerSecrets(t *testing.T) {
 	got, err := svc.GetByID(context.Background(), eventID, organizerID)
 	require.NoError(t, err)
 	assert.Equal(t, detail, got)
+}
+
+// ─── Invite token join ─────────────────────────────────────────────────────
+
+func TestJoinByInviteToken_RejectsCompletedEvent(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	token := uuid.New()
+	eventID := uuid.New()
+	userID := uuid.New()
+	er.EXPECT().GetByInviteToken(gomock.Any(), token).Return(model.InviteEventInfo{ID: eventID}, nil)
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID:          eventID,
+		Status:      "completed",
+		OrganizerID: uuid.New(),
+	}, nil)
+
+	_, err := svc.JoinByInviteToken(context.Background(), token, userID, model.JoinByInviteTokenRequest{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not active")
+}
+
+func TestJoinByInviteToken_RejectsExpiredToken(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	token := uuid.New()
+	eventID := uuid.New()
+	userID := uuid.New()
+	er.EXPECT().GetByInviteToken(gomock.Any(), token).Return(model.InviteEventInfo{ID: eventID}, nil)
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID:                   eventID,
+		Status:               "active",
+		OrganizerID:          uuid.New(),
+		InviteTokenExpiresAt: time.Now().Add(-time.Minute),
+	}, nil)
+
+	_, err := svc.JoinByInviteToken(context.Background(), token, userID, model.JoinByInviteTokenRequest{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "expired")
+}
+
+func TestJoinByInviteToken_UsesAtomicRepositoryGuard(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	token := uuid.New()
+	eventID := uuid.New()
+	userID := uuid.New()
+	expected := model.EventParticipant{EventID: eventID, UserID: userID, Status: "confirmed"}
+	er.EXPECT().GetByInviteToken(gomock.Any(), token).Return(model.InviteEventInfo{ID: eventID}, nil)
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID:                   eventID,
+		Status:               "active",
+		OrganizerID:          uuid.New(),
+		InviteTokenExpiresAt: time.Now().Add(time.Hour),
+	}, nil)
+	er.EXPECT().JoinByInviteToken(gomock.Any(), token, userID, "confirmed").Return(expected, nil)
+
+	got, err := svc.JoinByInviteToken(context.Background(), token, userID, model.JoinByInviteTokenRequest{})
+	require.NoError(t, err)
+	assert.Equal(t, expected, got)
+}
+
+func TestRotateInviteToken_OrganizerOnly(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	eventID := uuid.New()
+	callerID := uuid.New()
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID: eventID, Status: "active", OrganizerID: uuid.New(),
+	}, nil)
+
+	_, err := svc.RotateInviteToken(context.Background(), eventID, callerID)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "forbidden")
+}
+
+func TestRotateInviteToken_IssuesTokenForTwentyFourHours(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	eventID := uuid.New()
+	organizerID := uuid.New()
+	rotated := model.InviteTokenResponse{
+		InviteToken: uuid.New(),
+		ExpiresAt:   time.Now().Add(24 * time.Hour),
+	}
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID: eventID, Status: "active", OrganizerID: organizerID,
+	}, nil)
+	er.EXPECT().RotateInviteToken(gomock.Any(), eventID).Return(rotated, nil)
+
+	got, err := svc.RotateInviteToken(context.Background(), eventID, organizerID)
+	require.NoError(t, err)
+	assert.Equal(t, rotated, got)
+	assert.WithinDuration(t, time.Now().Add(24*time.Hour), got.ExpiresAt, time.Second)
 }
 
 // ─── Delete ────────────────────────────────────────────────────────────────
@@ -255,7 +381,10 @@ func TestInviteParticipant_UnknownEmailSendsMailAsync(t *testing.T) {
 	organizerID := uuid.New()
 	eventID := uuid.New()
 	inviteToken := uuid.New()
-	event := model.Event{ID: eventID, OrganizerID: organizerID, Title: "Gala", InviteToken: inviteToken}
+	event := model.Event{
+		ID: eventID, OrganizerID: organizerID, Title: "Gala", InviteToken: inviteToken,
+		Status: "active", InviteTokenExpiresAt: time.Now().Add(time.Hour),
+	}
 	organizer := model.User{ID: organizerID, Name: "Alice"}
 
 	er.EXPECT().GetByID(gomock.Any(), eventID).Return(event, nil)
@@ -269,6 +398,21 @@ func TestInviteParticipant_UnknownEmailSendsMailAsync(t *testing.T) {
 
 	// Wait briefly for goroutine
 	time.Sleep(10 * time.Millisecond)
+}
+
+func TestInviteParticipant_RejectsExpiredInviteToken(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	organizerID := uuid.New()
+	eventID := uuid.New()
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID: eventID, OrganizerID: organizerID, Status: "active",
+		InviteToken: uuid.New(), InviteTokenExpiresAt: time.Now().Add(-time.Minute),
+	}, nil)
+
+	_, err := svc.InviteParticipant(context.Background(), eventID, organizerID, model.InviteParticipantRequest{Email: "guest@example.com"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "expired")
 }
 
 // ─── UpdateParticipantStatus ───────────────────────────────────────────────

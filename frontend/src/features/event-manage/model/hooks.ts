@@ -41,6 +41,17 @@ export function useCompleteEvent(id: string) {
   })
 }
 
+export function useRotateInviteToken(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => eventMutationsApi.rotateInviteToken(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(id) })
+    },
+  })
+}
+
 export function useJoinPublicEvent() {
   const qc = useQueryClient()
   return useMutation({

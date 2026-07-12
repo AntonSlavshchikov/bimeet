@@ -138,6 +138,7 @@ func (s *Service) SubmitContribution(ctx context.Context, eventID, collectionID,
 	if err != nil {
 		return model.CollectionContribution{}, err
 	}
+	contrib.HasReceipt = contrib.ReceiptURL != nil
 
 	go func() {
 		bgCtx := context.Background()
@@ -146,6 +147,38 @@ func (s *Service) SubmitContribution(ctx context.Context, eventID, collectionID,
 	}()
 
 	return contrib, nil
+}
+
+// GetReceiptURL authorizes receipt access and returns a five-minute signed URL.
+func (s *Service) GetReceiptURL(ctx context.Context, eventID, collectionID, contributionID, userID uuid.UUID) (string, error) {
+	event, err := s.eventRepo.GetByID(ctx, eventID)
+	if err != nil {
+		return "", fmt.Errorf("event not found")
+	}
+
+	collection, err := s.collectionRepo.GetByID(ctx, collectionID)
+	if err != nil {
+		return "", fmt.Errorf("collection not found")
+	}
+	if collection.EventID != eventID {
+		return "", fmt.Errorf("collection does not belong to this event")
+	}
+
+	contribution, err := s.collectionRepo.GetContributionByID(ctx, contributionID)
+	if err != nil {
+		return "", fmt.Errorf("contribution not found")
+	}
+	if contribution.CollectionID != collectionID {
+		return "", fmt.Errorf("contribution does not belong to this collection")
+	}
+	if event.OrganizerID != userID && contribution.UserID != userID {
+		return "", fmt.Errorf("forbidden")
+	}
+	if contribution.ReceiptURL == nil || *contribution.ReceiptURL == "" {
+		return "", fmt.Errorf("receipt not found")
+	}
+
+	return s.uploader.PresignDownload(ctx, *contribution.ReceiptURL, 5*time.Minute)
 }
 
 // ConfirmContribution approves a pending contribution (organizer only).

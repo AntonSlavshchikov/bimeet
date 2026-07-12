@@ -29,12 +29,13 @@ type Config struct {
 	SMTPFrom     string
 	FrontendURL  string
 	// S3-compatible storage (optional — if S3Bucket is empty, avatar uploads are disabled)
-	AWSRegion       string
-	AWSAccessKeyID  string
-	AWSSecretKey    string
-	S3Bucket        string
-	S3PublicBaseURL string
-	S3Endpoint      string // custom endpoint for MinIO / S3-compatible services
+	AWSRegion         string
+	AWSAccessKeyID    string
+	AWSSecretKey      string
+	S3Bucket          string
+	S3PublicBaseURL   string
+	S3Endpoint        string // custom endpoint for MinIO / S3-compatible services
+	S3PresignEndpoint string // browser-reachable endpoint used in presigned URLs
 	// AdminEmails — whitelist of users (by email) allowed to access /api/admin/*
 	AdminEmails []string
 	// AppEnv — "development" (default) or "production". In production CORS is
@@ -141,6 +142,7 @@ func Load() Config {
 		S3Bucket:           os.Getenv("S3_BUCKET"),
 		S3PublicBaseURL:    os.Getenv("S3_PUBLIC_BASE_URL"),
 		S3Endpoint:         os.Getenv("S3_ENDPOINT"),
+		S3PresignEndpoint:  os.Getenv("S3_PRESIGN_ENDPOINT"),
 		AdminEmails:        parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
 		AppEnv:             appEnv,
 		CORSAllowedOrigins: parseCSV(os.Getenv("CORS_ALLOWED_ORIGINS")),

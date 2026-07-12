@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -40,7 +41,20 @@ func New(
 }
 
 func (s *Service) List(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
-	return s.eventRepo.ListForUserEnriched(ctx, userID)
+	events, err := s.eventRepo.ListForUserEnriched(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	for i := range events {
+		if !events[i].Organizer.IsMe {
+			events[i].InviteToken = nil
+			events[i].InviteTokenExpiresAt = nil
+		} else if events[i].InviteTokenExpiresAt == nil || !now.Before(*events[i].InviteTokenExpiresAt) {
+			events[i].InviteToken = nil
+		}
+	}
+	return events, nil
 }
 
 func (s *Service) Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error) {
@@ -62,6 +76,16 @@ func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Even
 		return model.EventDetail{}, fmt.Errorf("event not found")
 	}
 
+	for i := range detail.Collections {
+		for j := range detail.Collections[i].Contributions {
+			contribution := &detail.Collections[i].Contributions[j]
+			contribution.HasReceipt = contribution.ReceiptURL != nil
+		}
+	}
+	if detail.Organizer.IsMe && (detail.InviteTokenExpiresAt == nil || !time.Now().Before(*detail.InviteTokenExpiresAt)) {
+		detail.InviteToken = nil
+	}
+
 	if !detail.Organizer.IsMe {
 		isParticipant := false
 		for _, p := range detail.Participants {
@@ -75,11 +99,13 @@ func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Even
 		}
 
 		detail.InviteToken = nil
+		detail.InviteTokenExpiresAt = nil
 		for i := range detail.Collections {
 			for j := range detail.Collections[i].Contributions {
 				contribution := &detail.Collections[i].Contributions[j]
 				if !contribution.User.IsMe {
 					contribution.ReceiptURL = nil
+					contribution.HasReceipt = false
 				}
 			}
 		}
@@ -156,6 +182,12 @@ func (s *Service) JoinByInviteToken(ctx context.Context, token, userID uuid.UUID
 	if base.OrganizerID == userID {
 		return model.EventParticipant{}, fmt.Errorf("you are the organizer of this event")
 	}
+	if base.Status != "active" {
+		return model.EventParticipant{}, fmt.Errorf("event is not active")
+	}
+	if !time.Now().Before(base.InviteTokenExpiresAt) {
+		return model.EventParticipant{}, fmt.Errorf("invite token expired")
+	}
 
 	action := req.Action
 	if action == "" {
@@ -172,11 +204,25 @@ func (s *Service) JoinByInviteToken(ctx context.Context, token, userID uuid.UUID
 		return model.EventParticipant{}, fmt.Errorf("action must be join or decline")
 	}
 
-	p, err := s.eventRepo.AddParticipant(ctx, event.ID, userID, status)
+	p, err := s.eventRepo.JoinByInviteToken(ctx, token, userID, status)
 	if err != nil {
-		return model.EventParticipant{}, err
+		return model.EventParticipant{}, fmt.Errorf("invite token expired or event is not active")
 	}
 	return p, nil
+}
+
+func (s *Service) RotateInviteToken(ctx context.Context, eventID, userID uuid.UUID) (model.InviteTokenResponse, error) {
+	event, err := s.eventRepo.GetByID(ctx, eventID)
+	if err != nil {
+		return model.InviteTokenResponse{}, fmt.Errorf("event not found")
+	}
+	if event.OrganizerID != userID {
+		return model.InviteTokenResponse{}, ErrForbidden
+	}
+	if event.Status != "active" {
+		return model.InviteTokenResponse{}, fmt.Errorf("event is not active")
+	}
+	return s.eventRepo.RotateInviteToken(ctx, eventID)
 }
 
 func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.UpdateEventRequest) (model.Event, error) {
@@ -309,6 +355,12 @@ func (s *Service) InviteParticipant(ctx context.Context, eventID, organizerID uu
 	}
 	if event.OrganizerID != organizerID {
 		return model.EventParticipant{}, fmt.Errorf("forbidden")
+	}
+	if event.Status != "active" {
+		return model.EventParticipant{}, fmt.Errorf("event is not active")
+	}
+	if !time.Now().Before(event.InviteTokenExpiresAt) {
+		return model.EventParticipant{}, fmt.Errorf("invite token expired")
 	}
 
 	organizer, err := s.userRepo.GetByID(ctx, organizerID)

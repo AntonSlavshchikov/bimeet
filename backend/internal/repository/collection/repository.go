@@ -79,6 +79,7 @@ func scanContribution(row interface {
 }) (model.CollectionContribution, error) {
 	var cc model.CollectionContribution
 	err := row.Scan(&cc.ID, &cc.CollectionID, &cc.UserID, &cc.Paid, &cc.PaidAt, &cc.Status, &cc.ReceiptURL)
+	cc.HasReceipt = cc.ReceiptURL != nil
 	return cc, err
 }
 

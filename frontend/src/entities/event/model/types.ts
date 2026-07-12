@@ -29,6 +29,7 @@ export interface Event {
   confirmed_count: number
   organizer: EventUser
   invite_token?: string
+  invite_token_expires_at?: string
   created_at: string
   updated_at: string
   my_status?: string
@@ -54,6 +55,7 @@ export interface EventListItem {
   confirmed_count: number
   organizer: EventUser
   invite_token?: string
+  invite_token_expires_at?: string
   created_at: string
   my_status: string
   participants: Array<{ user: EventUser; status: string; is_organizer: boolean }>

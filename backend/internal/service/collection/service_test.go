@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -27,9 +28,15 @@ func (noopUploader) Upload(_ context.Context, _, _ string, _ io.Reader) (string,
 	return "", nil
 }
 
+func (noopUploader) PresignDownload(_ context.Context, _ string, _ time.Duration) (string, error) {
+	return "", nil
+}
+
 type captureUploader struct {
 	contentType string
 	body        []byte
+	presignFrom string
+	presignTTL  time.Duration
 }
 
 func (u *captureUploader) Upload(_ context.Context, _, contentType string, body io.Reader) (string, error) {
@@ -40,6 +47,12 @@ func (u *captureUploader) Upload(_ context.Context, _, contentType string, body 
 	}
 	u.body = data
 	return "https://cdn.example/receipt", nil
+}
+
+func (u *captureUploader) PresignDownload(_ context.Context, storedURL string, ttl time.Duration) (string, error) {
+	u.presignFrom = storedURL
+	u.presignTTL = ttl
+	return "https://signed.example/receipt?expires=300", nil
 }
 
 func newService(t *testing.T) (*collectionsvc.Service, *mock.MockCollectionRepo, *mock.MockEventRepo) {
@@ -197,6 +210,79 @@ func TestSubmitContribution_UploadsSniffedPNG(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "image/png", uploader.contentType)
 	assert.Equal(t, png, uploader.body)
+}
+
+// ─── Receipt download ──────────────────────────────────────────────────────
+
+func TestGetReceiptURL_AllowsOrganizer(t *testing.T) {
+	storage := &captureUploader{}
+	svc, cr, er, _ := newServiceWithUploader(t, storage)
+
+	eventID, collectionID := uuid.New(), uuid.New()
+	contributionID, ownerID, organizerID := uuid.New(), uuid.New(), uuid.New()
+	receiptURL := "https://cdn.example/receipts/private.pdf"
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: organizerID}, nil)
+	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: eventID}, nil)
+	cr.EXPECT().GetContributionByID(gomock.Any(), contributionID).Return(model.CollectionContribution{
+		ID: contributionID, CollectionID: collectionID, UserID: ownerID, ReceiptURL: &receiptURL,
+	}, nil)
+
+	got, err := svc.GetReceiptURL(context.Background(), eventID, collectionID, contributionID, organizerID)
+	require.NoError(t, err)
+	assert.Equal(t, "https://signed.example/receipt?expires=300", got)
+	assert.Equal(t, receiptURL, storage.presignFrom)
+	assert.Equal(t, 5*time.Minute, storage.presignTTL)
+}
+
+func TestGetReceiptURL_AllowsReceiptOwner(t *testing.T) {
+	storage := &captureUploader{}
+	svc, cr, er, _ := newServiceWithUploader(t, storage)
+
+	eventID, collectionID := uuid.New(), uuid.New()
+	contributionID, ownerID := uuid.New(), uuid.New()
+	receiptURL := "https://cdn.example/receipts/private.pdf"
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: uuid.New()}, nil)
+	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: eventID}, nil)
+	cr.EXPECT().GetContributionByID(gomock.Any(), contributionID).Return(model.CollectionContribution{
+		ID: contributionID, CollectionID: collectionID, UserID: ownerID, ReceiptURL: &receiptURL,
+	}, nil)
+
+	_, err := svc.GetReceiptURL(context.Background(), eventID, collectionID, contributionID, ownerID)
+	require.NoError(t, err)
+	assert.Equal(t, receiptURL, storage.presignFrom)
+}
+
+func TestGetReceiptURL_RejectsOtherParticipant(t *testing.T) {
+	storage := &captureUploader{}
+	svc, cr, er, _ := newServiceWithUploader(t, storage)
+
+	eventID, collectionID := uuid.New(), uuid.New()
+	contributionID := uuid.New()
+	receiptURL := "https://cdn.example/receipts/private.pdf"
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: uuid.New()}, nil)
+	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: eventID}, nil)
+	cr.EXPECT().GetContributionByID(gomock.Any(), contributionID).Return(model.CollectionContribution{
+		ID: contributionID, CollectionID: collectionID, UserID: uuid.New(), ReceiptURL: &receiptURL,
+	}, nil)
+
+	_, err := svc.GetReceiptURL(context.Background(), eventID, collectionID, contributionID, uuid.New())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "forbidden")
+	assert.Empty(t, storage.presignFrom)
+}
+
+func TestGetReceiptURL_RejectsCrossEventCollection(t *testing.T) {
+	storage := &captureUploader{}
+	svc, cr, er, _ := newServiceWithUploader(t, storage)
+
+	eventID, collectionID, organizerID := uuid.New(), uuid.New(), uuid.New()
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{ID: eventID, OrganizerID: organizerID}, nil)
+	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: uuid.New()}, nil)
+
+	_, err := svc.GetReceiptURL(context.Background(), eventID, collectionID, uuid.New(), organizerID)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "does not belong")
+	assert.Empty(t, storage.presignFrom)
 }
 
 // ─── Summary ───────────────────────────────────────────────────────────────

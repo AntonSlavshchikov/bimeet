@@ -170,6 +170,7 @@ Stage 2 — alpine:3.20
 | `S3_BUCKET` | `avatars` | Bucket name |
 | `S3_ENDPOINT` | `http://localhost:9000` | Custom endpoint for MinIO; omit for real AWS S3 |
 | `S3_PUBLIC_BASE_URL` | `http://localhost:9000/avatars` | Public base URL for serving uploaded files |
+| `S3_PRESIGN_ENDPOINT` | `http://localhost:9000` | Browser-reachable S3 endpoint used for receipt download signatures |
 
 **API Endpoints:**
 

@@ -44,23 +44,24 @@ type ReminderEvent struct {
 }
 
 type Event struct {
-	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	DateStart   time.Time `json:"date_start"`
-	DateEnd     time.Time `json:"date_end"`
-	Location    string    `json:"location"`
-	LocationLat *float64  `json:"location_lat,omitempty"`
-	LocationLng *float64  `json:"location_lng,omitempty"`
-	Category    string    `json:"category"` // ordinary | business
-	DressCode   *string   `json:"dress_code,omitempty"`
-	Status      string    `json:"status"` // active | completed
-	IsPublic    bool      `json:"is_public"`
-	MaxGuests   *int      `json:"max_guests,omitempty"`
-	OrganizerID uuid.UUID `json:"organizer_id"`
-	InviteToken uuid.UUID `json:"invite_token"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID                   uuid.UUID `json:"id"`
+	Title                string    `json:"title"`
+	Description          string    `json:"description"`
+	DateStart            time.Time `json:"date_start"`
+	DateEnd              time.Time `json:"date_end"`
+	Location             string    `json:"location"`
+	LocationLat          *float64  `json:"location_lat,omitempty"`
+	LocationLng          *float64  `json:"location_lng,omitempty"`
+	Category             string    `json:"category"` // ordinary | business
+	DressCode            *string   `json:"dress_code,omitempty"`
+	Status               string    `json:"status"` // active | completed
+	IsPublic             bool      `json:"is_public"`
+	MaxGuests            *int      `json:"max_guests,omitempty"`
+	OrganizerID          uuid.UUID `json:"organizer_id"`
+	InviteToken          uuid.UUID `json:"invite_token"`
+	InviteTokenExpiresAt time.Time `json:"invite_token_expires_at"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 type EventParticipant struct {
@@ -86,7 +87,8 @@ type CollectionContribution struct {
 	Paid         bool       `json:"paid"`
 	PaidAt       *time.Time `json:"paid_at,omitempty"`
 	Status       string     `json:"status"` // not_paid | pending | paid
-	ReceiptURL   *string    `json:"receipt_url,omitempty"`
+	ReceiptURL   *string    `json:"-"`
+	HasReceipt   bool       `json:"has_receipt"`
 }
 
 type Poll struct {
@@ -272,6 +274,15 @@ type JoinByInviteTokenRequest struct {
 	Action string `json:"action"` // "join" | "decline"; defaults to "join"
 }
 
+type InviteTokenResponse struct {
+	InviteToken uuid.UUID `json:"invite_token"`
+	ExpiresAt   time.Time `json:"expires_at"`
+}
+
+type ReceiptURLResponse struct {
+	URL string `json:"url"`
+}
+
 type UpdateParticipantStatusRequest struct {
 	Status string `json:"status"` // confirmed | declined
 }
@@ -358,7 +369,8 @@ type ContributionInfo struct {
 	Paid       bool       `json:"paid"`
 	PaidAt     *time.Time `json:"paid_at,omitempty"`
 	Status     string     `json:"status"`
-	ReceiptURL *string    `json:"receipt_url,omitempty"`
+	ReceiptURL *string    `json:"-"`
+	HasReceipt bool       `json:"has_receipt"`
 }
 
 type CollectionInfo struct {
@@ -409,50 +421,52 @@ type ChangeLogInfo struct {
 }
 
 type EventDetail struct {
-	ID             uuid.UUID         `json:"id"`
-	Title          string            `json:"title"`
-	Description    string            `json:"description"`
-	DateStart      time.Time         `json:"date_start"`
-	DateEnd        time.Time         `json:"date_end"`
-	Location       string            `json:"location"`
-	LocationLat    *float64          `json:"location_lat,omitempty"`
-	LocationLng    *float64          `json:"location_lng,omitempty"`
-	Category       string            `json:"category"`
-	DressCode      *string           `json:"dress_code,omitempty"`
-	Status         string            `json:"status"`
-	IsPublic       bool              `json:"is_public"`
-	MaxGuests      *int              `json:"max_guests,omitempty"`
-	ConfirmedCount int               `json:"confirmed_count"`
-	Organizer      UserInfo          `json:"organizer"`
-	InviteToken    *uuid.UUID        `json:"invite_token,omitempty"`
-	CreatedAt      time.Time         `json:"created_at"`
-	UpdatedAt      time.Time         `json:"updated_at"`
-	Participants   []ParticipantInfo `json:"participants"`
-	Collections    []CollectionInfo  `json:"collections"`
-	Polls          []PollInfo        `json:"polls"`
-	Items          []ItemInfo        `json:"items"`
-	Carpools       []CarpoolInfo     `json:"carpools"`
-	ChangeLog      []ChangeLogInfo   `json:"change_log"`
+	ID                   uuid.UUID         `json:"id"`
+	Title                string            `json:"title"`
+	Description          string            `json:"description"`
+	DateStart            time.Time         `json:"date_start"`
+	DateEnd              time.Time         `json:"date_end"`
+	Location             string            `json:"location"`
+	LocationLat          *float64          `json:"location_lat,omitempty"`
+	LocationLng          *float64          `json:"location_lng,omitempty"`
+	Category             string            `json:"category"`
+	DressCode            *string           `json:"dress_code,omitempty"`
+	Status               string            `json:"status"`
+	IsPublic             bool              `json:"is_public"`
+	MaxGuests            *int              `json:"max_guests,omitempty"`
+	ConfirmedCount       int               `json:"confirmed_count"`
+	Organizer            UserInfo          `json:"organizer"`
+	InviteToken          *uuid.UUID        `json:"invite_token,omitempty"`
+	InviteTokenExpiresAt *time.Time        `json:"invite_token_expires_at,omitempty"`
+	CreatedAt            time.Time         `json:"created_at"`
+	UpdatedAt            time.Time         `json:"updated_at"`
+	Participants         []ParticipantInfo `json:"participants"`
+	Collections          []CollectionInfo  `json:"collections"`
+	Polls                []PollInfo        `json:"polls"`
+	Items                []ItemInfo        `json:"items"`
+	Carpools             []CarpoolInfo     `json:"carpools"`
+	ChangeLog            []ChangeLogInfo   `json:"change_log"`
 }
 
 type EventListItem struct {
-	ID             uuid.UUID         `json:"id"`
-	Title          string            `json:"title"`
-	Description    string            `json:"description"`
-	DateStart      time.Time         `json:"date_start"`
-	DateEnd        time.Time         `json:"date_end"`
-	Location       string            `json:"location"`
-	Category       string            `json:"category"`
-	DressCode      *string           `json:"dress_code,omitempty"`
-	Status         string            `json:"status"`
-	IsPublic       bool              `json:"is_public"`
-	MaxGuests      *int              `json:"max_guests,omitempty"`
-	ConfirmedCount int               `json:"confirmed_count"`
-	Organizer      UserInfo          `json:"organizer"`
-	InviteToken    uuid.UUID         `json:"invite_token"`
-	CreatedAt      time.Time         `json:"created_at"`
-	MyStatus       string            `json:"my_status"`
-	Participants   []ParticipantInfo `json:"participants"`
+	ID                   uuid.UUID         `json:"id"`
+	Title                string            `json:"title"`
+	Description          string            `json:"description"`
+	DateStart            time.Time         `json:"date_start"`
+	DateEnd              time.Time         `json:"date_end"`
+	Location             string            `json:"location"`
+	Category             string            `json:"category"`
+	DressCode            *string           `json:"dress_code,omitempty"`
+	Status               string            `json:"status"`
+	IsPublic             bool              `json:"is_public"`
+	MaxGuests            *int              `json:"max_guests,omitempty"`
+	ConfirmedCount       int               `json:"confirmed_count"`
+	Organizer            UserInfo          `json:"organizer"`
+	InviteToken          *uuid.UUID        `json:"invite_token,omitempty"`
+	InviteTokenExpiresAt *time.Time        `json:"invite_token_expires_at,omitempty"`
+	CreatedAt            time.Time         `json:"created_at"`
+	MyStatus             string            `json:"my_status"`
+	Participants         []ParticipantInfo `json:"participants"`
 }
 
 type PublicUserInfo struct {
