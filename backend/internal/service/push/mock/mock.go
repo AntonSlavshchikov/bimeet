@@ -43,17 +43,17 @@ func (m *MockSubscriptionRepo) EXPECT() *MockSubscriptionRepoMockRecorder {
 }
 
 // DeleteByEndpoint mocks base method.
-func (m *MockSubscriptionRepo) DeleteByEndpoint(ctx context.Context, endpoint string) error {
+func (m *MockSubscriptionRepo) DeleteByEndpoint(ctx context.Context, userID uuid.UUID, endpoint string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteByEndpoint", ctx, endpoint)
+	ret := m.ctrl.Call(m, "DeleteByEndpoint", ctx, userID, endpoint)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteByEndpoint indicates an expected call of DeleteByEndpoint.
-func (mr *MockSubscriptionRepoMockRecorder) DeleteByEndpoint(ctx, endpoint any) *gomock.Call {
+func (mr *MockSubscriptionRepoMockRecorder) DeleteByEndpoint(ctx, userID, endpoint any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByEndpoint", reflect.TypeOf((*MockSubscriptionRepo)(nil).DeleteByEndpoint), ctx, endpoint)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByEndpoint", reflect.TypeOf((*MockSubscriptionRepo)(nil).DeleteByEndpoint), ctx, userID, endpoint)
 }
 
 // ListByUser mocks base method.

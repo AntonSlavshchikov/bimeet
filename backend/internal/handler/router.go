@@ -3,9 +3,12 @@ package handler
 import (
 	"net/http"
 
+	_ "bimeet/docs"
+
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/riandyrn/otelchi"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
@@ -63,6 +66,10 @@ func NewRouter(
 	r.Use(middleware.SecurityHeaders(prod))
 	r.Use(middleware.CORS(corsOrigins))
 	r.Use(middleware.RateLimitGlobal())
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	// Public auth routes — strict per-IP rate limit against brute force.
 	r.Route("/api/auth", func(r chi.Router) {

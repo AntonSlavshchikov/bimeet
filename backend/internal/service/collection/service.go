@@ -1,11 +1,12 @@
 package collectionsvc
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -119,13 +120,16 @@ func (s *Service) SubmitContribution(ctx context.Context, eventID, collectionID,
 		return model.CollectionContribution{}, fmt.Errorf("already paid: cannot resubmit")
 	}
 
-	contentType := header.Header.Get("Content-Type")
+	contentType, uploadBody, err := detectReceiptContentType(file)
+	if err != nil {
+		return model.CollectionContribution{}, fmt.Errorf("read receipt: %w", err)
+	}
 	if !isAllowedReceiptType(contentType) {
 		return model.CollectionContribution{}, fmt.Errorf("unsupported file type: must be image or PDF")
 	}
 
 	key := fmt.Sprintf("receipts/%s/%s/%d", collectionID, userID, time.Now().UnixMilli())
-	receiptURL, err := s.uploader.Upload(ctx, key, contentType, file)
+	receiptURL, err := s.uploader.Upload(ctx, key, contentType, uploadBody)
 	if err != nil {
 		return model.CollectionContribution{}, fmt.Errorf("upload receipt: %w", err)
 	}
@@ -304,7 +308,21 @@ func (s *Service) Summary(ctx context.Context, eventID, userID uuid.UUID) (model
 	}, nil
 }
 
+func detectReceiptContentType(file io.Reader) (string, io.Reader, error) {
+	var sniff [512]byte
+	n, err := io.ReadFull(file, sniff[:])
+	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		return "", nil, err
+	}
+	body := io.MultiReader(bytes.NewReader(sniff[:n]), file)
+	return http.DetectContentType(sniff[:n]), body, nil
+}
+
 func isAllowedReceiptType(contentType string) bool {
-	ct := strings.ToLower(contentType)
-	return strings.HasPrefix(ct, "image/") || ct == "application/pdf"
+	switch contentType {
+	case "image/jpeg", "image/png", "image/webp", "application/pdf":
+		return true
+	default:
+		return false
+	}
 }

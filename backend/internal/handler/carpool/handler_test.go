@@ -2,6 +2,7 @@ package carpoolhandler_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -41,7 +42,8 @@ func withAuth(r *http.Request, userID uuid.UUID) *http.Request {
 func TestList_NoAuth(t *testing.T) {
 	router, _ := newRouter(t)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/events/"+uuid.New().String()+"/carpools", nil))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/events/"+uuid.New().String()+"/carpools", nil)
+	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
@@ -50,7 +52,7 @@ func TestList_Forbidden(t *testing.T) {
 	eventID, userID := uuid.New(), uuid.New()
 	svc.EXPECT().List(gomock.Any(), eventID, userID).Return(nil, errors.New("forbidden"))
 
-	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/"+eventID.String()+"/carpools", nil), userID)
+	req := withAuth(httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/events/"+eventID.String()+"/carpools", nil), userID)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusForbidden, w.Code)
@@ -61,7 +63,7 @@ func TestList_ReturnsEmptySlice(t *testing.T) {
 	eventID, userID := uuid.New(), uuid.New()
 	svc.EXPECT().List(gomock.Any(), eventID, userID).Return([]model.Carpool{}, nil)
 
-	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/"+eventID.String()+"/carpools", nil), userID)
+	req := withAuth(httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/events/"+eventID.String()+"/carpools", nil), userID)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -78,7 +80,7 @@ func TestCreate_Forbidden(t *testing.T) {
 	svc.EXPECT().Create(gomock.Any(), eventID, userID, gomock.Any()).Return(model.Carpool{}, errors.New("forbidden"))
 
 	body, _ := json.Marshal(model.CreateCarpoolRequest{SeatsAvailable: 3})
-	req := withAuth(httptest.NewRequest(http.MethodPost, "/events/"+eventID.String()+"/carpools", bytes.NewBuffer(body)), userID)
+	req := withAuth(httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/events/"+eventID.String()+"/carpools", bytes.NewBuffer(body)), userID)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -93,7 +95,7 @@ func TestCreate_HappyPath(t *testing.T) {
 		Return(model.Carpool{ID: carpoolID, EventID: eventID, DriverID: userID}, nil)
 
 	body, _ := json.Marshal(model.CreateCarpoolRequest{SeatsAvailable: 3})
-	req := withAuth(httptest.NewRequest(http.MethodPost, "/events/"+eventID.String()+"/carpools", bytes.NewBuffer(body)), userID)
+	req := withAuth(httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/events/"+eventID.String()+"/carpools", bytes.NewBuffer(body)), userID)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
@@ -52,7 +53,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.is_public,
-		        u.name, u.email,
+		        u.name,
 		        COUNT(ep.id) FILTER (WHERE ep.status = 'confirmed') AS confirmed_count
 		 FROM events e
 		 JOIN users u ON u.id = e.organizer_id
@@ -62,7 +63,7 @@ func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (mod
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 		&e.Category, &e.DressCode, &e.IsPublic,
-		&e.Organizer.Name, &e.Organizer.Email,
+		&e.Organizer.Name,
 		&e.ConfirmedCount)
 	if err != nil {
 		return model.InviteEventInfo{}, fmt.Errorf("get event by invite token: %w", err)
@@ -729,25 +730,18 @@ func (r *Repository) MarkReminder1dSent(ctx context.Context, id uuid.UUID) error
 	return err
 }
 
-// ListPublic returns active public events with confirmed_count and is_participant flag.
+// ListPublic returns all active public events with confirmed_count and current-user state.
 func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
-		        e.organizer_id, ou.name, ou.email,
-		        e.invite_token, e.created_at,
-		        EXISTS(
-		            SELECT 1 FROM event_participants ep
-		            WHERE ep.event_id = e.id AND ep.user_id = $1
-		        ) AS is_participant
+		        e.organizer_id, ou.name, e.created_at,
+		        COALESCE(me.status, '') AS my_status,
+		        me.user_id IS NOT NULL AS is_participant
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
+		 LEFT JOIN event_participants me ON me.event_id = e.id AND me.user_id = $1
 		 WHERE e.is_public = TRUE AND e.status = 'active'
-		   AND e.organizer_id <> $1
-		   AND NOT EXISTS (
-		       SELECT 1 FROM event_participants ep
-		       WHERE ep.event_id = e.id AND ep.user_id = $1
-		   )
 		 ORDER BY e.date_start`,
 		userID,
 	)
@@ -764,14 +758,12 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
-			&orgID, &e.Organizer.Name, &e.Organizer.Email,
-			&e.InviteToken, &e.CreatedAt,
-			&e.IsParticipant,
+			&orgID, &e.Organizer.Name, &e.CreatedAt,
+			&e.MyStatus, &e.IsParticipant,
 		); err != nil {
 			return nil, fmt.Errorf("scan public event list item: %w", err)
 		}
 		e.Organizer.IsMe = orgID == userID
-		e.MyStatus = ""
 		events = append(events, e)
 		orgIDs = append(orgIDs, orgID)
 	}
@@ -784,33 +776,27 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 	orgByEvent := make(map[uuid.UUID]uuid.UUID, len(events))
 	idxByEvent := make(map[uuid.UUID]int, len(events))
 	for i := range events {
-		events[i].Participants = []model.ParticipantInfo{}
+		events[i].Participants = []model.PublicParticipantInfo{}
 		orgByEvent[events[i].ID] = orgIDs[i]
 		idxByEvent[events[i].ID] = i
 	}
 	if len(events) > 0 {
 		pRows, err := r.pool.Query(ctx,
-			`SELECT ep.event_id, ep.user_id, u.name, u.email, ep.status
+			`SELECT ep.event_id, ep.user_id, u.name, ep.status
 			 FROM event_participants ep
 			 JOIN users u ON u.id = ep.user_id
 			 WHERE ep.event_id IN (
 			     SELECT e.id FROM events e
 			     WHERE e.is_public = TRUE AND e.status = 'active'
-			       AND e.organizer_id <> $1
-			       AND NOT EXISTS (
-			           SELECT 1 FROM event_participants x
-			           WHERE x.event_id = e.id AND x.user_id = $1
-			       )
 			 )`,
-			userID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("list participants for public event: %w", err)
 		}
 		for pRows.Next() {
-			var p model.ParticipantInfo
+			var p model.PublicParticipantInfo
 			var evID, puID uuid.UUID
-			if err := pRows.Scan(&evID, &puID, &p.User.Name, &p.User.Email, &p.Status); err != nil {
+			if err := pRows.Scan(&evID, &puID, &p.User.Name, &p.Status); err != nil {
 				pRows.Close()
 				return nil, fmt.Errorf("scan participant public event: %w", err)
 			}
@@ -840,8 +826,52 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 
 // JoinPublic adds a user as a confirmed participant of a public event.
 func (r *Repository) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) (model.EventParticipant, error) {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return model.EventParticipant{}, fmt.Errorf("begin join public tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var isPublic bool
+	var status string
+	var organizerID uuid.UUID
+	var maxGuests *int
+	if err := tx.QueryRow(ctx,
+		`SELECT is_public, status, organizer_id, max_guests
+		 FROM events WHERE id=$1 FOR UPDATE`,
+		eventID,
+	).Scan(&isPublic, &status, &organizerID, &maxGuests); err != nil {
+		return model.EventParticipant{}, fmt.Errorf("event not found: %w", err)
+	}
+	if !isPublic {
+		return model.EventParticipant{}, fmt.Errorf("forbidden")
+	}
+	if status != "active" {
+		return model.EventParticipant{}, fmt.Errorf("event is not active")
+	}
+	if organizerID == userID {
+		return model.EventParticipant{}, fmt.Errorf("you are the organizer")
+	}
+
+	if maxGuests != nil {
+		var confirmedCount int
+		if err := tx.QueryRow(ctx,
+			`SELECT COUNT(*) FROM (
+				SELECT organizer_id AS user_id FROM events WHERE id=$1
+				UNION
+				SELECT user_id FROM event_participants WHERE event_id=$1 AND status='confirmed'
+			) t`,
+			eventID,
+		).Scan(&confirmedCount); err != nil {
+			return model.EventParticipant{}, fmt.Errorf("count confirmed participants: %w", err)
+		}
+		if confirmedCount >= *maxGuests {
+			return model.EventParticipant{}, fmt.Errorf("event is full")
+		}
+	}
+
 	var p model.EventParticipant
-	err := r.pool.QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO event_participants (event_id, user_id, status)
 		 VALUES ($1, $2, 'confirmed')
 		 ON CONFLICT (event_id, user_id) DO UPDATE SET status = 'confirmed'
@@ -850,6 +880,9 @@ func (r *Repository) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) 
 	).Scan(&p.ID, &p.EventID, &p.UserID, &p.Status)
 	if err != nil {
 		return model.EventParticipant{}, fmt.Errorf("join public event: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return model.EventParticipant{}, fmt.Errorf("commit join public tx: %w", err)
 	}
 	return p, nil
 }

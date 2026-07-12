@@ -59,7 +59,27 @@ export interface EventListItem {
   participants: Array<{ user: EventUser; status: string; is_organizer: boolean }>
 }
 
-export interface PublicEventListItem extends EventListItem {
+export interface PublicEventUser {
+  name: string
+  is_me: boolean
+}
+
+export interface PublicEventListItem {
+  id: string
+  title: string
+  description: string
+  date_start: string
+  date_end: string
+  location: string
+  dress_code?: string
+  status: 'active' | 'completed'
+  is_public: boolean
+  max_guests?: number
+  confirmed_count: number
+  organizer: PublicEventUser
+  created_at: string
+  my_status: string
+  participants: Array<{ user: PublicEventUser; status: string; is_organizer: boolean }>
   is_participant: boolean
 }
 
@@ -71,7 +91,7 @@ export interface InviteEventInfo {
   date_end: string
   location: string
   dress_code?: string
-  organizer: EventUser
+  organizer: PublicEventUser
   confirmed_count: number
 }
 

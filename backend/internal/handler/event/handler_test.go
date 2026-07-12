@@ -31,6 +31,7 @@ func newRouter(t *testing.T) (http.Handler, *mock.MockEventService) {
 	r := chi.NewRouter()
 	r.Get("/events", h.List)
 	r.Post("/events", h.Create)
+	r.Get("/events/public", h.ListPublic)
 	r.Get("/events/{id}", h.GetByID)
 	r.Put("/events/{id}", h.Update)
 	r.Delete("/events/{id}", h.Delete)
@@ -82,6 +83,44 @@ func TestList_HappyPath(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestListPublic_OmitsPrivateFields(t *testing.T) {
+	router, svc := newRouter(t)
+
+	userID := uuid.New()
+	items := []model.PublicEventListItem{{
+		ID:        uuid.New(),
+		Title:     "Gala",
+		Organizer: model.PublicUserInfo{Name: "Alice"},
+		Participants: []model.PublicParticipantInfo{
+			{User: model.PublicUserInfo{Name: "Bob"}, Status: "confirmed"},
+		},
+	}}
+	svc.EXPECT().ListPublic(gomock.Any(), userID).Return(items, nil)
+
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public", nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var got []map[string]any
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
+	require.Len(t, got, 1)
+	assert.NotContains(t, got[0], "invite_token")
+	organizer, ok := got[0]["organizer"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, organizer, "email")
+	assert.NotContains(t, organizer, "id")
+	participants, ok := got[0]["participants"].([]any)
+	require.True(t, ok)
+	require.Len(t, participants, 1)
+	participant, ok := participants[0].(map[string]any)
+	require.True(t, ok)
+	user, ok := participant["user"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, user, "email")
+	assert.NotContains(t, user, "id")
 }
 
 // ─── GetByID ───────────────────────────────────────────────────────────────

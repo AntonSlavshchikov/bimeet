@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
-import { Button, Input, Textarea, useToast } from '@/shared/ui'
+import { Button, DateRangePicker, Input, Textarea, useToast } from '@/shared/ui'
 import LocationPicker from '@/features/location-picker/ui/LocationPicker'
 import { cn } from '@/shared/lib/cn'
 
@@ -26,12 +26,24 @@ function toDatetimeLocal(iso: string) {
   return iso.slice(0, 16)
 }
 
+function datePart(value: string) {
+  return value.slice(0, 10)
+}
+
+function timePart(value: string, fallback: string) {
+  return value.slice(11, 16) || fallback
+}
+
+function combineDateTime(date: string, time: string) {
+  return date ? `${date}T${time}` : ''
+}
+
 export default function EventFormPage() {
   const { id } = useParams<{ id?: string }>()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const toast = useToast()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const event = useEvent(id ?? '')
   const createEvent = useCreateEvent()
@@ -67,6 +79,21 @@ export default function EventFormPage() {
 
   function update<K extends keyof FormValues>(field: K, value: FormValues[K]) {
     setForm(f => ({ ...f, [field]: value }))
+  }
+
+  function updateDateRange(startDate: string, endDate: string) {
+    setForm(f => ({
+      ...f,
+      dateStart: combineDateTime(startDate, timePart(f.dateStart, '12:00')),
+      dateEnd: combineDateTime(endDate, timePart(f.dateEnd, '13:00')),
+    }))
+  }
+
+  function updateDateTime(field: 'dateStart' | 'dateEnd', time: string, fallback: string) {
+    setForm(f => ({
+      ...f,
+      [field]: combineDateTime(datePart(f[field]), time || fallback),
+    }))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -182,20 +209,35 @@ export default function EventFormPage() {
         </Section>
 
         <Section title={t('eventForm.sectionWhenWhere', 'Когда и где')}>
+          <Field label={t('eventForm.fieldDates', 'Даты')} required>
+            <DateRangePicker
+              startDate={datePart(form.dateStart)}
+              endDate={datePart(form.dateEnd)}
+              onChange={({ startDate, endDate }) => updateDateRange(startDate, endDate)}
+              placeholder={t('eventForm.dateRangePlaceholder', 'Выберите период')}
+              clearLabel={t('eventForm.dateRangeClear', 'Сбросить даты')}
+              previousMonthLabel={t('eventForm.dateRangePreviousMonth', 'Предыдущий месяц')}
+              nextMonthLabel={t('eventForm.dateRangeNextMonth', 'Следующий месяц')}
+              locale={i18n.language === 'en' ? 'en-US' : 'ru-RU'}
+              required
+            />
+          </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label={t('eventForm.fieldStart', 'Начало')} required>
+            <Field label={t('eventForm.fieldStartTime', 'Время начала')} required>
               <Input
-                type="datetime-local"
-                value={form.dateStart}
-                onChange={e => update('dateStart', e.target.value)}
+                type="time"
+                value={timePart(form.dateStart, '12:00')}
+                onChange={e => updateDateTime('dateStart', e.target.value, '12:00')}
+                disabled={!datePart(form.dateStart)}
                 required
               />
             </Field>
-            <Field label={t('eventForm.fieldEnd', 'Конец')} required>
+            <Field label={t('eventForm.fieldEndTime', 'Время конца')} required>
               <Input
-                type="datetime-local"
-                value={form.dateEnd}
-                onChange={e => update('dateEnd', e.target.value)}
+                type="time"
+                value={timePart(form.dateEnd, '13:00')}
+                onChange={e => updateDateTime('dateEnd', e.target.value, '13:00')}
+                disabled={!datePart(form.dateEnd)}
                 required
               />
             </Field>

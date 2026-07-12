@@ -100,6 +100,46 @@ func TestCreate_DefaultsToOrdinary(t *testing.T) {
 	assert.Equal(t, expected.ID, result.ID)
 }
 
+// ─── GetByID ───────────────────────────────────────────────────────────────
+
+func TestGetByID_PublicEventRequiresMembership(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	eventID := uuid.New()
+	userID := uuid.New()
+	er.EXPECT().GetDetail(gomock.Any(), eventID, userID).Return(model.EventDetail{
+		ID:        eventID,
+		IsPublic:  true,
+		Organizer: model.UserInfo{Name: "Alice", IsMe: false},
+		Participants: []model.ParticipantInfo{
+			{User: model.UserInfo{Name: "Bob", IsMe: false}, Status: "confirmed"},
+		},
+	}, nil)
+
+	_, err := svc.GetByID(context.Background(), eventID, userID)
+	require.ErrorIs(t, err, eventsvc.ErrForbidden)
+}
+
+func TestGetByID_PublicEventAllowsParticipant(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+
+	eventID := uuid.New()
+	userID := uuid.New()
+	detail := model.EventDetail{
+		ID:        eventID,
+		IsPublic:  true,
+		Organizer: model.UserInfo{Name: "Alice", IsMe: false},
+		Participants: []model.ParticipantInfo{
+			{User: model.UserInfo{Name: "Caller", IsMe: true}, Status: "confirmed"},
+		},
+	}
+	er.EXPECT().GetDetail(gomock.Any(), eventID, userID).Return(detail, nil)
+
+	got, err := svc.GetByID(context.Background(), eventID, userID)
+	require.NoError(t, err)
+	assert.Equal(t, eventID, got.ID)
+}
+
 // ─── Delete ────────────────────────────────────────────────────────────────
 
 func TestDelete_NotFound(t *testing.T) {

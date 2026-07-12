@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
@@ -66,12 +67,45 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID uuid.UUID) ([]mode
 }
 
 func (r *Repository) AddPassenger(ctx context.Context, carpoolID, userID uuid.UUID) error {
-	_, err := r.pool.Exec(ctx,
-		`INSERT INTO carpool_passengers (carpool_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin carpool join tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var seatsAvailable int
+	if err := tx.QueryRow(ctx,
+		`SELECT seats_available FROM carpools WHERE id=$1 FOR UPDATE`,
+		carpoolID,
+	).Scan(&seatsAvailable); err != nil {
+		return fmt.Errorf("carpool not found: %w", err)
+	}
+
+	var count int
+	if err := tx.QueryRow(ctx,
+		`SELECT COUNT(*) FROM carpool_passengers WHERE carpool_id=$1`,
+		carpoolID,
+	).Scan(&count); err != nil {
+		return fmt.Errorf("count carpool passengers: %w", err)
+	}
+	if count >= seatsAvailable {
+		return fmt.Errorf("carpool is full")
+	}
+
+	tag, err := tx.Exec(ctx,
+		`INSERT INTO carpool_passengers (carpool_id, user_id)
+		 VALUES ($1, $2)
+		 ON CONFLICT DO NOTHING`,
 		carpoolID, userID,
 	)
 	if err != nil {
 		return fmt.Errorf("add carpool passenger: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("already joined this carpool")
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit carpool join tx: %w", err)
 	}
 	return nil
 }

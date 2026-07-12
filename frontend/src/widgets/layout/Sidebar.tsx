@@ -12,9 +12,9 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
-import { useEvents, usePublicEvents } from '@/entities/event/queries'
 import { useNotifications } from '@/entities/notification/queries'
 import { Avatar } from '@/shared/ui/avatar'
+import { BrandMark } from '@/shared/ui/brand-mark'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,13 +80,8 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   const { t, i18n } = useTranslation()
   const isRu = i18n.language === 'ru'
 
-  const events = useEvents()
-  const publicEvents = usePublicEvents()
   const { data: notifications = [] } = useNotifications()
   const unreadCount = notifications.filter(n => !n.is_read).length
-
-  const myEvents = events.filter(e => e.status !== 'completed')
-  const publicCount = (publicEvents ?? []).length
 
   const onEvents = location.pathname.startsWith('/events') && !location.pathname.includes('/new')
   const onDiscover = location.pathname.startsWith('/discover')
@@ -100,20 +95,25 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   return (
     <aside className="h-full flex flex-col bg-bg border-r border-line">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 px-3 pt-5 pb-4">
-        <div className="w-7 h-7 rounded-lg bg-ink text-bg flex items-center justify-center font-bold text-[14px] tracking-[-0.02em]">
-          B
-        </div>
+      <div className="flex items-center gap-2 px-3 pt-5 pb-4">
+        <BrandMark size={34} />
         <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Bimeet</div>
       </div>
 
       {/* Main nav */}
       <nav className="flex flex-col gap-px px-3">
         <NavItem
+          to="/discover"
+          icon={Search}
+          label={t('nav.publicEvents', 'Все встречи')}
+          active={onDiscover}
+          onClick={onClose}
+        />
+
+        <NavItem
           to="/events"
           icon={Calendar}
-          label={t('nav.events', 'Встречи')}
-          count={myEvents.length}
+          label={t('nav.events', 'Мои встречи')}
           active={onEvents}
           onClick={onClose}
         />
@@ -125,15 +125,6 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           count={unreadCount}
           accentBadge
           active={location.pathname.startsWith('/notifications')}
-          onClick={onClose}
-        />
-
-        <NavItem
-          to="/discover"
-          icon={Search}
-          label={t('nav.publicEvents', 'Найти публичные')}
-          count={publicCount > 0 ? publicCount : undefined}
-          active={onDiscover}
           onClick={onClose}
         />
 

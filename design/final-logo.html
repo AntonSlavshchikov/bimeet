@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet · Bond (43) — цветовые гаммы</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  :root{ --page:#FAFAF7; --txt:#0A0A0B; --muted:#6B6B73; --line:rgba(0,0,0,.08); --card:#fff }
+  body.dark{ --page:#0A0A0B; --txt:#F2F2F7; --muted:#9A9AA2; --line:rgba(255,255,255,.10); --card:#131316 }
+  body{ margin:0; font-family:'Inter',system-ui,sans-serif; background:var(--page); color:var(--txt);
+    -webkit-font-smoothing:antialiased; padding:60px 24px 120px; transition:background .2s,color .2s }
+  .wrap{ max-width:1080px; margin:0 auto }
+  .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin-bottom:8px }
+  .tag{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+  h1{ font-size:44px; line-height:1.06; letter-spacing:-0.03em; margin:10px 0 12px; font-weight:700 }
+  .sub{ color:var(--muted); font-size:16px; margin:0; max-width:640px }
+  .toggle{ flex-shrink:0; margin-top:8px; cursor:pointer; border:1px solid var(--line); background:var(--card);
+    color:var(--txt); border-radius:10px; padding:9px 14px; font:600 13px Inter; }
+  h2.sec{ font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    margin:54px 0 4px }
+  .secdesc{ color:var(--muted); font-size:14px; margin:0 0 22px }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:20px }
+  .sw{ display:flex; flex-direction:column; gap:12px }
+  .tile{ aspect-ratio:1/1; border-radius:24%; display:grid; place-items:center; overflow:hidden }
+  .tile svg{ width:100%; height:100% }
+  .cap{ display:flex; flex-direction:column; gap:7px }
+  .cap .nm{ font-size:13.5px; font-weight:600; letter-spacing:-0.01em }
+  .chips{ display:flex; gap:5px; flex-wrap:wrap }
+  .chip{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--muted);
+    border:1px solid var(--line); border-radius:999px; padding:2px 7px 2px 5px; font-weight:500 }
+  .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow:inset 0 0 0 1px rgba(0,0,0,.12) }
+  footer{ margin-top:72px; color:var(--muted); font-size:13px; text-align:center; line-height:1.6 }
+  footer code{ background:rgba(120,120,130,.14); padding:2px 6px; border-radius:5px; font-size:12px }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <span class="tag">Bimeet · знак 43 «Bond»</span>
+      <h1>Два сплетённых кольца — в цвете</h1>
+      <p class="sub">Один и тот же знак в разных гаммах: тёплые и контрастные пары, монохром, градиенты и инверсия на цветных подложках. Плетение over-under сохраняется везде.</p>
+    </div>
+    <button class="toggle" id="modeBtn" type="button">◐ Тёмный фон</button>
+  </div>
+  <div id="app"></div>
+  <footer>
+    Знак рисуется как inline-SVG на сетке <code>0 0 100 100</code> — любую из этих гамм можно вынуть в <code>favicon.svg</code> и PWA-иконки.<br>
+    Назови понравившуюся — вошью её в приложение.
+  </footer>
+</div>
+
+<script>
+let uid = 0;
+
+// c — строка (#hex) или {stops:[[offset,'#hex'],...], angle?}
+// userSpaceOnUse: градиент в общих координатах холста, одинаковый для всех фигур
+// (кольцо и дуга-перехлёст берут цвет из одной шкалы — никаких швов).
+function resolveColor(c, defs){
+  if (typeof c === 'string') return c;
+  const id = 'grad'+(uid++);
+  const a = c.angle ?? 45;
+  const rad = a*Math.PI/180, x=Math.cos(rad), y=Math.sin(rad), R=30;
+  const x1=(50-x*R).toFixed(2), y1=(50-y*R).toFixed(2), x2=(50+x*R).toFixed(2), y2=(50+y*R).toFixed(2);
+  const stops = c.stops.map(s=>`<stop offset="${s[0]}" stop-color="${s[1]}"/>`).join('');
+  defs.push(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stops}</linearGradient>`);
+  return `url(#${id})`;
+}
+
+function chipColors(c){
+  if (typeof c === 'string') return [c];
+  return c.stops.map(s=>s[1]);
+}
+
+// Два сплошных кольца + длинная дуга-перехлёст левого поверх правого внизу.
+function svgMark(p){
+  const defs = [];
+  const a = resolveColor(p.ring1, defs);
+  const b = resolveColor(p.ring2, defs);
+  const head = `<defs>${defs.join('')}</defs>`;
+  return `<svg viewBox="0 0 100 100">${head}
+    <circle cx="39" cy="50" r="16" fill="none" stroke="${a}" stroke-width="11"/>
+    <circle cx="61" cy="50" r="16" fill="none" stroke="${b}" stroke-width="11"/>
+    <path d="M54.86 52.09 A16 16 0 0 1 40.26 65.95" fill="none" stroke="${a}" stroke-width="11" stroke-linecap="round"/>
+  </svg>`;
+}
+
+const SECTIONS = [
+ { title:'Тёплые дуо', desc:'Оригинальная тёплая ветка — коралл, янтарь, закат.', items:[
+   { nm:'Coral × Amber', bg:'#FFF3EA', ring1:'#FF6F61', ring2:'#FFB259' },
+   { nm:'Sunset', bg:'#FFF1EC', ring1:'#FF5E62', ring2:'#FF9966' },
+   { nm:'Tomato × Gold', bg:'#FFF6E9', ring1:'#FF6347', ring2:'#FFC857' },
+   { nm:'Raspberry × Peach', bg:'#FFF0F0', ring1:'#E8506E', ring2:'#FFA177' },
+   { nm:'Terracotta × Sand', bg:'#FBF3E9', ring1:'#E2725B', ring2:'#E6B566' },
+ ]},
+ { title:'Контраст и холод', desc:'Двухцветные пары с большей разницей — свежо и заметно.', items:[
+   { nm:'Coral × Teal', bg:'#F1FBFA', ring1:'#FF6F61', ring2:'#2EC4B6' },
+   { nm:'Brand (bimeet)', bg:'#F3F6FF', ring1:'#007AFF', ring2:'#5856D6' },
+   { nm:'Indigo × Purple', bg:'#F6F3FF', ring1:'#5856D6', ring2:'#AF52DE' },
+   { nm:'Sky × Pink', bg:'#F2FAFF', ring1:'#38BDF8', ring2:'#F472B6' },
+   { nm:'Emerald × Lime', bg:'#F1FBF3', ring1:'#10B981', ring2:'#A3E635' },
+   { nm:'Ocean × Aqua', bg:'#EEF9FF', ring1:'#0094FF', ring2:'#00C2A8' },
+   { nm:'Violet × Coral', bg:'#F8F5FF', ring1:'#7C3AED', ring2:'#FB7185' },
+   { nm:'Plum × Rose', bg:'#FBF3F8', ring1:'#9333EA', ring2:'#F43F5E' },
+ ]},
+ { title:'Один тон', desc:'Монохром на двух оттенках — плетение читается за счёт светлоты.', items:[
+   { nm:'Blue mono', bg:'#F2F7FF', ring1:'#0066D6', ring2:'#5AA7FF' },
+   { nm:'Coral mono', bg:'#FFF3F1', ring1:'#FF5A4D', ring2:'#FF9E92' },
+   { nm:'Indigo mono', bg:'#F4F3FF', ring1:'#4F46E5', ring2:'#9A93F5' },
+   { nm:'Emerald mono', bg:'#EFFBF5', ring1:'#0E9F6E', ring2:'#6BD3AC' },
+   { nm:'Slate mono', bg:'#F4F6F8', ring1:'#334155', ring2:'#7689A3' },
+   { nm:'Ink · чистый', bg:'#FFFFFF', ring1:'#0A0A0B', ring2:'#0A0A0B', gap:true, gapBg:'#FFFFFF' },
+ ]},
+ { title:'Градиенты', desc:'Кольца с градиентной обводкой — современный, сочный язык.', items:[
+   { nm:'Aurora', bg:'#0B1020', ring1:{stops:[[0,'#00C6FF'],[1,'#5856D6']]}, ring2:{stops:[[0,'#5856D6'],[1,'#AF52DE']]} },
+   { nm:'Sunset grad', bg:'#1A1014', ring1:{stops:[[0,'#FF6F61'],[1,'#FF3D81']]}, ring2:{stops:[[0,'#FFB259'],[1,'#FF6F61']]} },
+   { nm:'Brand grad', bg:'#F3F6FF', ring1:{stops:[[0,'#007AFF'],[1,'#5856D6']]}, ring2:{stops:[[0,'#5856D6'],[1,'#AF52DE']]} },
+   { nm:'Neon mint', bg:'#0A0A0B', ring1:{stops:[[0,'#00F5A0'],[1,'#00D9F5']]}, ring2:{stops:[[0,'#00D9F5'],[1,'#4FACFE']]} },
+   { nm:'Peachy', bg:'#FFF6F0', ring1:{stops:[[0,'#FFD3A5'],[1,'#FF9A8B']]}, ring2:{stops:[[0,'#FF9A8B'],[1,'#FF6F91']]} },
+   { nm:'Cool wave', bg:'#06121F', ring1:{stops:[[0,'#4FACFE'],[1,'#00F2FE']]}, ring2:{stops:[[0,'#43E97B'],[1,'#38F9D7']]} },
+   { nm:'Grape soda', bg:'#15101F', ring1:{stops:[[0,'#7C3AED'],[1,'#EC4899']]}, ring2:{stops:[[0,'#EC4899'],[1,'#F59E0B']]} },
+   { nm:'Mono gradient', bg:'#F4F6F8', ring1:{stops:[[0,'#0A0A0B'],[1,'#4B5563']]}, ring2:{stops:[[0,'#4B5563'],[1,'#9CA3AF']]} },
+ ]},
+ { title:'Инверсия и подложки', desc:'Светлый знак на цветной/тёмной плитке — для иконок и обложек.', items:[
+   { nm:'White / dark', bg:'#0A0A0B', ring1:'#FFFFFF', ring2:'#FFFFFF', gap:true, gapBg:'#0A0A0B' },
+   { nm:'White / brand', bg:'#007AFF', ring1:'#FFFFFF', ring2:'#FFFFFF', gap:true, gapBg:'#007AFF' },
+   { nm:'White / coral', bg:'#FF6F61', ring1:'#FFF7F2', ring2:'#FFF7F2', gap:true, gapBg:'#FF6F61' },
+   { nm:'White / indigo', bg:'#5856D6', ring1:'#FFFFFF', ring2:'#FFE9C7', gap:true, gapBg:'#5856D6' },
+   { nm:'Cream / plum', bg:'#3B1D52', ring1:'#FFC9A3', ring2:'#FF8FB1' },
+   { nm:'Ink / amber tile', bg:'#FFE3B3', ring1:'#1A1206', ring2:'#9A5B00', gap:true, gapBg:'#FFE3B3' },
+   { nm:'Duo on dark', bg:'#0A0A0B', ring1:'#FF6F61', ring2:'#FFB259' },
+   { nm:'Brand on dark', bg:'#0A0A0B', ring1:'#0A84FF', ring2:'#5E5CE6' },
+ ]},
+ { title:'Пастель и нюд', desc:'Мягкие приглушённые тона — спокойно и премиально.', items:[
+   { nm:'Blush × Sage', bg:'#FAF6F2', ring1:'#F2A6A0', ring2:'#A8C3A0' },
+   { nm:'Lavender × Butter', bg:'#F7F5FB', ring1:'#C4B5FD', ring2:'#FCD96B' },
+   { nm:'Powder × Clay', bg:'#F6F4F1', ring1:'#9FC2DE', ring2:'#D9A88A' },
+   { nm:'Mint × Apricot', bg:'#F3F9F4', ring1:'#86D9AE', ring2:'#F7B68A' },
+   { nm:'Mauve × Stone', bg:'#F7F3F4', ring1:'#C9889B', ring2:'#9A8C98' },
+   { nm:'Sky × Peach', bg:'#F4F8FB', ring1:'#A5C9F0', ring2:'#F4B79E' },
+ ]},
+ { title:'Самоцветы', desc:'Глубокие насыщенные тона — дорого и уверенно.', items:[
+   { nm:'Ruby × Gold', bg:'#FBF1F2', ring1:'#C81D4E', ring2:'#E0A93B' },
+   { nm:'Sapphire × Teal', bg:'#F0F3F8', ring1:'#1E3A8A', ring2:'#0D9488' },
+   { nm:'Emerald × Amber', bg:'#F0F6F2', ring1:'#047857', ring2:'#D97706' },
+   { nm:'Amethyst × Rose', bg:'#F6F1FA', ring1:'#6D28D9', ring2:'#DB2777' },
+   { nm:'Garnet × Bronze', bg:'#FAF2EF', ring1:'#8E2434', ring2:'#B45309' },
+   { nm:'Jewels / dark', bg:'#0E0A14', ring1:'#E0115F', ring2:'#22D3A7' },
+ ]},
+ { title:'Ретро / 80s', desc:'Смелые ностальгические сочетания с характером.', items:[
+   { nm:'Miami', bg:'#FFF4FB', ring1:'#FF6AD5', ring2:'#26C6DA' },
+   { nm:'Mustard × Teal', bg:'#FBF8EE', ring1:'#E1A700', ring2:'#117A82' },
+   { nm:'Synthwave', bg:'#160A1E', ring1:{stops:[[0,'#F441A5'],[1,'#FF8C42']]}, ring2:{stops:[[0,'#03C4EB'],[1,'#7A5CFF']]} },
+   { nm:'Pop orange × navy', bg:'#FFF4EC', ring1:'#FF6B35', ring2:'#1B3A6B' },
+   { nm:'Cherry cola', bg:'#1A0E10', ring1:'#FF4D6D', ring2:'#FFD23F' },
+ ]},
+ { title:'Природа', desc:'Землистые и природные палитры — тепло и естественно.', items:[
+   { nm:'Forest × Moss', bg:'#F1F6EF', ring1:'#2D6A4F', ring2:'#95D5A0' },
+   { nm:'Ocean × Sand', bg:'#F3F8F8', ring1:'#0E7490', ring2:'#E2C290' },
+   { nm:'Coral reef', bg:'#FFF4F1', ring1:'#FF7F50', ring2:'#1FB6A6' },
+   { nm:'Autumn', bg:'#FBF4EC', ring1:'#B5651D', ring2:'#D9A441' },
+   { nm:'Wildflower', bg:'#F7F4FB', ring1:'#7B6CA8', ring2:'#E08DAC' },
+ ]},
+ { title:'Дуотон-градиенты', desc:'Сочные градиентные переходы в стиле современных брендов.', items:[
+   { nm:'Mango', bg:'#1A140A', ring1:{stops:[[0,'#FFE259'],[1,'#FFA751']]}, ring2:{stops:[[0,'#FFA751'],[1,'#FF6F61']]} },
+   { nm:'Bloody Mary', bg:'#1A0A10', ring1:{stops:[[0,'#FF512F'],[1,'#DD2476']]}, ring2:{stops:[[0,'#DD2476'],[1,'#7C3AED']]} },
+   { nm:'Cosmic', bg:'#080B1A', ring1:{stops:[[0,'#6A11CB'],[1,'#2575FC']]}, ring2:{stops:[[0,'#2575FC'],[1,'#21D4FD']]} },
+   { nm:'Aqua splash', bg:'#06141A', ring1:{stops:[[0,'#13547A'],[1,'#80D0C7']]}, ring2:{stops:[[0,'#80D0C7'],[1,'#43E97B']]} },
+   { nm:'Flamingo', bg:'#FFF2F6', ring1:{stops:[[0,'#F857A6'],[1,'#FF5858']]}, ring2:{stops:[[0,'#FF9A9E'],[1,'#FECFEF']]} },
+   { nm:'Northern', bg:'#04140F', ring1:{stops:[[0,'#43E97B'],[1,'#38F9D7']]}, ring2:{stops:[[0,'#38F9D7'],[1,'#4FACFE']]} },
+ ]},
+];
+
+function chipsHTML(p){
+  const cols = [...new Set([...chipColors(p.ring1), ...chipColors(p.ring2)])];
+  return `<div class="chips">${cols.map(c=>`<span class="chip"><span class="dot" style="background:${c}"></span>${c}</span>`).join('')}</div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = SECTIONS.map(sec=>`
+    <h2 class="sec">${sec.title}</h2>
+    <p class="secdesc">${sec.desc}</p>
+    <div class="grid">
+      ${sec.items.map(p=>`
+        <div class="sw">
+          <div class="tile" style="background:${p.bg}; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)">${svgMark(p)}</div>
+          <div class="cap"><span class="nm">${p.nm}</span>${chipsHTML(p)}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+render();
+
+document.getElementById('modeBtn').addEventListener('click', function(){
+  const d = document.body.classList.toggle('dark');
+  this.textContent = d ? '◑ Светлый фон' : '◐ Тёмный фон';
+});
+</script>
+</body>
+</html>

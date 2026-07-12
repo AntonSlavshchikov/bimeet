@@ -13,5 +13,5 @@ import (
 type SubscriptionRepo interface {
 	Upsert(ctx context.Context, userID uuid.UUID, endpoint, p256dh, auth, userAgent string) error
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]model.PushSubscription, error)
-	DeleteByEndpoint(ctx context.Context, endpoint string) error
+	DeleteByEndpoint(ctx context.Context, userID uuid.UUID, endpoint string) error
 }

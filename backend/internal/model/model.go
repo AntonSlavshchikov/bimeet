@@ -324,17 +324,17 @@ type CreateCarpoolRequest struct {
 // ─── Enriched API response types ───────────────────────────────────────────
 
 type InviteEventInfo struct {
-	ID             uuid.UUID `json:"id"`
-	Title          string    `json:"title"`
-	Description    string    `json:"description"`
-	DateStart      time.Time `json:"date_start"`
-	DateEnd        time.Time `json:"date_end"`
-	Location       string    `json:"location"`
-	Category       string    `json:"category"`
-	DressCode      *string   `json:"dress_code,omitempty"`
-	IsPublic       bool      `json:"is_public"`
-	Organizer      UserInfo  `json:"organizer"`
-	ConfirmedCount int       `json:"confirmed_count"`
+	ID             uuid.UUID      `json:"id"`
+	Title          string         `json:"title"`
+	Description    string         `json:"description"`
+	DateStart      time.Time      `json:"date_start"`
+	DateEnd        time.Time      `json:"date_end"`
+	Location       string         `json:"location"`
+	Category       string         `json:"category"`
+	DressCode      *string        `json:"dress_code,omitempty"`
+	IsPublic       bool           `json:"is_public"`
+	Organizer      PublicUserInfo `json:"organizer"`
+	ConfirmedCount int            `json:"confirmed_count"`
 }
 
 // UserInfo carries display fields for a user shown to other event members.
@@ -455,9 +455,35 @@ type EventListItem struct {
 	Participants   []ParticipantInfo `json:"participants"`
 }
 
+type PublicUserInfo struct {
+	Name string `json:"name"`
+	IsMe bool   `json:"is_me"`
+}
+
+type PublicParticipantInfo struct {
+	User        PublicUserInfo `json:"user"`
+	Status      string         `json:"status"`
+	IsOrganizer bool           `json:"is_organizer"`
+}
+
 type PublicEventListItem struct {
-	EventListItem
-	IsParticipant bool `json:"is_participant"`
+	ID             uuid.UUID               `json:"id"`
+	Title          string                  `json:"title"`
+	Description    string                  `json:"description"`
+	DateStart      time.Time               `json:"date_start"`
+	DateEnd        time.Time               `json:"date_end"`
+	Location       string                  `json:"location"`
+	Category       string                  `json:"category"`
+	DressCode      *string                 `json:"dress_code,omitempty"`
+	Status         string                  `json:"status"`
+	IsPublic       bool                    `json:"is_public"`
+	MaxGuests      *int                    `json:"max_guests,omitempty"`
+	ConfirmedCount int                     `json:"confirmed_count"`
+	Organizer      PublicUserInfo          `json:"organizer"`
+	CreatedAt      time.Time               `json:"created_at"`
+	MyStatus       string                  `json:"my_status"`
+	Participants   []PublicParticipantInfo `json:"participants"`
+	IsParticipant  bool                    `json:"is_participant"`
 }
 
 // ─── Admin DTOs ────────────────────────────────────────────────────────────

@@ -59,8 +59,8 @@ func (r *Repository) ListByUser(ctx context.Context, userID uuid.UUID) ([]model.
 	return subs, rows.Err()
 }
 
-func (r *Repository) DeleteByEndpoint(ctx context.Context, endpoint string) error {
-	_, err := r.pool.Exec(ctx, `DELETE FROM push_subscriptions WHERE endpoint = $1`, endpoint)
+func (r *Repository) DeleteByEndpoint(ctx context.Context, userID uuid.UUID, endpoint string) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM push_subscriptions WHERE user_id = $1 AND endpoint = $2`, userID, endpoint)
 	if err != nil {
 		return fmt.Errorf("delete push subscription: %w", err)
 	}

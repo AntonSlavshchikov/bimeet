@@ -52,6 +52,7 @@ export {
 } from './select'
 export { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from './tooltip'
 export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent } from './popover'
+export { DateRangePicker } from './date-range-picker'
 export { Separator } from './separator'
 export { Toaster, useToast, toast } from './toast'
 

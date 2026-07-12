@@ -116,8 +116,8 @@ export default function EventListRow({
       <div className="hidden lg:flex items-center gap-2 min-w-0">
         {confirmed.length > 0 && (
           <AvatarStack>
-            {confirmed.map(p => (
-              <Avatar key={p.user.email} name={p.user.name} size="sm" />
+            {confirmed.map((p, index) => (
+              <Avatar key={`${p.user.name}-${index}`} name={p.user.name} size="sm" />
             ))}
           </AvatarStack>
         )}

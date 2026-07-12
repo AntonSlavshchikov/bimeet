@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Bimeet · Варианты логотипа</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box }
+  :root{
+    --page:#FAFAF7; --txt:#0A0A0B; --muted:#57534E; --line:rgba(0,0,0,.08); --card:#fff;
+  }
+  body.dark{
+    --page:#0A0A0B; --txt:#F2F2F7; --muted:#9A9AA2; --line:rgba(255,255,255,.10); --card:#131316;
+  }
+  body{
+    margin:0; font-family:'Inter',system-ui,sans-serif;
+    background:var(--page); color:var(--txt);
+    -webkit-font-smoothing:antialiased;
+    padding:64px 24px 120px; transition:background .2s ease,color .2s ease;
+  }
+  .wrap{ max-width:920px; margin:0 auto }
+  .tag{ font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+  .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:24px }
+  h1{ font-size:46px; line-height:1.06; letter-spacing:-0.03em; margin:10px 0 12px; font-weight:700 }
+  .sub{ color:var(--muted); font-size:16px; margin:0 0 8px; max-width:600px }
+  .toggle{
+    flex-shrink:0; margin-top:8px; cursor:pointer; user-select:none;
+    border:1px solid var(--line); background:var(--card); color:var(--txt);
+    border-radius:10px; padding:9px 14px; font-family:inherit; font-size:13px; font-weight:600;
+  }
+  .toggle:hover{ border-color:rgba(120,120,130,.4) }
+
+  .section-tag{ font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); margin:56px 0 4px }
+  .section-tag:first-of-type{ margin-top:40px }
+  .section-desc{ color:var(--muted); font-size:14px; margin:0 0 20px; max-width:560px }
+
+  .grid{ display:grid; gap:14px }
+  .card{
+    display:grid; grid-template-columns: 220px 1fr; gap:24px; align-items:center;
+    padding:22px 24px; border-radius:16px; background:var(--card);
+    border:1px solid var(--line);
+  }
+  .meta{ min-width:0 }
+  .meta .no{ font-size:12px; font-weight:700; color:#007AFF; letter-spacing:.04em }
+  .meta h3{ margin:4px 0 5px; font-size:17px; font-weight:600; letter-spacing:-0.01em }
+  .meta p{ margin:0; color:var(--muted); font-size:13px; line-height:1.45 }
+
+  .renders{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; justify-content:flex-end }
+  .strip{ display:flex; align-items:center; gap:12px }
+
+  .tile{ border-radius:22%; display:grid; place-items:center; overflow:hidden; flex-shrink:0 }
+  .tile.dark { --bg:#0A0A0B; background:#0A0A0B; color:#ffffff }
+  .tile.light{ --bg:#ffffff; background:#ffffff; color:#0A0A0B; box-shadow:inset 0 0 0 1px rgba(0,0,0,.10) }
+  .tile.mono { --bg:#ffffff; --accent:currentColor; background:#ffffff; color:#0A0A0B; box-shadow:inset 0 0 0 1px rgba(0,0,0,.10) }
+  .tile.wide { border-radius:16px; padding:0 22px }
+
+  .hero{
+    margin:32px 0 8px; padding:32px; border-radius:24px;
+    background:var(--card); border:1px solid var(--line);
+    display:grid; grid-template-columns: auto 1fr; gap:36px; align-items:center;
+  }
+  .hero .show{ display:flex; align-items:center; gap:20px; flex-shrink:0 }
+  .hero .star{ display:inline-block; font-size:11px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:#fff; background:#007AFF; padding:5px 10px; border-radius:999px; margin-bottom:14px }
+  .hero h2{ margin:0 0 10px; font-size:26px; font-weight:700; letter-spacing:-0.02em }
+  .hero p{ margin:0 0 8px; color:var(--muted); font-size:14.5px; line-height:1.55; max-width:520px }
+  .hero .mini{ display:flex; align-items:center; gap:14px; margin-top:6px }
+  @media (max-width:680px){ .hero{ grid-template-columns:1fr; gap:24px } }
+  .tile svg{ width:100%; height:100%; display:block }
+
+  .lbl{ display:flex; flex-direction:column; align-items:center; gap:7px }
+  .lbl span{ font-size:10px; color:var(--muted); font-weight:500 }
+
+  footer{ margin-top:72px; color:var(--muted); font-size:13px; line-height:1.6; text-align:center }
+  footer code{ background:rgba(120,120,130,.14); padding:2px 6px; border-radius:5px; font-size:12px }
+
+  @media (max-width:680px){
+    .card{ grid-template-columns:1fr; gap:18px }
+    .renders{ justify-content:flex-start }
+    h1{ font-size:34px }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SVG symbol definitions: ink = currentColor, accent = var(--accent), knockout = var(--bg) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- A. Монограмма «B» -->
+    <symbol id="m1" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="36" y1="26" x2="36" y2="74"/>
+        <path d="M36 26 H53 a12 12 0 0 1 0 24 H36"/>
+        <path d="M36 50 H55 a13 13 0 0 1 0 24 H36"/>
+      </g>
+    </symbol>
+
+    <symbol id="m2" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="36" y1="25" x2="36" y2="75"/>
+        <path d="M36 25 H52 a12.5 12.5 0 0 1 0 25 H36"/>
+        <path d="M36 50 H54 a13.5 13.5 0 0 1 0 25 H36"/>
+      </g>
+      <circle cx="45" cy="37.5" r="4.3" fill="var(--accent,#007AFF)"/>
+      <circle cx="46" cy="62.5" r="4.3" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m3" viewBox="0 0 100 100">
+      <line x1="36" y1="22" x2="36" y2="72" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+      <circle cx="50" cy="57" r="16" fill="none" stroke="var(--accent,#007AFF)" stroke-width="11"/>
+    </symbol>
+
+    <!-- B. Два / встреча -->
+    <symbol id="m4" viewBox="0 0 100 100">
+      <clipPath id="m4clip"><circle cx="60" cy="50" r="18"/></clipPath>
+      <circle cx="40" cy="50" r="18" fill="var(--accent,#007AFF)" clip-path="url(#m4clip)"/>
+      <circle cx="40" cy="50" r="18" fill="none" stroke="currentColor" stroke-width="8.5"/>
+      <circle cx="60" cy="50" r="18" fill="none" stroke="currentColor" stroke-width="8.5"/>
+    </symbol>
+
+    <symbol id="m5" viewBox="0 0 100 100">
+      <path d="M37 33 Q37 60 50 67" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+      <path d="M63 33 Q63 60 50 67" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="37" cy="30" r="7.5" fill="currentColor"/>
+      <circle cx="63" cy="30" r="7.5" fill="currentColor"/>
+      <circle cx="50" cy="68" r="9" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m6" viewBox="0 0 100 100">
+      <circle cx="40" cy="50" r="17" fill="none" stroke="currentColor" stroke-width="10"/>
+      <circle cx="62" cy="50" r="17" fill="none" stroke="var(--accent,#007AFF)" stroke-width="10"/>
+    </symbol>
+
+    <!-- C. Пин / событие -->
+    <symbol id="m7" viewBox="0 0 100 100">
+      <path d="M50 18 a22 22 0 0 1 22 22 c0 17 -22 40 -22 40 c0 0 -22 -23 -22 -40 a22 22 0 0 1 22 -22 Z" fill="currentColor"/>
+      <circle cx="50" cy="40" r="13.5" fill="var(--bg,#fff)"/>
+      <circle cx="44.5" cy="40" r="4.1" fill="var(--accent,#007AFF)"/>
+      <circle cx="55.5" cy="40" r="4.1" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m8" viewBox="0 0 100 100">
+      <rect x="26" y="30" width="48" height="46" rx="11" fill="none" stroke="currentColor" stroke-width="8"/>
+      <line x1="31" y1="44" x2="69" y2="44" stroke="currentColor" stroke-width="6"/>
+      <line x1="40" y1="24" x2="40" y2="34" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+      <line x1="60" y1="24" x2="60" y2="34" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="50" cy="60" r="6.5" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <!-- D. Типографика -->
+    <symbol id="m9" viewBox="0 0 100 100">
+      <text x="44" y="75" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="70" fill="currentColor">b</text>
+      <circle cx="71" cy="33" r="6.5" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m10" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="22" fill="var(--accent,#007AFF)"/>
+      <text x="50" y="73" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="64" fill="#ffffff">B</text>
+    </symbol>
+
+    <!-- E. Дополнительно -->
+    <symbol id="m11" viewBox="0 0 100 100">
+      <path d="M20 28 h44 a9 9 0 0 1 9 9 v16 a9 9 0 0 1 -9 9 h-22 l-10 9 v-9 h-3 a9 9 0 0 1 -9 -9 v-16 a9 9 0 0 1 9 -9 Z" fill="currentColor"/>
+      <circle cx="36" cy="45" r="3.4" fill="var(--bg,#fff)"/>
+      <circle cx="48" cy="45" r="3.4" fill="var(--bg,#fff)"/>
+      <circle cx="60" cy="45" r="3.4" fill="var(--bg,#fff)"/>
+      <path d="M60 58 h18 a7 7 0 0 1 7 7 v8 a7 7 0 0 1 -7 7 h-2 v6 l-8 -6 h-8 a7 7 0 0 1 -7 -7 Z" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m12" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="32" fill="var(--accent,#007AFF)"/>
+      <text x="50" y="65" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="40" fill="var(--bg,#fff)">B</text>
+    </symbol>
+
+    <symbol id="m13" viewBox="0 0 100 100">
+      <g stroke="currentColor" stroke-width="5.5" stroke-linecap="round">
+        <line x1="50" y1="32" x2="34" y2="64"/>
+        <line x1="50" y1="32" x2="66" y2="64"/>
+        <line x1="34" y1="64" x2="66" y2="64"/>
+      </g>
+      <circle cx="34" cy="64" r="8" fill="currentColor"/>
+      <circle cx="66" cy="64" r="8" fill="currentColor"/>
+      <circle cx="50" cy="32" r="9" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m14" viewBox="0 0 100 100">
+      <clipPath id="m14L"><rect x="0" y="0" width="50" height="100"/></clipPath>
+      <clipPath id="m14R"><rect x="50" y="0" width="50" height="100"/></clipPath>
+      <path d="M50 76 C 36 64 22 52 22 40 C 22 31 30 26 38 28 C 44 29 48 33 50 38 C 52 33 56 29 62 28 C 70 26 78 31 78 40 C 78 52 64 64 50 76 Z" fill="currentColor" clip-path="url(#m14L)"/>
+      <path d="M50 76 C 36 64 22 52 22 40 C 22 31 30 26 38 28 C 44 29 48 33 50 38 C 52 33 56 29 62 28 C 70 26 78 31 78 40 C 78 52 64 64 50 76 Z" fill="var(--accent,#007AFF)" clip-path="url(#m14R)"/>
+    </symbol>
+
+    <symbol id="m15" viewBox="0 0 100 100">
+      <path d="M48 24 C 49 43 52 51 73 53 C 52 55 49 63 48 82 C 47 63 44 55 23 53 C 44 51 47 43 48 24 Z" fill="var(--accent,#007AFF)"/>
+      <path d="M74 20 C 74.6 27 76 28.4 83 29 C 76 29.6 74.6 31 74 38 C 73.4 31 72 29.6 65 29 C 72 28.4 73.4 27 74 20 Z" fill="currentColor"/>
+    </symbol>
+
+    <symbol id="m16" viewBox="0 0 100 100">
+      <path d="M50 18 a22 22 0 0 1 22 22 c0 17 -22 40 -22 40 c0 0 -22 -23 -22 -40 a22 22 0 0 1 22 -22 Z" fill="currentColor"/>
+      <text x="50" y="52" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="34" fill="var(--bg,#fff)">B</text>
+    </symbol>
+
+    <!-- F. Ещё идеи -->
+    <linearGradient id="g17" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#007AFF"/>
+      <stop offset="0.55" stop-color="#5856D6"/>
+      <stop offset="1" stop-color="#AF52DE"/>
+    </linearGradient>
+    <symbol id="m17" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#g17)"/>
+      <text x="50" y="73" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="64" fill="#ffffff">B</text>
+    </symbol>
+
+    <symbol id="m18" viewBox="0 0 100 100">
+      <polygon points="31,30 47,30 40,47" fill="currentColor"/>
+      <polygon points="53,30 69,30 60,47" fill="var(--accent,#007AFF)"/>
+      <g stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+        <line x1="40" y1="47" x2="38" y2="64"/>
+        <line x1="32" y1="66" x2="46" y2="66"/>
+        <line x1="60" y1="47" x2="62" y2="64"/>
+        <line x1="54" y1="66" x2="68" y2="66"/>
+      </g>
+      <path d="M50 18 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m19" viewBox="0 0 100 100">
+      <path d="M24 36 h52 v9 a5 5 0 0 0 0 10 v9 H24 v-9 a5 5 0 0 0 0 -10 Z" fill="currentColor"/>
+      <line x1="58" y1="40" x2="58" y2="64" stroke="var(--bg,#fff)" stroke-width="3" stroke-dasharray="4 4"/>
+      <circle cx="41" cy="52" r="6" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m20" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M28 34 L42 50 L28 66"/>
+        <path d="M72 34 L58 50 L72 66"/>
+      </g>
+      <circle cx="50" cy="50" r="7.5" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m21" viewBox="0 0 100 100">
+      <g fill="currentColor">
+        <circle cx="76" cy="50" r="5"/>
+        <circle cx="68.4" cy="68.4" r="5"/>
+        <circle cx="50" cy="76" r="5"/>
+        <circle cx="31.6" cy="68.4" r="5"/>
+        <circle cx="24" cy="50" r="5"/>
+        <circle cx="31.6" cy="31.6" r="5"/>
+        <circle cx="50" cy="24" r="5"/>
+        <circle cx="68.4" cy="31.6" r="5"/>
+      </g>
+      <circle cx="50" cy="50" r="9" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m22" viewBox="0 0 100 100">
+      <rect x="24" y="24" width="52" height="52" rx="14" fill="none" stroke="currentColor" stroke-width="7"/>
+      <g stroke="var(--accent,#007AFF)" stroke-width="8" stroke-linecap="round">
+        <line x1="50" y1="38" x2="50" y2="62"/>
+        <line x1="38" y1="50" x2="62" y2="50"/>
+      </g>
+    </symbol>
+
+    <symbol id="m23" viewBox="0 0 100 100">
+      <rect x="26" y="30" width="48" height="46" rx="11" fill="none" stroke="currentColor" stroke-width="8"/>
+      <line x1="31" y1="44" x2="69" y2="44" stroke="currentColor" stroke-width="6"/>
+      <line x1="40" y1="24" x2="40" y2="34" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+      <line x1="60" y1="24" x2="60" y2="34" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+      <path d="M39 60 L47 67 L62 50" fill="none" stroke="var(--accent,#007AFF)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <symbol id="m24" viewBox="0 0 100 100">
+      <g stroke="currentColor" stroke-width="5" stroke-linecap="round">
+        <line x1="50" y1="50" x2="50" y2="24"/>
+        <line x1="50" y1="50" x2="73" y2="37"/>
+        <line x1="50" y1="50" x2="73" y2="63"/>
+        <line x1="50" y1="50" x2="27" y2="63"/>
+        <line x1="50" y1="50" x2="27" y2="37"/>
+      </g>
+      <circle cx="50" cy="20" r="4.5" fill="var(--accent,#007AFF)"/>
+      <circle cx="78" cy="33" r="4.5" fill="var(--accent,#007AFF)"/>
+      <circle cx="78" cy="67" r="4.5" fill="currentColor"/>
+      <circle cx="22" cy="67" r="4.5" fill="var(--accent,#007AFF)"/>
+      <circle cx="22" cy="33" r="4.5" fill="currentColor"/>
+      <circle cx="50" cy="50" r="7" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <!-- G. Слово / две буквы -->
+    <symbol id="m25" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="22" fill="var(--accent,#007AFF)"/>
+      <text x="50" y="67" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="48" letter-spacing="-1.5" fill="#ffffff">Bi</text>
+    </symbol>
+
+    <symbol id="m26" viewBox="0 0 100 100">
+      <line x1="32" y1="20" x2="32" y2="72" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="44" cy="58" r="12" fill="none" stroke="currentColor" stroke-width="9"/>
+      <line x1="64" y1="44" x2="64" y2="72" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="64" cy="29" r="6" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <symbol id="m27" viewBox="0 0 100 100">
+      <text x="50" y="52" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="40" letter-spacing="-1.5" fill="currentColor">bi</text>
+      <text x="50" y="74" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="15" letter-spacing="3" fill="var(--accent,#007AFF)">MEET</text>
+    </symbol>
+
+    <symbol id="m28" viewBox="0 0 240 72">
+      <text x="120" y="50" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="44" letter-spacing="-1.5">
+        <tspan fill="var(--accent,#007AFF)">bi</tspan><tspan fill="currentColor">meet</tspan>
+      </text>
+    </symbol>
+
+    <!-- H. Современные · gradients/glass/depth -->
+    <linearGradient id="gAur" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00C6FF"/>
+      <stop offset="0.4" stop-color="#007AFF"/>
+      <stop offset="0.72" stop-color="#5856D6"/>
+      <stop offset="1" stop-color="#AF52DE"/>
+    </linearGradient>
+    <linearGradient id="gOcean" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00E0D5"/>
+      <stop offset="0.5" stop-color="#007AFF"/>
+      <stop offset="1" stop-color="#5856D6"/>
+    </linearGradient>
+    <linearGradient id="gSun" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#5856D6"/>
+      <stop offset="0.5" stop-color="#AF52DE"/>
+      <stop offset="1" stop-color="#FF2D55"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+
+    <symbol id="m29" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#gAur)"/>
+      <ellipse cx="50" cy="22" rx="46" ry="22" fill="#ffffff" opacity="0.14"/>
+      <text x="50" y="73" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="64" fill="#ffffff">b</text>
+    </symbol>
+
+    <symbol id="m30" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#gSun)"/>
+      <circle cx="28" cy="74" r="26" fill="#00E0FF" opacity="0.7" filter="url(#soft)"/>
+      <circle cx="74" cy="26" r="24" fill="#FF2D55" opacity="0.6" filter="url(#soft)"/>
+      <rect x="22" y="22" width="56" height="56" rx="18" fill="#ffffff" fill-opacity="0.18" stroke="#ffffff" stroke-opacity="0.45" stroke-width="1.5"/>
+      <text x="50" y="65" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="34" letter-spacing="-1" fill="#ffffff">bi</text>
+    </symbol>
+
+    <symbol id="m31" viewBox="0 0 100 100">
+      <path d="M52 5 C 78 4 96 24 95 50 C 94 74 80 96 52 95 C 27 94 5 77 6 50 C 7 25 28 6 52 5 Z" fill="url(#gOcean)"/>
+      <text x="50" y="72" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="58" fill="#ffffff">B</text>
+    </symbol>
+
+    <symbol id="m32" viewBox="0 0 100 100">
+      <g fill="none" stroke="url(#gAur)" stroke-width="10" stroke-linecap="round">
+        <line x1="36" y1="22" x2="36" y2="72"/>
+        <circle cx="50" cy="57" r="16"/>
+      </g>
+    </symbol>
+
+    <symbol id="m33" viewBox="0 0 100 100">
+      <circle cx="40" cy="50" r="23" fill="url(#gOcean)" opacity="0.85"/>
+      <circle cx="60" cy="50" r="23" fill="url(#gSun)" opacity="0.8"/>
+    </symbol>
+
+    <symbol id="m34" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="40" fill="url(#gOcean)"/>
+      <ellipse cx="50" cy="28" rx="34" ry="16" fill="#ffffff" opacity="0.18"/>
+      <text x="50" y="70" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="48" fill="#ffffff">B</text>
+    </symbol>
+
+    <symbol id="m35" viewBox="0 0 100 100">
+      <rect x="26" y="32" width="48" height="40" rx="11" fill="url(#gSun)" opacity="0.45" transform="rotate(-9 50 52)"/>
+      <rect x="26" y="32" width="48" height="40" rx="11" fill="url(#gOcean)" transform="rotate(0 50 52)"/>
+      <g stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.95">
+        <line x1="35" y1="46" x2="59" y2="46"/>
+        <line x1="35" y1="56" x2="52" y2="56"/>
+      </g>
+    </symbol>
+
+    <symbol id="m36" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="28" fill="none" stroke="url(#gAur)" stroke-width="8"/>
+      <circle cx="50" cy="50" r="9" fill="url(#gSun)"/>
+      <circle cx="50" cy="22" r="7" fill="#FF2D55"/>
+    </symbol>
+
+    <!-- ★ Рекомендуемый: «Together» -->
+    <linearGradient id="gHero" x1="0.05" y1="0" x2="0.95" y2="1">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="0.38" stop-color="#007AFF"/>
+      <stop offset="0.74" stop-color="#5856D6"/>
+      <stop offset="1" stop-color="#AF52DE"/>
+    </linearGradient>
+    <symbol id="m37" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#gHero)"/>
+      <ellipse cx="50" cy="20" rx="48" ry="24" fill="#ffffff" opacity="0.12"/>
+      <g fill="#ffffff">
+        <circle cx="39" cy="44" r="9.5"/>
+        <circle cx="61" cy="44" r="9.5"/>
+        <path d="M24 77 C24 62 32 57 39 57 C45 57 48 61 50 65 C52 61 55 57 61 57 C68 57 76 62 76 77 Z"/>
+      </g>
+      <path d="M50 18 C50.7 24 52 25.3 59 26 C52 26.7 50.7 28 50 34 C49.3 28 48 26.7 41 26 C48 25.3 49.3 24 50 18 Z" fill="#FFD166"/>
+    </symbol>
+    <symbol id="m37b" viewBox="0 0 100 100">
+      <g fill="currentColor">
+        <circle cx="39" cy="44" r="9.5"/>
+        <circle cx="61" cy="44" r="9.5"/>
+        <path d="M24 77 C24 62 32 57 39 57 C45 57 48 61 50 65 C52 61 55 57 61 57 C68 57 76 62 76 77 Z"/>
+      </g>
+      <path d="M50 18 C50.7 24 52 25.3 59 26 C52 26.7 50.7 28 50 34 C49.3 28 48 26.7 41 26 C48 25.3 49.3 24 50 18 Z" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <!-- ★ Рекомендуемый: «Beacon» -->
+    <linearGradient id="gBeacon" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#FF6FD8"/>
+      <stop offset="0.5" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <symbol id="m38" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#gBeacon)"/>
+      <ellipse cx="50" cy="20" rx="48" ry="24" fill="#ffffff" opacity="0.12"/>
+      <path d="M50 22 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="#ffffff"/>
+      <circle cx="44" cy="38" r="4.6" fill="url(#gBeacon)"/>
+      <circle cx="56" cy="38" r="4.6" fill="url(#gBeacon)"/>
+      <path d="M43 47 Q50 53 57 47" fill="none" stroke="url(#gBeacon)" stroke-width="3.4" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="m38b" viewBox="0 0 100 100">
+      <path d="M50 22 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="currentColor"/>
+      <circle cx="44" cy="38" r="4.6" fill="var(--bg,#fff)"/>
+      <circle cx="56" cy="38" r="4.6" fill="var(--bg,#fff)"/>
+      <path d="M43 47 Q50 53 57 47" fill="none" stroke="var(--bg,#fff)" stroke-width="3.4" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- ★ 39: 7 × 38 (без улыбки) -->
+    <symbol id="m39" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#gBeacon)"/>
+      <ellipse cx="50" cy="20" rx="48" ry="24" fill="#ffffff" opacity="0.12"/>
+      <path d="M50 22 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="#ffffff"/>
+      <circle cx="44" cy="40" r="5" fill="#5856D6"/>
+      <circle cx="56" cy="40" r="5" fill="#5856D6"/>
+    </symbol>
+    <symbol id="m39b" viewBox="0 0 100 100">
+      <path d="M50 22 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="currentColor"/>
+      <circle cx="44" cy="40" r="5" fill="var(--accent,#007AFF)"/>
+      <circle cx="56" cy="40" r="5" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <!-- ★ 40: 39 + искра события -->
+    <symbol id="m40" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="27" fill="url(#gBeacon)"/>
+      <ellipse cx="50" cy="20" rx="48" ry="24" fill="#ffffff" opacity="0.12"/>
+      <path d="M46 26 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="#ffffff"/>
+      <circle cx="40" cy="44" r="5" fill="#5856D6"/>
+      <circle cx="52" cy="44" r="5" fill="#5856D6"/>
+      <path d="M73 16 C73.8 23 75.3 24.5 83 25 C75.3 25.5 73.8 27 73 34 C72.2 27 70.7 25.5 63 25 C70.7 24.5 72.2 23 73 16 Z" fill="#FFD166"/>
+      <circle cx="84" cy="38" r="2.6" fill="#FFD166"/>
+    </symbol>
+    <symbol id="m40b" viewBox="0 0 100 100">
+      <path d="M46 26 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="currentColor"/>
+      <circle cx="40" cy="44" r="5" fill="var(--bg,#fff)"/>
+      <circle cx="52" cy="44" r="5" fill="var(--bg,#fff)"/>
+      <path d="M73 16 C73.8 23 75.3 24.5 83 25 C75.3 25.5 73.8 27 73 34 C72.2 27 70.7 25.5 63 25 C70.7 24.5 72.2 23 73 16 Z" fill="var(--accent,#007AFF)"/>
+      <circle cx="84" cy="38" r="2.6" fill="var(--accent,#007AFF)"/>
+    </symbol>
+
+    <!-- ★ 41: 40 в одном тоне, без градиента -->
+    <symbol id="m41" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="27" fill="currentColor"/>
+      <path d="M46 26 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="#ffffff"/>
+      <circle cx="40" cy="44" r="5" fill="currentColor"/>
+      <circle cx="52" cy="44" r="5" fill="currentColor"/>
+      <path d="M73 16 C73.8 23 75.3 24.5 83 25 C75.3 25.5 73.8 27 73 34 C72.2 27 70.7 25.5 63 25 C70.7 24.5 72.2 23 73 16 Z" fill="#ffffff"/>
+      <circle cx="84" cy="38" r="2.6" fill="#ffffff"/>
+    </symbol>
+    <symbol id="m41b" viewBox="0 0 100 100">
+      <path d="M46 26 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="currentColor"/>
+      <circle cx="40" cy="44" r="5" fill="var(--bg,#fff)"/>
+      <circle cx="52" cy="44" r="5" fill="var(--bg,#fff)"/>
+      <path d="M73 16 C73.8 23 75.3 24.5 83 25 C75.3 25.5 73.8 27 73 34 C72.2 27 70.7 25.5 63 25 C70.7 24.5 72.2 23 73 16 Z" fill="currentColor"/>
+      <circle cx="84" cy="38" r="2.6" fill="currentColor"/>
+    </symbol>
+
+    <!-- ★ 42: финал — разбавленный цветом -->
+    <symbol id="m42" viewBox="0 0 100 100">
+      <rect x="0" y="0" width="100" height="100" rx="27" fill="#5856D6"/>
+      <ellipse cx="50" cy="20" rx="48" ry="24" fill="#ffffff" opacity="0.12"/>
+      <circle cx="24" cy="30" r="2.6" fill="#FF2D55"/>
+      <circle cx="27" cy="68" r="2.6" fill="#34C759"/>
+      <circle cx="80" cy="64" r="2.6" fill="#22D3EE"/>
+      <path d="M46 26 a18 18 0 0 1 18 18 c0 14 -18 33 -18 33 c0 0 -18 -19 -18 -33 a18 18 0 0 1 18 -18 Z" fill="#ffffff"/>
+      <circle cx="40" cy="44" r="5" fill="#FF9500"/>
+      <circle cx="52" cy="44" r="5" fill="#22D3EE"/>
+      <path d="M73 16 C73.8 23 75.3 24.5 83 25 C75.3 25.5 73.8 27 73 34 C72.2 27 70.7 25.5 63 25 C70.7 24.5 72.2 23 73 16 Z" fill="#FFD166"/>
+      <circle cx="84" cy="38" r="2.6" fill="#FFD166"/>
+    </symbol>
+
+    <!-- ★ 43: абстракт-метафора, тёплый — два сплетённых кольца -->
+    <symbol id="m43" viewBox="0 0 100 100">
+      <circle cx="39" cy="50" r="16" fill="none" stroke="#FF6F61" stroke-width="11"/>
+      <circle cx="61" cy="50" r="16" fill="none" stroke="#FFB259" stroke-width="11"/>
+      <path d="M52.86 58 A16 16 0 0 1 46.26 64.26" fill="none" stroke="#FF6F61" stroke-width="11" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="m43b" viewBox="0 0 100 100">
+      <circle cx="39" cy="50" r="16" fill="none" stroke="currentColor" stroke-width="11"/>
+      <circle cx="61" cy="50" r="16" fill="none" stroke="var(--bg,#fff)" stroke-width="18"/>
+      <circle cx="61" cy="50" r="16" fill="none" stroke="currentColor" stroke-width="11"/>
+      <path d="M52.86 58 A16 16 0 0 1 46.26 64.26" fill="none" stroke="var(--bg,#fff)" stroke-width="18" stroke-linecap="round"/>
+      <path d="M52.86 58 A16 16 0 0 1 46.26 64.26" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <span class="tag">Bimeet · Logo exploration</span>
+      <h1>Десять знаков для&nbsp;Bimeet</h1>
+      <p class="sub">Только квадратная иконка — для favicon, PWA и home-screen. Каждый знак показан на тёмной и светлой плитке, в ряду масштабов до 16px и в одноцветном варианте. Назовите понравившийся номер — вошью его в <code>favicon.svg</code> и иконки приложения.</p>
+    </div>
+    <button class="toggle" id="modeBtn" type="button">◐ Тёмный фон</button>
+  </div>
+
+  <!-- ★ НОВЫЙ ФИНАЛ -->
+  <div class="hero" style="border-color:#FFD9B0">
+    <div class="show">
+      <div class="tile" style="width:140px;height:140px;background:#FFF3EA;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)"><svg viewBox="0 0 100 100"><use href="#m43"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="tile" style="width:60px;height:60px;background:#FFF3EA"><svg viewBox="0 0 100 100"><use href="#m43"/></svg></div>
+        <div class="lbl"><div class="tile" style="width:34px;height:34px;background:#FFF3EA"><svg viewBox="0 0 100 100"><use href="#m43"/></svg></div><span>32</span></div>
+        <div class="lbl"><div class="tile" style="width:18px;height:18px;background:#FFF3EA"><svg viewBox="0 0 100 100"><use href="#m43"/></svg></div><span>16</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star" style="background:#FF6F61">★ Новый финал · 43</span>
+      <h2>Bond — два сплетённых кольца</h2>
+      <p><b>Метафора.</b> Два кольца переплетены в настоящий узел: связь, которую нельзя разделить. Каждое — свой тёплый тон (коралл и янтарь), как два человека, чьи истории сошлись. Никакой буквальности — чистая форма, которая читается сердцем.</p>
+      <p><b>Характер.</b> Мягкие скруглённые линии, тёплая палитра, плетение over-under как в крафтовых брендах. Дружелюбно, но взросло — без мультяшности и шума.</p>
+      <div class="mini">
+        <div class="lbl"><div class="tile dark" style="width:46px;height:46px;color:#FF8A5B"><svg viewBox="0 0 100 100"><use href="#m43b"/></svg></div><span>один тон · тёмный</span></div>
+        <div class="lbl"><div class="tile light" style="width:46px;height:46px;color:#FF6F61"><svg viewBox="0 0 100 100"><use href="#m43b"/></svg></div><span>один тон · светлый</span></div>
+        <div class="lbl"><div class="tile mono" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m43b"/></svg></div><span>контур</span></div>
+        <span style="color:var(--muted);font-size:12.5px;max-width:200px">Работает и в один цвет — плетение остаётся за счёт зазоров.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★ Рекомендуемый -->
+  <div class="hero">
+    <div class="show">
+      <div class="tile" style="width:132px;height:132px"><svg viewBox="0 0 100 100"><use href="#m37"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="tile" style="width:56px;height:56px"><svg viewBox="0 0 100 100"><use href="#m37"/></svg></div>
+        <div class="lbl"><div class="tile dark" style="width:30px;height:30px"><svg viewBox="0 0 100 100"><use href="#m37"/></svg></div><span>28</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star">★ Рекомендуемый · 37</span>
+      <h2>Together — двое вместе</h2>
+      <p><b>Смысл.</b> Два человека плечом к плечу и искра события над ними — буквально «собрались вместе». Это ядро Bimeet: люди и повод встретиться. Считывается мгновенно и без объяснений — детьми и взрослыми одинаково.</p>
+      <p><b>Эстетика.</b> Живой aurora-градиент бирюза → синий → индиго → фиолетовый, мягкий верхний блик, тёплая искра — современный язык app-иконок 2025. Цепляет цветом, но остаётся чистым и узнаваемым даже на 16px.</p>
+      <div class="mini">
+        <div class="lbl"><div class="tile dark" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m37b"/></svg></div><span>на тёмном</span></div>
+        <div class="lbl"><div class="tile light" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m37b"/></svg></div><span>на светлом</span></div>
+        <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m37b"/></svg></div><span>одним цветом</span></div>
+        <span style="color:var(--muted);font-size:12.5px;max-width:200px">Знак работает и без градиента — плоской заливкой для печати и фавикона.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== A ===================== -->
+  <div class="section-tag">A · Монограмма «B»</div>
+  <p class="section-desc">Эволюция текущего знака — узнаваемая буква, чище и собраннее.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">01</div>
+        <h3>Geometric B</h3>
+        <p>Буква собрана из стойки и двух полукруглых чаш на единой сетке. Чистое негативное пространство, без декора.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m1"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m1"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m1"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m1"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m1"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m1"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">02</div>
+        <h3>B · два counter'а</h3>
+        <p>Та же буква, но два «глаза» подсвечены акцентом — намёк на двух участников, спрятанных внутри знака.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m2"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m2"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m2"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m2"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m2"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m2"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">03</div>
+        <h3>Lowercase b · two-tone</h3>
+        <p>Строчная «b»: стойка нейтральная, чаша — акцентным кольцом. Дружелюбнее и рифмуется со строчным «bimeet».</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m3"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m3"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m3"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m3"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m3"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m3"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== B ===================== -->
+  <div class="section-tag">B · Два / встреча («bi» = два)</div>
+  <p class="section-desc">Смысл продукта: люди сходятся вместе. Знак строится на двойке и точке встречи.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">04</div>
+        <h3>Venn · пересечение</h3>
+        <p>Два круга внахлёст, общая зона — акцентом. «Две стороны находят общее» — буквальная метафора встречи.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m4"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m4"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m4"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m4"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m4"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m4"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">05</div>
+        <h3>Узлы · точка сбора</h3>
+        <p>Две точки-участника, их пути сходятся в одной акцентной точке внизу. Динамика «собираемся вместе».</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m5"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m5"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m5"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m5"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m5"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m5"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">06</div>
+        <h3>Два кольца</h3>
+        <p>Сцепленные кольца — нейтральное и акцентное. Минимально, читается на любом размере, легко анимировать.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m6"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m6"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m6"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m6"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m6"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m6"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== C ===================== -->
+  <div class="section-tag">C · Пин / событие</div>
+  <p class="section-desc">События происходят где-то и когда-то — знак про место и дату.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">07</div>
+        <h3>Пин · место встречи</h3>
+        <p>Картографическая капля, внутри — две точки-участника. «Здесь встречаемся». Узнаваемая, тёплая метафора.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m7"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m7"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m7"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m7"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m7"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m7"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">08</div>
+        <h3>Календарь · день</h3>
+        <p>Карточка-календарь с акцентной точкой-днём. Прямо считывается как «событие в дате» — функционально и спокойно.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m8"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m8"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m8"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m8"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m8"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m8"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== D ===================== -->
+  <div class="section-tag">D · Типографика</div>
+  <p class="section-desc">Буквенная форма как знак — на базе фирменного Inter.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">09</div>
+        <h3>«b» · акцентная точка</h3>
+        <p>Чистая строчная «b» в Inter 800 с акцентной точкой-«i» вверху — намёк на «bi». Самый сдержанный, текстовый знак.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m9"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m9"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m9"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m9"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m9"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m9"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">10</div>
+        <h3>Brand tile · «B» knockout</h3>
+        <p>Готовый «фирменный» app icon: акцентная синяя плитка с белой «B». Максимально яркий и узнаваемый на экране телефона.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m10"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m10"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m10"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m10"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m10"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== E ===================== -->
+  <div class="section-tag">E · Дополнительно</div>
+  <p class="section-desc">Ещё шесть направлений — от разговора и группы до события-спарка.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">11</div>
+        <h3>Два сообщения</h3>
+        <p>Две перекрывающиеся реплики-баблы — про общение и согласование. «Договариваемся о встрече».</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m11"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m11"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m11"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m11"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m11"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m11"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">12</div>
+        <h3>Круглый бейдж</h3>
+        <p>«B» вырезана в сплошном круге. Классическая, отлично масштабируется и читается одним цветом.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m12"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m12"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m12"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m12"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m12"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m12"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">13</div>
+        <h3>Группа · связи</h3>
+        <p>Три соединённые точки — это уже компания, а не пара. Про участников, опросы и общие сборы.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m13"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m13"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m13"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m13"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m13"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m13"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">14</div>
+        <h3>Две половины · сердце</h3>
+        <p>Сердце, собранное из двух долей — нейтральной и акцентной. Тёплый «социальный» знак для встреч с близкими.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m14"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m14"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m14"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m14"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m14"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m14"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">15</div>
+        <h3>Спарк · событие</h3>
+        <p>Искра-«sparkle» — энергия, что-то происходит, праздник. Живой и заметный знак для афиш и пушей.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m15"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m15"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m15"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m15"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m15"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m15"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">16</div>
+        <h3>Пин · брендовая «B»</h3>
+        <p>Картографическая капля с «B» внутри — объединяет место встречи и монограмму бренда в одном знаке.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m16"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m16"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m16"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m16"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m16"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m16"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== F ===================== -->
+  <div class="section-tag">F · Ещё идеи</div>
+  <p class="section-desc">Праздник, действие и атмосфера события.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">17</div>
+        <h3>Gradient B</h3>
+        <p>Тот же brand-tile, но с фирменным градиентом синий → индиго → фиолетовый. Премиальнее и заметнее на экране.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m17"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m17"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m17"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m17"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m17"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">18</div>
+        <h3>Cheers · бокалы</h3>
+        <p>Два бокала чокаются — праздник, тусовка, повод собраться. Тёплый и человеческий знак.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m18"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m18"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m18"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m18"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m18"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m18"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">19</div>
+        <h3>Билет</h3>
+        <p>Билет-стаб с перфорацией и акцентной отметкой. Прямая ассоциация с входом на событие.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m19"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m19"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m19"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m19"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m19"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m19"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">20</div>
+        <h3>Стрелки · сюда</h3>
+        <p>Две стрелки сходятся к точке в центре — «встречаемся здесь». Динамично и считывается мгновенно.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m20"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m20"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m20"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m20"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m20"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m20"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">21</div>
+        <h3>Круг участников</h3>
+        <p>Точки по кругу вокруг центра — сообщество, все вместе. Хорошо работает с анимацией сбора.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m21"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m21"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m21"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m21"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m21"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m21"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">22</div>
+        <h3>Плюс · создать</h3>
+        <p>Скруглённый квадрат с акцентным плюсом — главное действие приложения «создать событие». Очень app-icon.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m22"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m22"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m22"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m22"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m22"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m22"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">23</div>
+        <h3>Календарь · подтверждено</h3>
+        <p>Карточка-календарь с акцентной галочкой — «событие в силе». Спокойный, функциональный вариант 08.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m23"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m23"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m23"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m23"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m23"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m23"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">24</div>
+        <h3>Конфетти</h3>
+        <p>Лучи и точки-конфетти из центра — энергия праздника. Эмоциональный и яркий, хорош для пушей.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m24"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m24"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m24"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m24"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m24"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m24"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== G ===================== -->
+  <div class="section-tag">G · Слово и две буквы</div>
+  <p class="section-desc">Знаки на основе названия — две первые буквы «bi» и полный wordmark «bimeet».</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">25</div>
+        <h3>«Bi» · brand tile</h3>
+        <p>Две первые буквы белым на акцентной плитке. Яркий app icon, который сразу читается как название.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m25"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m25"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m25"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m25"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m25"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">26</div>
+        <h3>«bi» · two-tone</h3>
+        <p>Строчные «bi», где точка над «i» — акцентная (второй участник). Сдержанный типографический знак.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m26"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m26"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m26"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m26"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m26"/></svg></div><span>16</span></div>
+          <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m26"/></svg></div><span>mono</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">27</div>
+        <h3>«bi / meet» · стэк</h3>
+        <p>Всё название в квадрате: крупное «bi» и акцентное «MEET» под ним. Иконка, которая одновременно — логотип.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m27"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m27"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m27"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m27"/></svg></div><span>28</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">28</div>
+        <h3>«bimeet» · wordmark</h3>
+        <p>Горизонтальный логотип: «bi» акцентом, «meet» — основным цветом. Для шапок, писем и десктопа (бонус к иконке).</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark wide" style="width:240px;height:72px"><svg viewBox="0 0 240 72"><use href="#m28"/></svg></div>
+        <div class="tile light wide" style="width:240px;height:72px"><svg viewBox="0 0 240 72"><use href="#m28"/></svg></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== H ===================== -->
+  <div class="section-tag">H · Современные</div>
+  <p class="section-desc">Сегодняшний язык app-иконок: живые градиенты, стекло, глубина и движение.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">29</div>
+        <h3>Aurora gradient</h3>
+        <p>Сочный градиент бирюза → синий → фиолетовый и мягкий «b». Свежо и премиально, как у современных приложений.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m29"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m29"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m29"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m29"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m29"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">30</div>
+        <h3>Glass · стекло</h3>
+        <p>Glassmorphism: цветные блики под матовой стеклянной панелью с «bi». Модно и тактильно.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m30"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m30"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m30"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m30"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m30"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">31</div>
+        <h3>Gradient coin</h3>
+        <p>Органичный «squircle» с градиентом и крупной «B». Дружелюбная круглая форма в духе финтех-приложений.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m31"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m31"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m31"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m31"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m31"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">32</div>
+        <h3>Monoline b</h3>
+        <p>Тонкий «b» одной линией с градиентной обводкой. Лёгкий, воздушный, очень современный monoline-стиль.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m32"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m32"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m32"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m32"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m32"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">33</div>
+        <h3>Gradient venn</h3>
+        <p>Два полупрозрачных градиентных круга, в пересечении рождается новый цвет. Современная версия «двое вместе».</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m33"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m33"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m33"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m33"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m33"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">34</div>
+        <h3>Glossy coin</h3>
+        <p>Глянцевая круглая «монета» с бликом и «B». Сочно и объёмно, отлично смотрится на home screen.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m34"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m34"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m34"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m34"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m34"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">35</div>
+        <h3>Stacked cards</h3>
+        <p>Слой карточек с градиентом и глубиной — метафора списка событий. Динамично и по-продуктовому.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m35"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m35"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m35"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m35"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m35"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta">
+        <div class="no">36</div>
+        <h3>Orbit</h3>
+        <p>Градиентное кольцо с ядром и «спутником» — движение, сбор, орбита вокруг события. Технологично и живо.</p>
+      </div>
+      <div class="renders">
+        <div class="tile dark" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m36"/></svg></div>
+        <div class="tile light" style="width:104px;height:104px"><svg viewBox="0 0 100 100"><use href="#m36"/></svg></div>
+        <div class="strip">
+          <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m36"/></svg></div><span>48</span></div>
+          <div class="lbl"><div class="tile dark" style="width:28px;height:28px"><svg viewBox="0 0 100 100"><use href="#m36"/></svg></div><span>28</span></div>
+          <div class="lbl"><div class="tile dark" style="width:16px;height:16px"><svg viewBox="0 0 100 100"><use href="#m36"/></svg></div><span>16</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== I ===================== -->
+  <div class="section-tag">I · Ещё рекомендуемый</div>
+  <p class="section-desc">Дружелюбный знак-метафора: место, где собираются люди.</p>
+  <div class="hero">
+    <div class="show">
+      <div class="tile" style="width:132px;height:132px"><svg viewBox="0 0 100 100"><use href="#m38"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="tile" style="width:56px;height:56px"><svg viewBox="0 0 100 100"><use href="#m38"/></svg></div>
+        <div class="lbl"><div class="tile dark" style="width:30px;height:30px"><svg viewBox="0 0 100 100"><use href="#m38"/></svg></div><span>28</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star" style="background:#A855F7">★ Рекомендуемый · 38</span>
+      <h2>Beacon — место встречи</h2>
+      <p><b>Смысл.</b> Узнаваемый пин-маркер, а внутри — два человечка и улыбка. Сразу читается: «здесь собираются люди, и это приятно». Соединяет место, людей и хорошее настроение — всё, для чего нужен Bimeet.</p>
+      <p><b>Эстетика.</b> Яркий градиент розовый → фиолетовый → индиго и мягкий блик — тёплый, эмоциональный, цепляет взгляд. Силуэт пина мгновенно понятен в любом размере, вплоть до favicon.</p>
+      <div class="mini">
+        <div class="lbl"><div class="tile dark" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m38b"/></svg></div><span>на тёмном</span></div>
+        <div class="lbl"><div class="tile light" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m38b"/></svg></div><span>на светлом</span></div>
+        <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m38b"/></svg></div><span>одним цветом</span></div>
+        <span style="color:var(--muted);font-size:12.5px;max-width:200px">Плоская версия для печати и фавикона — силуэт читается и без градиента.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="show">
+      <div class="tile" style="width:132px;height:132px"><svg viewBox="0 0 100 100"><use href="#m39"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="tile" style="width:56px;height:56px"><svg viewBox="0 0 100 100"><use href="#m39"/></svg></div>
+        <div class="lbl"><div class="tile dark" style="width:30px;height:30px"><svg viewBox="0 0 100 100"><use href="#m39"/></svg></div><span>28</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star" style="background:#5856D6">★ 39 · гибрид 7 × 38</span>
+      <h2>Beacon · два участника</h2>
+      <p><b>Смысл.</b> Тот же пин-«место встречи» из 38, но внутри — два чётких кружка-участника из 7, без улыбки. Чище и спокойнее: «здесь — двое», ничего лишнего.</p>
+      <p><b>Эстетика.</b> Яркий градиент 38 (розовый → фиолетовый → индиго) и белый пин; индиго-точки внутри дают контраст и считываются даже мелко.</p>
+      <div class="mini">
+        <div class="lbl"><div class="tile dark" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m39b"/></svg></div><span>на тёмном</span></div>
+        <div class="lbl"><div class="tile light" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m39b"/></svg></div><span>на светлом</span></div>
+        <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m39b"/></svg></div><span>одним цветом</span></div>
+        <span style="color:var(--muted);font-size:12.5px;max-width:200px">Плоская версия — это по сути знак 7: пин с двумя акцентными точками.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="show">
+      <div class="tile" style="width:132px;height:132px"><svg viewBox="0 0 100 100"><use href="#m40"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="tile" style="width:56px;height:56px"><svg viewBox="0 0 100 100"><use href="#m40"/></svg></div>
+        <div class="lbl"><div class="tile dark" style="width:30px;height:30px"><svg viewBox="0 0 100 100"><use href="#m40"/></svg></div><span>28</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star" style="background:#A855F7">★ 40 · 39 + искра</span>
+      <h2>Beacon · событие</h2>
+      <p><b>Смысл.</b> Тот же пин с двумя участниками, плюс искра-вспышка сверху — «здесь не просто место, здесь что-то происходит». Полная история бренда в одном знаке: место + люди + событие.</p>
+      <p><b>Эстетика.</b> Золотая искра играет на розово-фиолетовом градиенте и делает знак живым и праздничным, не перегружая силуэт. Пин по-прежнему читается на любом размере.</p>
+      <div class="mini">
+        <div class="lbl"><div class="tile dark" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m40b"/></svg></div><span>на тёмном</span></div>
+        <div class="lbl"><div class="tile light" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m40b"/></svg></div><span>на светлом</span></div>
+        <div class="lbl"><div class="tile mono" style="width:40px;height:40px"><svg viewBox="0 0 100 100"><use href="#m40b"/></svg></div><span>одним цветом</span></div>
+        <span style="color:var(--muted);font-size:12.5px;max-width:200px">Плоская версия: пин с двумя точками и акцентной искрой.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="show">
+      <div class="tile" style="width:132px;height:132px;color:#007AFF"><svg viewBox="0 0 100 100"><use href="#m41"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="lbl"><div class="tile" style="width:48px;height:48px;color:#5856D6"><svg viewBox="0 0 100 100"><use href="#m41"/></svg></div><span>индиго</span></div>
+        <div class="lbl"><div class="tile" style="width:48px;height:48px;color:#0A0A0B"><svg viewBox="0 0 100 100"><use href="#m41"/></svg></div><span>графит</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star" style="background:#0A0A0B">★ 41 · один тон</span>
+      <h2>Beacon · flat</h2>
+      <p><b>Суть.</b> Тот же знак 40 — пин, два участника и искра — но без градиента, в одном цвете. Строго, спокойно, по-взрослому. Легко перекрашивается под любой тон бренда.</p>
+      <p><b>Где сильнее.</b> Печать, монохромные носители, тиснение, фавикон, situations где градиент недоступен. Силуэт остаётся читаемым и узнаваемым.</p>
+      <div class="mini">
+        <div class="lbl"><div class="tile" style="width:46px;height:46px;color:#007AFF"><svg viewBox="0 0 100 100"><use href="#m41"/></svg></div><span>синий</span></div>
+        <div class="lbl"><div class="tile dark" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m41b"/></svg></div><span>контур · тёмный</span></div>
+        <div class="lbl"><div class="tile light" style="width:46px;height:46px"><svg viewBox="0 0 100 100"><use href="#m41b"/></svg></div><span>контур · светлый</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ФИНАЛ ===================== -->
+  <div class="section-tag">Финал</div>
+  <p class="section-desc">Отполированный знак, разбавленный живым цветом.</p>
+  <div class="hero">
+    <div class="show">
+      <div class="tile" style="width:132px;height:132px"><svg viewBox="0 0 100 100"><use href="#m42"/></svg></div>
+      <div class="mini" style="flex-direction:column">
+        <div class="tile" style="width:56px;height:56px"><svg viewBox="0 0 100 100"><use href="#m42"/></svg></div>
+        <div class="lbl"><div class="tile" style="width:30px;height:30px"><svg viewBox="0 0 100 100"><use href="#m42"/></svg></div><span>28</span></div>
+        <div class="lbl"><div class="tile" style="width:18px;height:18px"><svg viewBox="0 0 100 100"><use href="#m42"/></svg></div><span>16</span></div>
+      </div>
+    </div>
+    <div>
+      <span class="star" style="background:#FF9500">★ 42 · финал</span>
+      <h2>Beacon · finale</h2>
+      <p><b>Смысл.</b> Пин-место, два участника <i>разного цвета</i> — разные люди, которые собрались вместе, искра события сверху и лёгкое конфетти по углам. Вся идея Bimeet в одном тёплом кадре.</p>
+      <p><b>Чем разбавлено.</b> Спокойная индиго-плитка оживлена цветными точками-людьми (оранжевый + бирюза), золотой искрой и тремя конфетти из фирменной палитры. Празднично, но не пёстро — пин держит композицию.</p>
+      <div class="mini">
+        <span style="color:var(--muted);font-size:12.5px;max-width:340px">Цвета — из аватар-палитры приложения: <b style="color:#FF9500">#FF9500</b>, <b style="color:#22D3EE">#22D3EE</b>, <b style="color:#FFD166">#FFD166</b>, <b style="color:#FF2D55">#FF2D55</b>, <b style="color:#34C759">#34C759</b> на индиго <b style="color:#5856D6">#5856D6</b>.</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Знаки нарисованы как inline-SVG на сетке <code>0 0 100 100</code> — выбранный вариант напрямую вынимается в
+    <code>frontend/public/favicon.svg</code> и рендерится в PWA-иконки.<br>
+    Назовите номер — обновлю favicon, знак в навбаре и сгенерирую <code>apple-touch-icon.png</code> / <code>pwa-*.png</code>.
+  </footer>
+</div>
+
+<script>
+  var btn = document.getElementById('modeBtn');
+  btn.addEventListener('click', function(){
+    var dark = document.body.classList.toggle('dark');
+    btn.textContent = dark ? '◑ Светлый фон' : '◐ Тёмный фон';
+  });
+</script>
+</body>
+</html>

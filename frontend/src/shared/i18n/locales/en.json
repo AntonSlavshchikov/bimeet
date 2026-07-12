@@ -38,13 +38,13 @@
     "invalidCode": "Invalid or expired code"
   },
   "nav": {
-    "events": "Events",
+    "events": "My events",
     "profile": "Profile",
     "admin": "Admin",
     "notifications": "Notifications",
     "notificationsShort": "Alerts",
-    "publicEvents": "Find public",
-    "publicEventsShort": "Public"
+    "publicEvents": "All events",
+    "publicEventsShort": "All"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -72,6 +72,10 @@
     "completedAlert": "Event completed — editing and actions are unavailable",
     "changeHistory": "Change history",
     "changed": "changed «{{field}}»"
+  },
+  "publicEvents": {
+    "subtitle": "{{count}} active public events",
+    "empty": "There are no active public events right now"
   },
   "eventCard": {
     "statusCompleted": "Completed",
@@ -107,6 +111,13 @@
     "sectionWhenWhere": "When and where",
     "fieldStart": "Start",
     "fieldEnd": "End",
+    "fieldDates": "Dates",
+    "fieldStartTime": "Start time",
+    "fieldEndTime": "End time",
+    "dateRangePlaceholder": "Select date range",
+    "dateRangeClear": "Clear dates",
+    "dateRangePreviousMonth": "Previous month",
+    "dateRangeNextMonth": "Next month",
     "fieldLocation": "Location",
     "fieldLocationPlaceholder": "Address or place name",
     "fieldDressCode": "Dress code",

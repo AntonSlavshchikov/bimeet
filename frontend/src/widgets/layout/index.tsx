@@ -19,7 +19,7 @@ interface LayoutProps {
 
 function useMobileTitle(t: ReturnType<typeof useTranslation>['t']): string {
   const { pathname } = useLocation()
-  if (pathname === '/events') return t('nav.events', 'Встречи')
+  if (pathname === '/events') return t('nav.events', 'Мои встречи')
   if (pathname === '/events/new') return t('eventForm.titleCreate', 'Новая встреча')
   if (pathname.startsWith('/events/') && pathname.endsWith('/edit')) return t('eventForm.titleEdit', 'Редактирование')
   if (pathname.startsWith('/events/')) return t('events.title', 'Встреча')
@@ -96,7 +96,7 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
             <div className="flex items-center justify-self-start">
               <Link
                 to="/events"
-                aria-label={t('nav.events', 'Встречи')}
+                aria-label={t('nav.events', 'Мои встречи')}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-[9px] text-accent hover:bg-hover transition focus-ring"
               >
                 <CalendarIcon size={20} />

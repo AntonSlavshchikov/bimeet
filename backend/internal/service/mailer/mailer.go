@@ -2,13 +2,17 @@ package mailer
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"net"
 	"net/http"
+	"net/mail"
 	"net/smtp"
+	"strings"
 	"time"
 )
 
@@ -75,13 +79,21 @@ func (m *Mailer) SendLoginCode(toEmail, code string) error {
 }
 
 func (m *Mailer) send(toEmail, subject, body string) error {
+	normalizedTo, err := sanitizeEnvelopeAddress(toEmail)
+	if err != nil {
+		return err
+	}
+	if hasHeaderBreak(subject) {
+		return fmt.Errorf("invalid email subject")
+	}
+
 	switch {
 	case m.cfg.ResendAPIKey != "":
-		return m.sendResend(toEmail, subject, body)
+		return m.sendResend(normalizedTo, subject, body)
 	case m.cfg.SMTPHost != "":
-		return m.sendSMTP(toEmail, subject, body)
+		return m.sendSMTP(normalizedTo, subject, body)
 	default:
-		fmt.Printf("[mailer] no transport configured — would send to %s: %s\n", toEmail, subject)
+		fmt.Printf("[mailer] no transport configured — would send to %s: %s\n", normalizedTo, subject)
 		return nil
 	}
 }
@@ -115,7 +127,7 @@ func (m *Mailer) sendResend(toEmail, subject, body string) error {
 		return fmt.Errorf("marshal resend payload: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, resendEndpoint, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, resendEndpoint, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -126,7 +138,7 @@ func (m *Mailer) sendResend(toEmail, subject, body string) error {
 	if err != nil {
 		return fmt.Errorf("resend request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil
@@ -147,15 +159,26 @@ func (m *Mailer) sendSMTP(toEmail, subject, body string) error {
 	if from == "" {
 		from = m.cfg.SMTPUser
 	}
+	fromAddr, err := mail.ParseAddress(from)
+	if err != nil {
+		return fmt.Errorf("invalid from address")
+	}
+	if hasHeaderBreak(fromAddr.String()) {
+		return fmt.Errorf("invalid from address")
+	}
+	toAddr, err := mail.ParseAddress(toEmail)
+	if err != nil {
+		return fmt.Errorf("invalid recipient address")
+	}
 
 	msg := fmt.Sprintf(
 		"From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
-		from, toEmail, subject, body,
+		fromAddr.String(), toAddr.String(), mime.QEncoding.Encode("utf-8", subject), body,
 	)
 
 	addr := m.cfg.SMTPHost + ":" + m.cfg.SMTPPort
 
-	conn, err := net.DialTimeout("tcp", addr, smtpDialTimeout)
+	conn, err := (&net.Dialer{Timeout: smtpDialTimeout}).DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		return fmt.Errorf("dial %s: %w", addr, err)
 	}
@@ -165,7 +188,7 @@ func (m *Mailer) sendSMTP(toEmail, subject, body string) error {
 		_ = conn.Close()
 		return fmt.Errorf("smtp client: %w", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err := c.StartTLS(&tls.Config{ServerName: m.cfg.SMTPHost}); err != nil {
@@ -180,10 +203,10 @@ func (m *Mailer) sendSMTP(toEmail, subject, body string) error {
 		}
 	}
 
-	if err := c.Mail(from); err != nil {
+	if err := c.Mail(fromAddr.Address); err != nil {
 		return fmt.Errorf("mail from: %w", err)
 	}
-	if err := c.Rcpt(toEmail); err != nil {
+	if err := c.Rcpt(toAddr.Address); err != nil {
 		return fmt.Errorf("rcpt to: %w", err)
 	}
 
@@ -199,4 +222,22 @@ func (m *Mailer) sendSMTP(toEmail, subject, body string) error {
 	}
 
 	return c.Quit()
+}
+
+func sanitizeEnvelopeAddress(value string) (string, error) {
+	if hasHeaderBreak(value) {
+		return "", fmt.Errorf("invalid email address")
+	}
+	addr, err := mail.ParseAddress(value)
+	if err != nil {
+		return "", fmt.Errorf("invalid email address")
+	}
+	if strings.TrimSpace(addr.Address) != strings.TrimSpace(value) {
+		return "", fmt.Errorf("invalid email address")
+	}
+	return addr.Address, nil
+}
+
+func hasHeaderBreak(value string) bool {
+	return strings.ContainsAny(value, "\r\n")
 }

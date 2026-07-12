@@ -5,6 +5,21 @@ import (
 	"net/http"
 )
 
+// ErrorResponse documents the API error envelope.
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+// StatusResponse documents simple status responses.
+type StatusResponse struct {
+	Status string `json:"status"`
+}
+
+// VAPIDKeyResponse documents the web push public key response.
+type VAPIDKeyResponse struct {
+	Key string `json:"key"`
+}
+
 // JSON writes a JSON response with the given status code.
 func JSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -26,7 +41,7 @@ const maxJSONBody = 1 << 20
 // ParseJSON decodes a JSON request body into v, rejecting bodies larger than
 // maxJSONBody.
 func ParseJSON(r *http.Request, v any) error {
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	limited := http.MaxBytesReader(nil, r.Body, maxJSONBody)
 	return json.NewDecoder(limited).Decode(v)
 }

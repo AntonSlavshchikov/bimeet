@@ -38,7 +38,7 @@ func TestRecoverer_PanicReturns500AndLogs(t *testing.T) {
 	})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/boom", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/boom", nil)
 	middleware.Recoverer(panicker).ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -64,7 +64,7 @@ func TestObservability_InjectsRequestIDIntoLogger(t *testing.T) {
 	stack := chimw.RequestID(middleware.Observability(handler))
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	stack.ServeHTTP(rec, req)
 
 	require.True(t, loggedFromHandler)
@@ -84,7 +84,7 @@ func TestLogging_EmitsStructuredRequestLine(t *testing.T) {
 	stack := middleware.Observability(middleware.Logging(handler))
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/thing", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/thing", nil)
 	stack.ServeHTTP(rec, req)
 
 	out := buf.String()
@@ -108,7 +108,7 @@ func TestOtelchi_WritesTraceIDResponseHeader(t *testing.T) {
 	r.Get("/x", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/x", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/x", nil)
 	r.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)

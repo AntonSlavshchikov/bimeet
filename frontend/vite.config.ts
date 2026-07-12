@@ -41,6 +41,9 @@ export default defineConfig({
       },
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,woff2,png}'],
+        // iOS splash-картинки грузятся напрямую по <link> в index.html —
+        // в precache SW они не нужны и только раздувают объём установки.
+        globIgnores: ['**/splash/**'],
       },
     }),
   ],
