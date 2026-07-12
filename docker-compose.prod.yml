@@ -88,7 +88,7 @@ services:
       "
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-backend:${IMAGE_TAG:-latest}
     env_file: .env.prod
     depends_on:
       postgres:
@@ -99,7 +99,7 @@ services:
     logging: *default-logging
 
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-frontend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-frontend:${IMAGE_TAG:-latest}
     depends_on:
       - backend
     networks:
@@ -114,7 +114,7 @@ services:
       - traefik.http.services.frontend.loadbalancer.server.port=80
 
   landing:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-landing:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-landing:${IMAGE_TAG:-latest}
     networks:
       - app-net
     restart: unless-stopped

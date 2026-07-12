@@ -7,6 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   lint:
@@ -21,28 +22,9 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
 
-      - name: Backend — lint
+      - name: Backend — lint & vet
         working-directory: backend
-        run: make lint
-
-  test:
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
-
-      - name: Backend — vet & test
-        working-directory: backend
-        run: |
-          go vet ./...
-          go test ./...
+        run: make lint vet
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -55,26 +37,23 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Frontend — typecheck & test
+      - name: Frontend — lint
         working-directory: frontend
-        run: |
-          npx tsc -b
-          npm test
+        run: npm run lint
 
-  build-and-deploy:
-    needs: test
+  build:
+    needs: lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set lowercase owner
         id: owner
-        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -83,31 +62,105 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
-          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-backend:latest
+          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-backend:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-frontend:latest
+          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-frontend:${{ env.IMAGE_TAG }}
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
             VITE_ADMIN_EMAILS=${{ secrets.VITE_ADMIN_EMAILS }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
 
       - name: Build and push landing
         uses: docker/build-push-action@v5
         with:
           context: ./landing
           push: true
-          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-landing:latest
+          tags: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/bimeet-landing:${{ env.IMAGE_TAG }}
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
+          cache-from: type=gha,scope=landing
+          cache-to: type=gha,mode=max,scope=landing
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Backend — unit tests
+        working-directory: backend
+        run: make test
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend — install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend — unit tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Set lowercase owner
+        id: owner
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test built images
+        env:
+          IMAGE_OWNER: ${{ steps.owner.outputs.name }}
+        run: ./deploy/ci/smoke-images.sh "$REGISTRY/$IMAGE_OWNER" "$IMAGE_TAG"
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set lowercase owner
+        id: owner
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Copy compose + deploy files to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -118,7 +171,7 @@ jobs:
           source: "docker-compose.prod.yml,deploy/"
           target: ~/bimeet/
 
-      - name: Deploy to VPS
+      - name: Deploy tested images to VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -127,6 +180,8 @@ jobs:
           script: |
             cd ~/bimeet
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u antonslavshchikov --password-stdin
+            export GITHUB_REPOSITORY_OWNER="${{ steps.owner.outputs.name }}"
+            export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             docker compose --env-file .env.prod -f docker-compose.prod.yml pull
             docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
             docker image prune -f
