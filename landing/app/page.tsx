@@ -4,6 +4,7 @@ import Trust from "@/components/Trust";
 import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
 import UseCases from "@/components/UseCases";
+import InstallGuide from "@/components/InstallGuide";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
@@ -17,6 +18,7 @@ export default function Home() {
         <Features />
         <HowItWorks />
         <UseCases />
+        <InstallGuide />
         <CTA />
       </main>
       <Footer />
