@@ -110,17 +110,20 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
             </div>
           </header>
 
-          {/* Контейнер всегда max-w 1220, начинается сразу после sidebar.
-              Правая панель повторяет ширину 276 px из Warm Canvas.
-              Без rail main растягивается на всю доступную ширину. */}
+          {/* Оболочка занимает всю ширину после sidebar, чтобы при уменьшении
+              масштаба браузера layout не оставался маленьким блоком слева.
+              Сам контент сохраняет читаемую ширину и центрируется, а rail
+              остаётся у правого края viewport. */}
           <div
             className={cn(
-              'flex-1 min-w-0 w-full grid grid-cols-1 mr-auto ml-0 max-w-[1220px]',
+              'flex-1 min-w-0 w-full grid grid-cols-1',
               hasRail && 'xl:grid-cols-[minmax(0,1fr)_276px]',
             )}
           >
             <main className="relative min-w-0 px-4 py-6 lg:px-8 lg:py-7 pb-[80px] lg:pb-12">
-              {children}
+              <div className={cn('mx-auto w-full', hasRail ? 'max-w-[944px]' : 'max-w-[1220px]')}>
+                {children}
+              </div>
             </main>
             {hasRail && (
               <aside className="hidden xl:flex sticky top-0 h-screen overflow-y-auto border-l border-line bg-[color-mix(in_srgb,var(--color-surface)_91%,var(--color-bg))] flex-col gap-3 px-5 py-[25px]">

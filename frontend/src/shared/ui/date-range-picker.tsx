@@ -76,6 +76,7 @@ export function DateRangePicker({
   const selectedEnd = parseIsoDay(endDate)
   const [cursor, setCursor] = useState(() => selectedStart ?? today)
   const [hoveredDate, setHoveredDate] = useState<Date | undefined>()
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     const nextStart = parseIsoDay(startDate)
@@ -128,9 +129,12 @@ export function DateRangePicker({
 
   const label = selectedStart
     ? selectedEnd
-      ? `${dayFormatter.format(selectedStart)} - ${dayFormatter.format(selectedEnd)}`
+      ? `${dayFormatter.format(selectedStart)} – ${dayFormatter.format(selectedEnd)}`
       : dayFormatter.format(selectedStart)
     : placeholder
+
+  const monthLabel = monthFormatter.format(cursor)
+  const capitalizedMonthLabel = monthLabel.charAt(0).toLocaleUpperCase(locale) + monthLabel.slice(1)
 
   function selectDay(day: Date) {
     const iso = toIsoDay(day)
@@ -143,22 +147,25 @@ export function DateRangePicker({
 
     if (isBeforeDay(day, selectedStart)) {
       onChange({ startDate: iso, endDate: toIsoDay(selectedStart) })
+      setOpen(false)
       return
     }
 
     onChange({ startDate: toIsoDay(selectedStart), endDate: iso })
+    setOpen(false)
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <div className={cn('relative', className)}>
         <PopoverTrigger asChild>
           <button
             type="button"
             className={cn(
-              'flex h-9 w-full items-center justify-between gap-2 rounded-[9px] bg-bg-2 px-3 text-left text-[13.5px] text-ink',
+              'flex h-10 w-full items-center justify-between gap-2 rounded-[var(--radius-control)] bg-bg-2 px-3 text-left text-[13.5px] text-ink',
               'border border-transparent transition outline-none focus-ring',
               'hover:bg-hover focus:bg-surface focus:border-accent',
+              open && 'border-accent bg-surface shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_14%,transparent)]',
               !selectedStart && 'text-ink-3',
             )}
             aria-required={required}
@@ -167,15 +174,21 @@ export function DateRangePicker({
               <Calendar size={14} className="shrink-0 text-ink-3" />
               <span className="truncate">{label}</span>
             </span>
-            <ChevronDown size={14} className="shrink-0 text-ink-3" />
+            <ChevronDown
+              size={14}
+              className={cn('shrink-0 text-ink-3 transition-transform duration-200', open && 'rotate-180')}
+            />
           </button>
         </PopoverTrigger>
 
         {selectedStart && (
           <button
             type="button"
-            onClick={() => onChange({ startDate: '', endDate: '' })}
-            className="absolute right-8 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-[6px] text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
+            onClick={() => {
+              onChange({ startDate: '', endDate: '' })
+              setOpen(false)
+            }}
+            className="absolute right-8 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-[7px] text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
             aria-label={clearLabel}
           >
             <X size={13} />
@@ -183,45 +196,60 @@ export function DateRangePicker({
         )}
       </div>
 
-      <PopoverContent className="w-[min(calc(100vw-32px),336px)] p-3">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="text-[13.5px] font-semibold text-ink">
-              {monthFormatter.format(cursor)}
+      <PopoverContent
+        sideOffset={8}
+        collisionPadding={12}
+        className="w-[min(calc(100vw-24px),336px)] overflow-hidden rounded-[18px] border-line bg-surface p-0 shadow-[0_20px_56px_-24px_rgba(34,26,20,0.34)] sm:w-[356px]"
+      >
+        <div className="h-1 bg-[linear-gradient(90deg,var(--color-brand-rose),var(--color-brand-violet),var(--color-brand-sky))]" />
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between border-b border-line-soft bg-[color-mix(in_srgb,var(--color-bg-2)_58%,var(--color-surface))] px-4 py-3.5">
+            <div className="text-[14px] font-bold tracking-[-0.015em] text-ink">
+              {capitalizedMonthLabel}
             </div>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-                className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
+                className="flex h-8 w-8 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
                 aria-label={previousMonthLabel}
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={15} />
               </button>
               <button
                 type="button"
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-                className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
+                className="flex h-8 w-8 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
                 aria-label={nextMonthLabel}
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={15} />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-[2px]" onMouseLeave={() => setHoveredDate(undefined)}>
-            {weekdays.map(day => (
-              <div key={day} className="py-1 text-center text-[10px] font-semibold uppercase text-ink-3">
+          <div
+            className="grid grid-cols-7 gap-1 p-3 pt-2.5"
+            onMouseLeave={() => setHoveredDate(undefined)}
+          >
+            {weekdays.map((day, index) => (
+              <div
+                key={day}
+                className={cn(
+                  'py-1.5 text-center text-[9.5px] font-bold uppercase tracking-[0.06em] text-ink-3',
+                  index >= 5 && 'text-accent',
+                )}
+              >
                 {day}
               </div>
             ))}
 
-            {days.map(({ date, outOfMonth }) => {
+            {days.map(({ date, outOfMonth }, index) => {
               const selectedAsStart = selectedStart && isSameDay(date, selectedStart)
               const selectedAsEnd = selectedEnd && isSameDay(date, selectedEnd)
               const ranged = isInRange(date, selectedStart, selectedEnd)
               const previewed = !selectedEnd && isInPreviewRange(date, selectedStart, hoveredDate)
               const current = isSameDay(date, today)
+              const weekend = index % 7 >= 5
 
               return (
                 <button
@@ -231,14 +259,16 @@ export function DateRangePicker({
                   onFocus={() => setHoveredDate(date)}
                   onMouseEnter={() => setHoveredDate(date)}
                   className={cn(
-                    'relative flex aspect-square items-center justify-center rounded-[7px] text-[12px] font-medium tnum transition focus-ring',
-                    outOfMonth ? 'text-ink-4' : 'text-ink',
+                    'relative flex aspect-square items-center justify-center rounded-[10px] text-[12px] font-semibold tnum transition focus-ring',
+                    outOfMonth ? 'text-ink-4' : weekend ? 'text-ink-2' : 'text-ink',
                     'hover:bg-hover',
-                    (ranged || previewed) && 'bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)] text-accent',
-                    current && !selectedAsStart && !selectedAsEnd && 'font-bold text-accent',
-                    (selectedAsStart || selectedAsEnd) && 'bg-accent text-white font-bold hover:bg-accent hover:opacity-92',
+                    (ranged || previewed) && 'brand-gradient-soft text-accent',
+                    current && !selectedAsStart && !selectedAsEnd && 'ring-1 ring-inset ring-accent text-accent',
+                    (selectedAsStart || selectedAsEnd) && 'brand-gradient text-white font-bold hover:opacity-92',
                   )}
                   aria-label={dayFormatter.format(date)}
+                  aria-pressed={Boolean(selectedAsStart || selectedAsEnd)}
+                  aria-current={current ? 'date' : undefined}
                 >
                   {date.getDate()}
                 </button>
