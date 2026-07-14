@@ -50,13 +50,13 @@ export default function Header() {
           : "border-black/[0.03] bg-paper/60 backdrop-blur-md"
       }`}
     >
-      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-6 px-6 py-3.5 sm:px-8">
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-2 px-4 py-3 sm:gap-6 sm:px-8 sm:py-3.5">
         <a
           href="#"
-          className="flex items-center gap-2.5 text-[18px] font-bold tracking-tight text-ink"
+          className="flex min-w-0 items-center gap-2 text-[17px] font-bold tracking-tight text-ink sm:gap-2.5 sm:text-[18px]"
         >
-          <Image src="/logo-mark.svg" alt="Bimeet" width={914} height={534} className="h-[36px] w-auto shrink-0" priority />
-          <span className="font-wordmark">bimeet</span>
+          <Image src="/logo-mark.svg" alt="Bimeet" width={914} height={534} className="h-[30px] w-auto shrink-0 sm:h-[36px]" priority />
+          <span className="font-wordmark hidden min-[390px]:inline">bimeet</span>
         </a>
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-ink-2 md:flex">
@@ -81,7 +81,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2.5">
           <LanguageSwitcher />
           <a
             href={`${APP_URL}/login`}
@@ -91,7 +91,7 @@ export default function Header() {
           </a>
           <a
             href={`${APP_URL}/login`}
-            className="gradient-button-mono px-4 py-2.5 text-sm font-semibold"
+            className="gradient-button-mono whitespace-nowrap px-3 py-2.5 text-xs font-semibold sm:px-4 sm:text-sm"
           >
             {n.start}
           </a>

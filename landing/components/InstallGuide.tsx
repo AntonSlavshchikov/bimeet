@@ -200,16 +200,16 @@ export default function InstallGuide() {
   return (
     <section
       id="install"
-      className="mx-auto max-w-[1180px] scroll-mt-20 px-6 pb-20 sm:px-8 sm:pb-[88px]"
+      className="mx-auto max-w-[1180px] scroll-mt-20 px-4 pb-16 sm:px-8 sm:pb-[88px]"
     >
       <div className="mx-auto mb-10 max-w-[640px] text-center">
         <span className="mb-3.5 block text-xs font-bold uppercase tracking-[0.12em] text-ink-3">
           {ig.kicker}
         </span>
-        <h2 className="text-[clamp(2rem,4vw,2.5rem)] font-bold leading-tight tracking-[-0.03em] text-ink">
+        <h2 className="text-[clamp(1.75rem,8vw,2.5rem)] font-bold leading-[1.12] tracking-[-0.03em] text-ink">
           {ig.title}
         </h2>
-        <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-2 sm:text-[17px]">
           {ig.subtitle}
         </p>
       </div>
@@ -220,7 +220,7 @@ export default function InstallGuide() {
             key={p}
             type="button"
             onClick={() => selectPlatform(p)}
-            className={`flex items-center gap-2 rounded-[9px] px-5 py-2.5 text-[14px] font-semibold transition-colors ${
+            className={`flex items-center gap-2 rounded-[9px] px-4 py-2.5 text-[13px] font-semibold transition-colors sm:px-5 sm:text-[14px] ${
               platform === p ? "bg-ink text-white" : "text-ink-2 hover:text-ink"
             }`}
           >
@@ -232,7 +232,7 @@ export default function InstallGuide() {
 
       <div
         key={platform}
-        className="hero-screen-fade mx-auto mt-12 grid max-w-[920px] grid-cols-1 items-center gap-10 lg:grid-cols-[240px_1fr]"
+        className="hero-screen-fade mx-auto mt-10 grid max-w-[920px] grid-cols-1 items-center gap-8 sm:mt-12 sm:gap-10 lg:grid-cols-[240px_1fr]"
       >
         <div className="mx-auto flex justify-center">
           <div className="relative h-[320px] w-[160px] rounded-[32px] bg-coal p-[7px] shadow-[0_30px_60px_-15px_rgba(15,23,42,0.35)]">
@@ -251,7 +251,7 @@ export default function InstallGuide() {
                 key={i}
                 type="button"
                 onClick={() => setStep(i)}
-                className={`flex items-start gap-4 rounded-[16px] border p-4 text-left transition-all ${
+                className={`flex min-w-0 items-start gap-3 rounded-[16px] border p-3 text-left transition-all sm:gap-4 sm:p-4 ${
                   isActive
                     ? "border-transparent bg-soft shadow-[0_1px_0_rgba(10,10,11,0.04)]"
                     : "border-transparent hover:bg-soft/60"
@@ -266,7 +266,7 @@ export default function InstallGuide() {
                 >
                   <Icon size={18} strokeWidth={2} />
                 </span>
-                <div>
+                <div className="min-w-0">
                   <h3 className={`mb-1 text-[16px] font-semibold tracking-[-0.01em] ${isActive ? "text-ink" : "text-ink-2"}`}>
                     {i + 1}. {s.title}
                   </h3>

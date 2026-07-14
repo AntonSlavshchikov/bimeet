@@ -8,13 +8,16 @@ export default function Footer() {
   const { t } = useLanguage();
   const f = t.footer;
   return (
-    <footer className="mx-auto mt-24 flex max-w-[1180px] flex-wrap items-center justify-between gap-6 border-t border-black/[0.06] px-6 pb-16 pt-11 text-[13px] text-ink-3 sm:px-8">
-      <div className="flex items-center gap-2.5 font-bold text-ink">
-        <Image src="/logo-mark.svg" alt="Bimeet" width={914} height={534} className="h-[36px] w-auto shrink-0" />
-        <span className="font-wordmark">bimeet</span> {f.tagline}
+    <footer className="mx-auto mt-20 flex max-w-[1180px] flex-col items-start gap-7 border-t border-black/[0.06] px-4 pb-12 pt-9 text-[13px] text-ink-3 sm:mt-24 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-6 sm:px-8 sm:pb-16 sm:pt-11">
+      <div className="flex max-w-full flex-wrap items-center gap-x-2.5 gap-y-2 font-bold text-ink">
+        <span className="flex items-center gap-2.5">
+          <Image src="/logo-mark.svg" alt="Bimeet" width={914} height={534} className="h-[30px] w-auto shrink-0 sm:h-[36px]" />
+          <span className="font-wordmark">bimeet</span>
+        </span>
+        <span>{f.tagline}</span>
       </div>
 
-      <div className="flex flex-wrap gap-[22px]">
+      <div className="grid grid-cols-2 gap-x-[22px] gap-y-3 sm:flex sm:flex-wrap">
         <a href="#features" className="font-medium text-ink-2 hover:text-ink">
           {f.links.features}
         </a>

@@ -20,8 +20,8 @@ const chipRows = [
 ];
 
 const sidePos = {
-  left: "-left-4 sm:-left-16",
-  right: "-right-4 sm:-right-16",
+  left: "left-0 sm:-left-16",
+  right: "right-0 sm:-right-16",
 };
 
 const appScreenshots = [
@@ -46,7 +46,7 @@ export default function Hero() {
   const screenshot = appScreenshots[tick % appScreenshots.length];
 
   return (
-    <section className="relative mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 px-6 py-16 sm:px-8 lg:grid-cols-[1fr_1fr] lg:gap-10 lg:py-24">
+    <section className="relative isolate mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-14 px-4 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1fr_1fr] lg:gap-10 lg:py-24">
       <div
         aria-hidden="true"
         className="hero-blob hero-blob-lime absolute -left-24 top-10 h-72 w-72 rounded-full"
@@ -56,13 +56,13 @@ export default function Hero() {
         className="hero-blob hero-blob-ocean absolute -right-24 bottom-6 h-[26rem] w-[26rem] rounded-full"
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 min-w-0">
         <span className="hero-enter mb-6 inline-flex items-center gap-2 rounded-full border border-black/[0.06] bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
           {h.badge}
         </span>
 
-        <h1 className="hero-title-matte pt-2 text-[clamp(2.8rem,6vw,4rem)] font-extrabold leading-[1.12] tracking-[-0.04em] text-ink">
+        <h1 className="hero-title-matte pt-2 text-[clamp(2.25rem,10vw,3rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-ink sm:text-[clamp(3rem,7vw,4rem)] sm:leading-[1.12]">
           <div>
             <Typewriter
               key={h.title}
@@ -88,17 +88,17 @@ export default function Hero() {
           </div>
         </h1>
 
-        <p className="hero-enter hero-enter-delay-2 mt-6 max-w-[420px] text-lg leading-relaxed text-ink-2">
+        <p className="hero-enter hero-enter-delay-2 mt-5 max-w-[420px] text-base leading-relaxed text-ink-2 sm:mt-6 sm:text-lg">
           {h.description}
         </p>
 
-        <div className="hero-enter hero-enter-delay-3 mt-8">
+        <div className="hero-enter hero-enter-delay-3 mt-7 sm:mt-8">
           <a href={`${APP_URL}/login`} className="gradient-button">
             <span className="text-[15px] font-semibold">{h.ctaRegister}</span>
           </a>
         </div>
 
-        <div className="hero-enter hero-enter-delay-4 mt-7 flex items-center gap-3">
+        <div className="hero-enter hero-enter-delay-4 mt-6 flex flex-wrap items-center gap-3 sm:mt-7">
           <div className="flex">
             {ratingAvatars.map((cls, i) => (
               <span
@@ -113,9 +113,9 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="hero-phone-enter relative z-10 flex justify-center">
+      <div className="hero-phone-enter relative z-10 flex min-w-0 justify-center">
         <div className="hero-phone-contact-shadow" aria-hidden="true" />
-        <div className="hero-phone-float hero-phone-bezel relative h-[440px] w-[220px] rounded-[38px] p-2 shadow-[0_40px_80px_rgba(15,23,42,0.25)] sm:h-[500px] sm:w-[250px]">
+        <div className="hero-phone-float hero-phone-bezel relative h-[420px] w-[210px] rounded-[36px] p-2 shadow-[0_40px_80px_rgba(15,23,42,0.25)] sm:h-[500px] sm:w-[250px] sm:rounded-[38px]">
           <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[30px] bg-white">
             <div className="relative z-20 flex shrink-0 items-center justify-between px-6 pb-1.5 pt-3 text-[13px] font-semibold tracking-tight text-ink">
               <span>9:41</span>
@@ -214,7 +214,7 @@ export default function Hero() {
             return (
               <div
                 key={`chip-${i}`}
-                className={`hero-chip-pop ${visibilityClass} absolute items-center gap-2 rounded-full border border-black/[0.06] bg-white px-3.5 py-2 text-[13px] font-semibold text-ink shadow-[0_16px_32px_rgba(15,23,42,0.12)] flex ${sidePos[side]} ${row.extra}`}
+                className={`hero-chip-pop ${visibilityClass} absolute flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border border-black/[0.06] bg-white px-3 py-2 text-[12px] font-semibold text-ink shadow-[0_16px_32px_rgba(15,23,42,0.12)] sm:px-3.5 sm:text-[13px] ${sidePos[side]} ${row.extra}`}
                 style={{ top: row.top }}
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#A78BFA] to-[#38BDF8] text-[11px] font-bold text-white">
@@ -229,7 +229,7 @@ export default function Hero() {
           return (
             <div
               key={`chip-${i}`}
-              className={`hero-chip-pop ${visibilityClass} absolute items-center gap-2 rounded-full bg-coal px-3.5 py-2 text-[13px] font-semibold text-white shadow-[0_16px_32px_rgba(15,23,42,0.25)] flex ${sidePos[side]} ${row.extra}`}
+              className={`hero-chip-pop ${visibilityClass} absolute flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full bg-coal px-3 py-2 text-[12px] font-semibold text-white shadow-[0_16px_32px_rgba(15,23,42,0.25)] sm:px-3.5 sm:text-[13px] ${sidePos[side]} ${row.extra}`}
               style={{ top: row.top }}
             >
               <span aria-hidden="true">✓</span>

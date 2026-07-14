@@ -38,7 +38,7 @@ const avatarColors = [
 ];
 
 function FeatureMock({ color }: { color: string }) {
-  const row = "flex items-center gap-3 rounded-[12px] border border-black/[0.06] bg-soft px-4 py-3";
+  const row = "flex min-w-0 items-center gap-2.5 rounded-[12px] border border-black/[0.06] bg-soft px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3";
   const avatar = (i: number) => (
     <span
       key={i}
@@ -51,7 +51,7 @@ function FeatureMock({ color }: { color: string }) {
   if (color === "c1") {
     return (
       <div className="rounded-[14px] border border-black/[0.06] bg-soft p-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col items-start gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
           <span className="text-[14.5px] font-semibold text-ink">Поход на выходных</span>
           <span className="rounded-full bg-[#DCFCE7] px-2.5 py-1 text-[11px] font-semibold text-[#166534]">
             Публичная
@@ -69,7 +69,7 @@ function FeatureMock({ color }: { color: string }) {
   if (color === "c2") {
     return (
       <div className="rounded-[14px] border border-black/[0.06] bg-soft p-4">
-        <div className="mb-3 flex items-center justify-between text-[13px] font-medium text-ink-2">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[13px] font-medium text-ink-2">
           <span>Собрано</span>
           <span className="font-semibold text-ink">18 400 из 24 000 ₽</span>
         </div>
@@ -131,7 +131,7 @@ function FeatureMock({ color }: { color: string }) {
         ].map(([name, seats, free], i) => (
           <div key={name as string} className={row}>
             {avatar(i)}
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-ink">{name} на машине</div>
               <div className="text-[12px] text-ink-2">{seats}</div>
             </div>
@@ -183,8 +183,8 @@ function FeatureMock({ color }: { color: string }) {
       ].map(([text, time], i) => (
         <div key={text} className={row}>
           {avatar(i)}
-          <span className="flex-1 text-[13px] text-ink">{text}</span>
-          <span className="shrink-0 text-[11.5px] text-ink-3">{time}</span>
+          <span className="min-w-0 flex-1 text-[13px] text-ink">{text}</span>
+          <span className="shrink-0 self-start text-[11.5px] text-ink-3 sm:self-auto">{time}</span>
         </div>
       ))}
     </div>
@@ -201,22 +201,22 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="mx-auto max-w-[1180px] scroll-mt-20 px-6 py-20 sm:px-8 sm:py-[88px]"
+      className="mx-auto max-w-[1180px] scroll-mt-20 px-4 py-16 sm:px-8 sm:py-[88px]"
     >
       <div className="mx-auto mb-12 max-w-[640px] text-center">
         <span className="mb-3.5 block text-xs font-bold uppercase tracking-[0.12em] text-ink-3">
           {f.kicker}
         </span>
-        <h2 className="text-[clamp(2rem,4vw,2.5rem)] font-bold leading-tight tracking-[-0.03em] text-ink">
+        <h2 className="text-[clamp(1.75rem,8vw,2.5rem)] font-bold leading-[1.12] tracking-[-0.03em] text-ink">
           {f.title}
         </h2>
-        <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-2 sm:text-[17px]">
           {f.subtitle}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
-        <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:pb-0">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:px-0 lg:pb-0">
           {f.items.map((it, i) => {
             const TabIcon = iconMap[it.color];
             const isActive = i === active;
@@ -246,7 +246,7 @@ export default function Features() {
 
         <div
           key={active}
-          className="hero-screen-fade relative overflow-hidden rounded-[22px] border border-black/[0.06] bg-white p-8 sm:p-10"
+          className="hero-screen-fade relative min-w-0 overflow-hidden rounded-[20px] border border-black/[0.06] bg-white p-5 sm:rounded-[22px] sm:p-10"
         >
           <div
             className={`mb-6 flex h-14 w-14 items-center justify-center rounded-[16px] text-white shadow-[0_10px_24px_-8px_rgba(15,23,42,0.35)] ${previewStyles[item.color]}`}

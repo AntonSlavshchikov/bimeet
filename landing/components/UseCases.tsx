@@ -9,7 +9,11 @@ const tints = [
 ];
 
 const rotations = ["-rotate-2", "rotate-1", "rotate-2", "-rotate-1", "rotate-0"];
-const sizes = ["text-[15px] px-5 py-3", "text-[16.5px] px-6 py-3.5", "text-[14px] px-4 py-2.5"];
+const sizes = [
+  "px-3.5 py-2.5 text-[13px] sm:px-5 sm:py-3 sm:text-[15px]",
+  "px-4 py-3 text-[14px] sm:px-6 sm:py-3.5 sm:text-[16.5px]",
+  "px-3.5 py-2.5 text-[12.5px] sm:px-4 sm:text-[14px]",
+];
 
 export default function UseCases() {
   const { t } = useLanguage();
@@ -44,21 +48,21 @@ export default function UseCases() {
     <section
       ref={sectionRef}
       id="cases"
-      className="mx-auto max-w-[1180px] scroll-mt-20 px-6 pb-20 sm:px-8 sm:pb-[88px]"
+      className="mx-auto max-w-[1180px] scroll-mt-20 px-4 pb-16 sm:px-8 sm:pb-[88px]"
     >
       <div className="mx-auto mb-12 max-w-[640px] text-center">
         <span className="mb-3.5 block text-xs font-bold uppercase tracking-[0.12em] text-ink-3">
           {c.kicker}
         </span>
-        <h2 className="text-[clamp(2rem,4vw,2.5rem)] font-bold leading-tight tracking-[-0.03em] text-ink">
+        <h2 className="text-[clamp(1.75rem,8vw,2.5rem)] font-bold leading-[1.12] tracking-[-0.03em] text-ink">
           {c.title}
         </h2>
-        <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-2 sm:text-[17px]">
           {c.subtitle}
         </p>
       </div>
 
-      <div className="mx-auto flex max-w-[800px] flex-wrap justify-center gap-4">
+      <div className="mx-auto flex max-w-[800px] flex-wrap justify-center gap-3 sm:gap-4">
         {c.items.map((it, i) => (
           <span
             key={it}

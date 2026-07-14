@@ -13,6 +13,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 .font-wordmark {
@@ -21,6 +22,23 @@ html {
 
 body {
   font-feature-settings: "ss01";
+  min-width: 0;
+}
+
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+img,
+svg {
+  max-width: 100%;
 }
 
 .gradient-button {
@@ -441,3 +459,13 @@ body {
   }
 }
 
+@media (max-width: 639px) {
+  .gradient-button {
+    width: 100%;
+    padding: 13px 20px;
+  }
+
+  .hero-blob {
+    opacity: 0.38;
+  }
+}
