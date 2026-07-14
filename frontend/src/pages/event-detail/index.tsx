@@ -3,7 +3,6 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   BarChart3,
-  Check,
   CheckCircle2,
   Clock,
   History,
@@ -14,7 +13,6 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
-import type { Event } from '@/entities/event/model/types'
 import { useCompleteEvent } from '@/features/event-manage/model/hooks'
 import ParticipantsTab from '@/features/participants/ui/ParticipantsTab'
 import CollectionsTab from '@/features/collections/ui/CollectionsTab'
@@ -104,7 +102,6 @@ export default function EventDetailPage() {
     <>
       <div className="flex flex-col">
         <EventInfoPanel event={event} isOrganizer={isOrganizer} />
-        <EventOverview event={event} />
 
         {/* Quiet Rail: компактная навигация по рабочим разделам встречи. */}
         <div className="mt-[13px] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
@@ -241,81 +238,5 @@ export default function EventDetailPage() {
         </DialogContent>
       </Dialog>
     </>
-  )
-}
-
-function EventOverview({ event }: { event: Event }) {
-  const { t } = useTranslation()
-  const poll = event.polls[0]
-  const totalVotes = poll?.options.reduce((sum, option) => sum + option.vote_count, 0) ?? 0
-  const readyItems = event.items.filter(item => item.assigned_to).length
-
-  if (!poll && event.items.length === 0) return null
-
-  return (
-    <div className="mt-[13px]">
-      <section className="min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-[17px]">
-          {poll && (
-            <div>
-              <PanelHead
-                title={poll.question}
-                meta={t('eventInfo.votesCount', { count: totalVotes })}
-              />
-              <div className="flex flex-col gap-3">
-                {poll.options.map(option => {
-                  const percentage = totalVotes > 0 ? Math.round(option.vote_count / totalVotes * 100) : 0
-                  return (
-                    <div key={option.id}>
-                      <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] text-ink-2">
-                        <strong className="truncate font-semibold text-ink">{option.label}</strong>
-                        <span className="shrink-0 tnum">{option.vote_count} · {percentage}%</span>
-                      </div>
-                      <div className="h-[7px] overflow-hidden rounded-full bg-bg-2">
-                        <div
-                          className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-brand-rose),var(--color-brand-violet),var(--color-brand-sky))]"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {event.items.length > 0 && (
-            <div className={cn(poll && 'mt-[13px] border-t border-line pt-[13px]')}>
-              <PanelHead
-                title={t('eventInfo.whatToTake')}
-                meta={t('eventInfo.itemsReady', { ready: readyItems, total: event.items.length })}
-              />
-              <div className="flex flex-col gap-2">
-                {event.items.slice(0, 6).map(item => (
-                  <div key={item.id} className="flex items-center gap-2 text-[9.5px] text-ink-2">
-                    <span
-                      className={cn(
-                        'grid h-4 w-4 shrink-0 place-items-center rounded-[5px] border',
-                        item.assigned_to ? 'border-success bg-success text-white' : 'border-line bg-surface text-transparent',
-                      )}
-                    >
-                      <Check size={10} strokeWidth={3} />
-                    </span>
-                    <span>{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-      </section>
-    </div>
-  )
-}
-
-function PanelHead({ title, meta }: { title: string; meta: string }) {
-  return (
-    <div className="mb-[14px] flex items-center justify-between gap-2.5">
-      <h2 className="text-[12px] font-bold text-ink">{title}</h2>
-      <span className="shrink-0 text-[9px] text-ink-3">{meta}</span>
-    </div>
   )
 }

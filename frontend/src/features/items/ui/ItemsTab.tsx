@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Plus, ShoppingBag } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddItem, useAssignItem } from '@/features/items/model/hooks'
-import { Avatar, Button, Input, StatusPill, StatusPillButton } from '@/shared/ui'
+import { Button, Input, StatusPill, StatusPillButton } from '@/shared/ui'
 
 export default function ItemsTab({ event }: { event: Event }) {
   const { t } = useTranslation()
@@ -70,19 +70,14 @@ export default function ItemsTab({ event }: { event: Event }) {
             const isMine = item.assigned_to?.is_me ?? false
             const isTaken = Boolean(item.assigned_to)
             return (
-              <div key={item.id} className="flex items-center justify-between gap-3 p-3.5">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {item.assigned_to ? (
-                    <Avatar name={item.assigned_to.name} size="md" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-bg-2 border border-line-soft shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="text-[14px] font-medium text-ink truncate">{item.name}</div>
-                    <div className="text-[12px] text-ink-3 truncate mt-0.5">
-                      {item.assigned_to ? item.assigned_to.name : t('items.unassigned', 'Не занято')}
+              <div key={item.id} className="flex min-h-11 items-center justify-between gap-3 px-3.5 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-semibold text-ink">{item.name}</div>
+                  {item.assigned_to && (
+                    <div className="mt-0.5 truncate text-[10px] text-ink-3">
+                      {item.assigned_to.name}
                     </div>
-                  </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {isCompleted ? (

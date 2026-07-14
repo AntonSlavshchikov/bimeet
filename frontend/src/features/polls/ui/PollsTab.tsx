@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BarChart3, Plus, Trash2 } from 'lucide-react'
+import { BarChart3, Check, Plus, Trash2 } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddPoll, useVote } from '@/features/polls/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
@@ -115,9 +115,14 @@ export default function PollsTab({ event }: { event: Event }) {
       {event.polls.map(poll => {
         const totalVotes = poll.options.reduce((s, o) => s + o.vote_count, 0)
         return (
-          <div key={poll.id} className="rounded-[12px] border border-line bg-surface p-4 flex flex-col gap-2.5">
-            <div className="text-[14px] font-medium text-ink">{poll.question}</div>
-            <div className="flex flex-col gap-2">
+          <div key={poll.id} className="rounded-[12px] border border-line bg-surface p-4">
+            <div className="mb-3.5 flex items-center justify-between gap-3">
+              <h3 className="min-w-0 truncate text-[12px] font-bold text-ink">{poll.question}</h3>
+              <span className="shrink-0 text-[9px] text-ink-3">
+                {t('eventInfo.votesCount', { count: totalVotes })}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
               {poll.options.map(option => {
                 const pct = totalVotes > 0 ? Math.round((option.vote_count / totalVotes) * 100) : 0
                 const isMy = option.voted
@@ -125,37 +130,33 @@ export default function PollsTab({ event }: { event: Event }) {
                   <button
                     type="button"
                     key={option.id}
+                    aria-pressed={isMy}
                     disabled={isCompleted}
                     onClick={() => !isCompleted && user && castVote.mutate({ pollId: poll.id, optionId: option.id })}
                     className={cn(
-                      'relative w-full rounded-[10px] border p-3 text-left transition focus-ring',
-                      isMy
-                        ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]'
-                        : 'border-line-soft bg-bg-2 hover:border-line',
-                      isCompleted && 'cursor-default',
+                      'w-full rounded-[9px] p-2 text-left transition focus-ring',
+                      isMy ? 'bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]' : 'hover:bg-hover',
+                      isCompleted ? 'cursor-default' : 'cursor-pointer',
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className={cn('text-[13.5px] flex-1 line-clamp-2', isMy ? 'font-semibold text-accent' : 'text-ink')}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] text-ink-2">
+                      <span className={cn('flex min-w-0 items-center gap-1.5 truncate font-semibold', isMy ? 'text-accent' : 'text-ink')}>
+                        {isMy && <Check size={11} strokeWidth={3} className="shrink-0" />}
                         {option.label}
                       </span>
-                      <span className="text-[12px] text-ink-3 tnum shrink-0">
+                      <span className="shrink-0 tnum">
                         {option.vote_count} · {pct}%
                       </span>
                     </div>
-                    {/* Progress */}
-                    <div className="h-1 w-full rounded-full bg-line-soft overflow-hidden">
+                    <div className="h-[7px] w-full overflow-hidden rounded-full bg-bg-2">
                       <div
-                        className={cn('h-full rounded-full transition-[width]', isMy ? 'bg-accent' : 'bg-ink-3')}
+                        className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-brand-rose),var(--color-brand-violet),var(--color-brand-sky))] transition-[width]"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
                   </button>
                 )
               })}
-            </div>
-            <div className="text-[12px] text-ink-3">
-              {t('polls.totalVotes', { count: totalVotes, defaultValue: `${totalVotes} голосов` })}
             </div>
           </div>
         )
