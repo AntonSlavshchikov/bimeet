@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  AlertTriangle,
   BarChart3,
+  Check,
   CheckCircle2,
   Clock,
   History,
@@ -14,6 +14,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
+import type { Event } from '@/entities/event/model/types'
 import { useCompleteEvent } from '@/features/event-manage/model/hooks'
 import ParticipantsTab from '@/features/participants/ui/ParticipantsTab'
 import CollectionsTab from '@/features/collections/ui/CollectionsTab'
@@ -23,8 +24,8 @@ import CarpoolTab from '@/features/carpools/ui/CarpoolTab'
 import ChatTab from '@/features/chat/ui/ChatTab'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
-import ParticipantsSummaryPanel from '@/widgets/event-detail/ParticipantsSummaryPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
+import { cn } from '@/shared/lib/cn'
 import {
   Avatar,
   Button,
@@ -34,7 +35,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  SegmentedControl,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@/shared/ui'
 
 type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'chat' | 'changelog'
@@ -93,59 +96,87 @@ export default function EventDetailPage() {
       : baseTabs
 
   // Фолбэк: если активный таб не входит в набор, переключаемся на первый
-  const activeTab: TabKey = allTabs.some(td => td.key === tab) ? tab : allTabs[0].key
+  const activeTabDef = allTabs.find(td => td.key === tab) ?? allTabs[0]
+  const activeTab = activeTabDef.key
+  const ActiveTabIcon = activeTabDef.icon
 
   return (
     <>
-      <div className="grid gap-5 items-start xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="flex flex-col">
+        <EventInfoPanel event={event} isOrganizer={isOrganizer} />
+        <EventOverview event={event} />
 
-        {/* Left — sticky on xl */}
-        <div className="flex flex-col gap-4 xl:sticky xl:top-5">
-          <EventInfoPanel event={event} isOrganizer={isOrganizer} />
-          <ParticipantsSummaryPanel event={event} />
-        </div>
-
-        {/* Right — tabs */}
-        <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
-          {event.status === 'completed' && (
-            <div className="flex items-center gap-2 bg-warning/10 text-warning border-b border-warning/20 px-4 py-2.5 text-[13px] font-medium">
-              <AlertTriangle size={14} />
-              <span>{t('events.completedAlert', 'Эта встреча завершена')}</span>
+        {/* Quiet Rail: компактная навигация по рабочим разделам встречи. */}
+        <div className="mt-[13px] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+          <div className="border-b border-line-soft p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                {t('eventInfo.allDetails')}
+              </div>
+              {isOrganizer && event.status === 'active' && (
+                <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
+                  <CheckCircle2 size={13} />
+                  {t('eventInfo.menuComplete', 'Завершить')}
+                </Button>
+              )}
             </div>
-          )}
 
-          {/* Tab bar + organizer complete action */}
-          <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 pt-3 pb-3 flex-wrap">
-            <div className="overflow-x-auto -m-1 p-1">
-              <SegmentedControl
-                value={activeTab}
-                onChange={(v: TabKey) => setTab(v)}
-                options={allTabs.map(td => ({
-                  value: td.key,
-                  label: (
-                    <span className="inline-flex items-center gap-1.5">
-                      <td.icon size={13} className="shrink-0" />
-                      {t(td.tKey, td.fallback)}
-                      {td.key === 'chat' && chatUnread > 0 && (
-                        <span className="ml-0.5 inline-flex min-w-[16px] h-[16px] px-1 items-center justify-center rounded-full bg-danger text-white text-[10px] font-semibold tnum">
-                          {chatUnread}
-                        </span>
-                      )}
-                    </span>
-                  ),
-                }))}
-              />
+            <div
+              role="tablist"
+              aria-label={t('eventInfo.allDetails')}
+              className="mt-3 grid min-w-0 grid-cols-2 gap-1 rounded-[11px] bg-bg-2 p-1 sm:grid-cols-3 lg:flex"
+            >
+              {allTabs.map(td => {
+                const active = td.key === activeTab
+                const label = t(td.tKey, td.fallback)
+
+                return (
+                  <Tooltip key={td.key}>
+                    <TooltipTrigger asChild>
+                      <button
+                        id={`event-tab-${td.key}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        aria-controls="event-section-panel"
+                        aria-label={label}
+                        onClick={() => setTab(td.key)}
+                        className={cn(
+                          'flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[8px] px-2 text-[11px] font-semibold transition focus-ring lg:flex-1',
+                          active
+                            ? 'bg-surface text-ink shadow-[0_1px_4px_rgba(20,20,20,0.06)]'
+                            : 'text-ink-3 hover:bg-hover hover:text-ink',
+                        )}
+                      >
+                        <td.icon size={15} className="shrink-0" />
+                        <span className="min-w-0 truncate">{label}</span>
+                        {td.key === 'chat' && chatUnread > 0 && (
+                          <span className="grid min-h-[14px] min-w-[14px] shrink-0 place-items-center rounded-full bg-danger px-0.5 text-[8px] font-bold leading-none text-white tnum">
+                            {chatUnread > 9 ? '9+' : chatUnread}
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{label}</TooltipContent>
+                  </Tooltip>
+                )
+              })}
             </div>
-            {isOrganizer && event.status === 'active' && (
-              <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
-                <CheckCircle2 size={13} />
-                {t('eventInfo.menuComplete', 'Завершить')}
-              </Button>
-            )}
           </div>
 
-          {/* Tab content — feature-tabs пока на Chakra (24.5) */}
-          <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-2 border-b border-line-soft px-4 py-3">
+            <ActiveTabIcon size={15} className="text-ink-3" />
+            <h2 className="text-[13px] font-bold text-ink">
+              {t(activeTabDef.tKey, activeTabDef.fallback)}
+            </h2>
+          </div>
+
+          <div
+            id="event-section-panel"
+            role="tabpanel"
+            aria-labelledby={`event-tab-${activeTab}`}
+            className="p-4 sm:p-6"
+          >
             {activeTab === 'participants' && <ParticipantsTab event={event} />}
             {activeTab === 'collections' && <CollectionsTab event={event} />}
             {activeTab === 'polls' && <PollsTab event={event} />}
@@ -154,9 +185,6 @@ export default function EventDetailPage() {
             {activeTab === 'chat' && <ChatTab event={event} />}
             {activeTab === 'changelog' && (
               <div className="flex flex-col gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
-                  {t('events.changeHistory', 'История изменений')}
-                </div>
                 {[...event.change_log].reverse().map(log => (
                   <div
                     key={log.id}
@@ -213,5 +241,81 @@ export default function EventDetailPage() {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+function EventOverview({ event }: { event: Event }) {
+  const { t } = useTranslation()
+  const poll = event.polls[0]
+  const totalVotes = poll?.options.reduce((sum, option) => sum + option.vote_count, 0) ?? 0
+  const readyItems = event.items.filter(item => item.assigned_to).length
+
+  if (!poll && event.items.length === 0) return null
+
+  return (
+    <div className="mt-[13px]">
+      <section className="min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-[17px]">
+          {poll && (
+            <div>
+              <PanelHead
+                title={poll.question}
+                meta={t('eventInfo.votesCount', { count: totalVotes })}
+              />
+              <div className="flex flex-col gap-3">
+                {poll.options.map(option => {
+                  const percentage = totalVotes > 0 ? Math.round(option.vote_count / totalVotes * 100) : 0
+                  return (
+                    <div key={option.id}>
+                      <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] text-ink-2">
+                        <strong className="truncate font-semibold text-ink">{option.label}</strong>
+                        <span className="shrink-0 tnum">{option.vote_count} · {percentage}%</span>
+                      </div>
+                      <div className="h-[7px] overflow-hidden rounded-full bg-bg-2">
+                        <div
+                          className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-brand-rose),var(--color-brand-violet),var(--color-brand-sky))]"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {event.items.length > 0 && (
+            <div className={cn(poll && 'mt-[13px] border-t border-line pt-[13px]')}>
+              <PanelHead
+                title={t('eventInfo.whatToTake')}
+                meta={t('eventInfo.itemsReady', { ready: readyItems, total: event.items.length })}
+              />
+              <div className="flex flex-col gap-2">
+                {event.items.slice(0, 6).map(item => (
+                  <div key={item.id} className="flex items-center gap-2 text-[9.5px] text-ink-2">
+                    <span
+                      className={cn(
+                        'grid h-4 w-4 shrink-0 place-items-center rounded-[5px] border',
+                        item.assigned_to ? 'border-success bg-success text-white' : 'border-line bg-surface text-transparent',
+                      )}
+                    >
+                      <Check size={10} strokeWidth={3} />
+                    </span>
+                    <span>{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+      </section>
+    </div>
+  )
+}
+
+function PanelHead({ title, meta }: { title: string; meta: string }) {
+  return (
+    <div className="mb-[14px] flex items-center justify-between gap-2.5">
+      <h2 className="text-[12px] font-bold text-ink">{title}</h2>
+      <span className="shrink-0 text-[9px] text-ink-3">{meta}</span>
+    </div>
   )
 }

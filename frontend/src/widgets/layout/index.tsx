@@ -78,19 +78,19 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
 
   return (
     <TooltipProvider delayDuration={250}>
-      <div className="min-h-screen bg-bg text-ink">
+      <div className="min-h-screen warm-canvas-bg text-ink">
         {/* Fixed sidebar — десктоп. Всегда на одной позиции независимо от content. */}
-        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-30 w-[260px] flex-col overflow-y-auto">
+        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-30 w-[220px] flex-col overflow-y-auto">
           <Sidebar />
         </aside>
 
         {/* Content area — отступ слева под fixed sidebar */}
-        <div className="lg:pl-[260px] flex flex-col min-h-screen">
+        <div className="lg:pl-[220px] flex flex-col min-h-screen">
           {/* Mobile navbar — Calendar icon left, title center, action-icons right (как в макете 05-app.html) */}
           <header
             className={cn(
               'lg:hidden sticky top-0 z-20 h-11 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 px-3',
-              'bg-bg/80 backdrop-blur-xl backdrop-saturate-150 border-b border-line',
+              'bg-surface/[0.78] backdrop-blur-xl backdrop-saturate-150 border-b border-line',
             )}
           >
             <div className="flex items-center justify-self-start">
@@ -111,19 +111,19 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
           </header>
 
           {/* Контейнер всегда max-w 1220, начинается сразу после sidebar.
-              С rail: main 880 + rail 340.
-              Без rail: main растягивается на весь 1220 — заполняет пространство rail. */}
+              Правая панель повторяет ширину 276 px из Warm Canvas.
+              Без rail main растягивается на всю доступную ширину. */}
           <div
             className={cn(
               'flex-1 min-w-0 w-full grid grid-cols-1 mr-auto ml-0 max-w-[1220px]',
-              hasRail && 'xl:grid-cols-[minmax(0,1fr)_340px]',
+              hasRail && 'xl:grid-cols-[minmax(0,1fr)_276px]',
             )}
           >
-            <main className="min-w-0 px-4 py-6 lg:px-8 lg:py-7 pb-[80px] lg:pb-12">
+            <main className="relative min-w-0 px-4 py-6 lg:px-8 lg:py-7 pb-[80px] lg:pb-12">
               {children}
             </main>
             {hasRail && (
-              <aside className="hidden xl:flex sticky top-0 h-screen overflow-y-auto border-l border-line bg-bg flex-col gap-6 px-6 py-7">
+              <aside className="hidden xl:flex sticky top-0 h-screen overflow-y-auto border-l border-line bg-[color-mix(in_srgb,var(--color-surface)_91%,var(--color-bg))] flex-col gap-3 px-5 py-[25px]">
                 {rail}
               </aside>
             )}

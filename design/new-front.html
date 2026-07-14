@@ -1,0 +1,2377 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Bimeet · Варианты редизайна frontend</title>
+<style>:root{color-scheme:light;background:#faf8f2}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{box-sizing:border-box;background:inherit}iframe{display:block;width:100%;height:100%;margin:0;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Bimeet · Варианты редизайна frontend" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Bimeet · Варианты редизайна frontend&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(--background) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: light-dark(rgb(255 255 255), rgb(24 24 24));
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 12.5px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--viz-font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed=&quot;true&quot;],
+    [aria-selected=&quot;true&quot;],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;style&gt;
+  #bimeet-redesign {
+    --ink: #121214;
+    --ink-2: #5e5a55;
+    --ink-3: #9a948d;
+    --paper: #faf8f2;
+    --surface: #ffffff;
+    --surface-2: #f3f0e9;
+    --line: rgba(18, 18, 20, .09);
+    --line-strong: rgba(18, 18, 20, .15);
+    --brand-a: #fb7185;
+    --brand-b: #a78bfa;
+    --brand-c: #38bdf8;
+    --success: #299764;
+    --warning: #d97706;
+    --danger: #dc5a62;
+    --purple: #7857c8;
+    --app-radius: 30px;
+    --panel-radius: 18px;
+    --control-radius: 12px;
+    --shadow: 0 24px 70px rgba(36, 30, 20, .11);
+    color: var(--ink);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;
+    font-size: 15px;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  #bimeet-redesign * { box-sizing: border-box; }
+  #bimeet-redesign button,
+  #bimeet-redesign input { font: inherit; }
+  #bimeet-redesign button { cursor: pointer; }
+  #bimeet-redesign svg { display: block; }
+
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] {
+    --ink: #17131b;
+    --ink-2: #655f6b;
+    --ink-3: #938c9a;
+    --paper: #f9f7fb;
+    --surface: rgba(255, 255, 255, .78);
+    --surface-2: rgba(255, 255, 255, .48);
+    --line: rgba(73, 52, 84, .11);
+    --line-strong: rgba(73, 52, 84, .18);
+    --brand-a: #f36d8d;
+    --brand-b: #9867e8;
+    --brand-c: #34b9e7;
+    --app-radius: 34px;
+    --panel-radius: 22px;
+    --control-radius: 14px;
+    --shadow: 0 32px 90px rgba(91, 62, 110, .20);
+  }
+
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] {
+    --ink: #201a18;
+    --ink-2: #665c56;
+    --ink-3: #988d85;
+    --paper: #fff8ef;
+    --surface: #fffdf9;
+    --surface-2: #f6eee5;
+    --line: rgba(66, 40, 23, .09);
+    --line-strong: rgba(66, 40, 23, .16);
+    --brand-a: #ff7a7a;
+    --brand-b: #a779ef;
+    --brand-c: #45bfe7;
+    --app-radius: 36px;
+    --panel-radius: 24px;
+    --control-radius: 15px;
+    --shadow: 0 28px 74px rgba(95, 60, 34, .14);
+  }
+
+  .br-page {
+    position: relative;
+    isolation: isolate;
+    padding: 38px 30px 56px;
+    background:
+      radial-gradient(circle at 7% 18%, color-mix(in srgb, var(--brand-a) 18%, transparent) 0, transparent 26%),
+      radial-gradient(circle at 94% 13%, color-mix(in srgb, var(--brand-c) 17%, transparent) 0, transparent 25%),
+      var(--paper);
+  }
+
+  .br-orb {
+    position: absolute;
+    z-index: -1;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    filter: blur(28px);
+    opacity: .32;
+    pointer-events: none;
+  }
+  .br-orb-a { left: -190px; top: 500px; background: var(--brand-b); }
+  .br-orb-b { right: -190px; top: 820px; background: var(--brand-c); }
+
+  .br-wrap { width: min(1320px, 100%); margin: 0 auto; }
+
+  .br-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 28px;
+    align-items: end;
+    margin-bottom: 26px;
+  }
+  .br-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 14px;
+    color: var(--ink-2);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+  .br-eyebrow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand-a), var(--brand-b), var(--brand-c));
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand-b) 13%, transparent);
+  }
+  .br-intro h1 {
+    max-width: 780px;
+    margin: 0;
+    font-size: clamp(34px, 5vw, 62px);
+    line-height: 1.01;
+    letter-spacing: -.045em;
+    font-weight: 780;
+  }
+  .br-intro p {
+    max-width: 690px;
+    margin: 16px 0 0;
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .br-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink);
+    font-weight: 750;
+    letter-spacing: -.02em;
+  }
+  .br-logo {
+    display: block;
+    flex: 0 0 auto;
+    width: 54px;
+    aspect-ratio: 914 / 534;
+    background: center / contain no-repeat url(&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MTQiIGhlaWdodD0iNTM0IiB2aWV3Qm94PSIwIDAgOTE0IDUzNCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImxlZnRHcmFkaWVudCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSI1MCIgeTE9IjAiIHgyPSI1NDkiIHkyPSIwIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMjUyQTM0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzY2NzA4NSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icmlnaHRHcmFkaWVudCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIzNjYiIHkxPSIwIiB4Mj0iODY0IiB5Mj0iMCI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZCNzE4NSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjAuNSIgc3RvcC1jb2xvcj0iI0E3OEJGQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzOEJERjgiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoIGQ9Ik0gNTAgMjQ4IEwgNTEgMjQ4IEwgNTEgMjM4IEwgNTIgMjM4IEwgNTIgMjMxIEwgNTMgMjMxIEwgNTMgMjI1IEwgNTQgMjI1IEwgNTQgMjIwIEwgNTUgMjIwIEwgNTUgMjE1IEwgNTYgMjE1IEwgNTcgMjA3IEwgNTggMjA3IEwgNTggMjA0IEwgNTkgMjA0IEwgNTkgMjAwIEwgNjAgMjAwIEwgNjAgMTk3IEwgNjEgMTk3IEwgNjEgMTk0IEwgNjIgMTk0IEwgNjMgMTg4IEwgNjQgMTg4IEwgNjQgMTg2IEwgNjUgMTg2IEwgNjUgMTgzIEwgNjYgMTgzIEwgNjYgMTgxIEwgNjcgMTgxIEwgNjcgMTc4IEwgNjggMTc4IEwgNjggMTc2IEwgNjkgMTc2IEwgNjkgMTc0IEwgNzAgMTc0IEwgNzAgMTcyIEwgNzEgMTcyIEwgNzEgMTcwIEwgNzIgMTcwIEwgNzIgMTY4IEwgNzMgMTY4IEwgNzMgMTY2IEwgNzQgMTY2IEwgNzQgMTY0IEwgNzUgMTY0IEwgNzUgMTYyIEwgNzYgMTYyIEwgNzYgMTYwIEwgNzcgMTYwIEwgNzggMTU2IEwgNzkgMTU2IEwgNzkgMTU1IEwgODAgMTU1IEwgODAgMTUzIEwgODIgMTUyIEwgODMgMTQ4IEwgODUgMTQ3IEwgODUgMTQ1IEwgODcgMTQ0IEwgODcgMTQyIEwgODkgMTQxIEwgODkgMTM5IEwgOTAgMTM5IEwgOTAgMTM4IEwgOTIgMTM3IEwgOTIgMTM1IEwgOTMgMTM1IEwgOTMgMTM0IEwgOTUgMTMzIEwgOTUgMTMxIEwgOTYgMTMxIEwgOTYgMTMwIEwgOTcgMTMwIEwgOTcgMTI5IEwgOTggMTI5IEwgOTkgMTI3IEwgMTAwIDEyNyBMIDEwMCAxMjUgTCAxMDEgMTI1IEwgMTAxIDEyNCBMIDEwMiAxMjQgTCAxMDIgMTIzIEwgMTAzIDEyMyBMIDEwMyAxMjIgTCAxMDQgMTIyIEwgMTA0IDEyMSBMIDEwNSAxMjEgTCAxMDUgMTIwIEwgMTA2IDEyMCBMIDEwNiAxMTkgTCAxMDcgMTE5IEwgMTA3IDExOCBMIDEwOCAxMTggTCAxMDggMTE3IEwgMTEwIDExNiBMIDExMCAxMTQgTCAxMTEgMTE0IEwgMTEyIDExMiBMIDExNCAxMTIgTCAxMTQgMTExIEwgMTE1IDExMSBMIDExNSAxMTAgTCAxMTYgMTEwIEwgMTE2IDEwOSBMIDExNyAxMDkgTCAxMTcgMTA4IEwgMTE4IDEwOCBMIDExOCAxMDcgTCAxMTkgMTA3IEwgMTE5IDEwNiBMIDEyMCAxMDYgTCAxMjAgMTA1IEwgMTIxIDEwNSBMIDEyMSAxMDQgTCAxMjIgMTA0IEwgMTIyIDEwMyBMIDEyMyAxMDMgTCAxMjQgMTAxIEwgMTI2IDEwMSBMIDEyNiAxMDAgTCAxMjcgMTAwIEwgMTI3IDk5IEwgMTI4IDk5IEwgMTI5IDk3IEwgMTMxIDk3IEwgMTMxIDk2IEwgMTMyIDk2IEwgMTMyIDk1IEwgMTMzIDk1IEwgMTM0IDkzIEwgMTM2IDkzIEwgMTM2IDkyIEwgMTM3IDkyIEwgMTM4IDkwIEwgMTQwIDkwIEwgMTQxIDg4IEwgMTQzIDg4IEwgMTQ0IDg2IEwgMTQ2IDg2IEwgMTQ2IDg1IEwgMTQ3IDg1IEwgMTQ3IDg0IEwgMTQ5IDg0IEwgMTUwIDgyIEwgMTU0IDgxIEwgMTU1IDc5IEwgMTU3IDc5IEwgMTU3IDc4IEwgMTYxIDc3IEwgMTYyIDc1IEwgMTY0IDc1IEwgMTY0IDc0IEwgMTY2IDc0IEwgMTY2IDczIEwgMTY4IDczIEwgMTY4IDcyIEwgMTcwIDcyIEwgMTcwIDcxIEwgMTcyIDcxIEwgMTcyIDcwIEwgMTc1IDcwIEwgMTc1IDY5IEwgMTc3IDY5IEwgMTc3IDY4IEwgMTc5IDY4IEwgMTc5IDY3IEwgMTgyIDY3IEwgMTgyIDY2IEwgMTg0IDY2IEwgMTg0IDY1IEwgMTg3IDY1IEwgMTg3IDY0IEwgMTg5IDY0IEwgMTg5IDYzIEwgMTkyIDYzIEwgMTkyIDYyIEwgMTk1IDYyIEwgMTk1IDYxIEwgMTk4IDYxIEwgMTk4IDYwIEwgMjA0IDU5IEwgMjA0IDU4IEwgMjA4IDU4IEwgMjA4IDU3IEwgMjEyIDU3IEwgMjEyIDU2IEwgMjE2IDU2IEwgMjE2IDU1IEwgMjIwIDU1IEwgMjIwIDU0IEwgMjMyIDUzIEwgMjMyIDUyIEwgMjM5IDUyIEwgMjM5IDUxIEwgMjUyIDUxIEwgMjUyIDUwIEwgMzUxIDUwIEwgMzUxIDUxIEwgMzYyIDUxIEwgMzYyIDUyIEwgMzY5IDUyIEwgMzY5IDUzIEwgMzgxIDU0IEwgMzgxIDU1IEwgMzg1IDU1IEwgMzg1IDU2IEwgMzkzIDU3IEwgMzkzIDU4IEwgMzk2IDU4IEwgMzk2IDU5IEwgMzk5IDU5IEwgMzk5IDYwIEwgNDAyIDYwIEwgNDAyIDYxIEwgNDA1IDYxIEwgNDA1IDYyIEwgNDExIDYzIEwgNDExIDY0IEwgNDEzIDY0IEwgNDEzIDY1IEwgNDE1IDY1IEwgNDE1IDY2IEwgNDE4IDY2IEwgNDE4IDY3IEwgNDIwIDY3IEwgNDIwIDY4IEwgNDIyIDY4IEwgNDIyIDY5IEwgNDI1IDY5IEwgNDI1IDcwIEwgNDI3IDcwIEwgNDI3IDcxIEwgNDMxIDcyIEwgNDMyIDc0IEwgNDM0IDc0IEwgNDM0IDc1IEwgNDM2IDc1IEwgNDM2IDc2IEwgNDQwIDc3IEwgNDQxIDc5IEwgNDQ1IDgwIEwgNDQ1IDgxIEwgNDQ2IDgxIEwgNDQ3IDgzIEwgNDQ2IDgzIEwgNDQ1IDg1IEwgNDQzIDg1IEwgNDQzIDg2IEwgNDQyIDg2IEwgNDQyIDg3IEwgNDQxIDg3IEwgNDQwIDg5IEwgNDM4IDg5IEwgNDM4IDkwIEwgNDM3IDkwIEwgNDM3IDkxIEwgNDM2IDkxIEwgNDM2IDkyIEwgNDM1IDkyIEwgNDM1IDkzIEwgNDM0IDkzIEwgNDMzIDk1IEwgNDMxIDk1IEwgNDMxIDk2IEwgNDMwIDk2IEwgNDMwIDk3IEwgNDI5IDk3IEwgNDI5IDk4IEwgNDI4IDk4IEwgNDI4IDk5IEwgNDI3IDk5IEwgNDI3IDEwMCBMIDQyNiAxMDAgTCA0MjYgMTAxIEwgNDI1IDEwMSBMIDQyNSAxMDIgTCA0MjQgMTAyIEwgNDI0IDEwMyBMIDQyMyAxMDMgTCA0MjMgMTA0IEwgNDIyIDEwNCBMIDQyMiAxMDUgTCA0MjEgMTA1IEwgNDIxIDEwNiBMIDQyMCAxMDYgTCA0MjAgMTA3IEwgNDE5IDEwNyBMIDQxOSAxMDggTCA0MTggMTA4IEwgNDE4IDEwOSBMIDQxNyAxMDkgTCA0MTcgMTEwIEwgNDE2IDExMCBMIDQxNiAxMTEgTCA0MTUgMTExIEwgNDE1IDExMiBMIDQxNCAxMTIgTCA0MTQgMTEzIEwgNDEzIDExMyBMIDQxMyAxMTQgTCA0MTEgMTE1IEwgNDExIDExNyBMIDQxMCAxMTcgTCA0MTAgMTE4IEwgNDA5IDExOCBMIDQwOSAxMTkgTCA0MDggMTE5IEwgNDA4IDEyMCBMIDQwNiAxMjEgTCA0MDYgMTIzIEwgNDA1IDEyMyBMIDQwNSAxMjQgTCA0MDQgMTI0IEwgNDA0IDEyNSBMIDQwMiAxMjYgTCA0MDIgMTI4IEwgNDAxIDEyOCBMIDQwMSAxMjkgTCAzOTkgMTMwIEwgMzk5IDEzMiBMIDM5OCAxMzIgTCAzOTggMTMzIEwgMzk2IDEzNCBMIDM5NiAxMzYgTCAzOTQgMTM3IEwgMzk0IDEzOSBMIDM5MiAxNDAgTCAzOTIgMTQyIEwgMzkxIDE0MiBMIDM5MSAxNDMgTCAzOTAgMTQzIEwgMzkwIDE0NSBMIDM4OCAxNDYgTCAzODggMTQ4IEwgMzg3IDE0OCBMIDM4NyAxNTAgTCAzODUgMTUxIEwgMzg1IDE1MyBMIDM4NCAxNTMgTCAzODQgMTU1IEwgMzgzIDE1NSBMIDM4MiAxNTkgTCAzODAgMTYwIEwgMzgwIDE2MiBMIDM3OSAxNjIgTCAzNzkgMTY0IEwgMzc4IDE2NCBMIDM3OCAxNjcgTCAzNzcgMTY3IEwgMzc3IDE2OCBMIDM3NCAxNjggTCAzNzQgMTY3IEwgMzcxIDE2NyBMIDM3MSAxNjYgTCAzNjggMTY2IEwgMzY4IDE2NSBMIDM2MyAxNjUgTCAzNjMgMTY0IEwgMzU5IDE2NCBMIDM1OSAxNjMgTCAzNTIgMTYzIEwgMzUyIDE2MiBMIDI1MSAxNjIgTCAyNTEgMTYzIEwgMjQ0IDE2MyBMIDI0NCAxNjQgTCAyNDAgMTY0IEwgMjQwIDE2NSBMIDIzMiAxNjYgTCAyMzIgMTY3IEwgMjI5IDE2NyBMIDIyOSAxNjggTCAyMjcgMTY4IEwgMjI3IDE2OSBMIDIyNCAxNjkgTCAyMjQgMTcwIEwgMjIyIDE3MCBMIDIyMiAxNzEgTCAyMjAgMTcxIEwgMjIwIDE3MiBMIDIxNyAxNzIgTCAyMTcgMTczIEwgMjE1IDE3MyBMIDIxNCAxNzUgTCAyMTIgMTc1IEwgMjEyIDE3NiBMIDIxMCAxNzYgTCAyMDkgMTc4IEwgMjA3IDE3OCBMIDIwNiAxODAgTCAyMDQgMTgwIEwgMjAzIDE4MiBMIDIwMSAxODIgTCAyMDEgMTgzIEwgMjAwIDE4MyBMIDIwMCAxODQgTCAxOTkgMTg0IEwgMTk4IDE4NiBMIDE5NiAxODYgTCAxOTYgMTg3IEwgMTk1IDE4NyBMIDE5NSAxODggTCAxOTQgMTg4IEwgMTk0IDE4OSBMIDE5MyAxODkgTCAxOTMgMTkwIEwgMTkyIDE5MCBMIDE5MiAxOTEgTCAxOTEgMTkxIEwgMTkxIDE5MiBMIDE5MCAxOTIgTCAxOTAgMTkzIEwgMTg5IDE5MyBMIDE4OSAxOTQgTCAxODcgMTk1IEwgMTg3IDE5NyBMIDE4NiAxOTcgTCAxODYgMTk4IEwgMTg1IDE5OCBMIDE4NSAxOTkgTCAxODQgMTk5IEwgMTg0IDIwMCBMIDE4MiAyMDEgTCAxODIgMjAzIEwgMTgxIDIwMyBMIDE4MSAyMDQgTCAxODAgMjA0IEwgMTgwIDIwNiBMIDE3OCAyMDcgTCAxNzcgMjExIEwgMTc1IDIxMiBMIDE3NSAyMTQgTCAxNzQgMjE0IEwgMTc0IDIxNiBMIDE3MyAyMTYgTCAxNzMgMjE4IEwgMTcyIDIxOCBMIDE3MiAyMjAgTCAxNzEgMjIwIEwgMTcxIDIyMiBMIDE3MCAyMjIgTCAxNzAgMjI1IEwgMTY5IDIyNSBMIDE2OSAyMjcgTCAxNjggMjI3IEwgMTY3IDIzMyBMIDE2NiAyMzMgTCAxNjYgMjM3IEwgMTY1IDIzNyBMIDE2NSAyNDEgTCAxNjQgMjQxIEwgMTY0IDI0NiBMIDE2MyAyNDYgTCAxNjMgMjU0IEwgMTYyIDI1NCBMIDE2MiAyODEgTCAxNjMgMjgxIEwgMTYzIDI4OCBMIDE2NCAyODggTCAxNjUgMjk4IEwgMTY2IDI5OCBMIDE2NiAzMDEgTCAxNjcgMzAxIEwgMTY3IDMwNCBMIDE2OCAzMDQgTCAxNjkgMzEwIEwgMTcwIDMxMCBMIDE3MCAzMTIgTCAxNzEgMzEyIEwgMTcxIDMxNCBMIDE3MiAzMTQgTCAxNzIgMzE2IEwgMTczIDMxNiBMIDE3MyAzMTggTCAxNzQgMzE4IEwgMTc0IDMyMCBMIDE3NSAzMjAgTCAxNzUgMzIyIEwgMTc2IDMyMiBMIDE3NyAzMjYgTCAxNzggMzI2IEwgMTc4IDMyNyBMIDE4MCAzMjggTCAxODAgMzMwIEwgMTgxIDMzMCBMIDE4MSAzMzEgTCAxODIgMzMxIEwgMTgyIDMzMyBMIDE4MyAzMzMgTCAxODMgMzM0IEwgMTg1IDMzNSBMIDE4NSAzMzcgTCAxODYgMzM3IEwgMTg2IDMzOCBMIDE4NyAzMzggTCAxODcgMzM5IEwgMTg4IDMzOSBMIDE4OCAzNDAgTCAxODkgMzQwIEwgMTg5IDM0MSBMIDE5MCAzNDEgTCAxOTAgMzQyIEwgMTkxIDM0MiBMIDE5MSAzNDMgTCAxOTIgMzQzIEwgMTkyIDM0NCBMIDE5MyAzNDQgTCAxOTMgMzQ1IEwgMTk0IDM0NSBMIDE5NCAzNDYgTCAxOTUgMzQ2IEwgMTk2IDM0OCBMIDE5OCAzNDggTCAxOTggMzQ5IEwgMTk5IDM0OSBMIDE5OSAzNTAgTCAyMDAgMzUwIEwgMjAxIDM1MiBMIDIwMyAzNTIgTCAyMDMgMzUzIEwgMjA0IDM1MyBMIDIwNCAzNTQgTCAyMDYgMzU0IEwgMjA3IDM1NiBMIDIwOSAzNTYgTCAyMDkgMzU3IEwgMjExIDM1NyBMIDIxMSAzNTggTCAyMTMgMzU4IEwgMjEzIDM1OSBMIDIxNSAzNTkgTCAyMTUgMzYwIEwgMjE3IDM2MCBMIDIxNyAzNjEgTCAyMTkgMzYxIEwgMjE5IDM2MiBMIDIyMSAzNjIgTCAyMjEgMzYzIEwgMjIzIDM2MyBMIDIyMyAzNjQgTCAyMjYgMzY0IEwgMjI2IDM2NSBMIDIyOCAzNjUgTCAyMjggMzY2IEwgMjMyIDM2NiBMIDIzMiAzNjcgTCAyMzUgMzY3IEwgMjM1IDM2OCBMIDIzOSAzNjggTCAyMzkgMzY5IEwgMjQ0IDM2OSBMIDI0NCAzNzAgTCAyNTEgMzcwIEwgMjUxIDM3MSBMIDM2OCAzNzEgTCAzNjggMzcwIEwgMzc2IDM3MCBMIDM3NiAzNjkgTCAzODEgMzY5IEwgMzgxIDM2OCBMIDM4NSAzNjggTCAzODUgMzY3IEwgMzg4IDM2NyBMIDM4OCAzNjYgTCAzOTIgMzY2IEwgMzkyIDM2NSBMIDM5NSAzNjUgTCAzOTUgMzY0IEwgMzk3IDM2NCBMIDM5NyAzNjMgTCA0MDAgMzYzIEwgNDAwIDM2MiBMIDQwMiAzNjIgTCA0MDIgMzYxIEwgNDA0IDM2MSBMIDQwNCAzNjAgTCA0MDYgMzYwIEwgNDA2IDM1OSBMIDQwOCAzNTkgTCA0MDggMzU4IEwgNDEyIDM1NyBMIDQxMyAzNTUgTCA0MTcgMzU0IEwgNDE3IDM1MyBMIDQxOCAzNTMgTCA0MTggMzUyIEwgNDIwIDM1MiBMIDQyMCAzNTEgTCA0MjEgMzUxIEwgNDIyIDM0OSBMIDQyNCAzNDkgTCA0MjQgMzQ4IEwgNDI1IDM0OCBMIDQyNSAzNDcgTCA0MjYgMzQ3IEwgNDI2IDM0NiBMIDQyNyAzNDYgTCA0MjggMzQ0IEwgNDMwIDM0NCBMIDQzMCAzNDMgTCA0MzEgMzQzIEwgNDMxIDM0MiBMIDQzMiAzNDIgTCA0MzIgMzQxIEwgNDMzIDM0MSBMIDQzMyAzNDAgTCA0MzQgMzQwIEwgNDM0IDMzOSBMIDQzNiAzMzggTCA0MzYgMzM2IEwgNDM3IDMzNiBMIDQzNyAzMzUgTCA0MzggMzM1IEwgNDM4IDMzNCBMIDQzOSAzMzQgTCA0MzkgMzMzIEwgNDQxIDMzMiBMIDQ0MSAzMzAgTCA0NDIgMzMwIEwgNDQyIDMyOSBMIDQ0NCAzMjggTCA0NDQgMzI2IEwgNDQ1IDMyNiBMIDQ0NSAzMjUgTCA0NDYgMzI1IEwgNDQ2IDMyMyBMIDQ0OCAzMjIgTCA0NDkgMzE4IEwgNDUxIDMxNyBMIDQ1MSAzMTUgTCA0NTIgMzE1IEwgNDUyIDMxMyBMIDQ1MyAzMTMgTCA0NTMgMzExIEwgNDU0IDMxMSBMIDQ1NCAzMDkgTCA0NTUgMzA5IEwgNDU1IDMwNiBMIDQ1NiAzMDYgTCA0NTYgMzA0IEwgNDU3IDMwNCBMIDQ1NyAzMDEgTCA0NTggMzAxIEwgNDU4IDI5OCBMIDQ1OSAyOTggTCA0NjAgMjkyIEwgNDYxIDI5MiBMIDQ2MSAyODggTCA0NjIgMjg4IEwgNDYyIDI4NCBMIDQ2MyAyODQgTCA0NjMgMjc4IEwgNDY0IDI3OCBMIDQ2NCAyNzIgTCA0NjUgMjcyIEwgNDY1IDI2NSBMIDQ2NiAyNjUgTCA0NjYgMjYxIEwgNDY3IDI2MSBMIDQ2NyAyNTYgTCA0NjggMjU2IEwgNDY4IDI1MyBMIDQ2OSAyNTMgTCA0NjkgMjQ5IEwgNDcwIDI0OSBMIDQ3MSAyNDMgTCA0NzIgMjQzIEwgNDcyIDI0MSBMIDQ3MyAyNDEgTCA0NzMgMjM5IEwgNDc0IDIzOSBMIDQ3NCAyMzYgTCA0NzUgMjM2IEwgNDc1IDIzNCBMIDQ3NiAyMzQgTCA0NzcgMjMwIEwgNDc5IDIyOSBMIDQ4MCAyMjUgTCA0ODIgMjI0IEwgNDgzIDIyMCBMIDQ4NCAyMjAgTCA0ODQgMjE5IEwgNDg2IDIxOCBMIDQ4NiAyMTYgTCA0ODcgMjE2IEwgNDg3IDIxNSBMIDQ4OSAyMTQgTCA0ODkgMjEyIEwgNDkwIDIxMiBMIDQ5MCAyMTEgTCA0OTEgMjExIEwgNDkxIDIxMCBMIDQ5MiAyMTAgTCA0OTIgMjA5IEwgNDkzIDIwOSBMIDQ5MyAyMDggTCA0OTQgMjA4IEwgNDk0IDIwNyBMIDQ5NSAyMDcgTCA0OTUgMjA2IEwgNDk2IDIwNiBMIDQ5NiAyMDUgTCA0OTcgMjA1IEwgNDk3IDIwNCBMIDQ5OCAyMDQgTCA0OTggMjAzIEwgNDk5IDIwMyBMIDQ5OSAyMDIgTCA1MDAgMjAyIEwgNTAwIDIwMSBMIDUwMSAyMDEgTCA1MDEgMjAwIEwgNTAyIDIwMCBMIDUwMyAxOTggTCA1MDUgMTk4IEwgNTA1IDE5NyBMIDUwNiAxOTcgTCA1MDcgMTk1IEwgNTA5IDE5NSBMIDUwOSAxOTQgTCA1MTAgMTk0IEwgNTExIDE5MiBMIDUxMyAxOTIgTCA1MTQgMTkwIEwgNTE4IDE4OSBMIDUxOSAxODcgTCA1MjEgMTg3IEwgNTIxIDE4NiBMIDUyMyAxODYgTCA1MjMgMTg1IEwgNTI1IDE4NSBMIDUyNSAxODQgTCA1MjcgMTg0IEwgNTI3IDE4MyBMIDUyOSAxODMgTCA1MjkgMTgyIEwgNTMyIDE4MiBMIDUzMiAxODEgTCA1MzQgMTgxIEwgNTM0IDE4MyBMIDUzNSAxODMgTCA1MzUgMTg2IEwgNTM2IDE4NiBMIDUzNiAxODggTCA1MzcgMTg4IEwgNTM3IDE5MSBMIDUzOCAxOTEgTCA1MzggMTk0IEwgNTM5IDE5NCBMIDUzOSAxOTcgTCA1NDAgMTk3IEwgNTQxIDIwMyBMIDU0MiAyMDMgTCA1NDIgMjA3IEwgNTQzIDIwNyBMIDU0MyAyMTEgTCA1NDQgMjExIEwgNTQ1IDIxOSBMIDU0NiAyMTkgTCA1NDYgMjI0IEwgNTQ3IDIyNCBMIDU0NyAyMjkgTCA1NDggMjI5IEwgNTQ4IDIzNiBMIDU0OSAyMzYgTCA1NDkgMjQ2IEwgNTUwIDI0NiBMIDU1MCAyNjMgTCA1NTEgMjYzIEwgNTUxIDI3MyBMIDU1MCAyNzMgTCA1NTAgMjkxIEwgNTQ5IDI5MSBMIDU0OSAzMDAgTCA1NDggMzAwIEwgNTQ4IDMwNyBMIDU0NyAzMDcgTCA1NDcgMzEyIEwgNTQ2IDMxMiBMIDU0NiAzMTcgTCA1NDUgMzE3IEwgNTQ1IDMyMiBMIDU0NCAzMjIgTCA1NDMgMzMwIEwgNTQyIDMzMCBMIDU0MiAzMzMgTCA1NDEgMzMzIEwgNTQxIDMzNyBMIDU0MCAzMzcgTCA1NDAgMzQwIEwgNTM5IDM0MCBMIDUzOCAzNDYgTCA1MzcgMzQ2IEwgNTM3IDM0OCBMIDUzNiAzNDggTCA1MzUgMzU0IEwgNTM0IDM1NCBMIDUzNCAzNTYgTCA1MzMgMzU2IEwgNTMzIDM1OCBMIDUzMiAzNTggTCA1MzIgMzYxIEwgNTMxIDM2MSBMIDUzMSAzNjMgTCA1MzAgMzYzIEwgNTMwIDM2NSBMIDUyOSAzNjUgTCA1MjkgMzY3IEwgNTI4IDM2NyBMIDUyOCAzNjkgTCA1MjcgMzY5IEwgNTI3IDM3MSBMIDUyNiAzNzEgTCA1MjYgMzczIEwgNTI1IDM3MyBMIDUyNCAzNzcgTCA1MjIgMzc4IEwgNTIyIDM4MCBMIDUyMSAzODAgTCA1MjAgMzg0IEwgNTE4IDM4NSBMIDUxOCAzODcgTCA1MTYgMzg4IEwgNTE2IDM5MCBMIDUxNCAzOTEgTCA1MTQgMzkzIEwgNTEyIDM5NCBMIDUxMiAzOTYgTCA1MTEgMzk2IEwgNTExIDM5NyBMIDUwOSAzOTggTCA1MDkgNDAwIEwgNTA4IDQwMCBMIDUwOCA0MDEgTCA1MDYgNDAyIEwgNTA2IDQwNCBMIDUwNSA0MDQgTCA1MDUgNDA1IEwgNTA0IDQwNSBMIDUwNCA0MDYgTCA1MDIgNDA3IEwgNTAyIDQwOSBMIDUwMSA0MDkgTCA1MDEgNDEwIEwgNTAwIDQxMCBMIDUwMCA0MTEgTCA0OTkgNDExIEwgNDk5IDQxMiBMIDQ5NyA0MTMgTCA0OTcgNDE1IEwgNDk2IDQxNSBMIDQ5NiA0MTYgTCA0OTUgNDE2IEwgNDk1IDQxNyBMIDQ5NCA0MTcgTCA0OTQgNDE4IEwgNDkzIDQxOCBMIDQ5MyA0MTkgTCA0OTIgNDE5IEwgNDkyIDQyMCBMIDQ5MSA0MjAgTCA0OTEgNDIxIEwgNDkwIDQyMSBMIDQ5MCA0MjIgTCA0ODkgNDIyIEwgNDg5IDQyMyBMIDQ4OCA0MjMgTCA0ODggNDI0IEwgNDg3IDQyNCBMIDQ4NyA0MjUgTCA0ODYgNDI1IEwgNDg2IDQyNiBMIDQ4NSA0MjYgTCA0ODUgNDI3IEwgNDg0IDQyNyBMIDQ4NCA0MjggTCA0ODMgNDI4IEwgNDgzIDQyOSBMIDQ4MiA0MjkgTCA0ODEgNDMxIEwgNDc5IDQzMSBMIDQ3OSA0MzIgTCA0NzggNDMyIEwgNDc4IDQzMyBMIDQ3NyA0MzMgTCA0NzcgNDM0IEwgNDc2IDQzNCBMIDQ3NiA0MzUgTCA0NzUgNDM1IEwgNDc0IDQzNyBMIDQ3MiA0MzcgTCA0NzIgNDM4IEwgNDcxIDQzOCBMIDQ3MSA0MzkgTCA0NzAgNDM5IEwgNDcwIDQ0MCBMIDQ2OSA0NDAgTCA0NjggNDQyIEwgNDY2IDQ0MiBMIDQ2NiA0NDMgTCA0NjUgNDQzIEwgNDY0IDQ0NSBMIDQ2MiA0NDUgTCA0NjEgNDQ3IEwgNDU5IDQ0NyBMIDQ1OCA0NDkgTCA0NTYgNDQ5IEwgNDU1IDQ1MSBMIDQ1MyA0NTEgTCA0NTMgNDUyIEwgNDUyIDQ1MiBMIDQ1MiA0NTMgTCA0NTAgNDUzIEwgNDQ5IDQ1NSBMIDQ0NSA0NTYgTCA0NDQgNDU4IEwgNDQyIDQ1OCBMIDQ0MiA0NTkgTCA0NDAgNDU5IEwgNDQwIDQ2MCBMIDQzOCA0NjAgTCA0MzggNDYxIEwgNDM2IDQ2MSBMIDQzNiA0NjIgTCA0MzQgNDYyIEwgNDM0IDQ2MyBMIDQzMiA0NjMgTCA0MzIgNDY0IEwgNDMwIDQ2NCBMIDQzMCA0NjUgTCA0MjggNDY1IEwgNDI4IDQ2NiBMIDQyNiA0NjYgTCA0MjYgNDY3IEwgNDIzIDQ2NyBMIDQyMyA0NjggTCA0MjEgNDY4IEwgNDIxIDQ2OSBMIDQxOSA0NjkgTCA0MTkgNDcwIEwgNDE2IDQ3MCBMIDQxNiA0NzEgTCA0MTQgNDcxIEwgNDE0IDQ3MiBMIDQxMSA0NzIgTCA0MTEgNDczIEwgNDA4IDQ3MyBMIDQwOCA0NzQgTCA0MDUgNDc0IEwgNDA1IDQ3NSBMIDQwMiA0NzUgTCA0MDIgNDc2IEwgMzk5IDQ3NiBMIDM5OSA0NzcgTCAzOTUgNDc3IEwgMzk1IDQ3OCBMIDM5MiA0NzggTCAzOTIgNDc5IEwgMzg3IDQ3OSBMIDM4NyA0ODAgTCAzODMgNDgwIEwgMzgzIDQ4MSBMIDM3OCA0ODEgTCAzNzggNDgyIEwgMzcxIDQ4MiBMIDM3MSA0ODMgTCAzNjMgNDgzIEwgMzYzIDQ4NCBMIDM0OCA0ODQgTCAzNDggNDg1IEwgMjU1IDQ4NSBMIDI1NSA0ODQgTCAyNDAgNDg0IEwgMjQwIDQ4MyBMIDIzMiA0ODMgTCAyMzIgNDgyIEwgMjI2IDQ4MiBMIDIyNiA0ODEgTCAyMTYgNDgwIEwgMjE2IDQ3OSBMIDIxMiA0NzkgTCAyMTIgNDc4IEwgMjA4IDQ3OCBMIDIwOCA0NzcgTCAyMDUgNDc3IEwgMjA1IDQ3NiBMIDIwMSA0NzYgTCAyMDEgNDc1IEwgMTk4IDQ3NSBMIDE5OCA0NzQgTCAxOTIgNDczIEwgMTkyIDQ3MiBMIDE5MCA0NzIgTCAxOTAgNDcxIEwgMTg3IDQ3MSBMIDE4NyA0NzAgTCAxODUgNDcwIEwgMTg1IDQ2OSBMIDE4MiA0NjkgTCAxODIgNDY4IEwgMTgwIDQ2OCBMIDE4MCA0NjcgTCAxNzcgNDY3IEwgMTc3IDQ2NiBMIDE3NSA0NjYgTCAxNzUgNDY1IEwgMTczIDQ2NSBMIDE3MyA0NjQgTCAxNzEgNDY0IEwgMTcxIDQ2MyBMIDE2OSA0NjMgTCAxNjkgNDYyIEwgMTY3IDQ2MiBMIDE2NyA0NjEgTCAxNjUgNDYxIEwgMTY1IDQ2MCBMIDE2MSA0NTkgTCAxNjAgNDU3IEwgMTU2IDQ1NiBMIDE1NSA0NTQgTCAxNTEgNDUzIEwgMTUwIDQ1MSBMIDE0OCA0NTEgTCAxNDcgNDQ5IEwgMTQ1IDQ0OSBMIDE0NCA0NDcgTCAxNDIgNDQ3IEwgMTQxIDQ0NSBMIDEzOSA0NDUgTCAxMzkgNDQ0IEwgMTM4IDQ0NCBMIDEzNyA0NDIgTCAxMzUgNDQyIEwgMTM1IDQ0MSBMIDEzNCA0NDEgTCAxMzMgNDM5IEwgMTMxIDQzOSBMIDEzMSA0MzggTCAxMzAgNDM4IEwgMTMwIDQzNyBMIDEyOSA0MzcgTCAxMjkgNDM2IEwgMTI3IDQzNSBMIDEyNyA0MzQgTCAxMjUgNDM0IEwgMTI1IDQzMyBMIDEyNCA0MzMgTCAxMjQgNDMyIEwgMTIzIDQzMiBMIDEyMyA0MzEgTCAxMjIgNDMxIEwgMTIyIDQzMCBMIDEyMSA0MzAgTCAxMjEgNDI5IEwgMTIwIDQyOSBMIDExOSA0MjcgTCAxMTcgNDI3IEwgMTE3IDQyNiBMIDExNiA0MjYgTCAxMTYgNDI1IEwgMTE1IDQyNSBMIDExNSA0MjQgTCAxMTQgNDI0IEwgMTE0IDQyMyBMIDExMyA0MjMgTCAxMTMgNDIyIEwgMTEyIDQyMiBMIDExMiA0MjEgTCAxMTEgNDIxIEwgMTExIDQyMCBMIDExMCA0MjAgTCAxMTAgNDE5IEwgMTA5IDQxOSBMIDEwOSA0MTggTCAxMDggNDE4IEwgMTA4IDQxNyBMIDEwNiA0MTYgTCAxMDYgNDE0IEwgMTA1IDQxNCBMIDEwNSA0MTMgTCAxMDQgNDEzIEwgMTA0IDQxMiBMIDEwMyA0MTIgTCAxMDMgNDExIEwgMTAyIDQxMSBMIDEwMiA0MTAgTCAxMDEgNDEwIEwgMTAxIDQwOSBMIDk5IDQwOCBMIDk5IDQwNiBMIDk4IDQwNiBMIDk4IDQwNSBMIDk3IDQwNSBMIDk3IDQwNCBMIDk1IDQwMyBMIDk1IDQwMSBMIDk0IDQwMSBMIDk0IDQwMCBMIDkyIDM5OSBMIDkyIDM5NyBMIDkxIDM5NyBMIDkxIDM5NiBMIDg5IDM5NSBMIDg5IDM5MyBMIDg3IDM5MiBMIDg3IDM5MCBMIDg1IDM4OSBMIDg1IDM4NyBMIDgzIDM4NiBMIDgzIDM4NCBMIDgxIDM4MyBMIDgxIDM4MSBMIDc5IDM4MCBMIDc5IDM3OCBMIDc4IDM3OCBMIDc3IDM3NCBMIDc1IDM3MyBMIDc1IDM3MSBMIDc0IDM3MSBMIDc0IDM2OSBMIDczIDM2OSBMIDczIDM2NyBMIDcyIDM2NyBMIDcyIDM2NSBMIDcxIDM2NSBMIDcxIDM2MyBMIDcwIDM2MyBMIDcwIDM2MCBMIDY5IDM2MCBMIDY5IDM1OCBMIDY4IDM1OCBMIDY4IDM1NiBMIDY3IDM1NiBMIDY3IDM1NCBMIDY2IDM1NCBMIDY2IDM1MSBMIDY1IDM1MSBMIDY1IDM0OSBMIDY0IDM0OSBMIDY0IDM0NiBMIDYzIDM0NiBMIDYzIDM0MyBMIDYyIDM0MyBMIDYyIDM0MSBMIDYxIDM0MSBMIDYxIDMzOCBMIDYwIDMzOCBMIDYwIDMzNCBMIDU5IDMzNCBMIDU5IDMzMSBMIDU4IDMzMSBMIDU4IDMyNyBMIDU3IDMyNyBMIDU3IDMyNCBMIDU2IDMyNCBMIDU2IDMyMCBMIDU1IDMyMCBMIDU1IDMxNSBMIDU0IDMxNSBMIDU0IDMxMCBMIDUzIDMxMCBMIDUzIDMwNCBMIDUyIDMwNCBMIDUyIDI5NyBMIDUxIDI5NyBMIDUxIDI4OCBMIDUwIDI4OCBaIiBmaWxsPSJ1cmwoI2xlZnRHcmFkaWVudCkiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPgogIDxwYXRoIGQ9Ik0gMzY2IDI0OSBMIDM2NyAyNDkgTCAzNjcgMjM5IEwgMzY4IDIzOSBMIDM2OCAyMzIgTCAzNjkgMjMyIEwgMzY5IDIzNSBMIDM3MCAyMzUgTCAzNzAgMjMxIEwgMzY5IDIzMSBMIDM2OSAyMjYgTCAzNzAgMjI2IEwgMzcwIDIyOCBMIDM3MSAyMjggTCAzNzEgMjI2IEwgMzcwIDIyNiBMIDM3MCAyMjEgTCAzNzEgMjIxIEwgMzcxIDIyNCBMIDM3MiAyMjQgTCAzNzIgMjIxIEwgMzcxIDIyMSBMIDM3MSAyMTYgTCAzNzIgMjE2IEwgMzcyIDIxOCBMIDM3MyAyMTggTCAzNzMgMjE2IEwgMzcyIDIxNiBMIDM3MiAyMTIgTCAzNzMgMjEyIEwgMzczIDIwOCBMIDM3NCAyMDggTCAzNzQgMjA1IEwgMzc2IDIwNiBMIDM3NiAyMDUgTCAzNzUgMjA1IEwgMzc1IDIwMSBMIDM3NiAyMDEgTCAzNzYgMjAzIEwgMzc3IDIwMyBMIDM3NyAyMDEgTCAzNzYgMjAxIEwgMzc2IDE5OCBMIDM3NyAxOTggTCAzNzcgMjAwIEwgMzc4IDIwMCBMIDM3OCAxOTcgTCAzNzcgMTk3IEwgMzc3IDE5NSBMIDM3OSAxOTYgTCAzNzkgMTk1IEwgMzc4IDE5NSBMIDM3OCAxOTIgTCAzNzkgMTkyIEwgMzc5IDE5NCBMIDM4MCAxOTQgTCAzODAgMTkyIEwgMzc5IDE5MiBMIDM3OSAxODkgTCAzODAgMTg5IEwgMzgwIDE5MSBMIDM4MSAxOTEgTCAzODEgMTg5IEwgMzgwIDE4OSBMIDM4MCAxODcgTCAzODEgMTg3IEwgMzgxIDE4NCBMIDM4MiAxODQgTCAzODIgMTgyIEwgMzgzIDE4MiBMIDM4MyAxNzkgTCAzODQgMTc5IEwgMzg0IDE3NyBMIDM4NiAxNzggTCAzODYgMTc2IEwgMzg3IDE3NiBMIDM4NyAxNzQgTCAzODggMTc0IEwgMzg4IDE3MiBMIDM4NyAxNzIgTCAzODcgMTc0IEwgMzg2IDE3NCBMIDM4NiAxNzYgTCAzODUgMTc2IEwgMzg1IDE3NCBMIDM4NiAxNzQgTCAzODcgMTcwIEwgMzg5IDE3MSBMIDM4OSAxNzAgTCAzODggMTcwIEwgMzg4IDE2OCBMIDM5MCAxNjkgTCAzOTAgMTY4IEwgMzg5IDE2OCBMIDM4OSAxNjYgTCAzOTAgMTY2IEwgMzkwIDE2NCBMIDM5MSAxNjQgTCAzOTIgMTYwIEwgMzk0IDE2MSBMIDM5MyAxNTkgTCAzOTUgMTU5IEwgMzk1IDE1OCBMIDM5NiAxNTggTCAzOTYgMTU2IEwgMzk3IDE1NiBMIDM5NyAxNTUgTCAzOTYgMTU1IEwgMzk2IDE1NiBMIDM5NSAxNTYgTCAzOTUgMTU1IEwgMzk2IDE1NSBMIDM5NiAxNTMgTCAzOTggMTU0IEwgMzk3IDE1MiBMIDM5OSAxNTIgTCAzOTkgMTUxIEwgMzk4IDE1MSBMIDM5OCAxNTAgTCAzOTkgMTUwIEwgMzk5IDE0OCBMIDQwMSAxNDkgTCA0MDAgMTQ3IEwgNDAxIDE0NyBMIDQwMSAxNDUgTCA0MDMgMTQ2IEwgNDAzIDE0NSBMIDQwMiAxNDUgTCA0MDIgMTQ0IEwgNDAzIDE0NCBMIDQwMyAxNDIgTCA0MDUgMTQzIEwgNDA0IDE0MSBMIDQwNiAxNDAgTCA0MDYgMTM4IEwgNDA4IDEzNyBMIDQwOCAxMzUgTCA0MTAgMTM2IEwgNDA5IDEzNCBMIDQxMyAxMzIgTCA0MTMgMTMxIEwgNDEyIDEzMSBMIDQxMiAxMzIgTCA0MTEgMTMyIEwgNDExIDEzMSBMIDQxMiAxMzEgTCA0MTIgMTMwIEwgNDEzIDEzMCBMIDQxNCAxMjggTCA0MTYgMTI4IEwgNDE2IDEyNyBMIDQxNyAxMjcgTCA0MTggMTI1IEwgNDE3IDEyNSBMIDQxNiAxMjcgTCA0MTUgMTI3IEwgNDE1IDEyNiBMIDQxNiAxMjYgTCA0MTYgMTI1IEwgNDE3IDEyNSBMIDQxNyAxMjQgTCA0MTggMTI0IEwgNDE4IDEyMyBMIDQxOSAxMjMgTCA0MjAgMTIxIEwgNDIyIDEyMSBMIDQyMiAxMjAgTCA0MjMgMTIwIEwgNDIzIDExOSBMIDQyNCAxMTkgTCA0MjQgMTE4IEwgNDI1IDExOCBMIDQyNSAxMTcgTCA0MjYgMTE3IEwgNDI2IDExNiBMIDQyNyAxMTYgTCA0MjcgMTE1IEwgNDI4IDExNSBMIDQyOCAxMTQgTCA0MjkgMTE0IEwgNDI5IDExMyBMIDQzMCAxMTMgTCA0MzAgMTEyIEwgNDMxIDExMiBMIDQzMSAxMTEgTCA0MzIgMTExIEwgNDMyIDExMCBMIDQzMyAxMTAgTCA0MzMgMTA5IEwgNDM0IDEwOSBMIDQzNCAxMDggTCA0MzYgMTA3IEwgNDM2IDEwNSBMIDQzNyAxMDUgTCA0MzggMTAzIEwgNDQwIDEwNCBMIDQ0MCAxMDMgTCA0NDEgMTAzIEwgNDQxIDEwMiBMIDQ0MyAxMDEgTCA0NDMgMTAwIEwgNDQyIDEwMCBMIDQ0MiAxMDEgTCA0NDEgMTAxIEwgNDQxIDEwMiBMIDQzOSAxMDMgTCA0MzkgMTAyIEwgNDQwIDEwMiBMIDQ0MCAxMDEgTCA0NDEgMTAxIEwgNDQyIDk5IEwgNDQ0IDk5IEwgNDQ0IDk4IEwgNDQ1IDk4IEwgNDQ2IDk2IEwgNDQ4IDk3IEwgNDQ4IDk2IEwgNDQ5IDk2IEwgNDQ5IDk0IEwgNDUxIDk1IEwgNDUxIDk0IEwgNDUzIDkzIEwgNDUzIDkxIEwgNDU1IDkyIEwgNDU0IDkwIEwgNDU1IDkwIEwgNDU1IDg5IEwgNDU3IDg5IEwgNDU4IDg3IEwgNDYwIDg3IEwgNDYxIDg1IEwgNDYzIDg1IEwgNDYzIDg0IEwgNDY1IDg1IEwgNDY0IDgzIEwgNDY2IDgzIEwgNDY2IDg0IEwgNDY3IDg0IEwgNDY3IDgzIEwgNDY5IDgzIEwgNDY5IDgyIEwgNDcwIDgyIEwgNDcwIDgxIEwgNDY4IDgyIEwgNDY5IDgwIEwgNDcxIDgwIEwgNDcxIDgxIEwgNDcyIDgxIEwgNDcyIDgwIEwgNDczIDgwIEwgNDczIDc4IEwgNDc1IDc5IEwgNDc0IDc3IEwgNDc2IDc3IEwgNDc2IDc4IEwgNDc3IDc4IEwgNDc2IDc2IEwgNDc4IDc2IEwgNDc4IDc3IEwgNDc5IDc3IEwgNDc4IDc1IEwgNDgwIDc1IEwgNDgwIDc2IEwgNDgxIDc2IEwgNDgwIDc0IEwgNDgyIDc0IEwgNDgyIDc1IEwgNDgzIDc1IEwgNDgyIDczIEwgNDg0IDczIEwgNDg0IDc0IEwgNDg1IDc0IEwgNDg0IDcyIEwgNDg2IDcyIEwgNDg2IDczIEwgNDg3IDczIEwgNDg2IDcxIEwgNDg4IDcxIEwgNDg4IDcyIEwgNDg5IDcyIEwgNDg4IDcwIEwgNDkwIDcwIEwgNDkwIDY5IEwgNDkyIDY5IEwgNDkyIDcwIEwgNDkzIDcwIEwgNDkyIDY4IEwgNDk0IDY4IEwgNDk0IDY3IEwgNDk3IDY3IEwgNDk3IDY4IEwgNDk4IDY4IEwgNDk3IDY2IEwgNDk5IDY2IEwgNDk5IDY1IEwgNTAyIDY1IEwgNTAyIDY0IEwgNTA0IDY0IEwgNTA0IDYzIEwgNTA3IDYzIEwgNTA3IDY0IEwgNTA5IDY0IEwgNTA5IDYzIEwgNTA3IDYzIEwgNTA3IDYyIEwgNTEwIDYyIEwgNTEwIDYzIEwgNTEyIDYzIEwgNTEyIDYyIEwgNTEwIDYyIEwgNTEwIDYxIEwgNTEzIDYxIEwgNTEzIDYwIEwgNTE2IDYwIEwgNTE2IDU5IEwgNTIwIDU5IEwgNTIwIDYwIEwgNTIyIDYwIEwgNTIyIDU5IEwgNTIwIDU5IEwgNTIwIDU4IEwgNTIzIDU4IEwgNTIzIDU3IEwgNTI3IDU3IEwgNTI3IDU2IEwgNTMxIDU2IEwgNTMxIDU1IEwgNTM2IDU1IEwgNTM2IDU0IEwgNTQxIDU0IEwgNTQxIDUzIEwgNTQ3IDUzIEwgNTQ3IDUyIEwgNTU0IDUyIEwgNTU0IDUxIEwgNTY2IDUxIEwgNTY2IDUwIEwgNjY1IDUwIEwgNjY1IDUxIEwgNjc2IDUxIEwgNjc2IDUyIEwgNjg0IDUyIEwgNjg0IDUzIEwgNjkwIDUzIEwgNjkwIDU0IEwgNzAwIDU1IEwgNzAwIDU2IEwgNzA0IDU2IEwgNzA0IDU3IEwgNzA4IDU3IEwgNzA4IDU4IEwgNzExIDU4IEwgNzExIDU5IEwgNzE1IDU5IEwgNzE1IDYwIEwgNzE4IDYwIEwgNzE4IDYxIEwgNzI0IDYyIEwgNzI0IDYzIEwgNzI2IDYzIEwgNzI2IDY0IEwgNzI5IDY0IEwgNzI5IDY1IEwgNzMyIDY1IEwgNzMyIDY2IEwgNzM2IDY3IEwgNzM1IDY5IEwgNzM3IDY5IEwgNzM3IDcwIEwgNzM5IDcwIEwgNzM5IDcxIEwgNzQzIDcwIEwgNzQzIDcxIEwgNzQ1IDcxIEwgNzQ1IDcyIEwgNzQ3IDcyIEwgNzQ3IDczIEwgNzQ5IDczIEwgNzQ5IDc0IEwgNzUxIDc0IEwgNzUxIDc1IEwgNzU1IDc2IEwgNzU2IDc4IEwgNzYwIDc5IEwgNzYxIDgxIEwgNzY1IDgyIEwgNzY2IDg0IEwgNzY4IDg0IEwgNzY4IDg1IEwgNzY5IDg1IEwgNzY5IDg3IEwgNzcwIDg3IEwgNzcwIDg4IEwgNzcyIDg3IEwgNzcyIDg4IEwgNzc0IDg4IEwgNzc1IDkwIEwgNzc3IDkwIEwgNzc3IDkxIEwgNzc4IDkxIEwgNzc5IDkzIEwgNzgxIDkzIEwgNzgxIDk0IEwgNzgyIDk0IEwgNzgyIDk1IEwgNzgzIDk1IEwgNzg0IDk3IEwgNzg2IDk3IEwgNzg2IDk4IEwgNzg3IDk4IEwgNzg3IDk5IEwgNzg4IDk5IEwgNzg5IDEwMSBMIDc5MSAxMDEgTCA3OTEgMTAyIEwgNzkyIDEwMiBMIDc5MiAxMDMgTCA3OTMgMTAzIEwgNzkzIDEwNCBMIDc5NCAxMDQgTCA3OTQgMTA1IEwgNzk1IDEwNSBMIDc5NSAxMDYgTCA3OTYgMTA2IEwgNzk2IDEwNyBMIDc5NyAxMDcgTCA3OTcgMTA4IEwgNzk4IDEwOCBMIDc5OCAxMDkgTCA3OTkgMTA5IEwgODAwIDExMSBMIDgwMiAxMTEgTCA4MDIgMTEzIEwgODAzIDExMyBMIDgwMyAxMTQgTCA4MDUgMTE1IEwgODA1IDExNyBMIDgwNyAxMTcgTCA4MDcgMTE4IEwgODA4IDExOCBMIDgwOCAxMTkgTCA4MDkgMTE5IEwgODA5IDEyMCBMIDgxMCAxMjAgTCA4MTAgMTIxIEwgODExIDEyMSBMIDgxMSAxMjIgTCA4MTIgMTIyIEwgODEyIDEyMyBMIDgxMyAxMjMgTCA4MTMgMTI0IEwgODE1IDEyNSBMIDgxNSAxMjcgTCA4MTYgMTI3IEwgODE2IDEyOCBMIDgxNyAxMjggTCA4MTcgMTI5IEwgODE5IDEzMCBMIDgxOSAxMzIgTCA4MjAgMTMyIEwgODIwIDEzMyBMIDgyMSAxMzMgTCA4MjEgMTM0IEwgODIzIDEzNSBMIDgyMyAxMzcgTCA4MjUgMTM4IEwgODI1IDE0MCBMIDgyNiAxNDAgTCA4MjYgMTQxIEwgODI4IDE0MiBMIDgyOSAxNDYgTCA4MzEgMTQ3IEwgODMxIDE0OSBMIDgzMiAxNDkgTCA4MzIgMTUwIEwgODMzIDE1MCBMIDgzMyAxNTIgTCA4MzUgMTUzIEwgODM2IDE1NyBMIDgzOCAxNTggTCA4MzggMTYwIEwgODM5IDE2MCBMIDgzOSAxNjIgTCA4NDAgMTYyIEwgODQwIDE2NCBMIDg0MSAxNjQgTCA4NDEgMTY2IEwgODQyIDE2NiBMIDg0MiAxNjggTCA4NDMgMTY4IEwgODQzIDE3MCBMIDg0NCAxNzAgTCA4NDQgMTcyIEwgODQ1IDE3MiBMIDg0NSAxNzQgTCA4NDYgMTc0IEwgODQ2IDE3NiBMIDg0NyAxNzYgTCA4NDcgMTc5IEwgODQ4IDE3OSBMIDg0OCAxODEgTCA4NDkgMTgxIEwgODQ5IDE4NCBMIDg1MCAxODQgTCA4NTAgMTg2IEwgODUxIDE4NiBMIDg1MSAxODkgTCA4NTIgMTg5IEwgODUyIDE5MSBMIDg1MyAxOTEgTCA4NTMgMTk0IEwgODU0IDE5NCBMIDg1NCAxOTcgTCA4NTUgMTk3IEwgODU1IDIwMSBMIDg1NiAyMDEgTCA4NTYgMjA0IEwgODU3IDIwNCBMIDg1NyAyMDggTCA4NTggMjA4IEwgODU4IDIxMSBMIDg1OSAyMTEgTCA4NTkgMjE2IEwgODYwIDIxNiBMIDg2MCAyMjAgTCA4NjEgMjIwIEwgODYxIDIyNSBMIDg2MiAyMjUgTCA4NjIgMjMxIEwgODYzIDIzMSBMIDg2MyAyMzggTCA4NjQgMjM4IEwgODY0IDI0OCBMIDg2NSAyNDggTCA4NjUgMjg1IEwgODY0IDI4NSBMIDg2NCAyOTUgTCA4NjMgMjk1IEwgODYzIDMwMiBMIDg2MiAzMDIgTCA4NjEgMzE0IEwgODYwIDMxNCBMIDg2MCAzMTggTCA4NTkgMzE4IEwgODU4IDMyNiBMIDg1NyAzMjYgTCA4NTcgMzI5IEwgODU2IDMyOSBMIDg1NiAzMzMgTCA4NTUgMzMzIEwgODU1IDMzNiBMIDg1NCAzMzYgTCA4NTQgMzM5IEwgODUzIDMzOSBMIDg1MiAzNDUgTCA4NTEgMzQ1IEwgODUxIDM0NyBMIDg1MCAzNDcgTCA4NTAgMzUwIEwgODQ5IDM1MCBMIDg0OSAzNTIgTCA4NDggMzUyIEwgODQ4IDM1NSBMIDg0NyAzNTUgTCA4NDcgMzU3IEwgODQ2IDM1NyBMIDg0NiAzNTkgTCA4NDUgMzU5IEwgODQ1IDM2MiBMIDg0NCAzNjIgTCA4NDQgMzY0IEwgODQzIDM2NCBMIDg0MyAzNjYgTCA4NDIgMzY2IEwgODQyIDM2OCBMIDg0MSAzNjggTCA4NDEgMzcwIEwgODQwIDM3MCBMIDgzOSAzNzQgTCA4MzcgMzc1IEwgODM3IDM3NyBMIDgzNiAzNzcgTCA4MzUgMzgxIEwgODM0IDM4MSBMIDgzNCAzODIgTCA4MzMgMzgyIEwgODMzIDM4NCBMIDgzMSAzODUgTCA4MzEgMzg3IEwgODMwIDM4NyBMIDgzMCAzODkgTCA4MjggMzkwIEwgODI4IDM5MiBMIDgyNiAzOTMgTCA4MjYgMzk1IEwgODI1IDM5NSBMIDgyNSAzOTYgTCA4MjMgMzk3IEwgODIzIDM5OSBMIDgyMiAzOTkgTCA4MjIgNDAwIEwgODIwIDQwMSBMIDgyMCA0MDMgTCA4MTkgNDAzIEwgODE5IDQwNCBMIDgxOCA0MDQgTCA4MTggNDA1IEwgODE2IDQwNiBMIDgxNiA0MDggTCA4MTUgNDA4IEwgODE1IDQwOSBMIDgxNCA0MDkgTCA4MTQgNDEwIEwgODEzIDQxMCBMIDgxMyA0MTEgTCA4MTIgNDExIEwgODEyIDQxMiBMIDgxMCA0MTMgTCA4MTAgNDE1IEwgODA5IDQxNSBMIDgwOSA0MTYgTCA4MDggNDE2IEwgODA4IDQxNyBMIDgwNyA0MTcgTCA4MDcgNDE4IEwgODA2IDQxOCBMIDgwNiA0MTkgTCA4MDUgNDE5IEwgODA1IDQyMCBMIDgwNCA0MjAgTCA4MDQgNDIxIEwgODAzIDQyMSBMIDgwMyA0MjIgTCA4MDIgNDIyIEwgODAyIDQyMyBMIDgwMSA0MjMgTCA4MDEgNDI0IEwgODAwIDQyNCBMIDgwMCA0MjUgTCA3OTkgNDI1IEwgNzk5IDQyNiBMIDc5OCA0MjYgTCA3OTggNDI3IEwgNzk3IDQyNyBMIDc5NyA0MjggTCA3OTYgNDI4IEwgNzk2IDQyOSBMIDc5NSA0MjkgTCA3OTUgNDMwIEwgNzkzIDQzMSBMIDc5MyA0MzAgTCA3OTQgNDMwIEwgNzk0IDQyOSBMIDc5NSA0MjkgTCA3OTUgNDI4IEwgNzk3IDQyNyBMIDc5NyA0MjYgTCA3OTYgNDI2IEwgNzk2IDQyNyBMIDc5NSA0MjcgTCA3OTUgNDI4IEwgNzk0IDQyOCBMIDc5NCA0MjkgTCA3OTIgNDMwIEwgNzkyIDQzMiBMIDc5MSA0MzIgTCA3OTEgNDMzIEwgNzkwIDQzMyBMIDc5MCA0MzQgTCA3ODkgNDM0IEwgNzg5IDQzNSBMIDc4OCA0MzUgTCA3ODcgNDM3IEwgNzg2IDQzNyBMIDc4NiA0MzYgTCA3ODcgNDM2IEwgNzg3IDQzNSBMIDc4OCA0MzUgTCA3ODkgNDMzIEwgNzg4IDQzMyBMIDc4OCA0MzQgTCA3ODcgNDM0IEwgNzg3IDQzNSBMIDc4NSA0MzYgTCA3ODUgNDM4IEwgNzg0IDQzOCBMIDc4NCA0MzkgTCA3ODMgNDM5IEwgNzgyIDQ0MSBMIDc4MCA0NDEgTCA3ODAgNDQyIEwgNzc5IDQ0MiBMIDc3OSA0NDMgTCA3NzcgNDQ0IEwgNzc3IDQ0MyBMIDc3OSA0NDIgTCA3NzkgNDQxIEwgNzc4IDQ0MSBMIDc3OCA0NDIgTCA3NzYgNDQzIEwgNzc2IDQ0NSBMIDc3NSA0NDUgTCA3NzQgNDQ3IEwgNzcyIDQ0NyBMIDc3MSA0NDkgTCA3NjkgNDQ5IEwgNzY5IDQ1MCBMIDc2OCA0NTAgTCA3NjggNDUxIEwgNzY2IDQ1MSBMIDc2NSA0NTMgTCA3NjMgNDUzIEwgNzYzIDQ1NCBMIDc2MiA0NTQgTCA3NjMgNDUyIEwgNzYyIDQ1MiBMIDc2MiA0NTMgTCA3NjAgNDUzIEwgNzYwIDQ1NCBMIDc2MSA0NTQgTCA3NjAgNDU2IEwgNzU4IDQ1NiBMIDc1OCA0NTcgTCA3NTYgNDU3IEwgNzU2IDQ1OCBMIDc1NSA0NTggTCA3NTUgNDU3IEwgNzU2IDQ1NyBMIDc1NiA0NTYgTCA3NTUgNDU2IEwgNzUzIDQ2MCBMIDc1MSA0NjAgTCA3NTEgNDYxIEwgNzQ5IDQ2MSBMIDc0OSA0NjIgTCA3NDcgNDYyIEwgNzQ3IDQ2MyBMIDc0NSA0NjMgTCA3NDUgNDY0IEwgNzQzIDQ2NCBMIDc0MyA0NjUgTCA3NDEgNDY1IEwgNzQxIDQ2NiBMIDczOCA0NjYgTCA3MzggNDY3IEwgNzM2IDQ2NyBMIDczNiA0NjggTCA3MzQgNDY4IEwgNzM0IDQ2OSBMIDczMiA0NjkgTCA3MzIgNDY4IEwgNzM0IDQ2OCBMIDczNCA0NjcgTCA3MzIgNDY3IEwgNzMyIDQ2OCBMIDczMCA0NjggTCA3MzEgNDcwIEwgNzI5IDQ3MCBMIDcyOSA0NzEgTCA3MjYgNDcxIEwgNzI2IDQ3MiBMIDcyNCA0NzIgTCA3MjQgNDczIEwgNzIxIDQ3MyBMIDcyMSA0NzQgTCA3MTggNDc0IEwgNzE4IDQ3NSBMIDcxNSA0NzUgTCA3MTUgNDc2IEwgNzExIDQ3NiBMIDcxMSA0NzcgTCA3MDggNDc3IEwgNzA4IDQ3OCBMIDcwNCA0NzggTCA3MDQgNDc5IEwgNzAwIDQ3OSBMIDcwMCA0ODAgTCA2OTAgNDgxIEwgNjkwIDQ4MiBMIDY4NCA0ODIgTCA2ODQgNDgxIEwgNjgxIDQ4MSBMIDY4MSA0ODIgTCA2ODMgNDgyIEwgNjgzIDQ4MyBMIDY3NSA0ODMgTCA2NzUgNDg0IEwgNjY0IDQ4NCBMIDY2NCA0ODMgTCA1NjcgNDgzIEwgNTY3IDQ4NCBMIDU1NSA0ODQgTCA1NTUgNDgzIEwgNTYzIDQ4MyBMIDU2MyA0ODIgTCA1NDcgNDgzIEwgNTQ3IDQ4MiBMIDU1MSA0ODIgTCA1NTEgNDgxIEwgNTQ3IDQ4MSBMIDU0NyA0ODIgTCA1NDEgNDgyIEwgNTQxIDQ4MSBMIDU0MyA0ODEgTCA1NDMgNDgwIEwgNTQxIDQ4MCBMIDU0MSA0ODEgTCA1MzYgNDgxIEwgNTM2IDQ4MCBMIDUzOSA0ODAgTCA1MzkgNDc5IEwgNTMxIDQ4MCBMIDUzMSA0NzkgTCA1MzQgNDc5IEwgNTM0IDQ3OCBMIDUzMCA0NzggTCA1MzAgNDc5IEwgNTI3IDQ3OSBMIDUyNyA0NzggTCA1MjkgNDc4IEwgNTI5IDQ3NyBMIDUyMyA0NzggTCA1MjMgNDc3IEwgNTI1IDQ3NyBMIDUyNSA0NzYgTCA1MjMgNDc2IEwgNTIzIDQ3NyBMIDUxOSA0NzcgTCA1MTkgNDc2IEwgNTIyIDQ3NiBMIDUyMiA0NzUgTCA1MTYgNDc2IEwgNTE2IDQ3NSBMIDUxOCA0NzUgTCA1MTggNDc0IEwgNTE2IDQ3NCBMIDUxNiA0NzUgTCA1MTMgNDc1IEwgNTE0IDQ3MyBMIDUxMyA0NzMgTCA1MTMgNDc0IEwgNTEwIDQ3NCBMIDUxMSA0NzIgTCA1MTAgNDcyIEwgNTEwIDQ3MyBMIDUwNyA0NzMgTCA1MDcgNDcyIEwgNTA5IDQ3MiBMIDUwOSA0NzEgTCA1MDcgNDcxIEwgNTA3IDQ3MiBMIDUwNCA0NzIgTCA1MDQgNDcxIEwgNTA2IDQ3MSBMIDUwNiA0NzAgTCA1MDQgNDcwIEwgNTA0IDQ3MSBMIDUwMiA0NzEgTCA1MDMgNDY5IEwgNDk5IDQ3MCBMIDQ5OSA0NjkgTCA1MDEgNDY5IEwgNTAxIDQ2OCBMIDQ5NyA0NjkgTCA0OTcgNDY4IEwgNDk5IDQ2OCBMIDQ5OSA0NjcgTCA0OTYgNDY3IEwgNDk2IDQ2OCBMIDQ5NSA0NjggTCA0OTYgNDY2IEwgNDkyIDQ2NyBMIDQ5MiA0NjYgTCA0OTQgNDY2IEwgNDk0IDQ2NSBMIDQ5MCA0NjYgTCA0OTEgNDY0IEwgNDkwIDQ2NCBMIDQ5MCA0NjUgTCA0ODggNDY1IEwgNDg5IDQ2MyBMIDQ4OCA0NjMgTCA0ODggNDY0IEwgNDg2IDQ2NCBMIDQ4NiA0NjMgTCA0ODggNDYzIEwgNDg4IDQ2MiBMIDQ4NCA0NjMgTCA0ODQgNDYyIEwgNDg2IDQ2MiBMIDQ4NiA0NjEgTCA0ODIgNDYyIEwgNDgyIDQ2MSBMIDQ4NCA0NjEgTCA0ODQgNDYwIEwgNDgwIDQ2MSBMIDQ4MCA0NjAgTCA0ODIgNDYwIEwgNDgyIDQ1OSBMIDQ3OCA0NjAgTCA0NzggNDU5IEwgNDgwIDQ1OSBMIDQ4MCA0NTggTCA0NzggNDU4IEwgNDc4IDQ1OSBMIDQ3NyA0NTkgTCA0NzggNDU3IEwgNDc2IDQ1NyBMIDQ3NiA0NTggTCA0NzUgNDU4IEwgNDc2IDQ1NiBMIDQ3NSA0NTYgTCA0NzUgNDU3IEwgNDczIDQ1NyBMIDQ3NCA0NTUgTCA0NzIgNDU2IEwgNDcyIDQ1MyBMIDQ3MyA0NTMgTCA0NzQgNDUxIEwgNDczIDQ1MSBMIDQ3MiA0NTMgTCA0NzEgNDUzIEwgNDcxIDQ1MiBMIDQ3MiA0NTIgTCA0NzMgNDUwIEwgNDc1IDQ1MCBMIDQ3NSA0NDkgTCA0NzcgNDUwIEwgNDc2IDQ0OCBMIDQ3NyA0NDggTCA0NzcgNDQ3IEwgNDc5IDQ0NyBMIDQ3OSA0NDYgTCA0ODAgNDQ2IEwgNDgwIDQ0NSBMIDQ4MSA0NDUgTCA0ODEgNDQ0IEwgNDgyIDQ0NCBMIDQ4MiA0NDMgTCA0ODMgNDQzIEwgNDg0IDQ0MSBMIDQ4NiA0NDEgTCA0ODYgNDQwIEwgNDg3IDQ0MCBMIDQ4NyA0MzkgTCA0ODggNDM5IEwgNDg5IDQzNyBMIDQ5MSA0MzggTCA0OTEgNDM3IEwgNDkyIDQzNyBMIDQ5MiA0MzYgTCA0OTMgNDM2IEwgNDkzIDQzNSBMIDQ5NCA0MzUgTCA0OTQgNDM0IEwgNDk1IDQzNCBMIDQ5NSA0MzMgTCA0OTYgNDMzIEwgNDk2IDQzMiBMIDQ5NyA0MzIgTCA0OTggNDMwIEwgNDk3IDQzMCBMIDQ5NyA0MzEgTCA0OTYgNDMxIEwgNDk2IDQzMiBMIDQ5NSA0MzIgTCA0OTUgNDMzIEwgNDk0IDQzMyBMIDQ5NCA0MzQgTCA0OTMgNDM0IEwgNDkzIDQzNSBMIDQ5MiA0MzUgTCA0OTEgNDM3IEwgNDkwIDQzNyBMIDQ5MCA0MzYgTCA0OTEgNDM2IEwgNDkxIDQzNSBMIDQ5MiA0MzUgTCA0OTIgNDM0IEwgNDkzIDQzNCBMIDQ5MyA0MzMgTCA0OTQgNDMzIEwgNDk0IDQzMiBMIDQ5NSA0MzIgTCA0OTUgNDMxIEwgNDk2IDQzMSBMIDQ5NiA0MzAgTCA0OTcgNDMwIEwgNDk3IDQyOSBMIDQ5OCA0MjkgTCA0OTggNDI4IEwgNDk5IDQyOCBMIDQ5OSA0MjcgTCA1MDAgNDI3IEwgNTAwIDQyNiBMIDUwMSA0MjYgTCA1MDEgNDI1IEwgNTAyIDQyNSBMIDUwMiA0MjQgTCA1MDQgNDIzIEwgNTA0IDQyMSBMIDUwNSA0MjEgTCA1MDUgNDIwIEwgNTA3IDQyMSBMIDUwNyA0MjAgTCA1MDkgNDE5IEwgNTA5IDQxOCBMIDUwOCA0MTggTCA1MDggNDE5IEwgNTA2IDQyMCBMIDUwNiA0MTkgTCA1MDcgNDE5IEwgNTA3IDQxOCBMIDUwOCA0MTggTCA1MDggNDE3IEwgNTEwIDQxNiBMIDUxMCA0MTQgTCA1MTEgNDE0IEwgNTExIDQxMyBMIDUxMiA0MTMgTCA1MTIgNDEyIEwgNTE0IDQxMSBMIDUxNCA0MDkgTCA1MTUgNDA5IEwgNTE1IDQwOCBMIDUxNyA0MDcgTCA1MTcgNDA1IEwgNTE4IDQwNSBMIDUxOCA0MDQgTCA1MjAgNDAzIEwgNTIwIDQwMSBMIDUyMiA0MDAgTCA1MjIgMzk4IEwgNTIzIDM5OCBMIDUyMyAzOTcgTCA1MjUgMzk4IEwgNTI1IDM5NyBMIDUyNCAzOTcgTCA1MjQgMzk1IEwgNTI2IDM5NiBMIDUyNSAzOTQgTCA1MjYgMzk0IEwgNTI2IDM5MiBMIDUyOCAzOTEgTCA1MjggMzg5IEwgNTI5IDM4OSBMIDUzMCAzODUgTCA1MzEgMzg1IEwgNTMxIDM4NCBMIDUzMyAzODUgTCA1MzMgMzg0IEwgNTMyIDM4NCBMIDUzMiAzODIgTCA1MzQgMzgzIEwgNTM0IDM4MiBMIDUzMyAzODIgTCA1MzMgMzgwIEwgNTM0IDM4MCBMIDUzNCAzNzggTCA1MzUgMzc4IEwgNTM1IDM3NiBMIDUzNiAzNzYgTCA1MzcgMzcyIEwgNTM4IDM3MiBMIDUzOCAzNzMgTCA1NDAgMzczIEwgNTQwIDM3MiBMIDUzOCAzNzIgTCA1MzggMzcxIEwgNjY1IDM3MSBMIDY2NSAzNzAgTCA2NzIgMzcwIEwgNjcyIDM2OSBMIDY3NyAzNjkgTCA2NzcgMzY4IEwgNjgwIDM2OCBMIDY4MCAzNjcgTCA2ODQgMzY3IEwgNjg0IDM2NiBMIDY5MCAzNjUgTCA2OTAgMzY0IEwgNjkyIDM2NCBMIDY5MiAzNjMgTCA2OTUgMzYzIEwgNjk1IDM2MiBMIDY5NyAzNjIgTCA2OTcgMzYxIEwgNjk5IDM2MSBMIDY5OSAzNjAgTCA3MDMgMzU5IEwgNzA0IDM1NyBMIDcwOCAzNTYgTCA3MDggMzU1IEwgNzA5IDM1NSBMIDcwOSAzNTQgTCA3MTEgMzU0IEwgNzEyIDM1MiBMIDcxNCAzNTMgTCA3MTYgMzQ5IEwgNzE4IDM1MCBMIDcxNyAzNDggTCA3MTggMzQ4IEwgNzE5IDM0NiBMIDcyMSAzNDYgTCA3MjEgMzQ1IEwgNzIyIDM0NSBMIDcyMiAzNDQgTCA3MjMgMzQ0IEwgNzIzIDM0MyBMIDcyNCAzNDMgTCA3MjQgMzQyIEwgNzI1IDM0MiBMIDcyNSAzNDEgTCA3MjcgMzQwIEwgNzI3IDMzOCBMIDcyOCAzMzggTCA3MjggMzM3IEwgNzI5IDMzNyBMIDcyOSAzMzYgTCA3MzAgMzM2IEwgNzMwIDMzNSBMIDczMiAzMzQgTCA3MzIgMzMyIEwgNzM0IDMzMSBMIDczNCAzMjkgTCA3MzUgMzI5IEwgNzM1IDMyOCBMIDczNiAzMjggTCA3MzYgMzI2IEwgNzM4IDMyNSBMIDczOSAzMjEgTCA3NDEgMzIwIEwgNzQxIDMxOCBMIDc0MiAzMTggTCA3NDIgMzE1IEwgNzQzIDMxNSBMIDc0MyAzMTMgTCA3NDQgMzEzIEwgNzQ0IDMxMSBMIDc0NSAzMTEgTCA3NDUgMzA5IEwgNzQ2IDMwOSBMIDc0NiAzMDYgTCA3NDcgMzA2IEwgNzQ4IDMwMCBMIDc0OSAzMDAgTCA3NDkgMzAyIEwgNzUwIDMwMiBMIDc1MCAzMDAgTCA3NDkgMzAwIEwgNzQ5IDI5NiBMIDc1MCAyOTYgTCA3NTAgMjk4IEwgNzUxIDI5OCBMIDc1MSAyOTYgTCA3NTAgMjk2IEwgNzUwIDI5MSBMIDc1MSAyOTEgTCA3NTEgMjg2IEwgNzUyIDI4NiBMIDc1MiAyNzcgTCA3NTMgMjc3IEwgNzUzIDI1OCBMIDc1MiAyNTggTCA3NTIgMjQ5IEwgNzUxIDI0OSBMIDc1MSAyNDMgTCA3NTAgMjQzIEwgNzUwIDIzOCBMIDc1MSAyMzggTCA3NTEgMjM2IEwgNzUwIDIzNiBMIDc1MCAyMzggTCA3NDkgMjM4IEwgNzQ5IDIzNCBMIDc1MCAyMzQgTCA3NTAgMjMyIEwgNzQ5IDIzMiBMIDc0OSAyMzQgTCA3NDggMjM0IEwgNzQ4IDIzMSBMIDc0NyAyMzEgTCA3NDcgMjI4IEwgNzQ4IDIyOCBMIDc0OCAyMjYgTCA3NDcgMjI2IEwgNzQ3IDIyOCBMIDc0NiAyMjggTCA3NDYgMjI1IEwgNzQ3IDIyNSBMIDc0NyAyMjMgTCA3NDYgMjIzIEwgNzQ2IDIyNSBMIDc0NSAyMjUgTCA3NDUgMjIzIEwgNzQ0IDIyMyBMIDc0NCAyMjAgTCA3NDUgMjIwIEwgNzQ1IDIxOSBMIDc0MyAyMjAgTCA3NDMgMjE4IEwgNzQ0IDIxOCBMIDc0NCAyMTcgTCA3NDIgMjE4IEwgNzQyIDIxNiBMIDc0MyAyMTYgTCA3NDMgMjE1IEwgNzQxIDIxNiBMIDc0MSAyMTQgTCA3NDIgMjE0IEwgNzQyIDIxMyBMIDc0MCAyMTQgTCA3NDAgMjEyIEwgNzQxIDIxMiBMIDc0MSAyMTEgTCA3MzkgMjEyIEwgNzM5IDIxMCBMIDczOCAyMTAgTCA3MzggMjA5IEwgNzM3IDIwOSBMIDczNyAyMDcgTCA3MzUgMjA2IEwgNzM1IDIwNCBMIDczNiAyMDQgTCA3MzYgMjAzIEwgNzM1IDIwMyBMIDczNSAyMDQgTCA3MzQgMjA0IEwgNzM1IDIwMiBMIDczMyAyMDMgTCA3MzMgMjAxIEwgNzM0IDIwMSBMIDczNCAyMDAgTCA3MzMgMjAwIEwgNzMzIDIwMSBMIDczMSAyMDAgTCA3MzEgMTk4IEwgNzMwIDE5OCBMIDczMCAxOTcgTCA3MjkgMTk3IEwgNzI5IDE5NiBMIDcyOCAxOTYgTCA3MjggMTk1IEwgNzI3IDE5NSBMIDcyNyAxOTQgTCA3MjYgMTk0IEwgNzI2IDE5MyBMIDcyNSAxOTMgTCA3MjUgMTkyIEwgNzI0IDE5MiBMIDcyNCAxOTEgTCA3MjMgMTkxIEwgNzIzIDE5MCBMIDcyMiAxOTAgTCA3MjIgMTg5IEwgNzIxIDE4OSBMIDcyMSAxODggTCA3MTkgMTg3IEwgNzIwIDE4NSBMIDcxOCAxODYgTCA3MTggMTg1IEwgNzE2IDE4NCBMIDcxNiAxODIgTCA3MTQgMTgzIEwgNzE0IDE4MiBMIDcxMiAxODEgTCA3MTIgMTc5IEwgNzEwIDE4MCBMIDcxMSAxNzggTCA3MDkgMTc5IEwgNzA5IDE3NyBMIDcwNyAxNzggTCA3MDggMTc2IEwgNzA2IDE3NyBMIDcwNiAxNzUgTCA3MDQgMTc2IEwgNzA0IDE3NSBMIDcwMiAxNzUgTCA3MDIgMTc0IEwgNjk4IDE3MyBMIDY5OSAxNzEgTCA2OTggMTcxIEwgNjk4IDE3MiBMIDY5NCAxNzEgTCA2OTUgMTY5IEwgNjk0IDE2OSBMIDY5NCAxNzAgTCA2OTIgMTcwIEwgNjkzIDE2OCBMIDY5MiAxNjggTCA2OTIgMTY5IEwgNjkwIDE2OSBMIDY5MCAxNjcgTCA2ODkgMTY3IEwgNjg5IDE2OCBMIDY4NyAxNjggTCA2ODcgMTY3IEwgNjg0IDE2NyBMIDY4NCAxNjYgTCA2ODEgMTY2IEwgNjgxIDE2NSBMIDY3NyAxNjUgTCA2NzggMTYzIEwgNjc2IDE2MyBMIDY3NiAxNjQgTCA2NzIgMTY0IEwgNjcyIDE2MyBMIDY3NCAxNjMgTCA2NzQgMTYyIEwgNjcxIDE2MiBMIDY3MSAxNjMgTCA2NjYgMTYzIEwgNjY2IDE2MiBMIDY2OSAxNjIgTCA2NjkgMTYxIEwgNjY1IDE2MSBMIDY2NSAxNjIgTCA2NjQgMTYyIEwgNjY0IDE2MSBMIDY2MyAxNjEgTCA2NjMgMTYyIEwgNTY1IDE2MiBMIDU2NSAxNjEgTCA1NTkgMTYxIEwgNTU5IDE2MiBMIDU2MiAxNjIgTCA1NjIgMTYzIEwgNTU2IDE2MyBMIDU1NiAxNjIgTCA1NTQgMTYyIEwgNTU1IDE2NCBMIDU0NSAxNjUgTCA1NDUgMTY2IEwgNTQyIDE2NiBMIDU0MiAxNjcgTCA1MzkgMTY3IEwgNTM5IDE2OCBMIDUzNiAxNjggTCA1MzYgMTY5IEwgNTMzIDE2OSBMIDUzMyAxNzAgTCA1MzEgMTcwIEwgNTMxIDE2OSBMIDUzMCAxNjkgTCA1MzAgMTcxIEwgNTI4IDE3MSBMIDUyOCAxNzIgTCA1MjUgMTcyIEwgNTI1IDE3MyBMIDUyMyAxNzMgTCA1MjMgMTc0IEwgNTIxIDE3NCBMIDUyMSAxNzUgTCA1MjAgMTc1IEwgNTIwIDE3NCBMIDUxOCAxNzQgTCA1MTkgMTc2IEwgNTE4IDE3NiBMIDUxOCAxNzUgTCA1MTcgMTc1IEwgNTE3IDE3NyBMIDUxNSAxNzYgTCA1MTUgMTc4IEwgNTE0IDE3OCBMIDUxNCAxNzkgTCA1MTAgMTgwIEwgNTA5IDE4MiBMIDUwNyAxODIgTCA1MDYgMTg0IEwgNTA0IDE4NCBMIDUwMyAxODYgTCA1MDEgMTg2IEwgNTAxIDE4NyBMIDUwMCAxODcgTCA1MDAgMTg4IEwgNDk5IDE4OCBMIDQ5OSAxODkgTCA0OTggMTg5IEwgNDk4IDE5MCBMIDQ5NiAxOTEgTCA0OTYgMTkwIEwgNDk4IDE4OSBMIDQ5OCAxODggTCA0OTcgMTg4IEwgNDk3IDE4OSBMIDQ5NSAxOTAgTCA0OTUgMTkyIEwgNDk0IDE5MiBMIDQ5NCAxOTMgTCA0OTMgMTkzIEwgNDkzIDE5NCBMIDQ5MiAxOTQgTCA0OTIgMTk1IEwgNDkxIDE5NSBMIDQ5MSAxOTYgTCA0OTAgMTk2IEwgNDkwIDE5NyBMIDQ4OSAxOTcgTCA0ODkgMTk4IEwgNDg4IDE5OCBMIDQ4OCAxOTkgTCA0ODcgMTk5IEwgNDg3IDIwMCBMIDQ4NiAyMDAgTCA0ODYgMjAxIEwgNDg1IDIwMSBMIDQ4NSAyMDIgTCA0ODQgMjAyIEwgNDg0IDIwMyBMIDQ4MyAyMDMgTCA0ODIgMjA1IEwgNDgwIDIwNSBMIDQ4MSAyMDcgTCA0ODAgMjA3IEwgNDgwIDIwOCBMIDQ3OSAyMDggTCA0NzkgMjA5IEwgNDc3IDIxMCBMIDQ3NyAyMTIgTCA0NzYgMjEyIEwgNDc2IDIxMyBMIDQ3NCAyMTQgTCA0NzQgMjE2IEwgNDczIDIxNiBMIDQ3MyAyMTcgTCA0NzEgMjE3IEwgNDcyIDIxOSBMIDQ3MSAyMTkgTCA0NzAgMjIzIEwgNDY5IDIyMyBMIDQ2OSAyMjQgTCA0NjcgMjI0IEwgNDY4IDIyNiBMIDQ2NiAyMjUgTCA0NjYgMjI3IEwgNDY3IDIyNyBMIDQ2NyAyMjggTCA0NjYgMjI4IEwgNDY2IDIzMCBMIDQ2NSAyMzAgTCA0NjUgMjMyIEwgNDY0IDIzMiBMIDQ2NCAyMzQgTCA0NjMgMjM0IEwgNDYzIDIzNiBMIDQ2MiAyMzYgTCA0NjIgMjM5IEwgNDYxIDIzOSBMIDQ2MSAyNDEgTCA0NTkgMjQxIEwgNDU5IDI0MiBMIDQ2MCAyNDIgTCA0NjAgMjQ0IEwgNDU4IDI0NCBMIDQ1OCAyNDUgTCA0NTkgMjQ1IEwgNDU5IDI0OCBMIDQ1OCAyNDggTCA0NTggMjUxIEwgNDU3IDI1MSBMIDQ1NyAyNTUgTCA0NTYgMjU1IEwgNDU2IDI2MCBMIDQ1NSAyNjAgTCA0NTUgMjY1IEwgNDU0IDI2NSBMIDQ1NCAyNzIgTCA0NTMgMjcyIEwgNDUzIDI3OCBMIDQ1MiAyNzggTCA0NTEgMjg4IEwgNDUwIDI4OCBMIDQ1MCAyOTEgTCA0NDggMjkwIEwgNDQ5IDI5NCBMIDQ0OCAyOTQgTCA0NDcgMzAwIEwgNDQ2IDMwMCBMIDQ0NiAzMDIgTCA0NDUgMzAyIEwgNDQ1IDMwNCBMIDQ0NCAzMDQgTCA0NDQgMzA2IEwgNDQzIDMwNiBMIDQ0MyAzMDggTCA0NDIgMzA4IEwgNDQyIDMxMCBMIDQ0MSAzMTAgTCA0NDAgMzE0IEwgNDM4IDMxNSBMIDQzNyAzMTkgTCA0MzUgMzIwIEwgNDM1IDMyMiBMIDQzNCAzMjIgTCA0MzQgMzIzIEwgNDMzIDMyMyBMIDQzMyAzMjQgTCA0MzEgMzI1IEwgNDMxIDMyNCBMIDQzMiAzMjQgTCA0MzIgMzIzIEwgNDM0IDMyMiBMIDQzNCAzMjAgTCA0MzUgMzIwIEwgNDM2IDMxOCBMIDQzNSAzMTggTCA0MzUgMzE5IEwgNDM0IDMxOSBMIDQzNCAzMjAgTCA0MzIgMzIxIEwgNDMyIDMyMyBMIDQzMCAzMjQgTCA0MzAgMzI2IEwgNDMxIDMyNiBMIDQzMSAzMjcgTCA0MzAgMzI3IEwgNDMwIDMyOCBMIDQyOSAzMjggTCA0MjkgMzI5IEwgNDI4IDMyOSBMIDQyOCAzMzAgTCA0MjcgMzMwIEwgNDI3IDMzMSBMIDQyNiAzMzEgTCA0MjYgMzMyIEwgNDI1IDMzMiBMIDQyNSAzMzMgTCA0MjQgMzMzIEwgNDI0IDMzNCBMIDQyMyAzMzQgTCA0MjMgMzM1IEwgNDIyIDMzNSBMIDQyMiAzMzYgTCA0MjEgMzM2IEwgNDIxIDMzNyBMIDQyMCAzMzcgTCA0MTkgMzM5IEwgNDE4IDMzOSBMIDQxOCAzMzcgTCA0MTcgMzM3IEwgNDE3IDMzOCBMIDQxNiAzMzggTCA0MTcgMzQwIEwgNDE2IDM0MCBMIDQxNSAzNDIgTCA0MTMgMzQyIEwgNDEyIDM0NCBMIDQxMCAzNDQgTCA0MTAgMzQ1IEwgNDA5IDM0NSBMIDQwOSAzNDYgTCA0MDcgMzQ2IEwgNDA2IDM0OCBMIDQwNCAzNDggTCA0MDQgMzQ5IEwgNDAyIDM0OSBMIDQwMiAzNTAgTCA0MDAgMzUwIEwgNDAwIDM1MSBMIDM5OCAzNTEgTCAzOTggMzUyIEwgMzk1IDM1MiBMIDM5NSAzNTMgTCAzOTMgMzUzIEwgMzkzIDM1NCBMIDM5MSAzNTQgTCAzOTEgMzU1IEwgMzg1IDM1NiBMIDM4NSAzNTcgTCAzODQgMzU3IEwgMzg1IDM1NSBMIDM4MyAzNTYgTCAzODMgMzU0IEwgMzg0IDM1NCBMIDM4NCAzNTMgTCAzODIgMzU0IEwgMzgyIDM1MSBMIDM4MSAzNTEgTCAzODEgMzQ5IEwgMzgwIDM0OSBMIDM4MCAzNDYgTCAzODEgMzQ2IEwgMzgxIDM0NSBMIDM3OSAzNDYgTCAzODAgMzQyIEwgMzc4IDM0MyBMIDM3OCAzNDEgTCAzNzkgMzQxIEwgMzc5IDMzOSBMIDM3NyAzNDAgTCAzNzggMzM2IEwgMzc2IDMzNyBMIDM3NiAzMzUgTCAzNzcgMzM1IEwgMzc3IDMzMiBMIDM3NiAzMzIgTCAzNzYgMzM0IEwgMzc1IDMzNCBMIDM3NSAzMzIgTCAzNzYgMzMyIEwgMzc2IDMyOSBMIDM3NSAzMjkgTCAzNzUgMzMxIEwgMzc0IDMzMSBMIDM3NCAzMjggTCAzNzUgMzI4IEwgMzc1IDMyNiBMIDM3NCAzMjYgTCAzNzQgMzI4IEwgMzczIDMyOCBMIDM3MyAzMjQgTCAzNzQgMzI0IEwgMzc0IDMyMiBMIDM3MyAzMjIgTCAzNzMgMzI0IEwgMzcyIDMyNCBMIDM3MiAzMjAgTCAzNzMgMzIwIEwgMzczIDMxOCBMIDM3MSAzMTkgTCAzNzEgMzE2IEwgMzcyIDMxNiBMIDM3MiAzMTQgTCAzNzAgMzE1IEwgMzcwIDMxMCBMIDM3MSAzMTAgTCAzNzEgMzA4IEwgMzcwIDMwOCBMIDM3MCAzMTAgTCAzNjkgMzEwIEwgMzY5IDMwNiBMIDM3MCAzMDYgTCAzNzAgMzAxIEwgMzY5IDMwMSBMIDM2OSAzMDUgTCAzNjggMzA1IEwgMzY5IDI5MyBMIDM2OCAyOTMgTCAzNjggMjk3IEwgMzY3IDI5NyBMIDM2NyAyODkgTCAzNjggMjg5IEwgMzY4IDI4NiBMIDM2NiAyODcgWiIgZmlsbD0idXJsKCNyaWdodEdyYWRpZW50KSIgZmlsbC1ydWxlPSJldmVub2RkIi8+Cjwvc3ZnPgo=&quot;);
+  }
+
+  .br-control-deck {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    box-shadow: 0 14px 34px rgba(33, 28, 20, .06);
+    backdrop-filter: blur(18px);
+  }
+  .br-concept-tabs,
+  .br-view-tabs { display: flex; gap: 6px; min-width: 0; }
+  .br-tab {
+    min-width: 0;
+    border: 0;
+    border-radius: 11px;
+    padding: 10px 14px;
+    background: transparent;
+    color: var(--ink-2);
+    font-size: 13px;
+    font-weight: 650;
+    transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .br-tab:hover { background: var(--surface-2); color: var(--ink); }
+  .br-tab:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand-b) 40%, transparent);
+    outline-offset: 2px;
+  }
+  .br-tab[aria-pressed=&quot;true&quot;] {
+    color: #fff;
+    background: linear-gradient(115deg, var(--brand-a), var(--brand-b), var(--brand-c));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-b) 27%, transparent);
+  }
+  .br-view-tabs {
+    padding-left: 8px;
+    border-left: 1px solid var(--line);
+  }
+  .br-view-tabs .br-tab[aria-pressed=&quot;true&quot;] {
+    color: var(--ink);
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .br-summary {
+    display: grid;
+    grid-template-columns: minmax(260px, .74fr) minmax(0, 1.4fr);
+    gap: 24px;
+    align-items: start;
+    padding: 28px 2px 24px;
+  }
+  .br-summary h2 {
+    margin: 0 0 8px;
+    font-size: 25px;
+    line-height: 1.15;
+    letter-spacing: -.025em;
+  }
+  .br-summary p {
+    max-width: 500px;
+    margin: 0;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .br-recommend {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .br-recommend[hidden] { display: none; }
+  .br-specs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .br-spec {
+    min-width: 0;
+    padding: 13px 14px;
+    border-left: 1px solid var(--line-strong);
+  }
+  .br-spec-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--ink-3);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+  .br-spec-value {
+    color: var(--ink);
+    font-size: 12.5px;
+    line-height: 1.4;
+    font-weight: 620;
+  }
+  .br-swatches { display: flex; gap: 5px; margin-top: 2px; }
+  .br-swatch {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+  .br-swatch:nth-child(1) { background: var(--paper); }
+  .br-swatch:nth-child(2) { background: var(--ink); }
+  .br-swatch:nth-child(3) { background: var(--brand-a); }
+  .br-swatch:nth-child(4) { background: var(--brand-b); }
+  .br-swatch:nth-child(5) { background: var(--brand-c); }
+
+  .br-stage {
+    position: relative;
+    min-width: 0;
+    padding: 18px;
+    border-radius: 34px;
+    background:
+      radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--brand-a) 24%, transparent), transparent 26%),
+      radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--brand-c) 22%, transparent), transparent 28%),
+      linear-gradient(135deg, color-mix(in srgb, var(--brand-b) 9%, var(--paper)), var(--paper));
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .br-stage {
+    background:
+      radial-gradient(circle at 0 15%, rgba(251, 113, 133, .56), transparent 38%),
+      radial-gradient(circle at 100% 4%, rgba(56, 189, 248, .52), transparent 36%),
+      radial-gradient(circle at 52% 105%, rgba(167, 139, 250, .58), transparent 43%),
+      #f6eef9;
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .br-stage {
+    background:
+      radial-gradient(circle at 12% 3%, rgba(255, 194, 122, .42), transparent 29%),
+      radial-gradient(circle at 95% 88%, rgba(107, 207, 213, .30), transparent 31%),
+      #f8eadb;
+  }
+
+  .app-shell {
+    position: relative;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr) 276px;
+    min-height: 710px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--app-radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transition: border-radius .2s ease, background .2s ease;
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .app-shell {
+    background: rgba(255, 255, 255, .50);
+    backdrop-filter: blur(28px) saturate(1.15);
+  }
+
+  .app-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 22px 14px 15px;
+    border-right: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 90%, var(--paper));
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .app-sidebar {
+    background: rgba(255, 255, 255, .28);
+    backdrop-filter: blur(24px);
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .app-sidebar { background: #fff7ed; }
+
+  .app-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px 20px;
+    font-size: 15px;
+    font-weight: 760;
+    letter-spacing: -.02em;
+  }
+  .app-brand .br-logo { width: 40px; }
+  .app-nav-title {
+    margin: 11px 9px 6px;
+    color: var(--ink-3);
+    font-size: 9px;
+    font-weight: 760;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+  .app-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    margin: 1px 0;
+    padding: 9px 10px;
+    border-radius: 10px;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .app-nav-item svg { width: 16px; height: 16px; flex: 0 0 auto; }
+  .app-nav-item.active {
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .app-nav-item.active {
+    background: rgba(255,255,255,.68);
+    box-shadow: 0 8px 24px rgba(91, 62, 110, .08);
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .app-nav-item.active {
+    color: #6a3f24;
+    background: #ffe3c7;
+  }
+  .app-nav-count {
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: 999px;
+    color: var(--ink-3);
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+    font-size: 10px;
+  }
+  .app-user {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: auto;
+    padding: 10px;
+    border-radius: 13px;
+    background: var(--surface-2);
+  }
+  .avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+    font-size: 10px;
+    font-weight: 750;
+  }
+  .avatar.a2 { background: linear-gradient(135deg, #35b7d6, #4f7bdc); }
+  .avatar.a3 { background: linear-gradient(135deg, #f4a15d, #df6477); }
+  .avatar.a4 { background: linear-gradient(135deg, #66b789, #3b8f85); }
+  .avatar.a5 { background: linear-gradient(135deg, #9e7be7, #db76a7); }
+  .app-user-copy { min-width: 0; }
+  .app-user-name { overflow: hidden; color: var(--ink); font-size: 11.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .app-user-mail { overflow: hidden; margin-top: 2px; color: var(--ink-3); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+  .app-main { min-width: 0; padding: 25px 26px 36px; background: color-mix(in srgb, var(--surface) 94%, transparent); }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .app-main { background: rgba(255,255,255,.38); }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .app-main { background: #fffaf4; }
+  .app-toolbar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .search-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 36px;
+    flex: 1;
+    padding: 0 11px;
+    border: 1px solid var(--line);
+    border-radius: var(--control-radius);
+    color: var(--ink-3);
+    background: var(--surface-2);
+    font-size: 11.5px;
+  }
+  .search-field svg { width: 15px; height: 15px; }
+  .search-kbd {
+    margin-left: auto;
+    padding: 2px 5px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--ink-3);
+    background: var(--surface);
+    font-size: 9px;
+  }
+  .icon-action,
+  .primary-action,
+  .soft-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    border: 0;
+    border-radius: var(--control-radius);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .icon-action { width: 36px; color: var(--ink-2); background: var(--surface-2); }
+  .icon-action svg,
+  .primary-action svg,
+  .soft-action svg { width: 15px; height: 15px; }
+  .primary-action {
+    padding: 0 14px;
+    color: #fff;
+    background: linear-gradient(115deg, var(--brand-a), var(--brand-b), var(--brand-c));
+    box-shadow: 0 9px 20px color-mix(in srgb, var(--brand-b) 24%, transparent);
+  }
+  .soft-action { padding: 0 14px; color: var(--ink); background: var(--surface-2); }
+
+  .page-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 28px 0 20px;
+  }
+  .page-title { margin: 0; font-size: 28px; line-height: 1.05; letter-spacing: -.035em; }
+  .page-sub { margin-top: 7px; color: var(--ink-3); font-size: 11.5px; }
+  .segmented {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 11px;
+    background: var(--surface-2);
+  }
+  .segment {
+    padding: 6px 9px;
+    border-radius: 8px;
+    color: var(--ink-3);
+    font-size: 10px;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+  .segment.active { color: var(--ink); background: var(--surface); box-shadow: 0 1px 4px rgba(20,20,20,.06); }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .segment.active { background: rgba(255,255,255,.8); }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .segment.active { color: #754024; background: #ffe3c7; }
+
+  .event-section + .event-section { margin-top: 22px; }
+  .section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 3px 8px;
+    color: var(--ink-3);
+    font-size: 9.5px;
+    font-weight: 760;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .event-list {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--panel-radius);
+    background: var(--surface);
+  }
+  .event-row {
+    --event-tint: var(--surface);
+    position: relative;
+    display: grid;
+    grid-template-columns: 47px minmax(150px, 1fr) 92px 64px 48px 72px 12px;
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+    padding: 12px 14px 12px 17px;
+    background: var(--event-tint);
+  }
+  .event-row + .event-row { border-top: 1px solid var(--line); }
+  .event-row::before {
+    content: &quot;&quot;;
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--row-color, var(--brand-b));
+  }
+  .date-cell { text-align: center; }
+  .date-day { font-size: 20px; line-height: 1; font-weight: 760; letter-spacing: -.03em; }
+  .date-caption { margin-top: 4px; color: var(--ink-3); font-size: 8px; font-weight: 720; letter-spacing: .08em; text-transform: uppercase; }
+  .event-info { min-width: 0; }
+  .event-name { overflow: hidden; font-size: 12.5px; font-weight: 720; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; }
+  .event-place { overflow: hidden; margin-top: 4px; color: var(--ink-3); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .event-time { color: var(--ink-2); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+  .avatar-stack { display: flex; align-items: center; }
+  .avatar-stack .avatar { width: 24px; height: 24px; margin-left: -7px; font-size: 8px; }
+  .avatar-stack .avatar:first-child { margin-left: 0; }
+  .event-count { color: var(--ink-3); font-size: 9.5px; white-space: nowrap; }
+  .event-status {
+    justify-self: end;
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: var(--status-color, var(--success));
+    background: color-mix(in srgb, var(--status-color, var(--success)) 10%, transparent);
+    font-size: 9px;
+    font-weight: 720;
+    white-space: nowrap;
+  }
+  .event-chevron { color: var(--ink-3); }
+  .event-chevron svg { width: 12px; height: 12px; }
+
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .event-list {
+    background: rgba(255,255,255,.76);
+    box-shadow: 0 15px 36px rgba(73, 52, 84, .07);
+    backdrop-filter: blur(18px);
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .event-row { --event-tint: rgba(255,255,255,.56); }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-list {
+    display: grid;
+    gap: 8px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-row {
+    grid-template-columns: 52px minmax(140px, 1fr) 62px 48px 72px 12px;
+    padding: 13px 14px;
+    border: 1px solid color-mix(in srgb, var(--row-color, var(--brand-b)) 16%, var(--line));
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--row-color, var(--brand-b)) 9%, #fffdf9);
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-row + .event-row { border-top-width: 1px; }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-row::before { display: none; }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-time { display: none; }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .date-cell {
+    padding: 8px 5px;
+    border-radius: 14px;
+    color: color-mix(in srgb, var(--row-color, var(--brand-b)) 80%, var(--ink));
+    background: color-mix(in srgb, var(--row-color, var(--brand-b)) 12%, #fff);
+  }
+
+  .app-rail {
+    min-width: 0;
+    padding: 25px 20px;
+    border-left: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 91%, var(--paper));
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .app-rail {
+    background: rgba(255,255,255,.24);
+    backdrop-filter: blur(24px);
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .app-rail { background: #fff7ed; }
+  .rail-card {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--panel-radius);
+    background: var(--surface);
+  }
+  .rail-card + .rail-card { margin-top: 12px; }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .rail-card {
+    background: rgba(255,255,255,.60);
+    box-shadow: 0 15px 36px rgba(73, 52, 84, .06);
+    backdrop-filter: blur(18px);
+  }
+  .rail-kicker { color: var(--ink-3); font-size: 9px; font-weight: 760; letter-spacing: .09em; text-transform: uppercase; }
+  .rail-date { margin-top: 8px; font-size: 38px; line-height: 1; font-weight: 780; letter-spacing: -.04em; }
+  .rail-copy { margin-top: 5px; color: var(--ink-3); font-size: 10.5px; }
+  .rail-next {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 9px;
+    margin-top: 13px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .rail-time { color: var(--ink-2); font-size: 10px; font-weight: 700; }
+  .rail-event { overflow: hidden; font-size: 10.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .rail-place { overflow: hidden; margin-top: 3px; color: var(--ink-3); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+  .calendar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; font-size: 11px; font-weight: 700; }
+  .mini-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+  .cal-cell { position: relative; padding: 4px 0; color: var(--ink-2); font-size: 8.5px; }
+  .cal-cell.muted { color: var(--ink-3); opacity: .5; }
+  .cal-cell.week { color: var(--ink-3); font-size: 7.5px; font-weight: 700; text-transform: uppercase; }
+  .cal-cell.today { border-radius: 7px; color: #fff; background: linear-gradient(135deg, var(--brand-b), var(--brand-c)); font-weight: 750; }
+  .cal-cell.has-event:not(.today)::after {
+    content: &quot;&quot;;
+    position: absolute;
+    left: 50%;
+    bottom: 1px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--brand-b);
+    transform: translateX(-50%);
+  }
+  .rail-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .stat-value { font-size: 20px; font-weight: 760; letter-spacing: -.03em; }
+  .stat-label { margin-top: 3px; color: var(--ink-3); font-size: 8.5px; line-height: 1.3; }
+  .floating-chip {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(115deg, var(--brand-a), var(--brand-b));
+    font-size: 9px;
+    font-weight: 700;
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--brand-b) 22%, transparent);
+  }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .floating-chip { display: flex; }
+
+  .detail-view { display: none; }
+  .detail-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 11px; font-weight: 650; }
+  .back-link svg { width: 14px; height: 14px; }
+  .detail-hero {
+    position: relative;
+    overflow: hidden;
+    margin-top: 20px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: var(--panel-radius);
+    background: var(--surface);
+  }
+  .detail-hero::after {
+    content: &quot;&quot;;
+    position: absolute;
+    right: -65px;
+    top: -80px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--brand-b) 25%, transparent), transparent 68%);
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .detail-hero { background: rgba(255,255,255,.65); backdrop-filter: blur(20px); }
+  #bimeet-redesign[data-concept=&quot;pocket&quot;] .detail-hero {
+    border-color: rgba(231, 142, 84, .20);
+    background: linear-gradient(135deg, #fff0df, #fffaf4 62%);
+  }
+  .detail-badge { display: inline-flex; padding: 5px 8px; border-radius: 999px; color: var(--success); background: color-mix(in srgb, var(--success) 10%, transparent); font-size: 9px; font-weight: 720; }
+  .detail-title { position: relative; z-index: 1; max-width: 460px; margin: 14px 0 5px; font-size: 26px; line-height: 1.08; letter-spacing: -.035em; }
+  .detail-description { position: relative; z-index: 1; max-width: 520px; margin: 0; color: var(--ink-2); font-size: 11px; line-height: 1.5; }
+  .detail-meta { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; }
+  .meta-item { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 10px; }
+  .meta-item svg { width: 14px; height: 14px; color: var(--ink-3); }
+  .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .detail-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(210px, .75fr); gap: 13px; margin-top: 13px; }
+  .detail-panel {
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid var(--line);
+    border-radius: var(--panel-radius);
+    background: var(--surface);
+  }
+  #bimeet-redesign[data-concept=&quot;liquid&quot;] .detail-panel { background: rgba(255,255,255,.62); backdrop-filter: blur(18px); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .panel-title { margin: 0; font-size: 12px; font-weight: 740; }
+  .panel-meta { color: var(--ink-3); font-size: 9px; }
+  .poll-option + .poll-option { margin-top: 12px; }
+  .poll-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: var(--ink-2); font-size: 10px; }
+  .poll-copy strong { color: var(--ink); }
+  .poll-track { height: 7px; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
+  .poll-bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand-a), var(--brand-b), var(--brand-c)); }
+  .participant-line { display: flex; align-items: center; gap: 10px; }
+  .participant-line + .participant-line { margin-top: 10px; }
+  .participant-copy { min-width: 0; flex: 1; }
+  .participant-name { font-size: 10.5px; font-weight: 700; }
+  .participant-role { margin-top: 2px; color: var(--ink-3); font-size: 8.5px; }
+  .participant-status { color: var(--success); font-size: 8.5px; font-weight: 700; }
+  .check-list { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--line); }
+  .check-item { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 9.5px; }
+  .check-item + .check-item { margin-top: 8px; }
+  .check-mark { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 5px; color: #fff; background: var(--success); }
+  .check-mark svg { width: 10px; height: 10px; }
+
+  .section-lab {
+    margin-top: 30px;
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    background: color-mix(in srgb, var(--surface) 96%, var(--paper));
+  }
+  .section-lab-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .section-lab-kicker {
+    color: var(--purple);
+    font-size: 10px;
+    font-weight: 760;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .section-lab-title { margin: 5px 0 0; font-size: 22px; letter-spacing: -.025em; }
+  .section-lab-copy { max-width: 520px; margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.5; }
+  .section-variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .section-variant {
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid var(--line);
+    border-radius: var(--panel-radius);
+    background: var(--surface);
+  }
+  .section-variant-head { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
+  .section-variant-number { color: var(--ink-3); font-size: 9px; font-weight: 760; letter-spacing: .08em; }
+  .section-variant-title { margin-top: 2px; font-size: 13px; font-weight: 750; }
+  .section-variant-note { margin-top: 3px; color: var(--ink-3); font-size: 9.5px; line-height: 1.35; }
+  .section-recommend {
+    padding: 4px 7px;
+    border-radius: 999px;
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    font-size: 8px;
+    font-weight: 760;
+    white-space: nowrap;
+  }
+  .section-demo {
+    min-height: 260px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface) 96%, var(--paper));
+  }
+  .section-demo button { border: 0; color: inherit; }
+  .section-demo-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px; border-bottom: 1px solid var(--line); }
+  .section-demo-label { color: var(--ink-3); font-size: 8px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+  .section-complete {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 27px;
+    padding: 0 9px;
+    border: 1px solid var(--line) !important;
+    border-radius: 9px;
+    background: var(--surface);
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .section-complete i, .section-complete svg { width: 12px; height: 12px; }
+  .section-content { padding: 12px; }
+  .section-active-title { font-size: 13px; font-weight: 750; }
+  .section-active-copy { margin-top: 3px; color: var(--ink-3); font-size: 9.5px; }
+  .section-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 13px; }
+  .section-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink-2) !important;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .section-action i, .section-action svg { width: 13px; height: 13px; }
+  .section-stats { display: flex; gap: 6px; margin-top: 11px; }
+  .section-stat { padding: 4px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font-size: 8.5px; font-weight: 700; }
+
+  .quiet-tabs { display: flex; gap: 2px; overflow: hidden; padding: 4px; background: var(--surface-2); }
+  .quiet-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+    min-height: 31px;
+    padding: 0 5px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-3) !important;
+    font-size: 0;
+  }
+  .quiet-tab i, .quiet-tab svg { width: 13px; height: 13px; }
+  .quiet-tab[aria-pressed=&quot;true&quot;] { color: var(--ink) !important; background: var(--surface); box-shadow: 0 1px 4px rgba(20,20,20,.06); }
+
+  .tile-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px; }
+  .tile-tab {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: start;
+    gap: 5px;
+    min-height: 57px;
+    padding: 8px;
+    border: 1px solid var(--line) !important;
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--ink-2) !important;
+    text-align: left;
+    font-size: 8.5px;
+    font-weight: 700;
+  }
+  .tile-tab i, .tile-tab svg { width: 14px; height: 14px; color: var(--ink-3); }
+  .tile-tab[aria-pressed=&quot;true&quot;] { border-color: color-mix(in srgb, var(--brand-b) 35%, var(--line)) !important; background: color-mix(in srgb, var(--brand-b) 9%, var(--surface)); color: var(--ink) !important; }
+  .tile-tab[aria-pressed=&quot;true&quot;] i, .tile-tab[aria-pressed=&quot;true&quot;] svg { color: var(--purple); }
+
+  .index-demo { display: grid; grid-template-columns: 104px minmax(0, 1fr); min-height: 260px; }
+  .index-tabs { padding: 8px; border-right: 1px solid var(--line); background: var(--surface-2); }
+  .index-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 31px;
+    padding: 0 7px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-3) !important;
+    text-align: left;
+    font-size: 8.5px;
+    font-weight: 700;
+  }
+  .index-tab i, .index-tab svg { width: 12px; height: 12px; }
+  .index-tab[aria-pressed=&quot;true&quot;] { color: var(--ink) !important; background: var(--surface); }
+  .index-main { min-width: 0; }
+  .index-main .section-demo-top { border-bottom: 1px solid var(--line); }
+
+  @media (max-width: 1050px) {
+    .section-variants { grid-template-columns: 1fr; }
+    .section-demo { min-height: 0; }
+  }
+  @media (max-width: 620px) {
+    .section-lab { padding: 17px; border-radius: 20px; }
+    .section-lab-head { align-items: start; flex-direction: column; gap: 8px; }
+    .section-actions { grid-template-columns: 1fr; }
+    .index-demo { grid-template-columns: 1fr; }
+    .index-tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-right: 0; border-bottom: 1px solid var(--line); }
+    .index-tab { justify-content: center; padding: 0 4px; font-size: 0; }
+  }
+
+  .mobile-nav,
+  .mobile-bottom { display: none; }
+
+  #bimeet-redesign[data-view=&quot;detail&quot;] .list-view { display: none; }
+  #bimeet-redesign[data-view=&quot;detail&quot;] .detail-view { display: block; }
+
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .br-stage { padding: 22px; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .app-shell {
+    display: block;
+    width: min(390px, 100%);
+    min-height: 740px;
+    margin: 0 auto;
+    border-radius: 38px;
+  }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .app-sidebar,
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .app-rail,
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .app-toolbar { display: none; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .app-main { padding: 0 14px 78px; background: color-mix(in srgb, var(--paper) 78%, var(--surface)); }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .mobile-nav,
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .mobile-bottom { display: flex; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .mobile-nav {
+    position: relative;
+    z-index: 3;
+    align-items: center;
+    justify-content: space-between;
+    height: 54px;
+    margin: 0 -14px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    backdrop-filter: blur(20px);
+  }
+  .mobile-wordmark { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 750; }
+  .mobile-wordmark .br-logo { width: 34px; }
+  .mobile-actions { display: flex; gap: 6px; }
+  .mobile-actions .icon-action { width: 32px; height: 32px; min-height: 32px; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .page-head { display: block; margin: 24px 1px 16px; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .page-title { font-size: 31px; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .segmented { margin-top: 16px; overflow: hidden; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .segment { flex: 1; padding: 7px 3px; text-align: center; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .event-row,
+  #bimeet-redesign[data-view=&quot;mobile&quot;][data-concept=&quot;pocket&quot;] .event-row {
+    grid-template-columns: 48px minmax(0, 1fr) auto 11px;
+    gap: 10px;
+    padding: 12px 12px 12px 15px;
+  }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .event-time,
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .avatar-stack,
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .event-count { display: none; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .event-status { font-size: 8.5px; }
+  #bimeet-redesign[data-view=&quot;mobile&quot;] .mobile-bottom {
+    position: absolute;
+    z-index: 4;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: space-around;
+    padding: 10px 12px 14px;
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(22px);
+  }
+  .mobile-tab { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 70px; color: var(--ink-3); font-size: 8px; font-weight: 650; }
+  .mobile-tab svg { width: 17px; height: 17px; }
+  .mobile-tab.active { color: var(--brand-b); }
+
+  @media (max-width: 1080px) {
+    .app-shell { grid-template-columns: 200px minmax(0, 1fr); }
+    .app-rail { display: none; }
+    .event-row { grid-template-columns: 47px minmax(140px, 1fr) 82px 64px 72px 12px; }
+    #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-row { grid-template-columns: 52px minmax(140px, 1fr) 62px 72px 12px; }
+    .event-count { display: none; }
+    .br-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 760px) {
+    .br-page { padding: 28px 16px 38px; }
+    .br-intro { grid-template-columns: 1fr; gap: 16px; }
+    .br-brand { display: none; }
+    .br-control-deck { grid-template-columns: 1fr; }
+    .br-concept-tabs,
+    .br-view-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .br-view-tabs { padding: 7px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+    .br-tab { padding: 9px 6px; font-size: 11px; }
+    .br-summary { grid-template-columns: 1fr; gap: 16px; }
+    .br-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .app-shell:not(:has(.mobile-nav)) { grid-template-columns: 1fr; }
+    #bimeet-redesign:not([data-view=&quot;mobile&quot;]) .app-sidebar { display: none; }
+    #bimeet-redesign:not([data-view=&quot;mobile&quot;]) .mobile-nav { display: flex; }
+    #bimeet-redesign:not([data-view=&quot;mobile&quot;]) .app-main { padding: 0 14px 32px; }
+    #bimeet-redesign:not([data-view=&quot;mobile&quot;]) .mobile-nav {
+      align-items: center;
+      justify-content: space-between;
+      height: 54px;
+      margin: 0 -14px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 84%, transparent);
+      backdrop-filter: blur(20px);
+    }
+    .event-row,
+    #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-row {
+      grid-template-columns: 48px minmax(0, 1fr) auto 11px;
+    }
+    .event-time,
+    .avatar-stack,
+    .event-count { display: none; }
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 420px) {
+    .br-page { padding-inline: 10px; }
+    .br-intro h1 { font-size: 31px; }
+    .br-intro p { font-size: 14px; }
+    .br-concept-tabs { grid-template-columns: 1fr; }
+    .br-view-tabs { grid-template-columns: repeat(3, 1fr); }
+    .br-specs { grid-template-columns: 1fr 1fr; gap: 4px; }
+    .br-spec { padding: 10px 8px; }
+    .br-stage,
+    #bimeet-redesign[data-view=&quot;mobile&quot;] .br-stage { padding: 6px; border-radius: 28px; }
+    .app-shell,
+    #bimeet-redesign[data-view=&quot;mobile&quot;] .app-shell { min-height: 700px; border-radius: 27px; }
+    .app-main,
+    #bimeet-redesign[data-view=&quot;mobile&quot;] .app-main { padding-inline: 10px; }
+    .mobile-nav,
+    #bimeet-redesign[data-view=&quot;mobile&quot;] .mobile-nav { margin-inline: -10px; padding-inline: 12px; }
+    .page-title,
+    #bimeet-redesign[data-view=&quot;mobile&quot;] .page-title { font-size: 27px; }
+    .segment { font-size: 9px; }
+    .event-row,
+    #bimeet-redesign[data-concept=&quot;pocket&quot;] .event-row,
+    #bimeet-redesign[data-view=&quot;mobile&quot;] .event-row,
+    #bimeet-redesign[data-view=&quot;mobile&quot;][data-concept=&quot;pocket&quot;] .event-row {
+      grid-template-columns: 43px minmax(0, 1fr) 10px;
+      gap: 7px;
+      padding: 11px 9px 11px 12px;
+    }
+    .event-status { display: none; }
+    .event-name { font-size: 11.5px; }
+    .primary-action span { display: none; }
+    .primary-action { width: 36px; padding: 0; }
+    .detail-hero { padding: 17px; }
+    .detail-title { font-size: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #bimeet-redesign *, #bimeet-redesign *::before, #bimeet-redesign *::after {
+      scroll-behavior: auto !important;
+      transition-duration: .01ms !important;
+    }
+  }
+&lt;/style&gt;
+
+&lt;div id=&quot;bimeet-redesign&quot; data-concept=&quot;warm&quot; data-view=&quot;list&quot;&gt;
+  &lt;svg width=&quot;0&quot; height=&quot;0&quot; aria-hidden=&quot;true&quot; style=&quot;position:absolute&quot;&gt;
+    &lt;defs&gt;
+      &lt;symbol id=&quot;i-search&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;11&quot; cy=&quot;11&quot; r=&quot;7&quot;/&gt;&lt;path d=&quot;m20 20-4-4&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-calendar&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-compass&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/&gt;&lt;path d=&quot;m15.5 8.5-2 5-5 2 2-5 5-2Z&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-bell&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-user&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;12&quot; cy=&quot;8&quot; r=&quot;4&quot;/&gt;&lt;path d=&quot;M4 21c.8-4 3.5-6 8-6s7.2 2 8 6&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-plus&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M12 5v14M5 12h14&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-chevron&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;m9 5 7 7-7 7&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-map&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z&quot;/&gt;&lt;circle cx=&quot;12&quot; cy=&quot;10&quot; r=&quot;2.5&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-users&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;9&quot; cy=&quot;8&quot; r=&quot;3&quot;/&gt;&lt;circle cx=&quot;17&quot; cy=&quot;9&quot; r=&quot;2.5&quot;/&gt;&lt;path d=&quot;M3 20c.5-4 2.5-6 6-6s5.5 2 6 6M15 15c3 0 5 1.5 5.5 4&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-check&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;m5 12 4 4L19 6&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-clock&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/&gt;&lt;path d=&quot;M12 7v5l3 2&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-back&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;m15 5-7 7 7 7&quot;/&gt;&lt;/symbol&gt;
+      &lt;symbol id=&quot;i-more&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;5&quot; cy=&quot;12&quot; r=&quot;1&quot; fill=&quot;currentColor&quot; stroke=&quot;none&quot;/&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;1&quot; fill=&quot;currentColor&quot; stroke=&quot;none&quot;/&gt;&lt;circle cx=&quot;19&quot; cy=&quot;12&quot; r=&quot;1&quot; fill=&quot;currentColor&quot; stroke=&quot;none&quot;/&gt;&lt;/symbol&gt;
+    &lt;/defs&gt;
+  &lt;/svg&gt;
+
+  &lt;div class=&quot;br-page&quot;&gt;
+    &lt;div class=&quot;br-orb br-orb-a&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;br-orb br-orb-b&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;br-wrap&quot;&gt;
+      &lt;header class=&quot;br-intro&quot;&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;br-eyebrow&quot;&gt;&lt;span class=&quot;br-eyebrow-dot&quot;&gt;&lt;/span&gt;Bimeet · Product redesign&lt;/div&gt;
+          &lt;h1&gt;Три характера одного приложения&lt;/h1&gt;
+          &lt;p&gt;Одинаковые встречи, функции и плотность данных — разные способы перенести тёплый визуальный язык landing внутрь ежедневного продукта.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;br-brand&quot; aria-label=&quot;Bimeet&quot;&gt;
+          &lt;span class=&quot;br-logo&quot; role=&quot;img&quot; aria-label=&quot;Знак Bimeet&quot;&gt;&lt;/span&gt;
+          bimeet
+        &lt;/div&gt;
+      &lt;/header&gt;
+
+      &lt;div class=&quot;br-control-deck&quot; aria-label=&quot;Настройки сравнения&quot;&gt;
+        &lt;div class=&quot;br-concept-tabs&quot; role=&quot;group&quot; aria-label=&quot;Вариант дизайна&quot;&gt;
+          &lt;button class=&quot;br-tab&quot; type=&quot;button&quot; data-concept-button=&quot;warm&quot; aria-pressed=&quot;true&quot;&gt;01 · Warm Canvas&lt;/button&gt;
+          &lt;button class=&quot;br-tab&quot; type=&quot;button&quot; data-concept-button=&quot;liquid&quot; aria-pressed=&quot;false&quot;&gt;02 · Liquid Workspace&lt;/button&gt;
+          &lt;button class=&quot;br-tab&quot; type=&quot;button&quot; data-concept-button=&quot;pocket&quot; aria-pressed=&quot;false&quot;&gt;03 · Pocket Moments&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;br-view-tabs&quot; role=&quot;group&quot; aria-label=&quot;Экран приложения&quot;&gt;
+          &lt;button class=&quot;br-tab&quot; type=&quot;button&quot; data-view-button=&quot;list&quot; aria-pressed=&quot;true&quot;&gt;Список&lt;/button&gt;
+          &lt;button class=&quot;br-tab&quot; type=&quot;button&quot; data-view-button=&quot;detail&quot; aria-pressed=&quot;false&quot;&gt;Детали&lt;/button&gt;
+          &lt;button class=&quot;br-tab&quot; type=&quot;button&quot; data-view-button=&quot;mobile&quot; aria-pressed=&quot;false&quot;&gt;Телефон&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;section class=&quot;br-summary&quot; aria-live=&quot;polite&quot;&gt;
+        &lt;div&gt;
+          &lt;span class=&quot;br-recommend&quot; id=&quot;br-recommend&quot;&gt;Рекомендую&lt;/span&gt;
+          &lt;h2 id=&quot;br-concept-title&quot;&gt;Warm Canvas&lt;/h2&gt;
+          &lt;p id=&quot;br-concept-copy&quot;&gt;Спокойная продуктовая база: кремовый холст, цельные белые поверхности и фирменный градиент только там, где он помогает действию.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;br-specs&quot;&gt;
+          &lt;div class=&quot;br-spec&quot;&gt;
+            &lt;span class=&quot;br-spec-label&quot;&gt;Палитра&lt;/span&gt;
+            &lt;div class=&quot;br-swatches&quot; aria-label=&quot;Основные цвета&quot;&gt;&lt;span class=&quot;br-swatch&quot;&gt;&lt;/span&gt;&lt;span class=&quot;br-swatch&quot;&gt;&lt;/span&gt;&lt;span class=&quot;br-swatch&quot;&gt;&lt;/span&gt;&lt;span class=&quot;br-swatch&quot;&gt;&lt;/span&gt;&lt;span class=&quot;br-swatch&quot;&gt;&lt;/span&gt;&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;br-spec&quot;&gt;&lt;span class=&quot;br-spec-label&quot;&gt;Поверхности&lt;/span&gt;&lt;span class=&quot;br-spec-value&quot; id=&quot;br-surface-spec&quot;&gt;Плотные, без blur&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;br-spec&quot;&gt;&lt;span class=&quot;br-spec-label&quot;&gt;Геометрия&lt;/span&gt;&lt;span class=&quot;br-spec-value&quot; id=&quot;br-radius-spec&quot;&gt;12–30 px, сдержанно&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;br-spec&quot;&gt;&lt;span class=&quot;br-spec-label&quot;&gt;Градиент&lt;/span&gt;&lt;span class=&quot;br-spec-value&quot; id=&quot;br-gradient-spec&quot;&gt;CTA и active state&lt;/span&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;div class=&quot;br-stage&quot;&gt;
+        &lt;section class=&quot;app-shell&quot; aria-label=&quot;Интерактивный макет Bimeet&quot;&gt;
+          &lt;aside class=&quot;app-sidebar&quot;&gt;
+            &lt;div class=&quot;app-brand&quot;&gt;
+              &lt;span class=&quot;br-logo&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;
+              bimeet
+            &lt;/div&gt;
+            &lt;div class=&quot;app-nav-title&quot;&gt;Навигация&lt;/div&gt;
+            &lt;div class=&quot;app-nav-item&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-compass&quot;/&gt;&lt;/svg&gt;Все встречи&lt;/div&gt;
+            &lt;div class=&quot;app-nav-item active&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-calendar&quot;/&gt;&lt;/svg&gt;Мои встречи&lt;span class=&quot;app-nav-count&quot;&gt;6&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;app-nav-item&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-bell&quot;/&gt;&lt;/svg&gt;Уведомления&lt;span class=&quot;app-nav-count&quot;&gt;3&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;app-nav-title&quot;&gt;Фильтры&lt;/div&gt;
+            &lt;div class=&quot;app-nav-item&quot;&gt;Иду&lt;span class=&quot;app-nav-count&quot;&gt;4&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;app-nav-item&quot;&gt;Организую&lt;span class=&quot;app-nav-count&quot;&gt;2&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;app-nav-item&quot;&gt;Прошедшие&lt;span class=&quot;app-nav-count&quot;&gt;18&lt;/span&gt;&lt;/div&gt;
+            &lt;div class=&quot;app-user&quot;&gt;
+              &lt;span class=&quot;avatar&quot;&gt;АС&lt;/span&gt;
+              &lt;div class=&quot;app-user-copy&quot;&gt;&lt;div class=&quot;app-user-name&quot;&gt;Алексей Славщиков&lt;/div&gt;&lt;div class=&quot;app-user-mail&quot;&gt;alexey@bimeet.pro&lt;/div&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/aside&gt;
+
+          &lt;main class=&quot;app-main&quot;&gt;
+            &lt;div class=&quot;mobile-nav&quot;&gt;
+              &lt;div class=&quot;mobile-wordmark&quot;&gt;&lt;span class=&quot;br-logo&quot; aria-hidden=&quot;true&quot;&gt;&lt;/span&gt;bimeet&lt;/div&gt;
+              &lt;div class=&quot;mobile-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;icon-action&quot; aria-label=&quot;Поиск&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-search&quot;/&gt;&lt;/svg&gt;&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;icon-action&quot; aria-label=&quot;Создать встречу&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-plus&quot;/&gt;&lt;/svg&gt;&lt;/button&gt;&lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;list-view&quot;&gt;
+              &lt;div class=&quot;app-toolbar&quot;&gt;
+                &lt;div class=&quot;search-field&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-search&quot;/&gt;&lt;/svg&gt;Найти встречу, место или человека&lt;span class=&quot;search-kbd&quot;&gt;⌘ K&lt;/span&gt;&lt;/div&gt;
+                &lt;button type=&quot;button&quot; class=&quot;icon-action&quot; aria-label=&quot;Уведомления&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-bell&quot;/&gt;&lt;/svg&gt;&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;primary-action&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;use href=&quot;#i-plus&quot;/&gt;&lt;/svg&gt;&lt;span&gt;Создать&lt;/span&gt;&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;page-head&quot;&gt;
+                &lt;div&gt;&lt;h2 class=&quot;page-title&quot;&gt;Мои встречи&lt;/h2&gt;&lt;div class=&quot;page-sub&quot;&gt;6 впереди · одна сегодня&lt;/div&gt;&lt;/div&gt;
+                &lt;div class=&quot;segmented&quot; aria-label=&quot;Фильтр встреч&quot;&gt;&lt;span class=&quot;segment active&quot;&gt;Все&lt;/span&gt;&lt;span class=&quot;segment&quot;&gt;Иду&lt;/span&gt;&lt;span class=&quot;segment&quot;&gt;Организую&lt;/span&gt;&lt;span class=&quot;segment&quot;&gt;Архив&lt;/span&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+              &lt;section class=&quot;event-section&quot;&gt;
+                &lt;div class=&quot;section-label&quot;&gt;&lt;span&gt;Сегодня · вторник, 14 июля&lt;/span&gt;&lt;span&gt;1 встреча&lt;/span&gt;&lt;/div&gt;
+                &lt;div class=&quot;event-list&quot;&gt;
+                  &lt;article class=&quot;event-row&quot; style=&quot;--row-color:#e97573;--status-color:#299764&quot;&gt;
+                    &lt;div class=&quot;date-cell&quot;&gt;&lt;div class=&quot;date-day&quot;&gt;14&lt;/div&gt;&lt;div class=&quot;date-caption&quot;&gt;Июл&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-info&quot;&gt;&lt;div class=&quot;event-name&quot;&gt;Ужин на летней веранде&lt;/div&gt;&lt;div class=&quot;event-place&quot;&gt;Дом культур · Набережная, 12&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-time&quot;&gt;19:30&lt;/div&gt;
+                    &lt;div class=&quot;avatar-stack&quot;&gt;&lt;span class=&quot;avatar a2&quot;&gt;К&lt;/span&gt;&lt;span class=&quot;avatar a3&quot;&gt;М&lt;/span&gt;&lt;span class=&quot;avatar a4&quot;&gt;О&lt;/span&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-count&quot;&gt;8 чел.&lt;/div&gt;
+                    &lt;div class=&quot;event-status&quot;&gt;Иду&lt;/div&gt;
+                    &lt;div class=&quot;event-chevron&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;use href=&quot;#i-chevron&quot;/&gt;&lt;/svg&gt;&lt;/div&gt;
+                  &lt;/article&gt;
+                &lt;/div&gt;
+              &lt;/section&gt;
+
+              &lt;section class=&quot;event-section&quot;&gt;
+                &lt;div class=&quot;section-label&quot;&gt;&lt;span&gt;Июль&lt;/span&gt;&lt;span&gt;3 встречи&lt;/span&gt;&lt;/div&gt;
+                &lt;div class=&quot;event-list&quot;&gt;
+                  &lt;article class=&quot;event-row&quot; style=&quot;--row-color:#48a98c;--status-color:#7857c8&quot;&gt;
+                    &lt;div class=&quot;date-cell&quot;&gt;&lt;div class=&quot;date-day&quot;&gt;17&lt;/div&gt;&lt;div class=&quot;date-caption&quot;&gt;Пт&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-info&quot;&gt;&lt;div class=&quot;event-name&quot;&gt;Загородный пикник&lt;/div&gt;&lt;div class=&quot;event-place&quot;&gt;Серебряный бор · пляж №3&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-time&quot;&gt;16:00&lt;/div&gt;
+                    &lt;div class=&quot;avatar-stack&quot;&gt;&lt;span class=&quot;avatar a4&quot;&gt;А&lt;/span&gt;&lt;span class=&quot;avatar a2&quot;&gt;Е&lt;/span&gt;&lt;span class=&quot;avatar a5&quot;&gt;+3&lt;/span&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-count&quot;&gt;8 чел.&lt;/div&gt;
+                    &lt;div class=&quot;event-status&quot;&gt;Организатор&lt;/div&gt;
+                    &lt;div class=&quot;event-chevron&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;use href=&quot;#i-chevron&quot;/&gt;&lt;/svg&gt;&lt;/div&gt;
+                  &lt;/article&gt;
+                  &lt;article class=&quot;event-row&quot; style=&quot;--row-color:#a779e8;--status-color:#d97706&quot;&gt;
+                    &lt;div class=&quot;date-cell&quot;&gt;&lt;div class=&quot;date-day&quot;&gt;20&lt;/div&gt;&lt;div class=&quot;date-caption&quot;&gt;Пн&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-info&quot;&gt;&lt;div class=&quot;event-name&quot;&gt;День рождения Алисы&lt;/div&gt;&lt;div class=&quot;event-place&quot;&gt;Оранжерея · Тверская, 8&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-time&quot;&gt;18:30&lt;/div&gt;
+                    &lt;div class=&quot;avatar-stack&quot;&gt;&lt;span class=&quot;avatar a3&quot;&gt;А&lt;/span&gt;&lt;span class=&quot;avatar a5&quot;&gt;Л&lt;/span&gt;&lt;span class=&quot;avatar a2&quot;&gt;+8&lt;/span&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-count&quot;&gt;12 чел.&lt;/div&gt;
+                    &lt;div class=&quot;event-status&quot;&gt;Приглашение&lt;/div&gt;
+                    &lt;div class=&quot;event-chevron&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;use href=&quot;#i-chevron&quot;/&gt;&lt;/svg&gt;&lt;/div&gt;
+                  &lt;/article&gt;
+                  &lt;article class=&quot;event-row&quot; style=&quot;--row-color:#ee9b56;--status-color:#299764&quot;&gt;
+                    &lt;div class=&quot;date-cell&quot;&gt;&lt;div class=&quot;date-day&quot;&gt;27&lt;/div&gt;&lt;div class=&quot;date-caption&quot;&gt;Пн&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-info&quot;&gt;&lt;div class=&quot;event-name&quot;&gt;Поход на Таганай&lt;/div&gt;&lt;div class=&quot;event-place&quot;&gt;Национальный парк · Южный Урал&lt;/div&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-time&quot;&gt;07:00&lt;/div&gt;
+                    &lt;div class=&quot;avatar-stack&quot;&gt;&lt;span class=&quot;avatar a2&quot;&gt;Д&lt;/span&gt;&lt;span class=&quot;avatar a4&quot;&gt;И&lt;/span&gt;&lt;span class=&quot;avatar a3&quot;&gt;+2&lt;/span&gt;&lt;/div&gt;
+                    &lt;div class=&quot;event-count&quot;&gt;6 чел.&lt;/div&gt;
+                    &lt;div class=&quot;event-status&quot;&gt;Иду&lt;/div&gt;
+                    &lt;div class=&quot;event-chevron&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;use href=&quot;#i-chevron&quot;/&gt;&lt;/svg&gt;&lt;/div&gt;
+                  &lt;/article&gt;
+                &lt;/div&gt;
+              &lt;/section&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;detail-view&quot;&gt;
+              &lt;div class=&quot;detail-topbar&quot;&gt;&lt;span class=&quot;back-link&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;use href=&quot;#i-back&quot;/&gt;&lt;/svg&gt;Ко всем встречам&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;icon-action&quot; aria-label=&quot;Другие действия&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot;&gt;&lt;use href=&quot;#i-more&quot;/&gt;&lt;/svg&gt;&lt;/button&gt;&lt;/div&gt;
+              &lt;section class=&quot;detail-hero&quot;&gt;
+                &lt;span class=&quot;detail-badge&quot;&gt;Вы идёте&lt;/span&gt;
+                &lt;h2 class=&quot;detail-title&quot;&gt;Загородный пикник&lt;/h2&gt;
+                &lt;p class=&quot;detail-description&quot;&gt;Собираемся у воды: еда, игры и вечерний костёр. Берите пледы и хорошее настроение.&lt;/p&gt;
+                &lt;div class=&quot;detail-meta&quot;&gt;
+                  &lt;span class=&quot;meta-item&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-calendar&quot;/&gt;&lt;/svg&gt;17 июля · 16:00–22:00&lt;/span&gt;
+                  &lt;span class=&quot;meta-item&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-map&quot;/&gt;&lt;/svg&gt;Серебряный бор · пляж №3&lt;/span&gt;
+                  &lt;span class=&quot;meta-item&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-users&quot;/&gt;&lt;/svg&gt;8 участников&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;detail-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;primary-action&quot;&gt;Я иду&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;soft-action&quot;&gt;Не смогу&lt;/button&gt;&lt;/div&gt;
+              &lt;/section&gt;
+              &lt;div class=&quot;detail-grid&quot;&gt;
+                &lt;section class=&quot;detail-panel&quot;&gt;
+                  &lt;div class=&quot;panel-head&quot;&gt;&lt;h3 class=&quot;panel-title&quot;&gt;Что приготовить?&lt;/h3&gt;&lt;span class=&quot;panel-meta&quot;&gt;8 голосов&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;poll-option&quot;&gt;&lt;div class=&quot;poll-copy&quot;&gt;&lt;strong&gt;Бургеры на гриле&lt;/strong&gt;&lt;span&gt;5 · 63%&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;poll-track&quot;&gt;&lt;div class=&quot;poll-bar&quot; style=&quot;width:63%&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;poll-option&quot;&gt;&lt;div class=&quot;poll-copy&quot;&gt;&lt;strong&gt;Овощи и халуми&lt;/strong&gt;&lt;span&gt;2 · 25%&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;poll-track&quot;&gt;&lt;div class=&quot;poll-bar&quot; style=&quot;width:25%&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;poll-option&quot;&gt;&lt;div class=&quot;poll-copy&quot;&gt;&lt;strong&gt;Пицца&lt;/strong&gt;&lt;span&gt;1 · 12%&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;poll-track&quot;&gt;&lt;div class=&quot;poll-bar&quot; style=&quot;width:12%&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+                  &lt;div class=&quot;check-list&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;h3 class=&quot;panel-title&quot;&gt;Что взять&lt;/h3&gt;&lt;span class=&quot;panel-meta&quot;&gt;3 из 5&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;check-item&quot;&gt;&lt;span class=&quot;check-mark&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;3&quot;&gt;&lt;use href=&quot;#i-check&quot;/&gt;&lt;/svg&gt;&lt;/span&gt;Пледы и складные стулья&lt;/div&gt;&lt;div class=&quot;check-item&quot;&gt;&lt;span class=&quot;check-mark&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;3&quot;&gt;&lt;use href=&quot;#i-check&quot;/&gt;&lt;/svg&gt;&lt;/span&gt;Лёд и напитки&lt;/div&gt;&lt;/div&gt;
+                &lt;/section&gt;
+                &lt;section class=&quot;detail-panel&quot;&gt;
+                  &lt;div class=&quot;panel-head&quot;&gt;&lt;h3 class=&quot;panel-title&quot;&gt;Участники&lt;/h3&gt;&lt;span class=&quot;panel-meta&quot;&gt;8 человек&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;participant-line&quot;&gt;&lt;span class=&quot;avatar a4&quot;&gt;А&lt;/span&gt;&lt;div class=&quot;participant-copy&quot;&gt;&lt;div class=&quot;participant-name&quot;&gt;Алексей&lt;/div&gt;&lt;div class=&quot;participant-role&quot;&gt;Организатор&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;participant-status&quot;&gt;Идёт&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;participant-line&quot;&gt;&lt;span class=&quot;avatar a2&quot;&gt;К&lt;/span&gt;&lt;div class=&quot;participant-copy&quot;&gt;&lt;div class=&quot;participant-name&quot;&gt;Катя&lt;/div&gt;&lt;div class=&quot;participant-role&quot;&gt;Участник&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;participant-status&quot;&gt;Идёт&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;participant-line&quot;&gt;&lt;span class=&quot;avatar a3&quot;&gt;М&lt;/span&gt;&lt;div class=&quot;participant-copy&quot;&gt;&lt;div class=&quot;participant-name&quot;&gt;Максим&lt;/div&gt;&lt;div class=&quot;participant-role&quot;&gt;Водитель · 2 места&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;participant-status&quot;&gt;Идёт&lt;/span&gt;&lt;/div&gt;
+                  &lt;div class=&quot;participant-line&quot;&gt;&lt;span class=&quot;avatar a5&quot;&gt;О&lt;/span&gt;&lt;div class=&quot;participant-copy&quot;&gt;&lt;div class=&quot;participant-name&quot;&gt;Ольга&lt;/div&gt;&lt;div class=&quot;participant-role&quot;&gt;Участник&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;participant-status&quot; style=&quot;color:var(--warning)&quot;&gt;Ждём&lt;/span&gt;&lt;/div&gt;
+                &lt;/section&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;nav class=&quot;mobile-bottom&quot; aria-label=&quot;Мобильная навигация&quot;&gt;
+              &lt;span class=&quot;mobile-tab active&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-calendar&quot;/&gt;&lt;/svg&gt;Встречи&lt;/span&gt;
+              &lt;span class=&quot;mobile-tab&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-bell&quot;/&gt;&lt;/svg&gt;Уведомления&lt;/span&gt;
+              &lt;span class=&quot;mobile-tab&quot;&gt;&lt;svg fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.8&quot;&gt;&lt;use href=&quot;#i-user&quot;/&gt;&lt;/svg&gt;Профиль&lt;/span&gt;
+            &lt;/nav&gt;
+          &lt;/main&gt;
+
+          &lt;aside class=&quot;app-rail&quot;&gt;
+            &lt;section class=&quot;rail-card&quot;&gt;&lt;div class=&quot;rail-kicker&quot;&gt;Сегодня&lt;/div&gt;&lt;div class=&quot;rail-date&quot;&gt;14&lt;/div&gt;&lt;div class=&quot;rail-copy&quot;&gt;вторник · июль 2026&lt;/div&gt;&lt;div class=&quot;rail-next&quot;&gt;&lt;div class=&quot;rail-time&quot;&gt;19:30&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;rail-event&quot;&gt;Ужин на летней веранде&lt;/div&gt;&lt;div class=&quot;rail-place&quot;&gt;Дом культур · Набережная, 12&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;
+            &lt;section class=&quot;rail-card&quot;&gt;&lt;div class=&quot;calendar-head&quot;&gt;&lt;span&gt;Июль 2026&lt;/span&gt;&lt;span&gt;‹ &amp;nbsp; ›&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;mini-calendar&quot; aria-label=&quot;Календарь на июль 2026&quot;&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Пн&lt;/span&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Вт&lt;/span&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Ср&lt;/span&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Чт&lt;/span&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Пт&lt;/span&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Сб&lt;/span&gt;&lt;span class=&quot;cal-cell week&quot;&gt;Вс&lt;/span&gt;&lt;span class=&quot;cal-cell muted&quot;&gt;29&lt;/span&gt;&lt;span class=&quot;cal-cell muted&quot;&gt;30&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;6&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;7&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;11&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;13&lt;/span&gt;&lt;span class=&quot;cal-cell today&quot;&gt;14&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;15&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;16&lt;/span&gt;&lt;span class=&quot;cal-cell has-event&quot;&gt;17&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;18&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;19&lt;/span&gt;&lt;span class=&quot;cal-cell has-event&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;21&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;22&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;23&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;24&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;25&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;26&lt;/span&gt;&lt;span class=&quot;cal-cell has-event&quot;&gt;27&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;28&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;29&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;30&lt;/span&gt;&lt;span class=&quot;cal-cell&quot;&gt;31&lt;/span&gt;&lt;span class=&quot;cal-cell muted&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;cal-cell muted&quot;&gt;2&lt;/span&gt;&lt;/div&gt;&lt;/section&gt;
+            &lt;section class=&quot;rail-card&quot;&gt;&lt;div class=&quot;rail-kicker&quot;&gt;Этот месяц&lt;/div&gt;&lt;div class=&quot;rail-stats&quot;&gt;&lt;div&gt;&lt;div class=&quot;stat-value&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;stat-label&quot;&gt;встреч впереди&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;stat-value&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;stat-label&quot;&gt;организуете&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;stat-value&quot;&gt;21&lt;/div&gt;&lt;div class=&quot;stat-label&quot;&gt;человек рядом&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;stat-value&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;stat-label&quot;&gt;новых ответа&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;
+            &lt;div class=&quot;floating-chip&quot;&gt;&lt;span class=&quot;avatar a2&quot; style=&quot;width:22px;height:22px&quot;&gt;К&lt;/span&gt;Катя проголосовала&lt;/div&gt;
+          &lt;/aside&gt;
+        &lt;/section&gt;
+      &lt;/div&gt;
+
+      &lt;section class=&quot;section-lab&quot; aria-labelledby=&quot;section-lab-title&quot;&gt;
+        &lt;div class=&quot;section-lab-head&quot;&gt;
+          &lt;div&gt;
+            &lt;div class=&quot;section-lab-kicker&quot;&gt;Event detail · navigation lab&lt;/div&gt;
+            &lt;h2 class=&quot;section-lab-title&quot; id=&quot;section-lab-title&quot;&gt;Варианты блока разделов встречи&lt;/h2&gt;
+          &lt;/div&gt;
+          &lt;p class=&quot;section-lab-copy&quot;&gt;Три способа отделить навигацию по возможностям встречи от действий организатора. Данные и набор разделов везде одинаковые.&lt;/p&gt;
+        &lt;/div&gt;
+
+        &lt;div class=&quot;section-variants&quot;&gt;
+          &lt;article class=&quot;section-variant&quot;&gt;
+            &lt;div class=&quot;section-variant-head&quot;&gt;
+              &lt;div&gt;&lt;div class=&quot;section-variant-number&quot;&gt;01&lt;/div&gt;&lt;div class=&quot;section-variant-title&quot;&gt;Quiet Rail&lt;/div&gt;&lt;div class=&quot;section-variant-note&quot;&gt;Самый компактный и близкий к текущему интерфейсу.&lt;/div&gt;&lt;/div&gt;
+              &lt;span class=&quot;section-recommend&quot;&gt;Рекомендую&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;section-demo&quot; data-section-demo&gt;
+              &lt;div class=&quot;section-demo-top&quot;&gt;&lt;span class=&quot;section-demo-label&quot;&gt;Разделы встречи&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;section-complete&quot;&gt;&lt;i data-lucide=&quot;check-circle&quot;&gt;&lt;/i&gt;Завершить&lt;/button&gt;&lt;/div&gt;
+              &lt;div class=&quot;quiet-tabs&quot; role=&quot;group&quot; aria-label=&quot;Раздел встречи&quot;&gt;
+                &lt;button type=&quot;button&quot; class=&quot;quiet-tab&quot; data-section-name=&quot;Участники&quot; data-section-copy=&quot;1 участник&quot; aria-label=&quot;Участники&quot; aria-pressed=&quot;true&quot;&gt;&lt;i data-lucide=&quot;users&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;quiet-tab&quot; data-section-name=&quot;Сбор средств&quot; data-section-copy=&quot;0 сборов&quot; aria-label=&quot;Сбор средств&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;wallet&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;quiet-tab&quot; data-section-name=&quot;Опросы&quot; data-section-copy=&quot;0 активных опросов&quot; aria-label=&quot;Опросы&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;bar-chart-3&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;quiet-tab&quot; data-section-name=&quot;Вещи&quot; data-section-copy=&quot;0 позиций&quot; aria-label=&quot;Вещи&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;shopping-bag&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;quiet-tab&quot; data-section-name=&quot;Попутчики&quot; data-section-copy=&quot;0 машин&quot; aria-label=&quot;Попутчики&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;truck&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;quiet-tab&quot; data-section-name=&quot;Чат&quot; data-section-copy=&quot;Нет новых сообщений&quot; aria-label=&quot;Чат&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;message-circle&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;section-content&quot;&gt;
+                &lt;div class=&quot;section-active-title&quot; data-active-section&gt;Участники&lt;/div&gt;&lt;div class=&quot;section-active-copy&quot; data-active-copy&gt;1 участник&lt;/div&gt;
+                &lt;div class=&quot;section-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;section-action&quot;&gt;&lt;i data-lucide=&quot;user-plus&quot;&gt;&lt;/i&gt;Пригласить&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;section-action&quot;&gt;&lt;i data-lucide=&quot;link&quot;&gt;&lt;/i&gt;Скопировать ссылку&lt;/button&gt;&lt;/div&gt;
+                &lt;div class=&quot;section-stats&quot;&gt;&lt;span class=&quot;section-stat&quot;&gt;0 идут&lt;/span&gt;&lt;span class=&quot;section-stat&quot;&gt;0 приглашены&lt;/span&gt;&lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+
+          &lt;article class=&quot;section-variant&quot;&gt;
+            &lt;div class=&quot;section-variant-head&quot;&gt;&lt;div&gt;&lt;div class=&quot;section-variant-number&quot;&gt;02&lt;/div&gt;&lt;div class=&quot;section-variant-title&quot;&gt;Section Tiles&lt;/div&gt;&lt;div class=&quot;section-variant-note&quot;&gt;Разделы заметнее, а состояние читается до перехода.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;section-demo&quot; data-section-demo&gt;
+              &lt;div class=&quot;section-demo-top&quot;&gt;&lt;span class=&quot;section-demo-label&quot;&gt;Встреча&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;section-complete&quot;&gt;&lt;i data-lucide=&quot;check-circle&quot;&gt;&lt;/i&gt;Завершить&lt;/button&gt;&lt;/div&gt;
+              &lt;div class=&quot;tile-tabs&quot; role=&quot;group&quot; aria-label=&quot;Раздел встречи&quot;&gt;
+                &lt;button type=&quot;button&quot; class=&quot;tile-tab&quot; data-section-name=&quot;Участники&quot; data-section-copy=&quot;1 участник&quot; aria-pressed=&quot;true&quot;&gt;&lt;i data-lucide=&quot;users&quot;&gt;&lt;/i&gt;Участники&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;tile-tab&quot; data-section-name=&quot;Сбор средств&quot; data-section-copy=&quot;0 сборов&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;wallet&quot;&gt;&lt;/i&gt;Сбор средств&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;tile-tab&quot; data-section-name=&quot;Опросы&quot; data-section-copy=&quot;0 активных опросов&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;bar-chart-3&quot;&gt;&lt;/i&gt;Опросы&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;tile-tab&quot; data-section-name=&quot;Вещи&quot; data-section-copy=&quot;0 позиций&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;shopping-bag&quot;&gt;&lt;/i&gt;Вещи&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;tile-tab&quot; data-section-name=&quot;Попутчики&quot; data-section-copy=&quot;0 машин&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;truck&quot;&gt;&lt;/i&gt;Попутчики&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;tile-tab&quot; data-section-name=&quot;Чат&quot; data-section-copy=&quot;Нет новых сообщений&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;message-circle&quot;&gt;&lt;/i&gt;Чат&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;section-content&quot;&gt;&lt;div class=&quot;section-active-title&quot; data-active-section&gt;Участники&lt;/div&gt;&lt;div class=&quot;section-active-copy&quot; data-active-copy&gt;1 участник&lt;/div&gt;&lt;div class=&quot;section-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;section-action&quot;&gt;&lt;i data-lucide=&quot;user-plus&quot;&gt;&lt;/i&gt;Пригласить&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;section-action&quot;&gt;&lt;i data-lucide=&quot;link&quot;&gt;&lt;/i&gt;Ссылка&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+
+          &lt;article class=&quot;section-variant&quot;&gt;
+            &lt;div class=&quot;section-variant-head&quot;&gt;&lt;div&gt;&lt;div class=&quot;section-variant-number&quot;&gt;03&lt;/div&gt;&lt;div class=&quot;section-variant-title&quot;&gt;Side Index&lt;/div&gt;&lt;div class=&quot;section-variant-note&quot;&gt;Удобен, если разделов и действий станет больше.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;div class=&quot;section-demo index-demo&quot; data-section-demo&gt;
+              &lt;div class=&quot;index-tabs&quot; role=&quot;group&quot; aria-label=&quot;Раздел встречи&quot;&gt;
+                &lt;button type=&quot;button&quot; class=&quot;index-tab&quot; data-section-name=&quot;Участники&quot; data-section-copy=&quot;1 участник&quot; aria-label=&quot;Участники&quot; aria-pressed=&quot;true&quot;&gt;&lt;i data-lucide=&quot;users&quot;&gt;&lt;/i&gt;Участники&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;index-tab&quot; data-section-name=&quot;Сбор средств&quot; data-section-copy=&quot;0 сборов&quot; aria-label=&quot;Сбор средств&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;wallet&quot;&gt;&lt;/i&gt;Сборы&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;index-tab&quot; data-section-name=&quot;Опросы&quot; data-section-copy=&quot;0 активных опросов&quot; aria-label=&quot;Опросы&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;bar-chart-3&quot;&gt;&lt;/i&gt;Опросы&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;index-tab&quot; data-section-name=&quot;Вещи&quot; data-section-copy=&quot;0 позиций&quot; aria-label=&quot;Вещи&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;shopping-bag&quot;&gt;&lt;/i&gt;Вещи&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;index-tab&quot; data-section-name=&quot;Попутчики&quot; data-section-copy=&quot;0 машин&quot; aria-label=&quot;Попутчики&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;truck&quot;&gt;&lt;/i&gt;Попутчики&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;index-tab&quot; data-section-name=&quot;Чат&quot; data-section-copy=&quot;Нет новых сообщений&quot; aria-label=&quot;Чат&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;message-circle&quot;&gt;&lt;/i&gt;Чат&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;index-main&quot;&gt;
+                &lt;div class=&quot;section-demo-top&quot;&gt;&lt;span class=&quot;section-demo-label&quot;&gt;Текущий раздел&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;section-complete&quot; aria-label=&quot;Завершить встречу&quot;&gt;&lt;i data-lucide=&quot;check-circle&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;
+                &lt;div class=&quot;section-content&quot;&gt;&lt;div class=&quot;section-active-title&quot; data-active-section&gt;Участники&lt;/div&gt;&lt;div class=&quot;section-active-copy&quot; data-active-copy&gt;1 участник&lt;/div&gt;&lt;div class=&quot;section-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;section-action&quot;&gt;&lt;i data-lucide=&quot;user-plus&quot;&gt;&lt;/i&gt;Пригласить&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;section-action&quot;&gt;&lt;i data-lucide=&quot;link&quot;&gt;&lt;/i&gt;Ссылка&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;section-stats&quot;&gt;&lt;span class=&quot;section-stat&quot;&gt;0 идут&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  (() =&gt; {
+    const root = document.getElementById(&#x27;bimeet-redesign&#x27;);
+    if (!root) return;
+
+    const concepts = {
+      warm: {
+        title: &#x27;Warm Canvas&#x27;,
+        copy: &#x27;Спокойная продуктовая база: кремовый холст, цельные белые поверхности и фирменный градиент только там, где он помогает действию.&#x27;,
+        surfaces: &#x27;Плотные, без blur&#x27;,
+        radius: &#x27;12–30 px, сдержанно&#x27;,
+        gradient: &#x27;CTA и active state&#x27;,
+        recommended: true,
+      },
+      liquid: {
+        title: &#x27;Liquid Workspace&#x27;,
+        copy: &#x27;Эмоциональный премиум-вариант: цвет живёт под полупрозрачной оболочкой, а рабочие списки остаются спокойными и хорошо читаемыми.&#x27;,
+        surfaces: &#x27;Glass shell, плотные списки&#x27;,
+        radius: &#x27;14–34 px, мягко&#x27;,
+        gradient: &#x27;Фон, CTA и акценты&#x27;,
+        recommended: false,
+      },
+      pocket: {
+        title: &#x27;Pocket Moments&#x27;,
+        copy: &#x27;Самый дружелюбный mobile-first язык: самостоятельные пастельные карточки событий, крупные даты и короткие живые уведомления.&#x27;,
+        surfaces: &#x27;Тёплые цветные карточки&#x27;,
+        radius: &#x27;15–36 px, выразительно&#x27;,
+        gradient: &#x27;CTA и notification chips&#x27;,
+        recommended: false,
+      },
+    };
+
+    const title = root.querySelector(&#x27;#br-concept-title&#x27;);
+    const copy = root.querySelector(&#x27;#br-concept-copy&#x27;);
+    const surfaces = root.querySelector(&#x27;#br-surface-spec&#x27;);
+    const radius = root.querySelector(&#x27;#br-radius-spec&#x27;);
+    const gradient = root.querySelector(&#x27;#br-gradient-spec&#x27;);
+    const recommend = root.querySelector(&#x27;#br-recommend&#x27;);
+
+    root.querySelectorAll(&#x27;[data-concept-button]&#x27;).forEach((button) =&gt; {
+      button.addEventListener(&#x27;click&#x27;, () =&gt; {
+        const concept = button.getAttribute(&#x27;data-concept-button&#x27;);
+        const data = concepts[concept];
+        if (!data) return;
+        root.dataset.concept = concept;
+        root.querySelectorAll(&#x27;[data-concept-button]&#x27;).forEach((item) =&gt; item.setAttribute(&#x27;aria-pressed&#x27;, String(item === button)));
+        title.textContent = data.title;
+        copy.textContent = data.copy;
+        surfaces.textContent = data.surfaces;
+        radius.textContent = data.radius;
+        gradient.textContent = data.gradient;
+        recommend.hidden = !data.recommended;
+      });
+    });
+
+    root.querySelectorAll(&#x27;[data-view-button]&#x27;).forEach((button) =&gt; {
+      button.addEventListener(&#x27;click&#x27;, () =&gt; {
+        const view = button.getAttribute(&#x27;data-view-button&#x27;);
+        if (!view) return;
+        root.dataset.view = view;
+        root.querySelectorAll(&#x27;[data-view-button]&#x27;).forEach((item) =&gt; item.setAttribute(&#x27;aria-pressed&#x27;, String(item === button)));
+      });
+    });
+
+    root.querySelectorAll(&#x27;[data-section-demo]&#x27;).forEach((demo) =&gt; {
+      const activeTitle = demo.querySelector(&#x27;[data-active-section]&#x27;);
+      const activeCopy = demo.querySelector(&#x27;[data-active-copy]&#x27;);
+      demo.querySelectorAll(&#x27;[data-section-name]&#x27;).forEach((button) =&gt; {
+        button.addEventListener(&#x27;click&#x27;, () =&gt; {
+          demo.querySelectorAll(&#x27;[data-section-name]&#x27;).forEach((item) =&gt; {
+            item.setAttribute(&#x27;aria-pressed&#x27;, String(item === button));
+          });
+          if (activeTitle) activeTitle.textContent = button.getAttribute(&#x27;data-section-name&#x27;) || &#x27;&#x27;;
+          if (activeCopy) activeCopy.textContent = button.getAttribute(&#x27;data-section-copy&#x27;) || &#x27;&#x27;;
+        });
+      });
+    });
+  })();
+&lt;/script&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

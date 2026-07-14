@@ -19,7 +19,7 @@ export const ListGroup = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        'overflow-hidden rounded-[12px] border border-line bg-surface',
+        'overflow-hidden rounded-[var(--radius-list)] border border-line bg-surface warm-surface-shadow',
         '[&>*+*]:border-t [&>*+*]:border-line-soft',
         className,
       )}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CalendarOff, Plus, SearchX, X } from 'lucide-react'
+import { Bell, CalendarOff, Plus, SearchX, X } from 'lucide-react'
 import { useEvents } from '@/entities/event/queries'
 import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
 import EventListRow from '@/widgets/event-card/EventListRow'
@@ -17,10 +17,10 @@ import {
   StatCell,
   useToast,
 } from '@/shared/ui'
-type Tab = 'all' | 'attending' | 'organizing' | 'public' | 'past'
+type Tab = 'all' | 'attending' | 'organizing' | 'past'
 type EventAny = EventListItem | PublicEventListItem
 
-const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'public', 'past']
+const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'past']
 
 const MONTHS_LONG_RU = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -36,8 +36,10 @@ function isSameDay(a: Date, b: Date) {
 }
 
 interface Group {
-  /** Заголовок секции — «Сегодня · ср, 8 июня» или «Июнь · 5 встреч» */
+  /** Заголовок секции — «Сегодня · ср, 8 июня» или «Июнь». */
   title: string
+  /** Количество встреч выносится вправо, как в Warm Canvas. */
+  countLabel: string
   /** Подпись для дней внутри: 'weekday' для внутримесячных, 'month' иначе */
   dateCaption: 'weekday' | 'month'
   events: EventAny[]
@@ -69,7 +71,8 @@ function groupEvents(events: EventAny[]): Group[] {
     const wd = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'][today.getDay()]
     groups.push({
       title: `Сегодня · ${wd}, ${today.getDate()} ${MONTHS_LONG_RU[today.getMonth()].toLowerCase()}`,
-      dateCaption: 'weekday',
+      countLabel: `${todayList.length} ${pluralEvents(todayList.length)}`,
+      dateCaption: 'month',
       events: todayList,
     })
   }
@@ -79,7 +82,8 @@ function groupEvents(events: EventAny[]): Group[] {
     const currentYear = new Date().getFullYear()
     const yearPart = y === currentYear ? '' : ` ${y}`
     groups.push({
-      title: `${monthName}${yearPart} · ${list.length} ${pluralEvents(list.length)}`,
+      title: `${monthName}${yearPart}`,
+      countLabel: `${list.length} ${pluralEvents(list.length)}`,
       dateCaption: 'weekday',
       events: list,
     })
@@ -277,8 +281,6 @@ function EventsListPage() {
 
   const attendingEvents = events.filter(e => !e.organizer.is_me && e.status !== 'completed')
   const organizingEvents = events.filter(e => e.organizer.is_me && e.status !== 'completed')
-  // «Публичные» внутри моих встреч = мои публичные (например, которые я организовал).
-  const myPublicEvents = events.filter(e => e.is_public && e.status !== 'completed')
   const pastEvents = events.filter(e => e.status === 'completed')
 
   function handleAttend(event: EventAny) {
@@ -314,7 +316,6 @@ function EventsListPage() {
     all: allUpcoming,
     attending: attendingEvents,
     organizing: organizingEvents,
-    public: myPublicEvents,
     past: pastEvents,
   }
 
@@ -332,15 +333,20 @@ function EventsListPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Toolbar — DESKTOP only. На mobile «+» переехал в navbar, поиск — компактный icon-toggle ниже. */}
-      <div className="hidden lg:grid gap-4 items-center grid-cols-[minmax(0,1fr)_auto]">
+      <div className="hidden lg:flex items-center gap-2.5">
         <SearchInput
-          className="max-w-[420px]"
+          className="min-w-0 flex-1"
           kbdHint="⌘K"
           placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <div className="flex items-center gap-2 justify-self-end">
+        <div className="flex items-center gap-2">
+          <Button variant="icon" size="icon" asChild>
+            <Link to="/notifications" aria-label={t('nav.notifications')}>
+              <Bell size={15} />
+            </Link>
+          </Button>
           <Button asChild>
             <Link to="/events/new">
               <Plus size={14} strokeWidth={2.4} />
@@ -372,27 +378,28 @@ function EventsListPage() {
         </div>
       )}
 
-      {/* Page head — крупнее на mobile (iOS large title 34px) */}
-      <div>
-        <h1 className="text-[34px] lg:text-[28px] font-bold tracking-[-0.022em] leading-[1.05] lg:leading-[1.15]">
-          {t('events.title', 'Встречи')}
-        </h1>
-        <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">{todayLine}</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <SegmentedControl
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'all',        label: t('events.tabAll', 'Все'),             count: allUpcoming.length },
-            { value: 'attending',  label: t('events.tabAttending', 'Участвую'),   count: attendingEvents.length },
-            { value: 'organizing', label: t('events.tabOrganizing', 'Организую'), count: organizingEvents.length },
-            { value: 'public',     label: t('events.tabPublic', 'Публичные'),     count: myPublicEvents.length },
-            { value: 'past',       label: t('events.tabPast', 'Прошедшие'),       count: pastEvents.length },
-          ]}
-        />
+      {/* Заголовок и фильтры образуют один блок, как в макете Warm Canvas. */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-5">
+        <div>
+          <h1 className="text-[31px] lg:text-[28px] font-bold tracking-[-0.035em] leading-[1.05]">
+            {t('nav.events')}
+          </h1>
+          <p className="mt-[7px] text-[11.5px] text-ink-3">{todayLine}</p>
+        </div>
+        <div className="w-full lg:w-auto">
+          <SegmentedControl
+            value={tab}
+            onChange={setTab}
+            fullWidth
+            className="lg:w-auto"
+            options={[
+              { value: 'all',        label: t('events.tabAll') },
+              { value: 'attending',  label: t('events.tabAttending') },
+              { value: 'organizing', label: t('events.tabOrganizing') },
+              { value: 'past',       label: t('events.tabPast') },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Body */}
@@ -410,13 +417,16 @@ function EventsListPage() {
           />
         )
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-[22px]">
           {groups.map(g => {
             return (
-              <section key={g.title} className="flex flex-col gap-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-3">
+              <section key={g.title} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-[3px]">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
                     {g.title}
+                  </div>
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                    {g.countLabel}
                   </div>
                 </div>
                 <ListGroup>

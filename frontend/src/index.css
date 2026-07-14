@@ -1,50 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
-/* === Design tokens — App-минимализм (light theme) ===
- * Эталон: design/05-app-web.html, design/05-app.html
- * Dark variants заготовлены в комментариях для будущего этапа.
+/* === Design tokens — Warm Canvas ===
+ * Эталон: design/new-front.html + актуальный landing.
+ * Белый desktop-холст, тёплый mobile-холст, графитовый текст и один
+ * розово-фиолетово-голубой градиент для главных действий.
  */
 @theme {
-  /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
-  /* Surfaces — light */
-  --color-bg: #FFFFFF;            /* dark: #0A0A0B */
-  --color-bg-2: #F7F7F8;          /* dark: #131316 */
-  --color-surface: #FFFFFF;       /* dark: #161618 */
-  --color-hover: rgba(60,60,67,0.05);   /* dark: rgba(235,235,245,0.04) */
+  --color-bg: #FFFFFF;
+  --color-bg-2: #F3F0E9;
+  --color-surface: #FFFFFF;
+  --color-hover: rgba(86, 74, 63, 0.06);
 
-  /* Text + lines */
-  --color-ink: #000000;                  /* dark: #FFFFFF */
-  --color-ink-2: #3C3C43;                /* dark: rgba(235,235,245,0.92) */
-  --color-ink-3: rgba(60,60,67,0.60);    /* dark: rgba(235,235,245,0.55) */
-  --color-ink-4: rgba(60,60,67,0.30);    /* dark: rgba(235,235,245,0.28) */
-  --color-line: rgba(60,60,67,0.14);     /* dark: rgba(235,235,245,0.10) */
-  --color-line-soft: rgba(60,60,67,0.07);/* dark: rgba(235,235,245,0.06) */
+  --color-ink: #121214;
+  --color-ink-2: #5E5A55;
+  --color-ink-3: #9A948D;
+  --color-ink-4: rgba(94, 90, 85, 0.38);
+  --color-line: rgba(18, 18, 20, 0.09);
+  --color-line-soft: rgba(18, 18, 20, 0.055);
 
-  /* Accent + semantic (системные iOS) */
-  --color-accent: #007AFF;        /* dark: #0A84FF */
-  --color-success: #34C759;       /* dark: #30D158 */
-  --color-warning: #FF9500;       /* dark: #FF9F0A */
-  --color-danger: #FF3B30;        /* dark: #FF453A */
-  --color-purple: #AF52DE;        /* dark: #BF5AF2 */
-  --color-indigo: #5856D6;        /* dark: #5E5CE6 */
+  --color-accent: #8668D8;
+  --color-success: #299764;
+  --color-warning: #D97706;
+  --color-danger: #DC5A62;
+  --color-purple: #8B63D7;
+  --color-indigo: #6674CE;
+  --color-brand-rose: #FB7185;
+  --color-brand-violet: #A78BFA;
+  --color-brand-sky: #38BDF8;
 
-  /* Avatar palette (a1..a6) */
-  --color-avatar-1: #FF9500;
-  --color-avatar-2: #007AFF;
-  --color-avatar-3: #AF52DE;
-  --color-avatar-4: #FF2D55;
-  --color-avatar-5: #34C759;
-  --color-avatar-6: #5856D6;
+  --color-avatar-1: #E89A5E;
+  --color-avatar-2: #48A6D8;
+  --color-avatar-3: #9A75DE;
+  --color-avatar-4: #E56D7D;
+  --color-avatar-5: #4BA67F;
+  --color-avatar-6: #6674CE;
 
-  /* Radius scale */
-  --radius-nav: 7px;
-  --radius-control: 9px;
-  --radius-list: 12px;
-  --radius-card: 14px;
-  --radius-frame: 28px;
+  --radius-nav: 10px;
+  --radius-control: 12px;
+  --radius-list: 16px;
+  --radius-card: 18px;
+  --radius-frame: 30px;
 }
 
 /* Base reset + global rules */
@@ -84,15 +82,12 @@ body {
   input, textarea, select { font-size: 16px; }
 }
 
-/* === Mobile: серый iOS-фон вместо белого ===
- * Эталон: design/05-app.html — `--bg: #F2F2F7`.
- * Surface (карточки, popover'ы) остаётся белой. Десктоп — белый bg (1024px+).
- */
+/* На mobile сохраняем тёплый холст из макета; desktop остаётся белым. */
 @media (max-width: 1023.98px) {
   :root {
-    --color-bg: #F2F2F7;
-    --color-line: rgba(60, 60, 67, 0.18);
-    --color-line-soft: rgba(60, 60, 67, 0.08);
+    --color-bg: #FAF8F2;
+    --color-line: rgba(18, 18, 20, 0.1);
+    --color-line-soft: rgba(18, 18, 20, 0.06);
   }
 }
 
@@ -108,38 +103,54 @@ html.dark {
   color-scheme: dark;
 
   /* Surfaces */
-  --color-bg: #0A0A0B;
-  --color-bg-2: #131316;
-  --color-surface: #161618;
-  --color-hover: rgba(235, 235, 245, 0.04);
+  --color-bg: #121113;
+  --color-bg-2: #1B1918;
+  --color-surface: #211F1D;
+  --color-hover: rgba(250, 244, 235, 0.055);
 
   /* Text + lines */
-  --color-ink: #FFFFFF;
-  --color-ink-2: rgba(235, 235, 245, 0.92);
-  --color-ink-3: rgba(235, 235, 245, 0.55);
-  --color-ink-4: rgba(235, 235, 245, 0.28);
-  --color-line: rgba(235, 235, 245, 0.10);
-  --color-line-soft: rgba(235, 235, 245, 0.06);
+  --color-ink: #FAF7F2;
+  --color-ink-2: rgba(250, 247, 242, 0.83);
+  --color-ink-3: rgba(250, 247, 242, 0.52);
+  --color-ink-4: rgba(250, 247, 242, 0.28);
+  --color-line: rgba(250, 244, 235, 0.11);
+  --color-line-soft: rgba(250, 244, 235, 0.065);
 
   /* Accent + semantic (iOS dark) */
-  --color-accent: #0A84FF;
-  --color-success: #30D158;
-  --color-warning: #FF9F0A;
-  --color-danger: #FF453A;
-  --color-purple: #BF5AF2;
-  --color-indigo: #5E5CE6;
+  --color-accent: #B29AF7;
+  --color-success: #59C58E;
+  --color-warning: #F0A33A;
+  --color-danger: #F07B82;
+  --color-purple: #B99AF1;
+  --color-indigo: #8D9AE8;
 }
 
-/* === Логотип (BrandMark) ===
- * Графитовые кольца без плитки. На светлой теме — тёмное+серебро; на тёмной
- * перекрашиваем в серебро/сталь, чтобы знак читался на любом фоне.
- * (html.dark переопределяет :root — выше специфичность.) */
-:root {
-  --logo-1a: #0B0C0E; --logo-1b: #3A4250;
-  --logo-2a: #5A6473; --logo-2b: #AEB6C2;
-}
-html.dark {
-  --logo-1a: #8A93A1; --logo-1b: #E8ECF1;
-  --logo-2a: #3B4351; --logo-2b: #9CA3AF;
+/* Ровный холст без декоративных цветовых пятен. */
+.warm-canvas-bg {
+  background: var(--color-bg);
 }
 
+.brand-gradient {
+  color: #fff;
+  background: linear-gradient(115deg, var(--color-brand-rose), var(--color-brand-violet), var(--color-brand-sky));
+  background-size: 160% 160%;
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--color-brand-violet) 72%, transparent);
+}
+
+.brand-gradient:hover {
+  background-position: 100% 50%;
+  box-shadow: 0 13px 28px -12px color-mix(in srgb, var(--color-brand-violet) 86%, transparent);
+}
+
+.brand-gradient-soft {
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--color-brand-rose) 13%, var(--color-surface)),
+    color-mix(in srgb, var(--color-brand-violet) 14%, var(--color-surface)),
+    color-mix(in srgb, var(--color-brand-sky) 12%, var(--color-surface))
+  );
+}
+
+.warm-surface-shadow {
+  box-shadow: 0 16px 44px -30px rgba(50, 39, 27, 0.36);
+}

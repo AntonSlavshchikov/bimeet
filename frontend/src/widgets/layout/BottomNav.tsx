@@ -48,7 +48,7 @@ export default function BottomNav() {
     <nav
       className={cn(
         'lg:hidden fixed bottom-0 left-0 right-0 z-50',
-        'border-t border-line bg-bg/80 backdrop-blur-xl backdrop-saturate-150',
+        'border-t border-line bg-surface/[0.82] backdrop-blur-xl backdrop-saturate-150',
         'grid pt-2',
       )}
       style={{

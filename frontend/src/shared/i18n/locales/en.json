@@ -38,13 +38,16 @@
     "invalidCode": "Invalid or expired code"
   },
   "nav": {
+    "navigation": "Navigation",
+    "filters": "Filters",
     "events": "My events",
     "profile": "Profile",
     "admin": "Admin",
     "notifications": "Notifications",
     "notificationsShort": "Alerts",
     "publicEvents": "All events",
-    "publicEventsShort": "All"
+    "publicEventsShort": "All",
+    "pastEvents": "Past events"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -61,8 +64,9 @@
     "createEvent": "Create",
     "tabAll": "All",
     "tabOrganizing": "Organizing",
-    "tabAttending": "Attending",
+    "tabAttending": "Going",
     "tabPublic": "Public",
+    "tabPast": "Archive",
     "emptyNoOrganized": "You have no organized events",
     "emptyNoInvited": "No active invitations",
     "emptyNoPublic": "No public events",
@@ -82,6 +86,8 @@
     "statusInvited": "Invited",
     "statusConfirmed": "Going",
     "statusDeclined": "Not going",
+    "statusOrganizer": "Organizer",
+    "peopleShort": "people",
     "publicBadge": "Public",
     "personalBadge": "Personal",
     "attendButton": "I'm going"
@@ -130,7 +136,11 @@
     "errorUpdate": "Update error"
   },
   "eventInfo": {
+    "backAllEvents": "Back to all events",
     "statusCompleted": "Completed",
+    "statusYouGoing": "You're going",
+    "statusYouDeclined": "You're not going",
+    "statusAwaiting": "Awaiting response",
     "menuActions": "Actions",
     "menuComplete": "Complete",
     "menuDelete": "Delete",
@@ -139,10 +149,18 @@
     "dressCode": "Dress code: {{value}}",
     "organizer": "Organizer:",
     "join": "Join",
+    "attend": "I'm going",
+    "cannotAttend": "Can't make it",
     "joinSuccess": "You joined the event",
     "noSpots": "No spots left",
     "spotsLeft": "{{count}} spots",
     "confirmedCount": "{{count}} participants",
+    "votesCount": "{{count}} votes",
+    "whatToTake": "What to bring",
+    "itemsReady": "{{ready}} of {{total}}",
+    "participantsCount": "{{count}} people",
+    "participantRole": "Participant",
+    "allDetails": "All event sections",
     "completeDialogTitle": "Complete event",
     "completeDialogBody": "The event will be marked as completed. This action cannot be undone.",
     "completeDialogConfirm": "Complete",

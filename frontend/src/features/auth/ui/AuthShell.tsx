@@ -21,16 +21,16 @@ export default function AuthShell({ title, subtitle, footer, children }: AuthShe
   const { t } = useTranslation()
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-bg flex items-center justify-center px-4 py-10">
+      <div className="min-h-screen warm-canvas-bg flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-[400px] flex flex-col gap-6">
           {/* Brand */}
           <Link to="/login" className="flex items-center gap-2 self-center">
-            <BrandMark size={46} />
-            <div className="text-[17px] font-semibold tracking-[-0.015em] text-ink">Bimeet</div>
+            <BrandMark size={54} />
+            <div className="text-[17px] font-semibold tracking-[-0.015em] text-ink">bimeet</div>
           </Link>
 
           {/* Card */}
-          <div className="rounded-[14px] border border-line bg-surface p-6 flex flex-col gap-5">
+          <div className="rounded-[var(--radius-card)] border border-line bg-surface/[0.92] p-6 flex flex-col gap-5 warm-surface-shadow backdrop-blur-sm">
             <div>
               <h1 className="text-[22px] font-bold tracking-[-0.02em] leading-[1.2] text-ink">{title}</h1>
               {subtitle && (

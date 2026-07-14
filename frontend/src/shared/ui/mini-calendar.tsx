@@ -52,8 +52,8 @@ export function MiniCalendar({
     for (let i = 1; i <= lastDay; i++) {
       cells.push({ date: new Date(cursor.getFullYear(), cursor.getMonth(), i), outOfMonth: false })
     }
-    // следующий — добиваем до 42 (6 строк)
-    while (cells.length < 42) {
+    // Следующий месяц — добиваем только до полной недели (минимум 5 строк).
+    while (cells.length < 35 || cells.length % 7 !== 0) {
       const last = cells[cells.length - 1].date
       cells.push({ date: new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1), outOfMonth: true })
     }
@@ -61,16 +61,16 @@ export function MiniCalendar({
   }, [cursor])
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      <div className="flex items-center justify-between">
-        <div className="text-[13.5px] font-semibold tracking-[-0.01em]">
+    <div className={cn('flex flex-col', className)}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-[12.5px] font-bold tracking-[-0.01em]">
           {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
+            className="flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
             aria-label="Предыдущий месяц"
           >
             <ChevronLeft size={14} />
@@ -78,7 +78,7 @@ export function MiniCalendar({
           <button
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
+            className="flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
             aria-label="Следующий месяц"
           >
             <ChevronRight size={14} />
@@ -86,9 +86,9 @@ export function MiniCalendar({
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-[2px]">
+      <div className="grid grid-cols-7 gap-[3px] text-center">
         {WEEKDAYS.map(wd => (
-          <div key={wd} className="py-1 text-center text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-3">
+          <div key={wd} className="py-1.5 text-[9px] font-bold uppercase text-ink-3">
             {wd}
           </div>
         ))}
@@ -102,10 +102,10 @@ export function MiniCalendar({
               type="button"
               onClick={() => onSelect?.(date)}
               className={cn(
-                'relative aspect-square flex items-center justify-center rounded-[7px] text-[12px] font-medium tnum cursor-pointer transition',
-                outOfMonth ? 'text-ink-4' : 'text-ink',
+                'relative flex min-h-7 items-center justify-center rounded-[8px] py-1.5 text-[10.5px] font-medium tnum cursor-pointer transition',
+                outOfMonth ? 'text-ink-3 opacity-50' : 'text-ink-2',
                 'hover:bg-hover focus-ring',
-                isToday && 'bg-accent text-white font-bold hover:bg-accent hover:opacity-92',
+                isToday && 'bg-[linear-gradient(135deg,var(--color-brand-violet),var(--color-brand-sky))] text-white font-bold hover:opacity-92',
                 !isToday && isSelected && 'border border-accent text-accent font-bold',
               )}
             >
@@ -113,7 +113,7 @@ export function MiniCalendar({
               {hasEvent && (
                 <span
                   className={cn(
-                    'absolute bottom-[3px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full',
+                    'absolute bottom-[2px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full',
                     isToday ? 'bg-white' : 'bg-accent',
                   )}
                   aria-hidden
