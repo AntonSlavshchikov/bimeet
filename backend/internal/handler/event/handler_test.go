@@ -110,8 +110,8 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	var got []map[string]any
 	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
 	require.Len(t, got, 1)
-	assert.Equal(t, lat, got[0]["location_lat"])
-	assert.Equal(t, lng, got[0]["location_lng"])
+	assert.InDelta(t, lat, got[0]["location_lat"], 1e-9)
+	assert.InDelta(t, lng, got[0]["location_lng"], 1e-9)
 	assert.NotContains(t, got[0], "invite_token")
 	organizer, ok := got[0]["organizer"].(map[string]any)
 	require.True(t, ok)
