@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bimeet · Орбитальное переплетение</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box }
+
+  :root {
+    color-scheme: light;
+    --page: #f7f5f1;
+    --surface: rgba(255, 255, 255, .82);
+    --surface-strong: #ffffff;
+    --ink: #17171a;
+    --muted: #747078;
+    --line: rgba(23, 23, 26, .09);
+    --stage: #f1efeb;
+    --button: #19191c;
+    --button-ink: #ffffff;
+    --shadow: 0 24px 70px rgba(55, 45, 34, .08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page: #0d0d0f;
+      --surface: rgba(27, 27, 30, .82);
+      --surface-strong: #1b1b1e;
+      --ink: #f4f2ef;
+      --muted: #aaa6ae;
+      --line: rgba(255, 255, 255, .1);
+      --stage: #111114;
+      --button: #f4f2ef;
+      --button-ink: #17171a;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .24);
+    }
+  }
+
+  html { min-width: 320px; background: var(--page) }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 9% 0%, rgba(251, 113, 133, .1), transparent 26rem),
+      radial-gradient(circle at 94% 8%, rgba(56, 189, 248, .1), transparent 28rem),
+      var(--page);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    padding: clamp(32px, 6vw, 76px) clamp(16px, 4vw, 44px) 72px;
+  }
+
+  .page {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    margin: 0 0 12px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    max-width: 760px;
+    font-size: clamp(34px, 5vw, 58px);
+    line-height: 1.02;
+    letter-spacing: -.045em;
+    font-weight: 700;
+  }
+
+  .intro {
+    max-width: 650px;
+    margin: 18px 0 0;
+    color: var(--muted);
+    font-size: clamp(14px, 1.8vw, 17px);
+    line-height: 1.6;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: clamp(34px, 5vw, 56px);
+  }
+
+  .card {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 276px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(167, 139, 250, .07), transparent 48%),
+      var(--stage);
+    isolation: isolate;
+  }
+
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(145deg, rgba(255, 255, 255, .11), transparent 46%);
+  }
+
+  .mark {
+    position: relative;
+    width: min(82%, 286px);
+    aspect-ratio: 914 / 534;
+    z-index: 1;
+  }
+
+  .construction,
+  .exact,
+  .ghost {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .construction {
+    overflow: visible;
+    opacity: 0;
+  }
+
+  .exact {
+    object-fit: contain;
+    opacity: 1;
+    transform-origin: center;
+    will-change: transform, opacity, filter;
+  }
+
+  .ghost {
+    object-fit: contain;
+    opacity: 0;
+    transform-origin: center;
+    will-change: transform, opacity, filter;
+  }
+
+  .uses-shapes .construction { opacity: 1 }
+  .uses-shapes .exact { display: none }
+
+  .uses-shapes .left-part,
+  .uses-shapes .right-part {
+    fill-rule: evenodd;
+  }
+
+  .left-part,
+  .right-part {
+    transform-box: fill-box;
+    transform-origin: center;
+    will-change: transform, opacity, filter;
+  }
+
+  .impact,
+  .aura {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+  }
+
+  .impact {
+    width: 58px;
+    height: 58px;
+    border: 1px solid rgba(167, 139, 250, .42);
+    border-radius: 50%;
+    box-shadow:
+      0 0 28px rgba(251, 113, 133, .18),
+      inset 0 0 18px rgba(56, 189, 248, .12);
+  }
+
+  .aura {
+    width: 238px;
+    height: 164px;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse,
+      rgba(167, 139, 250, .29),
+      rgba(56, 189, 248, .12) 42%,
+      transparent 72%
+    );
+    filter: blur(14px);
+  }
+
+  .content { padding: 22px 22px 24px }
+
+  .number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface-strong);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.15;
+    letter-spacing: -.025em;
+  }
+
+  .description {
+    min-height: 64px;
+    margin: 10px 0 20px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    border: 0;
+    border-radius: 12px;
+    padding: 0 16px;
+    background: var(--button);
+    color: var(--button-ink);
+    font: 650 13px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    transition: transform .16s ease, opacity .16s ease;
+  }
+
+  button:hover { transform: translateY(-1px) }
+  button:active { transform: translateY(0) scale(.98) }
+  button:focus-visible { outline: 3px solid rgba(167, 139, 250, .5); outline-offset: 3px }
+  button:disabled { cursor: default; opacity: .52; transform: none }
+
+  .replay-icon {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* 01 · Два точных кольца мягко встречаются в центре. */
+  .variant-meet.is-running .left-part {
+    animation: meet-left 1.82s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-meet.is-running .right-part {
+    animation: meet-right 1.82s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-meet.is-running .impact {
+    animation: impact 1.82s ease-out both;
+  }
+
+  @keyframes meet-left {
+    0% { opacity: 0; transform: translate(-250px, -12px) rotate(-6deg) scale(.92) }
+    16% { opacity: 1 }
+    68% { opacity: 1; transform: translate(5px, 0) rotate(.45deg) scale(1.004) }
+    82% { transform: translate(-2px, 0) rotate(-.15deg) scale(.998) }
+    100% { opacity: 1; transform: none }
+  }
+
+  @keyframes meet-right {
+    0% { opacity: 0; transform: translate(250px, 12px) rotate(6deg) scale(.92) }
+    16% { opacity: 1 }
+    68% { opacity: 1; transform: translate(-5px, 0) rotate(-.45deg) scale(1.004) }
+    82% { transform: translate(2px, 0) rotate(.15deg) scale(.998) }
+    100% { opacity: 1; transform: none }
+  }
+
+  @keyframes impact {
+    0%, 58% { opacity: 0; transform: translate(-50%, -50%) scale(.55) }
+    68% { opacity: .42 }
+    92%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2) }
+  }
+
+  /* 02 · Последовательное переплетение без смены геометрии. */
+  .variant-weave.is-running .construction {
+    animation: weave-breathe 1.9s ease-in-out both;
+  }
+
+  .variant-weave.is-running .left-part {
+    animation: weave-left 1.9s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-weave.is-running .right-part {
+    animation: weave-right 1.9s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-weave.is-running .aura {
+    animation: weave-aura 1.9s ease-out both;
+  }
+
+  @keyframes weave-left {
+    0% { opacity: 0; transform: translate(-30px, 16px) scale(.94); filter: blur(3px) }
+    12% { opacity: 1 }
+    62%, 100% { opacity: 1; transform: none; filter: blur(0) }
+  }
+
+  @keyframes weave-right {
+    0%, 18% { opacity: 0; transform: translate(32px, -16px) scale(.94); filter: blur(3px) }
+    30% { opacity: 1 }
+    72%, 100% { opacity: 1; transform: none; filter: blur(0) }
+  }
+
+  @keyframes weave-breathe {
+    0%, 72% { transform: scale(1) }
+    86% { transform: scale(1.018) }
+    100% { transform: scale(1) }
+  }
+
+  @keyframes weave-aura {
+    0%, 60% { opacity: 0; transform: translate(-50%, -50%) scale(.84) }
+    78% { opacity: .38; transform: translate(-50%, -50%) scale(1) }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.18) }
+  }
+
+  /* 03 · Мягкая фокусировка без резкого blur-перехода. */
+  .variant-focus.is-running .exact {
+    animation: focus-mark 1.68s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-focus.is-running .aura {
+    animation: focus-aura 1.68s ease-out both;
+  }
+
+  @keyframes focus-mark {
+    0% { opacity: 0; transform: scale(.88); filter: blur(10px) saturate(1.3) }
+    18% { opacity: .6 }
+    68% { opacity: 1; transform: scale(1.012); filter: blur(0) saturate(1.08) }
+    100% { opacity: 1; transform: scale(1); filter: none }
+  }
+
+  @keyframes focus-aura {
+    0% { opacity: .5; transform: translate(-50%, -50%) scale(.6); filter: blur(20px) }
+    62% { opacity: .28; transform: translate(-50%, -50%) scale(1.08); filter: blur(16px) }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); filter: blur(18px) }
+  }
+
+  /* 04 · Диагональные дуги сходятся без удара. */
+  .variant-orbit.is-running .left-part {
+    animation: orbit-left 1.95s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-orbit.is-running .right-part {
+    animation: orbit-right 1.95s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  @keyframes orbit-left {
+    0% { opacity: 0; transform: translate(-92px, -86px) rotate(-14deg) scale(.88) }
+    16% { opacity: 1 }
+    55% { transform: translate(-14px, 18px) rotate(2deg) scale(.985) }
+    80% { transform: translate(3px, -2px) rotate(-.3deg) scale(1.002) }
+    100% { opacity: 1; transform: none }
+  }
+
+  @keyframes orbit-right {
+    0% { opacity: 0; transform: translate(92px, 86px) rotate(14deg) scale(.88) }
+    16% { opacity: 1 }
+    55% { transform: translate(14px, -18px) rotate(-2deg) scale(.985) }
+    80% { transform: translate(-3px, 2px) rotate(.3deg) scale(1.002) }
+    100% { opacity: 1; transform: none }
+  }
+
+  /* 05 · Вертикальная волна проходит слева направо. */
+  .variant-wave.is-running .left-part {
+    animation: wave-left 1.78s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-wave.is-running .right-part {
+    animation: wave-right 1.78s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-wave.is-running .aura {
+    animation: wave-light 1.78s ease-in-out both;
+  }
+
+  @keyframes wave-left {
+    0% { opacity: 0; transform: translateY(24px) scale(.97) }
+    18% { opacity: 1 }
+    62% { transform: translateY(-3px) scale(1.004) }
+    100% { opacity: 1; transform: none }
+  }
+
+  @keyframes wave-right {
+    0%, 16% { opacity: 0; transform: translateY(24px) scale(.97) }
+    30% { opacity: 1 }
+    72% { transform: translateY(-3px) scale(1.004) }
+    100% { opacity: 1; transform: none }
+  }
+
+  @keyframes wave-light {
+    0% { opacity: 0; transform: translate(-110%, -50%) scale(.7) }
+    32% { opacity: .3 }
+    72% { opacity: .2; transform: translate(10%, -50%) scale(1) }
+    100% { opacity: 0; transform: translate(55%, -50%) scale(1.08) }
+  }
+
+  /* 06 · Полупрозрачные эхо-слои спокойно сходятся в резкий знак. */
+  .variant-echo.is-running .ghost-left {
+    animation: echo-left 1.82s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-echo.is-running .ghost-right {
+    animation: echo-right 1.82s cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  .variant-echo.is-running .exact {
+    animation: echo-exact 1.82s ease-out both;
+  }
+
+  @keyframes echo-left {
+    0% { opacity: 0; transform: translate(-46px, 0) scale(.96); filter: blur(4px) }
+    20% { opacity: .28 }
+    72% { opacity: .12; transform: translate(-4px, 0) scale(.995); filter: blur(1px) }
+    100% { opacity: 0; transform: none; filter: blur(0) }
+  }
+
+  @keyframes echo-right {
+    0% { opacity: 0; transform: translate(46px, 0) scale(.96); filter: blur(4px) }
+    20% { opacity: .28 }
+    72% { opacity: .12; transform: translate(4px, 0) scale(.995); filter: blur(1px) }
+    100% { opacity: 0; transform: none; filter: blur(0) }
+  }
+
+  @keyframes echo-exact {
+    0% { opacity: 0; transform: scale(.97) }
+    34% { opacity: .25 }
+    78% { opacity: 1; transform: scale(1.004) }
+    100% { opacity: 1; transform: scale(1) }
+  }
+
+  /* Выбранный вариант · Орбитальное переплетение. */
+  .grid {
+    max-width: 920px;
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card:not(.variant-orbit) { display: none }
+
+  .variant-orbit {
+    border-radius: 30px;
+    background: var(--surface);
+  }
+
+  .variant-orbit .stage {
+    min-height: 520px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(167, 139, 250, .16), transparent 17%),
+      radial-gradient(circle at 31% 28%, rgba(251, 113, 133, .11), transparent 27%),
+      radial-gradient(circle at 72% 70%, rgba(56, 189, 248, .13), transparent 29%),
+      linear-gradient(145deg, rgba(255, 255, 255, .06), transparent 45%),
+      var(--stage);
+  }
+
+  .variant-orbit .stage::before {
+    content: "";
+    position: absolute;
+    inset: 10%;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 120deg,
+      transparent,
+      rgba(251, 113, 133, .08),
+      transparent 32%,
+      rgba(56, 189, 248, .08),
+      transparent 68%
+    );
+    filter: blur(34px);
+    opacity: .7;
+  }
+
+  .variant-orbit .mark {
+    width: min(54%, 430px);
+    z-index: 3;
+  }
+
+  .variant-orbit .content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 32px;
+    align-items: center;
+    padding: 26px 30px 30px;
+  }
+
+  .variant-orbit .number {
+    width: auto;
+    margin: 0 0 5px;
+    padding-inline: 10px;
+    justify-self: start;
+  }
+
+  .variant-orbit h2,
+  .variant-orbit .description { grid-column: 1 }
+  .variant-orbit .description { min-height: 0; max-width: 610px; margin: 3px 0 0 }
+  .variant-orbit button { grid-column: 2; grid-row: 1 / span 3 }
+
+  .flight-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .flight-line {
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+    opacity: 0;
+    stroke-dasharray: .22 .78;
+    stroke-dashoffset: 1;
+  }
+
+  .flight-line.soft {
+    stroke-width: 7;
+    opacity: 0;
+    filter: blur(6px);
+  }
+
+  .orbit-speck {
+    --size: 4px;
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background: var(--spark);
+    box-shadow: 0 0 14px var(--spark);
+    opacity: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .variant-orbit .impact {
+    width: 74px;
+    height: 74px;
+    z-index: 2;
+  }
+
+  .variant-orbit .aura {
+    width: 340px;
+    height: 220px;
+    z-index: 2;
+  }
+
+  .ring-outline {
+    fill: none;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ring-outline-left {
+    stroke: rgba(220, 228, 255, .96);
+    filter: drop-shadow(0 0 5px rgba(148, 163, 184, .86));
+  }
+
+  .ring-outline-right {
+    stroke: rgba(255, 255, 255, .98);
+    filter: drop-shadow(0 0 6px rgba(167, 139, 250, .9));
+  }
+
+  .variant-orbit.is-running .left-part {
+    animation: spiral-left 1.7s linear both;
+  }
+
+  .variant-orbit.is-running .right-part {
+    animation: spiral-right 1.7s linear both;
+  }
+
+  .variant-orbit.is-running .construction {
+    animation: spiral-settle 1.7s ease-out both;
+  }
+
+  .variant-orbit.is-running .flight-line {
+    animation: trace-flight 1.48s cubic-bezier(.2, .65, .22, 1) .02s both;
+  }
+
+  .variant-orbit.is-running .flight-line.soft {
+    animation-name: trace-flight-soft;
+  }
+
+  .variant-orbit.is-running .orbit-speck {
+    animation: speck-flight .65s ease-out var(--delay) both;
+  }
+
+  .variant-orbit.is-running .impact {
+    animation: orbit-impact .34s ease-out 1.39s both;
+  }
+
+  .variant-orbit.is-running .aura {
+    animation: orbit-aura .36s ease-out 1.38s both;
+  }
+
+  .variant-orbit.is-running .ring-outline {
+    animation: contour-highlight .32s ease-out 1.40s both;
+  }
+
+  @keyframes spiral-left {
+    0% { opacity: 0; transform: translate(-390px, 145px) rotate(-240deg) scale(.08); filter: blur(18px) saturate(.6) }
+    7% { opacity: .32; transform: translate(-330px, 38px) rotate(-215deg) scale(.2); filter: blur(13px) saturate(.72) }
+    15% { opacity: .78; transform: translate(-215px, -116px) rotate(-185deg) scale(.39); filter: blur(6px) saturate(.9) }
+    24% { opacity: 1; transform: translate(-70px, -150px) rotate(-150deg) scale(.55); filter: blur(1.5px) }
+    39% { transform: translate(90px, -100px) rotate(-105deg) scale(.72); filter: blur(0) }
+    54% { transform: translate(115px, 20px) rotate(-65deg) scale(.84) }
+    67% { transform: translate(50px, 90px) rotate(-18deg) scale(.91) }
+    71.3% { transform: translate(30px, 82px) rotate(0) scale(.93) }
+    76.4% { transform: translate(-8px, 35px) rotate(0) scale(.97) }
+    81.5%, 100% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); filter: none }
+  }
+
+  @keyframes spiral-right {
+    0% { opacity: 0; transform: translate(390px, -145px) rotate(240deg) scale(.08); filter: blur(18px) saturate(.6) }
+    7% { opacity: .32; transform: translate(330px, -38px) rotate(215deg) scale(.2); filter: blur(13px) saturate(.72) }
+    15% { opacity: .78; transform: translate(215px, 116px) rotate(185deg) scale(.39); filter: blur(6px) saturate(.9) }
+    24% { opacity: 1; transform: translate(70px, 150px) rotate(150deg) scale(.55); filter: blur(1.5px) }
+    39% { transform: translate(-90px, 100px) rotate(105deg) scale(.72); filter: blur(0) }
+    54% { transform: translate(-115px, -20px) rotate(65deg) scale(.84) }
+    67% { transform: translate(-50px, -90px) rotate(18deg) scale(.91) }
+    71.3% { transform: translate(-30px, -82px) rotate(0) scale(.93) }
+    76.4% { transform: translate(8px, -35px) rotate(0) scale(.97) }
+    81.5%, 100% { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); filter: none }
+  }
+
+  @keyframes spiral-settle {
+    0%, 80% { filter: drop-shadow(0 0 0 transparent) }
+    86% { filter: drop-shadow(0 10px 22px rgba(108, 92, 231, .22)) }
+    100% { filter: drop-shadow(0 7px 14px rgba(108, 92, 231, .1)) }
+  }
+
+  @keyframes trace-flight {
+    0% { opacity: 0; stroke-dashoffset: 1 }
+    12% { opacity: .72 }
+    72% { opacity: .38; stroke-dashoffset: -.14 }
+    100% { opacity: 0; stroke-dashoffset: -.5 }
+  }
+
+  @keyframes trace-flight-soft {
+    0% { opacity: 0; stroke-dashoffset: 1 }
+    18% { opacity: .18 }
+    72% { opacity: .08; stroke-dashoffset: -.14 }
+    100% { opacity: 0; stroke-dashoffset: -.5 }
+  }
+
+  @keyframes speck-flight {
+    0% { opacity: 0; transform: translate(0, 0) scale(.35) }
+    22% { opacity: .85 }
+    70% { opacity: .55; transform: translate(var(--drift-x), var(--drift-y)) scale(1) }
+    100% { opacity: 0; transform: translate(var(--drift-x), var(--drift-y)) scale(.2) }
+  }
+
+  @keyframes orbit-impact {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.35) }
+    20% { opacity: .52 }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(3.2) }
+  }
+
+  @keyframes orbit-aura {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.76) rotate(-6deg) }
+    20% { opacity: .46; transform: translate(-50%, -50%) scale(.9) rotate(3deg) }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3) rotate(8deg) }
+  }
+
+  @keyframes contour-highlight {
+    0% { opacity: 0; stroke-width: 1.5 }
+    12% { opacity: .18; stroke-width: 1.8 }
+    30% { opacity: 1; stroke-width: 3.1 }
+    67% { opacity: .56; stroke-width: 2.2 }
+    100% { opacity: 0; stroke-width: 1.6 }
+  }
+
+  @media (max-width: 960px) {
+    .grid { grid-template-columns: 1fr }
+    .stage { min-height: clamp(230px, 48vw, 340px) }
+    .mark { width: min(72%, 330px) }
+    .description { min-height: 0 }
+    .variant-orbit .stage { min-height: clamp(390px, 66vw, 520px) }
+    .variant-orbit .mark { width: min(58%, 400px) }
+  }
+
+  @media (max-width: 480px) {
+    body { padding-inline: 12px }
+    .card { border-radius: 20px }
+    .stage { min-height: 218px }
+    .content { padding: 19px 18px 21px }
+    .mark { width: min(82%, 284px) }
+    .variant-orbit { border-radius: 22px }
+    .variant-orbit .stage { min-height: 340px }
+    .variant-orbit .mark { width: min(72%, 300px) }
+    .variant-orbit .content { grid-template-columns: 1fr; padding: 22px 20px 23px }
+    .variant-orbit button { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 12px }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: .001ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+
+    .construction, .impact, .aura, .ghost, .flight-lines, .orbit-speck { display: none }
+    .uses-shapes .exact { display: block }
+    .exact { opacity: 1 !important; transform: none !important; filter: none !important }
+  }
+</style>
+</head>
+<body>
+<main class="page" id="logo-animation-board">
+  <header>
+    <p class="eyebrow">Bimeet · Motion study</p>
+    <h1>Орбитальное переплетение</h1>
+    <p class="intro">Выбран вариант «Орбита»: два кольца прилетают по встречным спиралям, обвивают друг друга и мягко собираются в точный знак Bimeet.</p>
+  </header>
+
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <defs>
+      <linearGradient id="motion-left" gradientUnits="userSpaceOnUse" x1="50" y1="267" x2="550" y2="267">
+        <stop offset="0" stop-color="#252A34"/>
+        <stop offset="1" stop-color="#667085"/>
+      </linearGradient>
+      <linearGradient id="motion-right" gradientUnits="userSpaceOnUse" x1="366" y1="267" x2="865" y2="267">
+        <stop offset="0" stop-color="#FB7185"/>
+        <stop offset=".5" stop-color="#A78BFA"/>
+        <stop offset="1" stop-color="#38BDF8"/>
+      </linearGradient>
+      <path id="logo-left-shape" d="M 50 248 L 51 248 L 51 238 L 52 238 L 52 231 L 53 231 L 53 225 L 54 225 L 54 220 L 55 220 L 55 215 L 56 215 L 57 207 L 58 207 L 58 204 L 59 204 L 59 200 L 60 200 L 60 197 L 61 197 L 61 194 L 62 194 L 63 188 L 64 188 L 64 186 L 65 186 L 65 183 L 66 183 L 66 181 L 67 181 L 67 178 L 68 178 L 68 176 L 69 176 L 69 174 L 70 174 L 70 172 L 71 172 L 71 170 L 72 170 L 72 168 L 73 168 L 73 166 L 74 166 L 74 164 L 75 164 L 75 162 L 76 162 L 76 160 L 77 160 L 78 156 L 79 156 L 79 155 L 80 155 L 80 153 L 82 152 L 83 148 L 85 147 L 85 145 L 87 144 L 87 142 L 89 141 L 89 139 L 90 139 L 90 138 L 92 137 L 92 135 L 93 135 L 93 134 L 95 133 L 95 131 L 96 131 L 96 130 L 97 130 L 97 129 L 98 129 L 99 127 L 100 127 L 100 125 L 101 125 L 101 124 L 102 124 L 102 123 L 103 123 L 103 122 L 104 122 L 104 121 L 105 121 L 105 120 L 106 120 L 106 119 L 107 119 L 107 118 L 108 118 L 108 117 L 110 116 L 110 114 L 111 114 L 112 112 L 114 112 L 114 111 L 115 111 L 115 110 L 116 110 L 116 109 L 117 109 L 117 108 L 118 108 L 118 107 L 119 107 L 119 106 L 120 106 L 120 105 L 121 105 L 121 104 L 122 104 L 122 103 L 123 103 L 124 101 L 126 101 L 126 100 L 127 100 L 127 99 L 128 99 L 129 97 L 131 97 L 131 96 L 132 96 L 132 95 L 133 95 L 134 93 L 136 93 L 136 92 L 137 92 L 138 90 L 140 90 L 141 88 L 143 88 L 144 86 L 146 86 L 146 85 L 147 85 L 147 84 L 149 84 L 150 82 L 154 81 L 155 79 L 157 79 L 157 78 L 161 77 L 162 75 L 164 75 L 164 74 L 166 74 L 166 73 L 168 73 L 168 72 L 170 72 L 170 71 L 172 71 L 172 70 L 175 70 L 175 69 L 177 69 L 177 68 L 179 68 L 179 67 L 182 67 L 182 66 L 184 66 L 184 65 L 187 65 L 187 64 L 189 64 L 189 63 L 192 63 L 192 62 L 195 62 L 195 61 L 198 61 L 198 60 L 204 59 L 204 58 L 208 58 L 208 57 L 212 57 L 212 56 L 216 56 L 216 55 L 220 55 L 220 54 L 232 53 L 232 52 L 239 52 L 239 51 L 252 51 L 252 50 L 351 50 L 351 51 L 362 51 L 362 52 L 369 52 L 369 53 L 381 54 L 381 55 L 385 55 L 385 56 L 393 57 L 393 58 L 396 58 L 396 59 L 399 59 L 399 60 L 402 60 L 402 61 L 405 61 L 405 62 L 411 63 L 411 64 L 413 64 L 413 65 L 415 65 L 415 66 L 418 66 L 418 67 L 420 67 L 420 68 L 422 68 L 422 69 L 425 69 L 425 70 L 427 70 L 427 71 L 431 72 L 432 74 L 434 74 L 434 75 L 436 75 L 436 76 L 440 77 L 441 79 L 445 80 L 445 81 L 446 81 L 447 83 L 446 83 L 445 85 L 443 85 L 443 86 L 442 86 L 442 87 L 441 87 L 440 89 L 438 89 L 438 90 L 437 90 L 437 91 L 436 91 L 436 92 L 435 92 L 435 93 L 434 93 L 433 95 L 431 95 L 431 96 L 430 96 L 430 97 L 429 97 L 429 98 L 428 98 L 428 99 L 427 99 L 427 100 L 426 100 L 426 101 L 425 101 L 425 102 L 424 102 L 424 103 L 423 103 L 423 104 L 422 104 L 422 105 L 421 105 L 421 106 L 420 106 L 420 107 L 419 107 L 419 108 L 418 108 L 418 109 L 417 109 L 417 110 L 416 110 L 416 111 L 415 111 L 415 112 L 414 112 L 414 113 L 413 113 L 413 114 L 411 115 L 411 117 L 410 117 L 410 118 L 409 118 L 409 119 L 408 119 L 408 120 L 406 121 L 406 123 L 405 123 L 405 124 L 404 124 L 404 125 L 402 126 L 402 128 L 401 128 L 401 129 L 399 130 L 399 132 L 398 132 L 398 133 L 396 134 L 396 136 L 394 137 L 394 139 L 392 140 L 392 142 L 391 142 L 391 143 L 390 143 L 390 145 L 388 146 L 388 148 L 387 148 L 387 150 L 385 151 L 385 153 L 384 153 L 384 155 L 383 155 L 382 159 L 380 160 L 380 162 L 379 162 L 379 164 L 378 164 L 378 167 L 377 167 L 377 168 L 374 168 L 374 167 L 371 167 L 371 166 L 368 166 L 368 165 L 363 165 L 363 164 L 359 164 L 359 163 L 352 163 L 352 162 L 251 162 L 251 163 L 244 163 L 244 164 L 240 164 L 240 165 L 232 166 L 232 167 L 229 167 L 229 168 L 227 168 L 227 169 L 224 169 L 224 170 L 222 170 L 222 171 L 220 171 L 220 172 L 217 172 L 217 173 L 215 173 L 214 175 L 212 175 L 212 176 L 210 176 L 209 178 L 207 178 L 206 180 L 204 180 L 203 182 L 201 182 L 201 183 L 200 183 L 200 184 L 199 184 L 198 186 L 196 186 L 196 187 L 195 187 L 195 188 L 194 188 L 194 189 L 193 189 L 193 190 L 192 190 L 192 191 L 191 191 L 191 192 L 190 192 L 190 193 L 189 193 L 189 194 L 187 195 L 187 197 L 186 197 L 186 198 L 185 198 L 185 199 L 184 199 L 184 200 L 182 201 L 182 203 L 181 203 L 181 204 L 180 204 L 180 206 L 178 207 L 177 211 L 175 212 L 175 214 L 174 214 L 174 216 L 173 216 L 173 218 L 172 218 L 172 220 L 171 220 L 171 222 L 170 222 L 170 225 L 169 225 L 169 227 L 168 227 L 167 233 L 166 233 L 166 237 L 165 237 L 165 241 L 164 241 L 164 246 L 163 246 L 163 254 L 162 254 L 162 281 L 163 281 L 163 288 L 164 288 L 165 298 L 166 298 L 166 301 L 167 301 L 167 304 L 168 304 L 169 310 L 170 310 L 170 312 L 171 312 L 171 314 L 172 314 L 172 316 L 173 316 L 173 318 L 174 318 L 174 320 L 175 320 L 175 322 L 176 322 L 177 326 L 178 326 L 178 327 L 180 328 L 180 330 L 181 330 L 181 331 L 182 331 L 182 333 L 183 333 L 183 334 L 185 335 L 185 337 L 186 337 L 186 338 L 187 338 L 187 339 L 188 339 L 188 340 L 189 340 L 189 341 L 190 341 L 190 342 L 191 342 L 191 343 L 192 343 L 192 344 L 193 344 L 193 345 L 194 345 L 194 346 L 195 346 L 196 348 L 198 348 L 198 349 L 199 349 L 199 350 L 200 350 L 201 352 L 203 352 L 203 353 L 204 353 L 204 354 L 206 354 L 207 356 L 209 356 L 209 357 L 211 357 L 211 358 L 213 358 L 213 359 L 215 359 L 215 360 L 217 360 L 217 361 L 219 361 L 219 362 L 221 362 L 221 363 L 223 363 L 223 364 L 226 364 L 226 365 L 228 365 L 228 366 L 232 366 L 232 367 L 235 367 L 235 368 L 239 368 L 239 369 L 244 369 L 244 370 L 251 370 L 251 371 L 368 371 L 368 370 L 376 370 L 376 369 L 381 369 L 381 368 L 385 368 L 385 367 L 388 367 L 388 366 L 392 366 L 392 365 L 395 365 L 395 364 L 397 364 L 397 363 L 400 363 L 400 362 L 402 362 L 402 361 L 404 361 L 404 360 L 406 360 L 406 359 L 408 359 L 408 358 L 412 357 L 413 355 L 417 354 L 417 353 L 418 353 L 418 352 L 420 352 L 420 351 L 421 351 L 422 349 L 424 349 L 424 348 L 425 348 L 425 347 L 426 347 L 426 346 L 427 346 L 428 344 L 430 344 L 430 343 L 431 343 L 431 342 L 432 342 L 432 341 L 433 341 L 433 340 L 434 340 L 434 339 L 436 338 L 436 336 L 437 336 L 437 335 L 438 335 L 438 334 L 439 334 L 439 333 L 441 332 L 441 330 L 442 330 L 442 329 L 444 328 L 444 326 L 445 326 L 445 325 L 446 325 L 446 323 L 448 322 L 449 318 L 451 317 L 451 315 L 452 315 L 452 313 L 453 313 L 453 311 L 454 311 L 454 309 L 455 309 L 455 306 L 456 306 L 456 304 L 457 304 L 457 301 L 458 301 L 458 298 L 459 298 L 460 292 L 461 292 L 461 288 L 462 288 L 462 284 L 463 284 L 463 278 L 464 278 L 464 272 L 465 272 L 465 265 L 466 265 L 466 261 L 467 261 L 467 256 L 468 256 L 468 253 L 469 253 L 469 249 L 470 249 L 471 243 L 472 243 L 472 241 L 473 241 L 473 239 L 474 239 L 474 236 L 475 236 L 475 234 L 476 234 L 477 230 L 479 229 L 480 225 L 482 224 L 483 220 L 484 220 L 484 219 L 486 218 L 486 216 L 487 216 L 487 215 L 489 214 L 489 212 L 490 212 L 490 211 L 491 211 L 491 210 L 492 210 L 492 209 L 493 209 L 493 208 L 494 208 L 494 207 L 495 207 L 495 206 L 496 206 L 496 205 L 497 205 L 497 204 L 498 204 L 498 203 L 499 203 L 499 202 L 500 202 L 500 201 L 501 201 L 501 200 L 502 200 L 503 198 L 505 198 L 505 197 L 506 197 L 507 195 L 509 195 L 509 194 L 510 194 L 511 192 L 513 192 L 514 190 L 518 189 L 519 187 L 521 187 L 521 186 L 523 186 L 523 185 L 525 185 L 525 184 L 527 184 L 527 183 L 529 183 L 529 182 L 532 182 L 532 181 L 534 181 L 534 183 L 535 183 L 535 186 L 536 186 L 536 188 L 537 188 L 537 191 L 538 191 L 538 194 L 539 194 L 539 197 L 540 197 L 541 203 L 542 203 L 542 207 L 543 207 L 543 211 L 544 211 L 545 219 L 546 219 L 546 224 L 547 224 L 547 229 L 548 229 L 548 236 L 549 236 L 549 246 L 550 246 L 550 263 L 551 263 L 551 273 L 550 273 L 550 291 L 549 291 L 549 300 L 548 300 L 548 307 L 547 307 L 547 312 L 546 312 L 546 317 L 545 317 L 545 322 L 544 322 L 543 330 L 542 330 L 542 333 L 541 333 L 541 337 L 540 337 L 540 340 L 539 340 L 538 346 L 537 346 L 537 348 L 536 348 L 535 354 L 534 354 L 534 356 L 533 356 L 533 358 L 532 358 L 532 361 L 531 361 L 531 363 L 530 363 L 530 365 L 529 365 L 529 367 L 528 367 L 528 369 L 527 369 L 527 371 L 526 371 L 526 373 L 525 373 L 524 377 L 522 378 L 522 380 L 521 380 L 520 384 L 518 385 L 518 387 L 516 388 L 516 390 L 514 391 L 514 393 L 512 394 L 512 396 L 511 396 L 511 397 L 509 398 L 509 400 L 508 400 L 508 401 L 506 402 L 506 404 L 505 404 L 505 405 L 504 405 L 504 406 L 502 407 L 502 409 L 501 409 L 501 410 L 500 410 L 500 411 L 499 411 L 499 412 L 497 413 L 497 415 L 496 415 L 496 416 L 495 416 L 495 417 L 494 417 L 494 418 L 493 418 L 493 419 L 492 419 L 492 420 L 491 420 L 491 421 L 490 421 L 490 422 L 489 422 L 489 423 L 488 423 L 488 424 L 487 424 L 487 425 L 486 425 L 486 426 L 485 426 L 485 427 L 484 427 L 484 428 L 483 428 L 483 429 L 482 429 L 481 431 L 479 431 L 479 432 L 478 432 L 478 433 L 477 433 L 477 434 L 476 434 L 476 435 L 475 435 L 474 437 L 472 437 L 472 438 L 471 438 L 471 439 L 470 439 L 470 440 L 469 440 L 468 442 L 466 442 L 466 443 L 465 443 L 464 445 L 462 445 L 461 447 L 459 447 L 458 449 L 456 449 L 455 451 L 453 451 L 453 452 L 452 452 L 452 453 L 450 453 L 449 455 L 445 456 L 444 458 L 442 458 L 442 459 L 440 459 L 440 460 L 438 460 L 438 461 L 436 461 L 436 462 L 434 462 L 434 463 L 432 463 L 432 464 L 430 464 L 430 465 L 428 465 L 428 466 L 426 466 L 426 467 L 423 467 L 423 468 L 421 468 L 421 469 L 419 469 L 419 470 L 416 470 L 416 471 L 414 471 L 414 472 L 411 472 L 411 473 L 408 473 L 408 474 L 405 474 L 405 475 L 402 475 L 402 476 L 399 476 L 399 477 L 395 477 L 395 478 L 392 478 L 392 479 L 387 479 L 387 480 L 383 480 L 383 481 L 378 481 L 378 482 L 371 482 L 371 483 L 363 483 L 363 484 L 348 484 L 348 485 L 255 485 L 255 484 L 240 484 L 240 483 L 232 483 L 232 482 L 226 482 L 226 481 L 216 480 L 216 479 L 212 479 L 212 478 L 208 478 L 208 477 L 205 477 L 205 476 L 201 476 L 201 475 L 198 475 L 198 474 L 192 473 L 192 472 L 190 472 L 190 471 L 187 471 L 187 470 L 185 470 L 185 469 L 182 469 L 182 468 L 180 468 L 180 467 L 177 467 L 177 466 L 175 466 L 175 465 L 173 465 L 173 464 L 171 464 L 171 463 L 169 463 L 169 462 L 167 462 L 167 461 L 165 461 L 165 460 L 161 459 L 160 457 L 156 456 L 155 454 L 151 453 L 150 451 L 148 451 L 147 449 L 145 449 L 144 447 L 142 447 L 141 445 L 139 445 L 139 444 L 138 444 L 137 442 L 135 442 L 135 441 L 134 441 L 133 439 L 131 439 L 131 438 L 130 438 L 130 437 L 129 437 L 129 436 L 127 435 L 127 434 L 125 434 L 125 433 L 124 433 L 124 432 L 123 432 L 123 431 L 122 431 L 122 430 L 121 430 L 121 429 L 120 429 L 119 427 L 117 427 L 117 426 L 116 426 L 116 425 L 115 425 L 115 424 L 114 424 L 114 423 L 113 423 L 113 422 L 112 422 L 112 421 L 111 421 L 111 420 L 110 420 L 110 419 L 109 419 L 109 418 L 108 418 L 108 417 L 106 416 L 106 414 L 105 414 L 105 413 L 104 413 L 104 412 L 103 412 L 103 411 L 102 411 L 102 410 L 101 410 L 101 409 L 99 408 L 99 406 L 98 406 L 98 405 L 97 405 L 97 404 L 95 403 L 95 401 L 94 401 L 94 400 L 92 399 L 92 397 L 91 397 L 91 396 L 89 395 L 89 393 L 87 392 L 87 390 L 85 389 L 85 387 L 83 386 L 83 384 L 81 383 L 81 381 L 79 380 L 79 378 L 78 378 L 77 374 L 75 373 L 75 371 L 74 371 L 74 369 L 73 369 L 73 367 L 72 367 L 72 365 L 71 365 L 71 363 L 70 363 L 70 360 L 69 360 L 69 358 L 68 358 L 68 356 L 67 356 L 67 354 L 66 354 L 66 351 L 65 351 L 65 349 L 64 349 L 64 346 L 63 346 L 63 343 L 62 343 L 62 341 L 61 341 L 61 338 L 60 338 L 60 334 L 59 334 L 59 331 L 58 331 L 58 327 L 57 327 L 57 324 L 56 324 L 56 320 L 55 320 L 55 315 L 54 315 L 54 310 L 53 310 L 53 304 L 52 304 L 52 297 L 51 297 L 51 288 L 50 288 Z" fill-rule="evenodd"/>
+      <path id="logo-right-shape" d="M 366 249 L 367 249 L 367 239 L 368 239 L 368 232 L 369 232 L 369 235 L 370 235 L 370 231 L 369 231 L 369 226 L 370 226 L 370 228 L 371 228 L 371 226 L 370 226 L 370 221 L 371 221 L 371 224 L 372 224 L 372 221 L 371 221 L 371 216 L 372 216 L 372 218 L 373 218 L 373 216 L 372 216 L 372 212 L 373 212 L 373 208 L 374 208 L 374 205 L 376 206 L 376 205 L 375 205 L 375 201 L 376 201 L 376 203 L 377 203 L 377 201 L 376 201 L 376 198 L 377 198 L 377 200 L 378 200 L 378 197 L 377 197 L 377 195 L 379 196 L 379 195 L 378 195 L 378 192 L 379 192 L 379 194 L 380 194 L 380 192 L 379 192 L 379 189 L 380 189 L 380 191 L 381 191 L 381 189 L 380 189 L 380 187 L 381 187 L 381 184 L 382 184 L 382 182 L 383 182 L 383 179 L 384 179 L 384 177 L 386 178 L 386 176 L 387 176 L 387 174 L 388 174 L 388 172 L 387 172 L 387 174 L 386 174 L 386 176 L 385 176 L 385 174 L 386 174 L 387 170 L 389 171 L 389 170 L 388 170 L 388 168 L 390 169 L 390 168 L 389 168 L 389 166 L 390 166 L 390 164 L 391 164 L 392 160 L 394 161 L 393 159 L 395 159 L 395 158 L 396 158 L 396 156 L 397 156 L 397 155 L 396 155 L 396 156 L 395 156 L 395 155 L 396 155 L 396 153 L 398 154 L 397 152 L 399 152 L 399 151 L 398 151 L 398 150 L 399 150 L 399 148 L 401 149 L 400 147 L 401 147 L 401 145 L 403 146 L 403 145 L 402 145 L 402 144 L 403 144 L 403 142 L 405 143 L 404 141 L 406 140 L 406 138 L 408 137 L 408 135 L 410 136 L 409 134 L 413 132 L 413 131 L 412 131 L 412 132 L 411 132 L 411 131 L 412 131 L 412 130 L 413 130 L 414 128 L 416 128 L 416 127 L 417 127 L 418 125 L 417 125 L 416 127 L 415 127 L 415 126 L 416 126 L 416 125 L 417 125 L 417 124 L 418 124 L 418 123 L 419 123 L 420 121 L 422 121 L 422 120 L 423 120 L 423 119 L 424 119 L 424 118 L 425 118 L 425 117 L 426 117 L 426 116 L 427 116 L 427 115 L 428 115 L 428 114 L 429 114 L 429 113 L 430 113 L 430 112 L 431 112 L 431 111 L 432 111 L 432 110 L 433 110 L 433 109 L 434 109 L 434 108 L 436 107 L 436 105 L 437 105 L 438 103 L 440 104 L 440 103 L 441 103 L 441 102 L 443 101 L 443 100 L 442 100 L 442 101 L 441 101 L 441 102 L 439 103 L 439 102 L 440 102 L 440 101 L 441 101 L 442 99 L 444 99 L 444 98 L 445 98 L 446 96 L 448 97 L 448 96 L 449 96 L 449 94 L 451 95 L 451 94 L 453 93 L 453 91 L 455 92 L 454 90 L 455 90 L 455 89 L 457 89 L 458 87 L 460 87 L 461 85 L 463 85 L 463 84 L 465 85 L 464 83 L 466 83 L 466 84 L 467 84 L 467 83 L 469 83 L 469 82 L 470 82 L 470 81 L 468 82 L 469 80 L 471 80 L 471 81 L 472 81 L 472 80 L 473 80 L 473 78 L 475 79 L 474 77 L 476 77 L 476 78 L 477 78 L 476 76 L 478 76 L 478 77 L 479 77 L 478 75 L 480 75 L 480 76 L 481 76 L 480 74 L 482 74 L 482 75 L 483 75 L 482 73 L 484 73 L 484 74 L 485 74 L 484 72 L 486 72 L 486 73 L 487 73 L 486 71 L 488 71 L 488 72 L 489 72 L 488 70 L 490 70 L 490 69 L 492 69 L 492 70 L 493 70 L 492 68 L 494 68 L 494 67 L 497 67 L 497 68 L 498 68 L 497 66 L 499 66 L 499 65 L 502 65 L 502 64 L 504 64 L 504 63 L 507 63 L 507 64 L 509 64 L 509 63 L 507 63 L 507 62 L 510 62 L 510 63 L 512 63 L 512 62 L 510 62 L 510 61 L 513 61 L 513 60 L 516 60 L 516 59 L 520 59 L 520 60 L 522 60 L 522 59 L 520 59 L 520 58 L 523 58 L 523 57 L 527 57 L 527 56 L 531 56 L 531 55 L 536 55 L 536 54 L 541 54 L 541 53 L 547 53 L 547 52 L 554 52 L 554 51 L 566 51 L 566 50 L 665 50 L 665 51 L 676 51 L 676 52 L 684 52 L 684 53 L 690 53 L 690 54 L 700 55 L 700 56 L 704 56 L 704 57 L 708 57 L 708 58 L 711 58 L 711 59 L 715 59 L 715 60 L 718 60 L 718 61 L 724 62 L 724 63 L 726 63 L 726 64 L 729 64 L 729 65 L 732 65 L 732 66 L 736 67 L 735 69 L 737 69 L 737 70 L 739 70 L 739 71 L 743 70 L 743 71 L 745 71 L 745 72 L 747 72 L 747 73 L 749 73 L 749 74 L 751 74 L 751 75 L 755 76 L 756 78 L 760 79 L 761 81 L 765 82 L 766 84 L 768 84 L 768 85 L 769 85 L 769 87 L 770 87 L 770 88 L 772 87 L 772 88 L 774 88 L 775 90 L 777 90 L 777 91 L 778 91 L 779 93 L 781 93 L 781 94 L 782 94 L 782 95 L 783 95 L 784 97 L 786 97 L 786 98 L 787 98 L 787 99 L 788 99 L 789 101 L 791 101 L 791 102 L 792 102 L 792 103 L 793 103 L 793 104 L 794 104 L 794 105 L 795 105 L 795 106 L 796 106 L 796 107 L 797 107 L 797 108 L 798 108 L 798 109 L 799 109 L 800 111 L 802 111 L 802 113 L 803 113 L 803 114 L 805 115 L 805 117 L 807 117 L 807 118 L 808 118 L 808 119 L 809 119 L 809 120 L 810 120 L 810 121 L 811 121 L 811 122 L 812 122 L 812 123 L 813 123 L 813 124 L 815 125 L 815 127 L 816 127 L 816 128 L 817 128 L 817 129 L 819 130 L 819 132 L 820 132 L 820 133 L 821 133 L 821 134 L 823 135 L 823 137 L 825 138 L 825 140 L 826 140 L 826 141 L 828 142 L 829 146 L 831 147 L 831 149 L 832 149 L 832 150 L 833 150 L 833 152 L 835 153 L 836 157 L 838 158 L 838 160 L 839 160 L 839 162 L 840 162 L 840 164 L 841 164 L 841 166 L 842 166 L 842 168 L 843 168 L 843 170 L 844 170 L 844 172 L 845 172 L 845 174 L 846 174 L 846 176 L 847 176 L 847 179 L 848 179 L 848 181 L 849 181 L 849 184 L 850 184 L 850 186 L 851 186 L 851 189 L 852 189 L 852 191 L 853 191 L 853 194 L 854 194 L 854 197 L 855 197 L 855 201 L 856 201 L 856 204 L 857 204 L 857 208 L 858 208 L 858 211 L 859 211 L 859 216 L 860 216 L 860 220 L 861 220 L 861 225 L 862 225 L 862 231 L 863 231 L 863 238 L 864 238 L 864 248 L 865 248 L 865 285 L 864 285 L 864 295 L 863 295 L 863 302 L 862 302 L 861 314 L 860 314 L 860 318 L 859 318 L 858 326 L 857 326 L 857 329 L 856 329 L 856 333 L 855 333 L 855 336 L 854 336 L 854 339 L 853 339 L 852 345 L 851 345 L 851 347 L 850 347 L 850 350 L 849 350 L 849 352 L 848 352 L 848 355 L 847 355 L 847 357 L 846 357 L 846 359 L 845 359 L 845 362 L 844 362 L 844 364 L 843 364 L 843 366 L 842 366 L 842 368 L 841 368 L 841 370 L 840 370 L 839 374 L 837 375 L 837 377 L 836 377 L 835 381 L 834 381 L 834 382 L 833 382 L 833 384 L 831 385 L 831 387 L 830 387 L 830 389 L 828 390 L 828 392 L 826 393 L 826 395 L 825 395 L 825 396 L 823 397 L 823 399 L 822 399 L 822 400 L 820 401 L 820 403 L 819 403 L 819 404 L 818 404 L 818 405 L 816 406 L 816 408 L 815 408 L 815 409 L 814 409 L 814 410 L 813 410 L 813 411 L 812 411 L 812 412 L 810 413 L 810 415 L 809 415 L 809 416 L 808 416 L 808 417 L 807 417 L 807 418 L 806 418 L 806 419 L 805 419 L 805 420 L 804 420 L 804 421 L 803 421 L 803 422 L 802 422 L 802 423 L 801 423 L 801 424 L 800 424 L 800 425 L 799 425 L 799 426 L 798 426 L 798 427 L 797 427 L 797 428 L 796 428 L 796 429 L 795 429 L 795 430 L 793 431 L 793 430 L 794 430 L 794 429 L 795 429 L 795 428 L 797 427 L 797 426 L 796 426 L 796 427 L 795 427 L 795 428 L 794 428 L 794 429 L 792 430 L 792 432 L 791 432 L 791 433 L 790 433 L 790 434 L 789 434 L 789 435 L 788 435 L 787 437 L 786 437 L 786 436 L 787 436 L 787 435 L 788 435 L 789 433 L 788 433 L 788 434 L 787 434 L 787 435 L 785 436 L 785 438 L 784 438 L 784 439 L 783 439 L 782 441 L 780 441 L 780 442 L 779 442 L 779 443 L 777 444 L 777 443 L 779 442 L 779 441 L 778 441 L 778 442 L 776 443 L 776 445 L 775 445 L 774 447 L 772 447 L 771 449 L 769 449 L 769 450 L 768 450 L 768 451 L 766 451 L 765 453 L 763 453 L 763 454 L 762 454 L 763 452 L 762 452 L 762 453 L 760 453 L 760 454 L 761 454 L 760 456 L 758 456 L 758 457 L 756 457 L 756 458 L 755 458 L 755 457 L 756 457 L 756 456 L 755 456 L 753 460 L 751 460 L 751 461 L 749 461 L 749 462 L 747 462 L 747 463 L 745 463 L 745 464 L 743 464 L 743 465 L 741 465 L 741 466 L 738 466 L 738 467 L 736 467 L 736 468 L 734 468 L 734 469 L 732 469 L 732 468 L 734 468 L 734 467 L 732 467 L 732 468 L 730 468 L 731 470 L 729 470 L 729 471 L 726 471 L 726 472 L 724 472 L 724 473 L 721 473 L 721 474 L 718 474 L 718 475 L 715 475 L 715 476 L 711 476 L 711 477 L 708 477 L 708 478 L 704 478 L 704 479 L 700 479 L 700 480 L 690 481 L 690 482 L 684 482 L 684 481 L 681 481 L 681 482 L 683 482 L 683 483 L 675 483 L 675 484 L 664 484 L 664 483 L 567 483 L 567 484 L 555 484 L 555 483 L 563 483 L 563 482 L 547 483 L 547 482 L 551 482 L 551 481 L 547 481 L 547 482 L 541 482 L 541 481 L 543 481 L 543 480 L 541 480 L 541 481 L 536 481 L 536 480 L 539 480 L 539 479 L 531 480 L 531 479 L 534 479 L 534 478 L 530 478 L 530 479 L 527 479 L 527 478 L 529 478 L 529 477 L 523 478 L 523 477 L 525 477 L 525 476 L 523 476 L 523 477 L 519 477 L 519 476 L 522 476 L 522 475 L 516 476 L 516 475 L 518 475 L 518 474 L 516 474 L 516 475 L 513 475 L 514 473 L 513 473 L 513 474 L 510 474 L 511 472 L 510 472 L 510 473 L 507 473 L 507 472 L 509 472 L 509 471 L 507 471 L 507 472 L 504 472 L 504 471 L 506 471 L 506 470 L 504 470 L 504 471 L 502 471 L 503 469 L 499 470 L 499 469 L 501 469 L 501 468 L 497 469 L 497 468 L 499 468 L 499 467 L 496 467 L 496 468 L 495 468 L 496 466 L 492 467 L 492 466 L 494 466 L 494 465 L 490 466 L 491 464 L 490 464 L 490 465 L 488 465 L 489 463 L 488 463 L 488 464 L 486 464 L 486 463 L 488 463 L 488 462 L 484 463 L 484 462 L 486 462 L 486 461 L 482 462 L 482 461 L 484 461 L 484 460 L 480 461 L 480 460 L 482 460 L 482 459 L 478 460 L 478 459 L 480 459 L 480 458 L 478 458 L 478 459 L 477 459 L 478 457 L 476 457 L 476 458 L 475 458 L 476 456 L 475 456 L 475 457 L 473 457 L 474 455 L 472 456 L 472 453 L 473 453 L 474 451 L 473 451 L 472 453 L 471 453 L 471 452 L 472 452 L 473 450 L 475 450 L 475 449 L 477 450 L 476 448 L 477 448 L 477 447 L 479 447 L 479 446 L 480 446 L 480 445 L 481 445 L 481 444 L 482 444 L 482 443 L 483 443 L 484 441 L 486 441 L 486 440 L 487 440 L 487 439 L 488 439 L 489 437 L 491 438 L 491 437 L 492 437 L 492 436 L 493 436 L 493 435 L 494 435 L 494 434 L 495 434 L 495 433 L 496 433 L 496 432 L 497 432 L 498 430 L 497 430 L 497 431 L 496 431 L 496 432 L 495 432 L 495 433 L 494 433 L 494 434 L 493 434 L 493 435 L 492 435 L 491 437 L 490 437 L 490 436 L 491 436 L 491 435 L 492 435 L 492 434 L 493 434 L 493 433 L 494 433 L 494 432 L 495 432 L 495 431 L 496 431 L 496 430 L 497 430 L 497 429 L 498 429 L 498 428 L 499 428 L 499 427 L 500 427 L 500 426 L 501 426 L 501 425 L 502 425 L 502 424 L 504 423 L 504 421 L 505 421 L 505 420 L 507 421 L 507 420 L 509 419 L 509 418 L 508 418 L 508 419 L 506 420 L 506 419 L 507 419 L 507 418 L 508 418 L 508 417 L 510 416 L 510 414 L 511 414 L 511 413 L 512 413 L 512 412 L 514 411 L 514 409 L 515 409 L 515 408 L 517 407 L 517 405 L 518 405 L 518 404 L 520 403 L 520 401 L 522 400 L 522 398 L 523 398 L 523 397 L 525 398 L 525 397 L 524 397 L 524 395 L 526 396 L 525 394 L 526 394 L 526 392 L 528 391 L 528 389 L 529 389 L 530 385 L 531 385 L 531 384 L 533 385 L 533 384 L 532 384 L 532 382 L 534 383 L 534 382 L 533 382 L 533 380 L 534 380 L 534 378 L 535 378 L 535 376 L 536 376 L 537 372 L 538 372 L 538 373 L 540 373 L 540 372 L 538 372 L 538 371 L 665 371 L 665 370 L 672 370 L 672 369 L 677 369 L 677 368 L 680 368 L 680 367 L 684 367 L 684 366 L 690 365 L 690 364 L 692 364 L 692 363 L 695 363 L 695 362 L 697 362 L 697 361 L 699 361 L 699 360 L 703 359 L 704 357 L 708 356 L 708 355 L 709 355 L 709 354 L 711 354 L 712 352 L 714 353 L 716 349 L 718 350 L 717 348 L 718 348 L 719 346 L 721 346 L 721 345 L 722 345 L 722 344 L 723 344 L 723 343 L 724 343 L 724 342 L 725 342 L 725 341 L 727 340 L 727 338 L 728 338 L 728 337 L 729 337 L 729 336 L 730 336 L 730 335 L 732 334 L 732 332 L 734 331 L 734 329 L 735 329 L 735 328 L 736 328 L 736 326 L 738 325 L 739 321 L 741 320 L 741 318 L 742 318 L 742 315 L 743 315 L 743 313 L 744 313 L 744 311 L 745 311 L 745 309 L 746 309 L 746 306 L 747 306 L 748 300 L 749 300 L 749 302 L 750 302 L 750 300 L 749 300 L 749 296 L 750 296 L 750 298 L 751 298 L 751 296 L 750 296 L 750 291 L 751 291 L 751 286 L 752 286 L 752 277 L 753 277 L 753 258 L 752 258 L 752 249 L 751 249 L 751 243 L 750 243 L 750 238 L 751 238 L 751 236 L 750 236 L 750 238 L 749 238 L 749 234 L 750 234 L 750 232 L 749 232 L 749 234 L 748 234 L 748 231 L 747 231 L 747 228 L 748 228 L 748 226 L 747 226 L 747 228 L 746 228 L 746 225 L 747 225 L 747 223 L 746 223 L 746 225 L 745 225 L 745 223 L 744 223 L 744 220 L 745 220 L 745 219 L 743 220 L 743 218 L 744 218 L 744 217 L 742 218 L 742 216 L 743 216 L 743 215 L 741 216 L 741 214 L 742 214 L 742 213 L 740 214 L 740 212 L 741 212 L 741 211 L 739 212 L 739 210 L 738 210 L 738 209 L 737 209 L 737 207 L 735 206 L 735 204 L 736 204 L 736 203 L 735 203 L 735 204 L 734 204 L 735 202 L 733 203 L 733 201 L 734 201 L 734 200 L 733 200 L 733 201 L 731 200 L 731 198 L 730 198 L 730 197 L 729 197 L 729 196 L 728 196 L 728 195 L 727 195 L 727 194 L 726 194 L 726 193 L 725 193 L 725 192 L 724 192 L 724 191 L 723 191 L 723 190 L 722 190 L 722 189 L 721 189 L 721 188 L 719 187 L 720 185 L 718 186 L 718 185 L 716 184 L 716 182 L 714 183 L 714 182 L 712 181 L 712 179 L 710 180 L 711 178 L 709 179 L 709 177 L 707 178 L 708 176 L 706 177 L 706 175 L 704 176 L 704 175 L 702 175 L 702 174 L 698 173 L 699 171 L 698 171 L 698 172 L 694 171 L 695 169 L 694 169 L 694 170 L 692 170 L 693 168 L 692 168 L 692 169 L 690 169 L 690 167 L 689 167 L 689 168 L 687 168 L 687 167 L 684 167 L 684 166 L 681 166 L 681 165 L 677 165 L 678 163 L 676 163 L 676 164 L 672 164 L 672 163 L 674 163 L 674 162 L 671 162 L 671 163 L 666 163 L 666 162 L 669 162 L 669 161 L 665 161 L 665 162 L 664 162 L 664 161 L 663 161 L 663 162 L 565 162 L 565 161 L 559 161 L 559 162 L 562 162 L 562 163 L 556 163 L 556 162 L 554 162 L 555 164 L 545 165 L 545 166 L 542 166 L 542 167 L 539 167 L 539 168 L 536 168 L 536 169 L 533 169 L 533 170 L 531 170 L 531 169 L 530 169 L 530 171 L 528 171 L 528 172 L 525 172 L 525 173 L 523 173 L 523 174 L 521 174 L 521 175 L 520 175 L 520 174 L 518 174 L 519 176 L 518 176 L 518 175 L 517 175 L 517 177 L 515 176 L 515 178 L 514 178 L 514 179 L 510 180 L 509 182 L 507 182 L 506 184 L 504 184 L 503 186 L 501 186 L 501 187 L 500 187 L 500 188 L 499 188 L 499 189 L 498 189 L 498 190 L 496 191 L 496 190 L 498 189 L 498 188 L 497 188 L 497 189 L 495 190 L 495 192 L 494 192 L 494 193 L 493 193 L 493 194 L 492 194 L 492 195 L 491 195 L 491 196 L 490 196 L 490 197 L 489 197 L 489 198 L 488 198 L 488 199 L 487 199 L 487 200 L 486 200 L 486 201 L 485 201 L 485 202 L 484 202 L 484 203 L 483 203 L 482 205 L 480 205 L 481 207 L 480 207 L 480 208 L 479 208 L 479 209 L 477 210 L 477 212 L 476 212 L 476 213 L 474 214 L 474 216 L 473 216 L 473 217 L 471 217 L 472 219 L 471 219 L 470 223 L 469 223 L 469 224 L 467 224 L 468 226 L 466 225 L 466 227 L 467 227 L 467 228 L 466 228 L 466 230 L 465 230 L 465 232 L 464 232 L 464 234 L 463 234 L 463 236 L 462 236 L 462 239 L 461 239 L 461 241 L 459 241 L 459 242 L 460 242 L 460 244 L 458 244 L 458 245 L 459 245 L 459 248 L 458 248 L 458 251 L 457 251 L 457 255 L 456 255 L 456 260 L 455 260 L 455 265 L 454 265 L 454 272 L 453 272 L 453 278 L 452 278 L 451 288 L 450 288 L 450 291 L 448 290 L 449 294 L 448 294 L 447 300 L 446 300 L 446 302 L 445 302 L 445 304 L 444 304 L 444 306 L 443 306 L 443 308 L 442 308 L 442 310 L 441 310 L 440 314 L 438 315 L 437 319 L 435 320 L 435 322 L 434 322 L 434 323 L 433 323 L 433 324 L 431 325 L 431 324 L 432 324 L 432 323 L 434 322 L 434 320 L 435 320 L 436 318 L 435 318 L 435 319 L 434 319 L 434 320 L 432 321 L 432 323 L 430 324 L 430 326 L 431 326 L 431 327 L 430 327 L 430 328 L 429 328 L 429 329 L 428 329 L 428 330 L 427 330 L 427 331 L 426 331 L 426 332 L 425 332 L 425 333 L 424 333 L 424 334 L 423 334 L 423 335 L 422 335 L 422 336 L 421 336 L 421 337 L 420 337 L 419 339 L 418 339 L 418 337 L 417 337 L 417 338 L 416 338 L 417 340 L 416 340 L 415 342 L 413 342 L 412 344 L 410 344 L 410 345 L 409 345 L 409 346 L 407 346 L 406 348 L 404 348 L 404 349 L 402 349 L 402 350 L 400 350 L 400 351 L 398 351 L 398 352 L 395 352 L 395 353 L 393 353 L 393 354 L 391 354 L 391 355 L 385 356 L 385 357 L 384 357 L 385 355 L 383 356 L 383 354 L 384 354 L 384 353 L 382 354 L 382 351 L 381 351 L 381 349 L 380 349 L 380 346 L 381 346 L 381 345 L 379 346 L 380 342 L 378 343 L 378 341 L 379 341 L 379 339 L 377 340 L 378 336 L 376 337 L 376 335 L 377 335 L 377 332 L 376 332 L 376 334 L 375 334 L 375 332 L 376 332 L 376 329 L 375 329 L 375 331 L 374 331 L 374 328 L 375 328 L 375 326 L 374 326 L 374 328 L 373 328 L 373 324 L 374 324 L 374 322 L 373 322 L 373 324 L 372 324 L 372 320 L 373 320 L 373 318 L 371 319 L 371 316 L 372 316 L 372 314 L 370 315 L 370 310 L 371 310 L 371 308 L 370 308 L 370 310 L 369 310 L 369 306 L 370 306 L 370 301 L 369 301 L 369 305 L 368 305 L 369 293 L 368 293 L 368 297 L 367 297 L 367 289 L 368 289 L 368 286 L 366 287 Z" fill-rule="evenodd"/>
+    </defs>
+  </svg>
+
+  <section class="grid" aria-label="Варианты анимации логотипа">
+    <article class="card uses-shapes variant-meet">
+      <div class="stage">
+        <span class="impact" aria-hidden="true"></span>
+        <div class="mark" role="img" aria-label="Логотип Bimeet">
+          <svg class="construction" viewBox="0 0 914 534" aria-hidden="true" focusable="false">
+            <use class="left-part" href="#logo-left-shape" fill="url(#motion-left)"/>
+            <use class="right-part" href="#logo-right-shape" fill="url(#motion-right)"/>
+          </svg>
+          <img class="exact" src="../frontend/public/logo-mark.svg" alt="Логотип Bimeet">
+        </div>
+      </div>
+      <div class="content">
+        <span class="number">01</span>
+        <h2>Соединение</h2>
+        <p class="description">Кольца плавно прилетают навстречу, соединяются с едва заметной инерцией и дают мягкий световой отклик.</p>
+        <button type="button" data-replay aria-label="Повторить анимацию «Соединение»">
+          <svg class="replay-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span data-button-label>Повторить</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="card uses-shapes variant-weave">
+      <div class="stage">
+        <span class="aura" aria-hidden="true"></span>
+        <div class="mark" role="img" aria-label="Логотип Bimeet">
+          <svg class="construction" viewBox="0 0 914 534" aria-hidden="true" focusable="false">
+            <use class="left-part" href="#logo-left-shape" fill="url(#motion-left)"/>
+            <use class="right-part" href="#logo-right-shape" fill="url(#motion-right)"/>
+          </svg>
+          <img class="exact" src="../frontend/public/logo-mark.svg" alt="Логотип Bimeet">
+        </div>
+      </div>
+      <div class="content">
+        <span class="number">02</span>
+        <h2>Переплетение</h2>
+        <p class="description">Кольца проявляются по очереди, спокойно собирают фирменный узел и делают один лёгкий вдох.</p>
+        <button type="button" data-replay aria-label="Повторить анимацию «Переплетение»">
+          <svg class="replay-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span data-button-label>Повторить</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="card variant-focus">
+      <div class="stage">
+        <span class="aura" aria-hidden="true"></span>
+        <div class="mark">
+          <img class="exact" src="../frontend/public/logo-mark.svg" alt="Логотип Bimeet">
+        </div>
+      </div>
+      <div class="content">
+        <span class="number">03</span>
+        <h2>Фокус</h2>
+        <p class="description">Цветной расфокус быстро собирается в резкий знак, а насыщенность и мягкое свечение спокойно уходят.</p>
+        <button type="button" data-replay aria-label="Повторить анимацию «Фокус»">
+          <svg class="replay-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span data-button-label>Повторить</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="card uses-shapes variant-orbit">
+      <div class="stage">
+        <span class="aura" aria-hidden="true"></span>
+        <span class="impact" aria-hidden="true"></span>
+        <svg class="flight-lines" viewBox="0 0 900 520" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="trail-warm" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="#FB7185" stop-opacity="0"/>
+              <stop offset=".56" stop-color="#A78BFA"/>
+              <stop offset="1" stop-color="#38BDF8" stop-opacity=".18"/>
+            </linearGradient>
+            <linearGradient id="trail-cool" x1="1" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#38BDF8" stop-opacity="0"/>
+              <stop offset=".56" stop-color="#A78BFA"/>
+              <stop offset="1" stop-color="#FB7185" stop-opacity=".18"/>
+            </linearGradient>
+          </defs>
+          <path class="flight-line soft" pathLength="1" stroke="url(#trail-warm)" d="M-55 365 C78 62 365 21 507 174 C650 327 502 468 326 373 C190 299 250 165 421 194"/>
+          <path class="flight-line" pathLength="1" stroke="url(#trail-warm)" d="M-55 365 C78 62 365 21 507 174 C650 327 502 468 326 373 C190 299 250 165 421 194"/>
+          <path class="flight-line soft" pathLength="1" stroke="url(#trail-cool)" d="M955 155 C822 458 535 499 393 346 C250 193 398 52 574 147 C710 221 650 355 479 326"/>
+          <path class="flight-line" pathLength="1" stroke="url(#trail-cool)" d="M955 155 C822 458 535 499 393 346 C250 193 398 52 574 147 C710 221 650 355 479 326"/>
+        </svg>
+        <span class="orbit-speck" style="--x:18%;--y:30%;--delay:.12s;--drift-x:26px;--drift-y:-32px;--spark:#FB7185;--size:5px" aria-hidden="true"></span>
+        <span class="orbit-speck" style="--x:29%;--y:72%;--delay:.42s;--drift-x:-18px;--drift-y:28px;--spark:#A78BFA" aria-hidden="true"></span>
+        <span class="orbit-speck" style="--x:76%;--y:28%;--delay:.26s;--drift-x:21px;--drift-y:-24px;--spark:#38BDF8;--size:3px" aria-hidden="true"></span>
+        <span class="orbit-speck" style="--x:72%;--y:69%;--delay:.56s;--drift-x:30px;--drift-y:25px;--spark:#A78BFA;--size:5px" aria-hidden="true"></span>
+        <span class="orbit-speck" style="--x:48%;--y:17%;--delay:.72s;--drift-x:-12px;--drift-y:-34px;--spark:#38BDF8" aria-hidden="true"></span>
+        <span class="orbit-speck" style="--x:52%;--y:81%;--delay:.82s;--drift-x:14px;--drift-y:31px;--spark:#FB7185;--size:3px" aria-hidden="true"></span>
+        <div class="mark" role="img" aria-label="Логотип Bimeet">
+          <svg class="construction" viewBox="0 0 914 534" aria-hidden="true" focusable="false">
+            <g class="left-part">
+              <use href="#logo-left-shape" fill="url(#motion-left)"/>
+              <use class="ring-outline ring-outline-left" href="#logo-left-shape"/>
+            </g>
+            <g class="right-part">
+              <use href="#logo-right-shape" fill="url(#motion-right)"/>
+              <use class="ring-outline ring-outline-right" href="#logo-right-shape"/>
+            </g>
+          </svg>
+          <img class="exact" src="../frontend/public/logo-mark.svg" alt="Логотип Bimeet">
+        </div>
+      </div>
+      <div class="content">
+        <span class="number">Выбранный вариант</span>
+        <h2>Танец двух колец</h2>
+        <p class="description">Кольца проходят полную встречную дугу, оставляют световой след и с лёгкой инерцией переплетаются в центре.</p>
+        <button type="button" data-replay aria-label="Повторить анимацию «Орбитальное переплетение»">
+          <svg class="replay-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span data-button-label>Повторить</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="card uses-shapes variant-wave">
+      <div class="stage">
+        <span class="aura" aria-hidden="true"></span>
+        <div class="mark" role="img" aria-label="Логотип Bimeet">
+          <svg class="construction" viewBox="0 0 914 534" aria-hidden="true" focusable="false">
+            <use class="left-part" href="#logo-left-shape" fill="url(#motion-left)"/>
+            <use class="right-part" href="#logo-right-shape" fill="url(#motion-right)"/>
+          </svg>
+          <img class="exact" src="../frontend/public/logo-mark.svg" alt="Логотип Bimeet">
+        </div>
+      </div>
+      <div class="content">
+        <span class="number">05</span>
+        <h2>Волна</h2>
+        <p class="description">Части знака поднимаются с небольшим сдвигом во времени, а мягкий свет проходит слева направо.</p>
+        <button type="button" data-replay aria-label="Повторить анимацию «Волна»">
+          <svg class="replay-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span data-button-label>Повторить</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="card variant-echo">
+      <div class="stage">
+        <div class="mark">
+          <img class="ghost ghost-left" src="../frontend/public/logo-mark.svg" alt="">
+          <img class="ghost ghost-right" src="../frontend/public/logo-mark.svg" alt="">
+          <img class="exact" src="../frontend/public/logo-mark.svg" alt="Логотип Bimeet">
+        </div>
+      </div>
+      <div class="content">
+        <span class="number">06</span>
+        <h2>Эхо</h2>
+        <p class="description">Два полупрозрачных отражения сходятся к центру и растворяются в одном чётком логотипе.</p>
+        <button type="button" data-replay aria-label="Повторить анимацию «Эхо»">
+          <svg class="replay-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span data-button-label>Повторить</span>
+        </button>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script>
+  (() => {
+    const board = document.getElementById('logo-animation-board');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const cards = Array.from(board.querySelectorAll('.card'));
+
+    function play(card) {
+      if (reduceMotion.matches) return;
+      card.classList.remove('is-running');
+      void card.offsetWidth;
+      card.classList.add('is-running');
+    }
+
+    board.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-replay]');
+      if (!button) return;
+      play(button.closest('.card'));
+    });
+
+    function syncMotionPreference() {
+      cards.forEach((card) => {
+        const button = card.querySelector('[data-replay]');
+        button.disabled = reduceMotion.matches;
+        button.querySelector('[data-button-label]').textContent = reduceMotion.matches ? 'Статичный режим' : 'Повторить';
+        if (reduceMotion.matches) card.classList.remove('is-running');
+      });
+    }
+
+    syncMotionPreference();
+    reduceMotion.addEventListener?.('change', syncMotionPreference);
+
+    if (!reduceMotion.matches) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        cards.forEach((card, index) => {
+          window.setTimeout(() => play(card), index * 90);
+        });
+      }));
+    }
+  })();
+</script>
+</body>
+</html>
