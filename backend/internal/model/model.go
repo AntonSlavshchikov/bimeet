@@ -473,6 +473,8 @@ type PublicEventListItem struct {
 	DateStart      time.Time               `json:"date_start"`
 	DateEnd        time.Time               `json:"date_end"`
 	Location       string                  `json:"location"`
+	LocationLat    *float64                `json:"location_lat,omitempty"`
+	LocationLng    *float64                `json:"location_lng,omitempty"`
 	Category       string                  `json:"category"`
 	DressCode      *string                 `json:"dress_code,omitempty"`
 	Status         string                  `json:"status"`

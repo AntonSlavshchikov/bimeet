@@ -79,7 +79,12 @@
   },
   "publicEvents": {
     "subtitle": "{{count}} активных публичных встреч",
-    "empty": "Сейчас нет активных публичных встреч"
+    "empty": "Сейчас нет активных публичных встреч",
+    "distanceKm": "{{distance}} км",
+    "nearbyTitle": "Рядом с вами",
+    "otherTitle": "Другие публичные встречи",
+    "nearbyMeta": "{{count}} · до {{radius}} км",
+    "sectionCount": "{{count}}"
   },
   "eventCard": {
     "statusCompleted": "Завершена",

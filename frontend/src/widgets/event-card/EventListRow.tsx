@@ -25,6 +25,8 @@ interface EventListRowProps {
   onJoin?: () => void
   /** Подпись в DateCell: день недели (внутри одного месяца) или сокращение месяца. */
   dateCaption?: 'weekday' | 'month'
+  /** Расстояние от текущей позиции пользователя; только для публичного каталога. */
+  distanceKm?: number
 }
 
 export default function EventListRow({
@@ -33,8 +35,9 @@ export default function EventListRow({
   canJoin,
   onJoin,
   dateCaption = 'weekday',
+  distanceKm,
 }: EventListRowProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const d = new Date(event.date_start)
   const day = d.getDate()
   const caption = dateCaption === 'month' ? MONTHS_SHORT_RU[d.getMonth()] : WEEKDAYS_SHORT_RU[d.getDay()]
@@ -44,6 +47,11 @@ export default function EventListRow({
   const confirmedCount =
     event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
   const confirmed = event.participants.filter(p => p.status === 'confirmed').slice(0, 3)
+  const formattedDistance = distanceKm == null
+    ? null
+    : new Intl.NumberFormat(i18n.language, {
+        maximumFractionDigits: distanceKm < 10 ? 1 : 0,
+      }).format(distanceKm)
 
   return (
     <Link
@@ -76,7 +84,12 @@ export default function EventListRow({
         <div className="truncate text-[12.5px] font-bold tracking-[-0.01em] text-ink">
           {event.title}
         </div>
-        {event.location && <div className="truncate text-[10px] text-ink-3">{event.location}</div>}
+        {event.location && (
+          <div className="truncate text-[10px] text-ink-3">
+            {event.location}
+            {formattedDistance != null && ` · ${t('publicEvents.distanceKm', { distance: formattedDistance })}`}
+          </div>
+        )}
       </div>
 
       <div className="hidden text-[10.5px] text-ink-2 tnum lg:block">{time}</div>

@@ -89,10 +89,13 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	router, svc := newRouter(t)
 
 	userID := uuid.New()
+	lat, lng := 55.751244, 37.618423
 	items := []model.PublicEventListItem{{
-		ID:        uuid.New(),
-		Title:     "Gala",
-		Organizer: model.PublicUserInfo{Name: "Alice"},
+		ID:          uuid.New(),
+		Title:       "Gala",
+		LocationLat: &lat,
+		LocationLng: &lng,
+		Organizer:   model.PublicUserInfo{Name: "Alice"},
 		Participants: []model.PublicParticipantInfo{
 			{User: model.PublicUserInfo{Name: "Bob"}, Status: "confirmed"},
 		},
@@ -107,6 +110,8 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	var got []map[string]any
 	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
 	require.Len(t, got, 1)
+	assert.Equal(t, lat, got[0]["location_lat"])
+	assert.Equal(t, lng, got[0]["location_lng"])
 	assert.NotContains(t, got[0], "invite_token")
 	organizer, ok := got[0]["organizer"].(map[string]any)
 	require.True(t, ok)

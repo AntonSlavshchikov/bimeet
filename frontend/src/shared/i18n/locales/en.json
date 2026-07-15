@@ -79,7 +79,12 @@
   },
   "publicEvents": {
     "subtitle": "{{count}} active public events",
-    "empty": "There are no active public events right now"
+    "empty": "There are no active public events right now",
+    "distanceKm": "{{distance}} km",
+    "nearbyTitle": "Near you",
+    "otherTitle": "Other public events",
+    "nearbyMeta": "{{count}} · within {{radius}} km",
+    "sectionCount": "{{count}}"
   },
   "eventCard": {
     "statusCompleted": "Completed",

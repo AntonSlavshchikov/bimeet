@@ -71,6 +71,8 @@ export interface PublicEventListItem {
   date_start: string
   date_end: string
   location: string
+  location_lat?: number
+  location_lng?: number
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean

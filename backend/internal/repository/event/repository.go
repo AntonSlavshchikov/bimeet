@@ -734,6 +734,7 @@ func (r *Repository) MarkReminder1dSent(ctx context.Context, id uuid.UUID) error
 func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
+		        e.location_lat, e.location_lng,
 		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, e.created_at,
 		        COALESCE(me.status, '') AS my_status,
@@ -757,6 +758,7 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 		var orgID uuid.UUID
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
+			&e.LocationLat, &e.LocationLng,
 			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
 			&orgID, &e.Organizer.Name, &e.CreatedAt,
 			&e.MyStatus, &e.IsParticipant,
