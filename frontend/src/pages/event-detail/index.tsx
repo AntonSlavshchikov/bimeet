@@ -33,9 +33,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+  GooeyTabs,
 } from '@/shared/ui'
 
 type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'chat' | 'changelog'
@@ -100,64 +98,38 @@ export default function EventDetailPage() {
 
   return (
     <>
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-5">
+
         <EventInfoPanel event={event} isOrganizer={isOrganizer} />
 
-        {/* Quiet Rail: компактная навигация по рабочим разделам встречи. */}
-        <div className="mt-[13px] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-          <div className="border-b border-line-soft p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                {t('eventInfo.allDetails')}
-              </div>
-              {isOrganizer && event.status === 'active' && (
-                <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
-                  <CheckCircle2 size={13} />
-                  {t('eventInfo.menuComplete', 'Завершить')}
-                </Button>
-              )}
+        <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
+          {event.status === 'completed' && (
+            <div className="flex items-center gap-2 bg-warning/10 text-warning border-b border-warning/20 px-4 py-2.5 text-[13px] font-medium">
+              <AlertTriangle size={14} />
+              <span>{t('events.completedAlert', 'Эта встреча завершена')}</span>
             </div>
 
-            <div
-              role="tablist"
-              aria-label={t('eventInfo.allDetails')}
-              className="mt-3 grid min-w-0 grid-cols-2 gap-1 rounded-[11px] bg-bg-2 p-1 sm:grid-cols-3 lg:flex"
-            >
-              {allTabs.map(td => {
-                const active = td.key === activeTab
-                const label = t(td.tKey, td.fallback)
-
-                return (
-                  <Tooltip key={td.key}>
-                    <TooltipTrigger asChild>
-                      <button
-                        id={`event-tab-${td.key}`}
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        aria-controls="event-section-panel"
-                        aria-label={label}
-                        onClick={() => setTab(td.key)}
-                        className={cn(
-                          'flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[8px] px-2 text-[11px] font-semibold transition focus-ring lg:flex-1',
-                          active
-                            ? 'bg-surface text-ink shadow-[0_1px_4px_rgba(20,20,20,0.06)]'
-                            : 'text-ink-3 hover:bg-hover hover:text-ink',
-                        )}
-                      >
-                        <td.icon size={15} className="shrink-0" />
-                        <span className="min-w-0 truncate">{label}</span>
-                        {td.key === 'chat' && chatUnread > 0 && (
-                          <span className="grid min-h-[14px] min-w-[14px] shrink-0 place-items-center rounded-full bg-danger px-0.5 text-[8px] font-bold leading-none text-white tnum">
-                            {chatUnread > 9 ? '9+' : chatUnread}
-                          </span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">{label}</TooltipContent>
-                  </Tooltip>
-                )
-              })}
+          {/* Tab bar + organizer complete action */}
+          <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 pt-3 pb-3 flex-wrap">
+            <div className="overflow-x-auto -m-1 p-1">
+              <GooeyTabs
+                value={activeTab}
+                onChange={(v: TabKey) => setTab(v)}
+                options={allTabs.map(td => ({
+                  value: td.key,
+                  label: (
+                    <span className="inline-flex items-center gap-1.5">
+                      <td.icon size={13} className="shrink-0" />
+                      {t(td.tKey, td.fallback)}
+                      {td.key === 'chat' && chatUnread > 0 && (
+                        <span className="ml-0.5 inline-flex min-w-[16px] h-[16px] px-1 items-center justify-center rounded-full bg-danger text-white text-[10px] font-semibold tnum">
+                          {chatUnread}
+                        </span>
+                      )}
+                    </span>
+                  ),
+                }))}
+              />
             </div>
           </div>
 

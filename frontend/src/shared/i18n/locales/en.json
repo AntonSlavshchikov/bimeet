@@ -47,7 +47,7 @@
     "notificationsShort": "Alerts",
     "publicEvents": "All events",
     "publicEventsShort": "All",
-    "pastEvents": "Past events"
+    "filters": "Filters"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -83,6 +83,7 @@
   },
   "eventCard": {
     "statusCompleted": "Completed",
+    "statusHost": "Host",
     "statusInvited": "Invited",
     "statusConfirmed": "Going",
     "statusDeclined": "Not going",
@@ -138,9 +139,11 @@
   "eventInfo": {
     "backAllEvents": "Back to all events",
     "statusCompleted": "Completed",
-    "statusYouGoing": "You're going",
-    "statusYouDeclined": "You're not going",
-    "statusAwaiting": "Awaiting response",
+    "statusHost": "You're hosting",
+    "statusGoing": "You're going",
+    "statusDeclined": "You're not going",
+    "statusPending": "Awaiting your response",
+    "cantMake": "Can't make it",
     "menuActions": "Actions",
     "menuComplete": "Complete",
     "menuDelete": "Delete",

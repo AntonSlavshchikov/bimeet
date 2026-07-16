@@ -78,63 +78,73 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
 
   return (
     <TooltipProvider delayDuration={250}>
-      <div className="min-h-screen warm-canvas-bg text-ink">
-        {/* Fixed sidebar — десктоп. Всегда на одной позиции независимо от content. */}
-        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-30 w-[220px] flex-col overflow-y-auto">
-          <Sidebar />
-        </aside>
+      <div
+        className="h-[100dvh] text-ink p-3 flex items-stretch justify-center lg:p-5"
+        style={{
+          background:
+            'radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%), ' +
+            'radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%), ' +
+            'var(--color-bg-2)',
+        }}
+      >
+        {/* Единая карточка приложения — сайдбар + контент + рейл + bottom-nav как секции.
+            Плавает поверх градиента на всех размерах экрана. */}
+        <div
+          className={cn(
+            'w-full h-full min-h-0 flex flex-col',
+            'rounded-[20px] border border-line bg-bg overflow-hidden',
+            'shadow-[0_2px_4px_rgba(0,0,0,0.04),0_16px_40px_rgba(0,0,0,0.08)]',
+            'lg:max-w-[1360px] lg:flex-row',
+          )}
+        >
+          {/* Sidebar — секция карточки на десктопе */}
+          <aside className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-line">
+            <Sidebar />
+          </aside>
 
-        {/* Content area — отступ слева под fixed sidebar */}
-        <div className="lg:pl-[220px] flex flex-col min-h-screen">
-          {/* Mobile navbar — Calendar icon left, title center, action-icons right (как в макете 05-app.html) */}
-          <header
-            className={cn(
-              'lg:hidden sticky top-0 z-20 h-11 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 px-3',
-              'bg-surface/[0.78] backdrop-blur-xl backdrop-saturate-150 border-b border-line',
-            )}
-          >
-            <div className="flex items-center justify-self-start">
-              <Link
-                to="/events"
-                aria-label={t('nav.events', 'Мои встречи')}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[9px] text-accent hover:bg-hover transition focus-ring"
-              >
-                <CalendarIcon size={20} />
-              </Link>
-            </div>
-            <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink truncate justify-self-center">
-              {mobileTitle}
-            </div>
-            <div className="flex items-center gap-0.5 justify-self-end">
-              {mobileActions ?? autoMobileActions}
-            </div>
-          </header>
-
-          {/* Оболочка занимает всю ширину после sidebar, чтобы при уменьшении
-              масштаба браузера layout не оставался маленьким блоком слева.
-              Сам контент сохраняет читаемую ширину и центрируется, а rail
-              остаётся у правого края viewport. */}
-          <div
-            className={cn(
-              'flex-1 min-w-0 w-full grid grid-cols-1',
-              hasRail && 'xl:grid-cols-[minmax(0,1fr)_276px]',
-            )}
-          >
-            <main className="relative min-w-0 px-4 py-6 lg:px-8 lg:py-7 pb-[80px] lg:pb-12">
-              <div className={cn('mx-auto w-full', hasRail ? 'max-w-[944px]' : 'max-w-[1220px]')}>
-                {children}
+          {/* Правая часть карточки: mobile navbar + main/rail + bottom-nav (mobile) */}
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col lg:overflow-hidden">
+            {/* Mobile navbar — Calendar icon left, title center, action-icons right */}
+            <header
+              className={cn(
+                'lg:hidden shrink-0 h-11 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 px-3',
+                'bg-bg border-b border-line',
+              )}
+            >
+              <div className="flex items-center justify-self-start">
+                <Link
+                  to="/events"
+                  aria-label={t('nav.events', 'Мои встречи')}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-[9px] text-accent hover:bg-hover transition focus-ring"
+                >
+                  <CalendarIcon size={20} />
+                </Link>
               </div>
-            </main>
-            {hasRail && (
-              <aside className="hidden xl:flex sticky top-0 h-screen overflow-y-auto border-l border-line bg-[color-mix(in_srgb,var(--color-surface)_91%,var(--color-bg))] flex-col gap-3 px-5 py-[25px]">
-                {rail}
-              </aside>
-            )}
+              <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink truncate justify-self-center">
+                {mobileTitle}
+              </div>
+              <div className="flex items-center gap-0.5 justify-self-end">
+                {mobileActions ?? autoMobileActions}
+              </div>
+            </header>
+
+            {/* Main + rail */}
+            <div className="flex-1 min-w-0 min-h-0 flex flex-col lg:flex-row lg:overflow-hidden">
+              <main className="flex-1 min-w-0 min-h-0 overflow-y-auto px-4 py-6 lg:px-8 lg:py-7">
+                {children}
+              </main>
+              {hasRail && (
+                <aside className="hidden xl:flex xl:w-[340px] xl:shrink-0 xl:flex-col xl:overflow-y-auto xl:border-l xl:border-line gap-6 px-6 py-7">
+                  {rail}
+                </aside>
+              )}
+            </div>
+
+            <BottomNav />
           </div>
         </div>
       </div>
 
-      <BottomNav />
       <Toaster />
     </TooltipProvider>
   )

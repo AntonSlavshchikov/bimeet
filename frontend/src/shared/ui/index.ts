@@ -58,6 +58,7 @@ export { Toaster, useToast, toast } from './toast'
 
 // applied design-5 building blocks
 export { SegmentedControl } from './segmented-control'
+export { GooeyTabs } from './gooey-tabs'
 export { ListGroup, ListRow } from './list'
 export { DateCell } from './date-cell'
 export { TimeCell } from './time-cell'
