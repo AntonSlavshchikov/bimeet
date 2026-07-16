@@ -53,7 +53,7 @@ export default function AppRouter() {
           path="/events/:id"
           element={
             <ProtectedRoute>
-              <Layout>
+              <Layout rail={<EventsListRail />}>
                 <EventDetailPage />
               </Layout>
             </ProtectedRoute>

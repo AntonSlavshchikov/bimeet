@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useNotifications } from '@/entities/notification/queries'
+import { useEvents } from '@/entities/event/queries'
 import { Avatar } from '@/shared/ui/avatar'
 import {
   DropdownMenu,
@@ -26,7 +27,7 @@ import { cn } from '@/shared/lib/cn'
 
 interface NavItemProps {
   to: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  icon?: React.ComponentType<{ size?: number; className?: string }>
   label: string
   count?: number
   /** Badge в акцентном цвете (для непрочитанных уведомлений). */
@@ -47,7 +48,7 @@ function NavItem({ to, icon: Icon, label, count, accentBadge, active, onClick }:
           : 'text-ink-2 font-medium hover:bg-hover hover:text-ink',
       )}
     >
-      <Icon size={16} className={cn('shrink-0', active ? 'text-accent' : 'text-ink-3')} />
+      {Icon && <Icon size={16} className={cn('shrink-0', active ? 'text-accent' : 'text-ink-3')} />}
       <span className="truncate">{label}</span>
       {count != null && count > 0 && (
         <span
@@ -82,8 +83,14 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   const { data: notifications = [] } = useNotifications()
   const unreadCount = notifications.filter(n => !n.is_read).length
 
+  const events = useEvents()
+  const attendingCount = events.filter(e => !e.organizer.is_me && e.status !== 'completed').length
+  const organizingCount = events.filter(e => e.organizer.is_me && e.status !== 'completed').length
+  const pastCount = events.filter(e => e.status === 'completed').length
+
   const onEvents = location.pathname.startsWith('/events') && !location.pathname.includes('/new')
   const onDiscover = location.pathname.startsWith('/discover')
+  const activeTab = onEvents ? new URLSearchParams(location.search).get('tab') ?? 'all' : null
 
   function handleLogout() {
     logout()
@@ -92,7 +99,7 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   }
 
   return (
-    <aside className="h-full flex flex-col bg-bg border-r border-line">
+    <div className="h-full flex flex-col">
       {/* Brand */}
       <div className="flex items-center gap-2 px-3 pt-5 pb-4">
         <img src="/logo-mark.svg" alt="" className="w-10 h-auto shrink-0" />
@@ -140,6 +147,36 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
         )}
       </nav>
 
+      {/* Filters */}
+      <div className="mt-5 px-3">
+        <div className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.04em] text-ink-4 uppercase">
+          {t('nav.filters', 'Фильтры')}
+        </div>
+        <nav className="flex flex-col gap-px">
+          <NavItem
+            to="/events?tab=attending"
+            label={t('events.tabAttending', 'Иду')}
+            count={attendingCount}
+            active={activeTab === 'attending'}
+            onClick={onClose}
+          />
+          <NavItem
+            to="/events?tab=organizing"
+            label={t('events.tabOrganizing', 'Организую')}
+            count={organizingCount}
+            active={activeTab === 'organizing'}
+            onClick={onClose}
+          />
+          <NavItem
+            to="/events?tab=past"
+            label={t('events.tabPast', 'Прошедшие')}
+            count={pastCount}
+            active={activeTab === 'past'}
+            onClick={onClose}
+          />
+        </nav>
+      </div>
+
       {/* Spacer */}
       <div className="flex-1" />
 
@@ -179,6 +216,6 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           </DropdownMenu>
         </div>
       )}
-    </aside>
+    </div>
   )
 }

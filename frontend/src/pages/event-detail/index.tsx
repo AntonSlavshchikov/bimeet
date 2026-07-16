@@ -23,7 +23,6 @@ import CarpoolTab from '@/features/carpools/ui/CarpoolTab'
 import ChatTab from '@/features/chat/ui/ChatTab'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
-import ParticipantsSummaryPanel from '@/widgets/event-detail/ParticipantsSummaryPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
 import {
   Avatar,
@@ -34,7 +33,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  SegmentedControl,
+  GooeyTabs,
 } from '@/shared/ui'
 
 type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'chat' | 'changelog'
@@ -97,15 +96,10 @@ export default function EventDetailPage() {
 
   return (
     <>
-      <div className="grid gap-5 items-start xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="flex flex-col gap-5">
 
-        {/* Left — sticky on xl */}
-        <div className="flex flex-col gap-4 xl:sticky xl:top-5">
-          <EventInfoPanel event={event} isOrganizer={isOrganizer} />
-          <ParticipantsSummaryPanel event={event} />
-        </div>
+        <EventInfoPanel event={event} isOrganizer={isOrganizer} />
 
-        {/* Right — tabs */}
         <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
           {event.status === 'completed' && (
             <div className="flex items-center gap-2 bg-warning/10 text-warning border-b border-warning/20 px-4 py-2.5 text-[13px] font-medium">
@@ -117,7 +111,7 @@ export default function EventDetailPage() {
           {/* Tab bar + organizer complete action */}
           <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 pt-3 pb-3 flex-wrap">
             <div className="overflow-x-auto -m-1 p-1">
-              <SegmentedControl
+              <GooeyTabs
                 value={activeTab}
                 onChange={(v: TabKey) => setTab(v)}
                 options={allTabs.map(td => ({

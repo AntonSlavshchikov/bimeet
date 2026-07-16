@@ -5,13 +5,9 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
-  Clock,
-  Globe,
-  Lock,
   MapPin,
   MoreVertical,
   Pencil,
-  Shirt,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -19,8 +15,10 @@ import type { Event } from '@/entities/event/model/types'
 import { eventAccentColor } from '@/shared/lib/eventAccentColor'
 import { formatDate, formatTime } from '@/shared/lib/formatDate'
 import { useDeleteEvent, useJoinPublicEvent } from '@/features/event-manage/model/hooks'
-import LocationMap from '@/features/location-picker/ui/LocationMap'
+import { useUpdateParticipantStatus } from '@/features/participants/model/hooks'
 import {
+  Avatar,
+  AvatarStack,
   Button,
   Dialog,
   DialogContent,
@@ -46,14 +44,14 @@ interface EventInfoPanelProps {
   isOrganizer: boolean
 }
 
-const ACCENT_TO_BG: Record<string, string> = {
-  blue: 'bg-accent',
-  green: 'bg-success',
-  orange: 'bg-warning',
-  red: 'bg-danger',
-  purple: 'bg-purple',
-  indigo: 'bg-indigo',
-  gray: 'bg-ink-4',
+const ACCENT_TO_GRADIENT: Record<string, string> = {
+  blue: 'from-accent/25',
+  green: 'from-success/25',
+  orange: 'from-warning/25',
+  red: 'from-danger/25',
+  purple: 'from-purple/25',
+  indigo: 'from-indigo/25',
+  gray: 'from-ink-4/25',
 }
 
 export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelProps) {
@@ -66,10 +64,13 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
 
   const deleteEvent = useDeleteEvent()
   const joinPublicEvent = useJoinPublicEvent()
+  const updateStatus = useUpdateParticipantStatus(event.id)
 
-  const isParticipant = event.participants.some(p => p.user?.is_me)
+  const myParticipant = event.participants.find(p => p.user?.is_me)
+  const isParticipant = !!myParticipant
   const confirmedCount =
     event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
+  const confirmed = event.participants.filter(p => p.status === 'confirmed')
   const spotsLeft = event.max_guests != null ? event.max_guests - confirmedCount : null
   const canJoin =
     event.is_public &&
@@ -79,6 +80,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
     (spotsLeft == null || spotsLeft > 0)
   const noSpots =
     event.is_public && !isOrganizer && !isParticipant && spotsLeft != null && spotsLeft <= 0
+  const canRespond = isParticipant && !isOrganizer && event.status === 'active'
 
   const sameDay = formatDate(event.date_start) === formatDate(event.date_end)
   const descLong = (event.description ?? '').length > 160
@@ -102,19 +104,43 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
 
   return (
     <>
-      <div className="overflow-hidden rounded-[14px] border border-line bg-surface">
+      <div className="relative overflow-hidden rounded-[14px] border border-line bg-surface">
+        {/* Decorative gradient blob, top-right */}
+        <div
+          className={cn(
+            'pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-gradient-to-br to-transparent blur-3xl',
+            ACCENT_TO_GRADIENT[accent],
+          )}
+          aria-hidden
+        />
         {/* Accent bar */}
-        <div className={cn('h-1 w-full', ACCENT_TO_BG[accent])} aria-hidden />
+        <div className={cn('relative h-1 w-full bg-gradient-to-r', ACCENT_TO_GRADIENT[accent].replace('/25', ''), 'to-transparent')} aria-hidden />
 
-        <div className="p-5">
+        <div className="relative p-5 sm:p-6">
           {/* Header: status + menu */}
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
-              {event.status === 'completed' && (
+              {event.status === 'completed' ? (
                 <StatusPill variant="completed" size="sm">
                   {t('eventInfo.statusCompleted', 'Завершена')}
                 </StatusPill>
-              )}
+              ) : isOrganizer ? (
+                <StatusPill variant="host" size="sm">
+                  {t('eventInfo.statusHost', 'Вы организатор')}
+                </StatusPill>
+              ) : myParticipant?.status === 'confirmed' ? (
+                <StatusPill variant="going" size="sm">
+                  {t('eventInfo.statusGoing', 'Вы идёте')}
+                </StatusPill>
+              ) : myParticipant?.status === 'declined' ? (
+                <StatusPill variant="neutral" size="sm">
+                  {t('eventInfo.statusDeclined', 'Вы не идёте')}
+                </StatusPill>
+              ) : isParticipant ? (
+                <StatusPill variant="invited" size="sm">
+                  {t('eventInfo.statusPending', 'Ждём ответа')}
+                </StatusPill>
+              ) : null}
             </div>
             {isOrganizer && (
               <DropdownMenu>
@@ -147,17 +173,17 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
           </div>
 
           {/* Title */}
-          <h1 className="text-[22px] font-bold tracking-[-0.02em] leading-[1.2] text-ink">
+          <h1 className="text-[26px] sm:text-[28px] font-bold tracking-[-0.02em] leading-[1.15] text-ink">
             {event.title}
           </h1>
 
           {/* Description */}
           {event.description && (
-            <div className="mt-3">
+            <div className="mt-2.5 max-w-[640px]">
               <p
                 className={cn(
-                  'text-[13.5px] text-ink-2 leading-[1.6] whitespace-pre-wrap',
-                  descLong && !descExpanded && 'line-clamp-3',
+                  'text-[14px] text-ink-2 leading-[1.6] whitespace-pre-wrap',
+                  descLong && !descExpanded && 'line-clamp-2',
                 )}
               >
                 {event.description}
@@ -178,53 +204,67 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
             </div>
           )}
 
-          {/* Meta */}
-          <div className="mt-4 flex flex-col gap-2.5">
-            {sameDay ? (
-              <>
-                <MetaRow icon={Calendar}>{formatDate(event.date_start)}</MetaRow>
-                <MetaRow icon={Clock}>
-                  {formatTime(event.date_start)} — {formatTime(event.date_end)}
-                </MetaRow>
-              </>
-            ) : (
-              <MetaRow icon={Calendar}>
-                {formatDate(event.date_start)}, {formatTime(event.date_start)}
-                <br />— {formatDate(event.date_end)}, {formatTime(event.date_end)}
-              </MetaRow>
+          {/* Meta row — single line, wraps on narrow screens */}
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-ink-2">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar size={14} className="text-ink-3 shrink-0" />
+              {sameDay
+                ? `${formatDate(event.date_start)} · ${formatTime(event.date_start)}–${formatTime(event.date_end)}`
+                : `${formatDate(event.date_start)} — ${formatDate(event.date_end)}`}
+            </span>
+
+            {event.location && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={14} className="text-ink-3 shrink-0" />
+                {event.location}
+              </span>
             )}
 
-            {event.location && <MetaRow icon={MapPin}>{event.location}</MetaRow>}
-
-            {event.location_lat != null && event.location_lng != null && (
-              <div className="pl-[26px]">
-                <LocationMap lat={event.location_lat} lng={event.location_lng} />
-              </div>
-            )}
-
-            {event.dress_code && (
-              <MetaRow icon={Shirt}>
-                {t('eventInfo.dressCode', { value: event.dress_code, defaultValue: `Дресс-код: ${event.dress_code}` })}
-              </MetaRow>
-            )}
-
-            <MetaRow icon={event.is_public ? Globe : Lock}>
-              {event.is_public ? t('eventCard.publicBadge', 'Публичная') : t('eventCard.personalBadge', 'Личная')}
-            </MetaRow>
-
-            <MetaRow icon={Users}>
+            <span className="inline-flex items-center gap-1.5">
+              <Users size={14} className="text-ink-3 shrink-0" />
               {event.max_guests != null
                 ? `${confirmedCount} / ${event.max_guests}`
-                : t('eventInfo.confirmedCount', { count: confirmedCount, defaultValue: `${confirmedCount} подтвердили` })}
-            </MetaRow>
+                : t('eventInfo.confirmedCount', { count: confirmedCount, defaultValue: `${confirmedCount} участников` })}
+            </span>
+
+            {confirmed.length > 0 && (
+              <AvatarStack max={5} size="sm">
+                {confirmed.map(p => (
+                  <Avatar key={p.user.email} name={p.user.name} size="sm" />
+                ))}
+              </AvatarStack>
+            )}
           </div>
 
-          {/* Join CTA */}
+          {/* CTAs */}
+          {canRespond && (
+            <div className="mt-5 flex gap-2.5">
+              <Button
+                className={cn(
+                  'bg-gradient-to-r from-accent to-purple text-white hover:opacity-90 border-0',
+                  myParticipant.status === 'confirmed' && 'ring-2 ring-accent/40',
+                )}
+                onClick={() => updateStatus.mutate({ status: 'confirmed' })}
+                disabled={updateStatus.isPending}
+              >
+                {t('participants.going', 'Я иду')}
+              </Button>
+              <Button
+                variant="outline"
+                className={cn(myParticipant.status === 'declined' && 'bg-bg-2 text-ink font-semibold')}
+                onClick={() => updateStatus.mutate({ status: 'declined' })}
+                disabled={updateStatus.isPending}
+              >
+                {t('eventInfo.cantMake', 'Не смогу')}
+              </Button>
+            </div>
+          )}
+
           {(canJoin || noSpots) && (
             <div className="mt-5">
               {canJoin ? (
                 <Button
-                  className="w-full"
+                  className="bg-gradient-to-r from-accent to-purple text-white hover:opacity-90 border-0"
                   onClick={handleJoin}
                   disabled={joinPublicEvent.isPending}
                 >
@@ -233,7 +273,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button className="w-full" disabled>
+                    <Button disabled>
                       {t('eventInfo.join', 'Присоединиться')}
                     </Button>
                   </TooltipTrigger>
@@ -271,20 +311,5 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
         </DialogContent>
       </Dialog>
     </>
-  )
-}
-
-function MetaRow({
-  icon: Icon,
-  children,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex items-start gap-2.5 text-[13.5px] text-ink-2 leading-[1.5]">
-      <Icon size={14} className="text-ink-3 shrink-0 mt-0.5" />
-      <div className="min-w-0">{children}</div>
-    </div>
   )
 }
