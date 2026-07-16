@@ -3,10 +3,10 @@ import {
   BarChart3,
   Bell,
   Calendar,
-  Compass,
   Globe,
   LogOut,
   MoreHorizontal,
+  Search,
   User,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -29,33 +29,42 @@ interface NavItemProps {
   to: string
   icon?: React.ComponentType<{ size?: number; className?: string }>
   label: string
+  count?: number
+  /** Badge в акцентном цвете (для непрочитанных уведомлений). */
+  accentBadge?: boolean
   active?: boolean
   onClick?: () => void
 }
 
-function NavItem({ to, icon: Icon, label, active, onClick }: NavItemProps) {
+function NavItem({ to, icon: Icon, label, count, accentBadge, active, onClick }: NavItemProps) {
   return (
     <Link
       to={to}
       onClick={onClick}
       className={cn(
-        'group my-px flex min-w-0 items-center gap-2.5 rounded-[10px] px-2.5 py-[9px] text-[12.5px] font-semibold transition select-none',
+        'group flex items-center gap-2.5 rounded-[7px] px-2.5 py-1.5 text-[13.5px] transition select-none',
         active
-          ? 'bg-bg-2 text-ink'
-          : 'text-ink-2 hover:bg-hover hover:text-ink',
+          ? 'bg-hover text-ink font-semibold'
+          : 'text-ink-2 font-medium hover:bg-hover hover:text-ink',
       )}
     >
       {Icon && <Icon size={16} className={cn('shrink-0', active ? 'text-accent' : 'text-ink-3')} />}
       <span className="truncate">{label}</span>
+      {count != null && count > 0 && (
+        <span
+          className={cn(
+            'ml-auto rounded-full px-1.5 text-[11px] font-semibold tnum',
+            accentBadge
+              ? 'bg-accent text-white'
+              : active
+                ? 'bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] text-accent'
+                : 'bg-line-soft text-ink-3',
+          )}
+        >
+          {accentBadge && count > 99 ? '99+' : count}
+        </span>
+      )}
     </Link>
-  )
-}
-
-function NavSectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-[9px] mb-1.5 mt-[11px] text-[9px] font-bold uppercase tracking-[0.11em] text-ink-3">
-      {children}
-    </div>
   )
 }
 
@@ -100,12 +109,10 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
       </div>
 
       {/* Main nav */}
-      <nav className="flex flex-col">
-        <NavSectionTitle>{t('nav.navigation')}</NavSectionTitle>
-
+      <nav className="flex flex-col gap-px px-3">
         <NavItem
           to="/discover"
-          icon={Compass}
+          icon={Search}
           label={t('nav.publicEvents', 'Все встречи')}
           active={onDiscover}
           onClick={onClose}
@@ -123,6 +130,8 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           to="/notifications"
           icon={Bell}
           label={t('nav.notifications', 'Уведомления')}
+          count={unreadCount}
+          accentBadge
           active={location.pathname.startsWith('/notifications')}
           onClick={onClose}
         />
@@ -136,7 +145,6 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
             onClick={onClose}
           />
         )}
-
       </nav>
 
       {/* Filters */}
@@ -174,12 +182,12 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
 
       {/* User pill */}
       {user && (
-        <div>
+        <div className="px-3 pb-4 border-t border-line pt-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="w-full flex items-center gap-[9px] rounded-[13px] bg-bg-2 p-2.5 hover:bg-hover transition focus-ring"
+                className="w-full flex items-center gap-2.5 rounded-[8px] px-2 py-2 hover:bg-hover transition focus-ring"
               >
                 <Avatar name={user.name} src={user.avatar_url} size="md" />
                 <div className="min-w-0 flex-1 text-left">

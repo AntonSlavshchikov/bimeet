@@ -1,17 +1,19 @@
-import { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Calendar,
   ChevronDown,
   ChevronUp,
   MapPin,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Trash2,
   Users,
 } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
+import { eventAccentColor } from '@/shared/lib/eventAccentColor'
+import { formatDate, formatTime } from '@/shared/lib/formatDate'
 import { useDeleteEvent, useJoinPublicEvent } from '@/features/event-manage/model/hooks'
 import { useUpdateParticipantStatus } from '@/features/participants/model/hooks'
 import {
@@ -30,8 +32,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   StatusPill,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useToast,
 } from '@/shared/ui'
+import { cn } from '@/shared/lib/cn'
 
 interface EventInfoPanelProps {
   event: Event
@@ -50,8 +56,9 @@ const ACCENT_TO_GRADIENT: Record<string, string> = {
 
 export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelProps) {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const toast = useToast()
+  const [descExpanded, setDescExpanded] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const cancelRef = useRef<HTMLButtonElement>(null)
 
@@ -69,31 +76,21 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
     event.is_public &&
     event.status === 'active' &&
     !isOrganizer &&
-    !myParticipant &&
+    !isParticipant &&
     (spotsLeft == null || spotsLeft > 0)
   const noSpots =
     event.is_public && !isOrganizer && !isParticipant && spotsLeft != null && spotsLeft <= 0
   const canRespond = isParticipant && !isOrganizer && event.status === 'active'
 
-  const locale = i18n.resolvedLanguage?.startsWith('en') ? 'en-US' : 'ru-RU'
-  const start = new Date(event.date_start)
-  const end = new Date(event.date_end)
-  const sameDay = start.toDateString() === end.toDateString()
-  const shortDate = (date: Date) => date.toLocaleDateString(locale, { day: 'numeric', month: 'long' })
-  const shortTime = (date: Date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-  const dateLabel = sameDay
-    ? `${shortDate(start)} · ${shortTime(start)}–${shortTime(end)}`
-    : `${shortDate(start)}, ${shortTime(start)} — ${shortDate(end)}, ${shortTime(end)}`
+  const sameDay = formatDate(event.date_start) === formatDate(event.date_end)
+  const descLong = (event.description ?? '').length > 160
+  const accent = eventAccentColor(event)
 
   function handleJoin() {
     joinPublicEvent.mutate(event.id, {
-      onSuccess: () => toast({ title: t('eventInfo.joinSuccess'), status: 'success' }),
-      onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+      onSuccess: () => toast({ title: t('eventInfo.joinSuccess', 'Вы присоединились'), status: 'success' }),
+      onError: err => toast({ title: t('common.error', 'Ошибка'), description: err.message, status: 'error' }),
     })
-  }
-
-  function handleStatus(status: 'confirmed' | 'declined') {
-    updateStatus.mutate({ status })
   }
 
   function handleDelete() {
@@ -104,25 +101,6 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
       },
     })
   }
-
-  const statusBadge = (() => {
-    if (event.status === 'completed') {
-      return <StatusPill variant="completed" className="px-2 py-[5px] text-[9px] leading-none">{t('eventInfo.statusCompleted')}</StatusPill>
-    }
-    if (isOrganizer) {
-      return <StatusPill variant="host" className="px-2 py-[5px] text-[9px] leading-none">{t('eventCard.statusOrganizer')}</StatusPill>
-    }
-    if (myParticipant?.status === 'confirmed') {
-      return <StatusPill variant="going" className="px-2 py-[5px] text-[9px] leading-none">{t('eventInfo.statusYouGoing')}</StatusPill>
-    }
-    if (myParticipant?.status === 'declined') {
-      return <StatusPill variant="declined" className="px-2 py-[5px] text-[9px] leading-none">{t('eventInfo.statusYouDeclined')}</StatusPill>
-    }
-    if (myParticipant?.status === 'invited') {
-      return <StatusPill variant="invited" className="px-2 py-[5px] text-[9px] leading-none">{t('eventInfo.statusAwaiting')}</StatusPill>
-    }
-    return null
-  })()
 
   return (
     <>
@@ -189,40 +167,17 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
                     <Trash2 size={14} />
                     {t('common.delete', 'Удалить')}
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem destructive onClick={() => setDeleteOpen(true)}>
-                  <Trash2 size={14} />
-                  {t('common.delete')}
-                </DropdownMenuItem>
-              </>
-            ) : myParticipant ? (
-              <>
-                <DropdownMenuItem onClick={() => handleStatus('confirmed')}>
-                  {t('eventInfo.attend')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleStatus('declined')}>
-                  {t('eventInfo.cannotAttend')}
-                </DropdownMenuItem>
-              </>
-            ) : canJoin ? (
-              <DropdownMenuItem onClick={handleJoin}>
-                {t('eventInfo.join')}
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem disabled>
-                {t('eventInfo.noSpots')}
-              </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          </div>
 
           {/* Title */}
           <h1 className="text-[26px] sm:text-[28px] font-bold tracking-[-0.02em] leading-[1.15] text-ink">
             {event.title}
           </h1>
 
+          {/* Description */}
           {event.description && (
             <div className="mt-2.5 max-w-[640px]">
               <p
@@ -325,24 +280,32 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
                   <TooltipContent>{t('eventInfo.noSpots', 'Мест нет')}</TooltipContent>
                 </Tooltip>
               )}
-              {noSpots && <Button className="h-9 rounded-[var(--radius-control)] px-3.5 text-[11.5px]" disabled>{t('eventInfo.noSpots')}</Button>}
             </div>
           )}
-        </div>
-      </section>
 
+          {/* Organizer */}
+          <div className="mt-4 pt-3 border-t border-line-soft flex items-center gap-1.5">
+            <span className="text-[11.5px] text-ink-3">{t('eventInfo.organizer', 'Организатор:')}</span>
+            <span className="text-[11.5px] font-semibold text-ink-2">{event.organizer.name}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('eventInfo.deleteDialogTitle')}</DialogTitle>
-            <DialogDescription>{t('eventInfo.deleteDialogBody')}</DialogDescription>
+            <DialogTitle>{t('eventInfo.deleteDialogTitle', 'Удалить встречу?')}</DialogTitle>
+            <DialogDescription>
+              {t('eventInfo.deleteDialogBody', 'Все участники получат уведомление. Это действие нельзя отменить.')}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button ref={cancelRef} variant="ghost" onClick={() => setDeleteOpen(false)}>
-              {t('common.cancel')}
+              {t('common.cancel', 'Отмена')}
             </Button>
             <Button variant="danger" onClick={handleDelete} disabled={deleteEvent.isPending}>
-              {t('eventInfo.deleteDialogConfirm')}
+              {t('eventInfo.deleteDialogConfirm', 'Удалить')}
             </Button>
           </DialogFooter>
         </DialogContent>

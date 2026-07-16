@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  AlertTriangle,
   BarChart3,
   CheckCircle2,
   Clock,
@@ -23,7 +24,6 @@ import ChatTab from '@/features/chat/ui/ChatTab'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
-import { cn } from '@/shared/lib/cn'
 import {
   Avatar,
   Button,
@@ -92,9 +92,7 @@ export default function EventDetailPage() {
       : baseTabs
 
   // Фолбэк: если активный таб не входит в набор, переключаемся на первый
-  const activeTabDef = allTabs.find(td => td.key === tab) ?? allTabs[0]
-  const activeTab = activeTabDef.key
-  const ActiveTabIcon = activeTabDef.icon
+  const activeTab: TabKey = allTabs.some(td => td.key === tab) ? tab : allTabs[0].key
 
   return (
     <>
@@ -108,6 +106,7 @@ export default function EventDetailPage() {
               <AlertTriangle size={14} />
               <span>{t('events.completedAlert', 'Эта встреча завершена')}</span>
             </div>
+          )}
 
           {/* Tab bar + organizer complete action */}
           <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 pt-3 pb-3 flex-wrap">
@@ -131,21 +130,16 @@ export default function EventDetailPage() {
                 }))}
               />
             </div>
+            {isOrganizer && event.status === 'active' && (
+              <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
+                <CheckCircle2 size={13} />
+                {t('eventInfo.menuComplete', 'Завершить')}
+              </Button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 border-b border-line-soft px-4 py-3">
-            <ActiveTabIcon size={15} className="text-ink-3" />
-            <h2 className="text-[13px] font-bold text-ink">
-              {t(activeTabDef.tKey, activeTabDef.fallback)}
-            </h2>
-          </div>
-
-          <div
-            id="event-section-panel"
-            role="tabpanel"
-            aria-labelledby={`event-tab-${activeTab}`}
-            className="p-4 sm:p-6"
-          >
+          {/* Tab content — feature-tabs пока на Chakra (24.5) */}
+          <div className="p-4 sm:p-6">
             {activeTab === 'participants' && <ParticipantsTab event={event} />}
             {activeTab === 'collections' && <CollectionsTab event={event} />}
             {activeTab === 'polls' && <PollsTab event={event} />}
@@ -154,6 +148,9 @@ export default function EventDetailPage() {
             {activeTab === 'chat' && <ChatTab event={event} />}
             {activeTab === 'changelog' && (
               <div className="flex flex-col gap-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+                  {t('events.changeHistory', 'История изменений')}
+                </div>
                 {[...event.change_log].reverse().map(log => (
                   <div
                     key={log.id}
