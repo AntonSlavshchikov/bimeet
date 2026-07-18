@@ -46,8 +46,7 @@
     "notifications": "Уведомления",
     "notificationsShort": "Уведом.",
     "publicEvents": "Все встречи",
-    "publicEventsShort": "Все",
-    "filters": "Фильтры"
+    "publicEventsShort": "Все"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -87,7 +86,6 @@
     "statusInvited": "Приглашён",
     "statusConfirmed": "Иду",
     "statusDeclined": "Не иду",
-    "statusOrganizer": "Организатор",
     "peopleShort": "чел.",
     "publicBadge": "Публичная",
     "personalBadge": "Персональная",

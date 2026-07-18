@@ -46,8 +46,7 @@
     "notifications": "Notifications",
     "notificationsShort": "Alerts",
     "publicEvents": "All events",
-    "publicEventsShort": "All",
-    "filters": "Filters"
+    "publicEventsShort": "All"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -87,7 +86,6 @@
     "statusInvited": "Invited",
     "statusConfirmed": "Going",
     "statusDeclined": "Not going",
-    "statusOrganizer": "Organizer",
     "peopleShort": "people",
     "publicBadge": "Public",
     "personalBadge": "Personal",
