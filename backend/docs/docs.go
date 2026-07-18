@@ -4165,6 +4165,12 @@ const docTemplate = `{
                 "location": {
                     "type": "string"
                 },
+                "location_lat": {
+                    "type": "number"
+                },
+                "location_lng": {
+                    "type": "number"
+                },
                 "max_guests": {
                     "type": "integer"
                 },
@@ -4398,6 +4404,9 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "remember_me": {
+                    "type": "boolean"
                 }
             }
         },

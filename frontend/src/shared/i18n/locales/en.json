@@ -35,7 +35,8 @@
     "resendCode": "Resend code",
     "resendIn": "Resend in {{count}}s",
     "changeEmail": "Change email",
-    "invalidCode": "Invalid or expired code"
+    "invalidCode": "Invalid or expired code",
+    "rememberMe": "Remember me"
   },
   "nav": {
     "navigation": "Navigation",

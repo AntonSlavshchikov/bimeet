@@ -1,5 +1,6 @@
 import { apiFetch } from '@/shared/api/client'
 import type { User, ProfileStats } from '@/entities/user/model/types'
+import { clearSession, getSessionToken } from '@/shared/auth/session'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
@@ -21,10 +22,10 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
-  verifyCode: (email: string, code: string) =>
+  verifyCode: (email: string, code: string, rememberMe: boolean) =>
     apiFetch<AuthResponse>('/api/auth/verify-code', {
       method: 'POST',
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code, remember_me: rememberMe }),
     }),
   getMe: () =>
     apiFetch<User>('/api/auth/me'),
@@ -36,7 +37,7 @@ export const authApi = {
   getStats: () =>
     apiFetch<ProfileStats>('/api/auth/me/stats'),
   uploadAvatar: async (file: File): Promise<User> => {
-    const token = localStorage.getItem('token')
+    const token = getSessionToken()
     const form = new FormData()
     form.append('avatar', file)
     const res = await fetch(`${API_URL}/api/auth/me/avatar`, {
@@ -46,8 +47,7 @@ export const authApi = {
     })
     if (!res.ok) {
       if (res.status === 401 && token) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+        clearSession()
         window.dispatchEvent(new Event('auth:unauthorized'))
       }
       const body = await res.json().catch(() => ({ error: 'Unknown error' }))

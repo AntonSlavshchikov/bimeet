@@ -35,7 +35,8 @@
     "resendCode": "Отправить код повторно",
     "resendIn": "Отправить повторно через {{count}}с",
     "changeEmail": "Изменить email",
-    "invalidCode": "Неверный или просроченный код"
+    "invalidCode": "Неверный или просроченный код",
+    "rememberMe": "Запомнить меня"
   },
   "nav": {
     "navigation": "Навигация",

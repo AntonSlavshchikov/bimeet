@@ -81,10 +81,14 @@ func TestVerifyCode_InvalidCode(t *testing.T) {
 func TestVerifyCode_HappyPath(t *testing.T) {
 	router, svc := newRouter(t)
 	userID := uuid.New()
-	svc.EXPECT().VerifyCode(gomock.Any(), gomock.Any()).
+	svc.EXPECT().VerifyCode(gomock.Any(), model.VerifyCodeRequest{
+		Email: "a@b.com", Code: "123456", RememberMe: true,
+	}).
 		Return(model.AuthResponse{Token: "tok", User: model.User{ID: userID}}, nil)
 
-	w := post(t, router, "/auth/verify-code", model.VerifyCodeRequest{Email: "a@b.com", Code: "123456"})
+	w := post(t, router, "/auth/verify-code", map[string]any{
+		"email": "a@b.com", "code": "123456", "remember_me": true,
+	})
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var resp model.AuthResponse

@@ -159,7 +159,15 @@ func main() {
 		SMTPFrom:     cfg.SMTPFrom,
 		FrontendURL:  cfg.FrontendURL,
 	})
-	authSvc := authsvc.New(userRepo, loginCodeRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
+	authSvc := authsvc.New(
+		userRepo,
+		loginCodeRepo,
+		m,
+		cfg.JWTSecret,
+		cfg.JWTExpHours,
+		cfg.JWTRememberExpHours,
+		cfg.AuthTest,
+	)
 	eventSvc := eventsvc.New(eventRepo, userRepo, notifyingRepo, m)
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
 	itemSvc := itemsvc.New(itemRepo, eventRepo)

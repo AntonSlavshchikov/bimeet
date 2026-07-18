@@ -34,22 +34,24 @@ var (
 )
 
 type Service struct {
-	userRepo  UserRepo
-	codeRepo  LoginCodeRepo
-	mailer    Mailer
-	jwtSecret string
-	jwtExpH   int
-	authTest  bool
+	userRepo        UserRepo
+	codeRepo        LoginCodeRepo
+	mailer          Mailer
+	jwtSecret       string
+	jwtExpH         int
+	jwtRememberExpH int
+	authTest        bool
 }
 
-func New(userRepo UserRepo, codeRepo LoginCodeRepo, mailer Mailer, jwtSecret string, jwtExpHours int, authTest bool) *Service {
+func New(userRepo UserRepo, codeRepo LoginCodeRepo, mailer Mailer, jwtSecret string, jwtExpHours, jwtRememberExpHours int, authTest bool) *Service {
 	return &Service{
-		userRepo:  userRepo,
-		codeRepo:  codeRepo,
-		mailer:    mailer,
-		jwtSecret: jwtSecret,
-		jwtExpH:   jwtExpHours,
-		authTest:  authTest,
+		userRepo:        userRepo,
+		codeRepo:        codeRepo,
+		mailer:          mailer,
+		jwtSecret:       jwtSecret,
+		jwtExpH:         jwtExpHours,
+		jwtRememberExpH: jwtRememberExpHours,
+		authTest:        authTest,
 	}
 }
 
@@ -155,18 +157,23 @@ func (s *Service) VerifyCode(ctx context.Context, req model.VerifyCodeRequest) (
 		}
 	}
 
-	token, err := s.generateToken(user.ID)
+	expHours := s.jwtExpH
+	if req.RememberMe {
+		expHours = s.jwtRememberExpH
+	}
+	token, err := s.generateToken(user.ID, time.Duration(expHours)*time.Hour)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
 	return model.AuthResponse{Token: token, User: user}, nil
 }
 
-func (s *Service) generateToken(userID uuid.UUID) (string, error) {
+func (s *Service) generateToken(userID uuid.UUID, ttl time.Duration) (string, error) {
+	now := time.Now()
 	claims := jwt.MapClaims{
 		"sub": userID.String(),
-		"exp": time.Now().Add(time.Duration(s.jwtExpH) * time.Hour).Unix(),
-		"iat": time.Now().Unix(),
+		"exp": now.Add(ttl).Unix(),
+		"iat": now.Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(s.jwtSecret))

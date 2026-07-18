@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func newService(t *testing.T, authTest bool) (*authsvc.Service, *mock.MockUserRe
 	users := mock.NewMockUserRepo(ctrl)
 	codes := mock.NewMockLoginCodeRepo(ctrl)
 	mailer := mock.NewMockMailer(ctrl)
-	return authsvc.New(users, codes, mailer, "secret", 72, authTest), users, codes, mailer
+	return authsvc.New(users, codes, mailer, "secret", 72, 720, authTest), users, codes, mailer
 }
 
 // ─── RequestCode ─────────────────────────────────────────────────────────────
@@ -150,6 +151,38 @@ func TestVerifyCode_ExistingUser(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, userID, resp.User.ID)
 	assert.NotEmpty(t, resp.Token)
+	assertTokenTTL(t, resp.Token, 72*time.Hour)
+}
+
+func TestVerifyCode_RememberedSessionUsesLongTTL(t *testing.T) {
+	svc, users, codes, _ := newService(t, false)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.MinCost)
+	id := uuid.New()
+	userID := uuid.New()
+	codes.EXPECT().GetActiveByEmail(gomock.Any(), "alice@example.com").
+		Return(model.LoginCode{ID: id, CodeHash: string(hash)}, nil)
+	codes.EXPECT().MarkUsed(gomock.Any(), id).Return(nil)
+	users.EXPECT().GetByEmail(gomock.Any(), "alice@example.com").
+		Return(model.User{ID: userID, Email: "alice@example.com"}, nil)
+
+	resp, err := svc.VerifyCode(context.Background(), model.VerifyCodeRequest{
+		Email: "alice@example.com", Code: "123456", RememberMe: true,
+	})
+	require.NoError(t, err)
+	assertTokenTTL(t, resp.Token, 720*time.Hour)
+}
+
+func assertTokenTTL(t *testing.T, tokenString string, want time.Duration) {
+	t.Helper()
+	token, err := jwt.Parse(tokenString, func(_ *jwt.Token) (any, error) {
+		return []byte("secret"), nil
+	})
+	require.NoError(t, err)
+	expiresAt, err := token.Claims.GetExpirationTime()
+	require.NoError(t, err)
+	issuedAt, err := token.Claims.GetIssuedAt()
+	require.NoError(t, err)
+	assert.InDelta(t, want.Seconds(), expiresAt.Sub(issuedAt.Time).Seconds(), 1)
 }
 
 func TestVerifyCode_NewUser_AutoCreated(t *testing.T) {

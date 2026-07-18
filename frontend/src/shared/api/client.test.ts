@@ -28,6 +28,7 @@ function sentHeaders(f: ReturnType<typeof mockFetch>): Record<string, string> {
 describe('apiFetch', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
   })
   afterEach(() => {
     vi.unstubAllGlobals()
@@ -35,7 +36,8 @@ describe('apiFetch', () => {
   })
 
   it('добавляет Authorization: Bearer при наличии токена', async () => {
-    localStorage.setItem('token', 'jwt-1')
+    sessionStorage.setItem('token', 'jwt-1')
+    sessionStorage.setItem('user', '{"id":"u1"}')
     const f = mockFetch({ jsonData: { ok: true } })
 
     await apiFetch('/api/x')
@@ -70,6 +72,8 @@ describe('apiFetch', () => {
   it('на 401 с токеном чистит сессию и шлёт auth:unauthorized', async () => {
     localStorage.setItem('token', 'jwt-1')
     localStorage.setItem('user', '{"id":"u1"}')
+    sessionStorage.setItem('token', 'jwt-2')
+    sessionStorage.setItem('user', '{"id":"u2"}')
     mockFetch({ ok: false, status: 401, jsonData: { error: 'expired' } })
     const onUnauth = vi.fn()
     window.addEventListener('auth:unauthorized', onUnauth)
@@ -78,6 +82,8 @@ describe('apiFetch', () => {
 
     expect(localStorage.getItem('token')).toBeNull()
     expect(localStorage.getItem('user')).toBeNull()
+    expect(sessionStorage.getItem('token')).toBeNull()
+    expect(sessionStorage.getItem('user')).toBeNull()
     expect(onUnauth).toHaveBeenCalledOnce()
     window.removeEventListener('auth:unauthorized', onUnauth)
   })

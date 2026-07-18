@@ -3210,12 +3210,14 @@ MapLibre-совместимы). Путь к решению: Яндекс отк�
 
 ### Чеклист
 
-- [ ] backend DTO: `remember_me` в `VerifyCodeRequest`, без изменения `AuthResponse`
-- [ ] backend config: `JWT_REMEMBER_EXP_HOURS=720`; проброс в auth service
-- [ ] auth service: JWT на 72 часа без галочки и на 30 дней с ней; service/handler tests
-- [ ] общая frontend-утилита сессии: `sessionStorage`/`localStorage`, очистка обоих, legacy-совместимость
-- [ ] `AuthContext`, `apiFetch` и upload avatar переведены на общую утилиту; logout/401 чистят оба storage
-- [ ] `/login`: галочка по умолчанию выключена, доживает до OTP-шага, `remember_me` уходит в verify request
-- [ ] i18n RU/EN синхронно; Swagger перегенерирован
-- [ ] `go test ./...` + `go build ./cmd/server` + `go vet ./...`; `npm test` + `npm run build` + `npm run lint`
+- [x] backend DTO: `remember_me` в `VerifyCodeRequest`, без изменения `AuthResponse`
+- [x] backend config: `JWT_REMEMBER_EXP_HOURS=720`; проброс в auth service
+- [x] auth service: JWT на 72 часа без галочки и на 30 дней с ней; service/handler tests
+- [x] общая frontend-утилита сессии: `sessionStorage`/`localStorage`, очистка обоих, legacy-совместимость
+- [x] `AuthContext`, `apiFetch` и upload avatar переведены на общую утилиту; logout/401 чистят оба storage
+- [x] `/login`: галочка по умолчанию выключена, доживает до OTP-шага, `remember_me` уходит в verify request
+- [x] i18n RU/EN синхронно; Swagger перегенерирован
+- [x] `go test ./...` + `go build ./cmd/server` + `go vet ./...`; `npm test` + `npm run build` + `npm run lint`
 - [ ] live-smoke: без галочки закрытие вкладки завершает сессию; с галочкой вход переживает перезапуск; logout чистит оба варианта
+
+UI-smoke: нативный checkbox отображается на `/login`, по умолчанию выключен и переключается. Полный restart-smoke оставлен ручным: для него нужен запущенный backend с БД и успешный OTP-вход.

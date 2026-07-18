@@ -227,8 +227,9 @@ type RequestCodeRequest struct {
 
 // VerifyCodeRequest verifies a one-time login code for an email.
 type VerifyCodeRequest struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
+	Email      string `json:"email"`
+	Code       string `json:"code"`
+	RememberMe bool   `json:"remember_me"`
 }
 
 type AuthResponse struct {

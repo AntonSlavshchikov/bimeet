@@ -1,14 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+import { clearSession, getSessionToken } from '@/shared/auth/session'
 
-function getToken(): string | null {
-  return localStorage.getItem('token')
-}
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getToken()
+  const token = getSessionToken()
   // Don't set Content-Type for FormData — browser sets it with the multipart boundary
   const defaultHeaders: Record<string, string> = options.body instanceof FormData
     ? {}
@@ -25,8 +23,7 @@ export async function apiFetch<T>(
     if (res.status === 401 && token) {
       // Токен был, но отклонён → сессия истекла. login/register идут без токена,
       // их 401 (неверный пароль и т.п.) сюда не попадает.
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      clearSession()
       window.dispatchEvent(new Event('auth:unauthorized'))
     }
     const body = await res.json().catch(() => ({ error: 'Unknown error' }))

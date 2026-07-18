@@ -20,6 +20,7 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [codeError, setCodeError] = useState(false)
@@ -71,7 +72,7 @@ export default function LoginPage() {
   async function submitCode(value: string) {
     if (loading) return
     setLoading(true)
-    const ok = await verifyCode(email, value)
+    const ok = await verifyCode(email, value, rememberMe)
     if (!ok) {
       setLoading(false)
       setCode('')
@@ -110,6 +111,15 @@ export default function LoginPage() {
               autoFocus
             />
           </AuthField>
+          <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-ink-2">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+              className="h-4 w-4 cursor-pointer accent-accent"
+            />
+            <span>{t('auth.rememberMe')}</span>
+          </label>
           <Button type="submit" className="w-full mt-1" disabled={loading}>
             {loading ? '…' : t('auth.getCode', 'Получить код')}
           </Button>
