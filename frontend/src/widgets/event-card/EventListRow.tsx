@@ -114,7 +114,7 @@ export default function EventListRow({
             return <StatusPill variant="completed" size="sm">{t('eventCard.statusCompleted')}</StatusPill>
           }
           if (event.organizer.is_me) {
-            return <StatusPill variant="host" size="sm">{t('eventCard.statusOrganizer')}</StatusPill>
+            return <StatusPill variant="host" size="sm">{t('eventCard.statusHost')}</StatusPill>
           }
           if (myStatus === 'confirmed') {
             return <StatusPill variant="going" size="sm">{t('eventCard.statusConfirmed')}</StatusPill>

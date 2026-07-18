@@ -46,8 +46,7 @@
     "notifications": "Уведомления",
     "notificationsShort": "Уведом.",
     "publicEvents": "Все встречи",
-    "publicEventsShort": "Все",
-    "pastEvents": "Прошедшие"
+    "publicEventsShort": "Все"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -88,10 +87,10 @@
   },
   "eventCard": {
     "statusCompleted": "Завершена",
+    "statusHost": "Организатор",
     "statusInvited": "Приглашён",
     "statusConfirmed": "Иду",
     "statusDeclined": "Не иду",
-    "statusOrganizer": "Организатор",
     "peopleShort": "чел.",
     "publicBadge": "Публичная",
     "personalBadge": "Персональная",
@@ -143,9 +142,11 @@
   "eventInfo": {
     "backAllEvents": "Ко всем встречам",
     "statusCompleted": "Завершена",
-    "statusYouGoing": "Вы идёте",
-    "statusYouDeclined": "Вы не идёте",
-    "statusAwaiting": "Ожидает ответа",
+    "statusHost": "Вы организатор",
+    "statusGoing": "Вы идёте",
+    "statusDeclined": "Вы не идёте",
+    "statusPending": "Ждём ответа",
+    "cantMake": "Не смогу",
     "menuActions": "Действия",
     "menuComplete": "Завершить",
     "menuDelete": "Удалить",

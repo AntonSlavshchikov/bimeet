@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@700&display=swap');
 @import 'tailwindcss';
 
 /* === Design tokens — Warm Canvas ===
@@ -8,6 +8,7 @@
  */
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-wordmark: 'Quicksand', 'Inter', sans-serif;
 
   --color-bg: #FFFFFF;
   --color-bg-2: #F3F0E9;
@@ -21,15 +22,13 @@
   --color-line: rgba(18, 18, 20, 0.09);
   --color-line-soft: rgba(18, 18, 20, 0.055);
 
-  --color-accent: #8668D8;
-  --color-success: #299764;
-  --color-warning: #D97706;
-  --color-danger: #DC5A62;
-  --color-purple: #8B63D7;
-  --color-indigo: #6674CE;
-  --color-brand-rose: #FB7185;
-  --color-brand-violet: #A78BFA;
-  --color-brand-sky: #38BDF8;
+  /* Accent — brand violet (was iOS blue #007AFF / #0A84FF). Semantic colors below stay iOS-system on purpose. */
+  --color-accent: #7C3AED;        /* dark: #A78BFA */
+  --color-success: #34C759;       /* dark: #30D158 */
+  --color-warning: #FF9500;       /* dark: #FF9F0A */
+  --color-danger: #FF3B30;        /* dark: #FF453A */
+  --color-purple: #AF52DE;        /* dark: #BF5AF2 */
+  --color-indigo: #5856D6;        /* dark: #5E5CE6 */
 
   --color-avatar-1: #E89A5E;
   --color-avatar-2: #48A6D8;
@@ -116,41 +115,12 @@ html.dark {
   --color-line: rgba(250, 244, 235, 0.11);
   --color-line-soft: rgba(250, 244, 235, 0.065);
 
-  /* Accent + semantic (iOS dark) */
-  --color-accent: #B29AF7;
-  --color-success: #59C58E;
-  --color-warning: #F0A33A;
-  --color-danger: #F07B82;
-  --color-purple: #B99AF1;
-  --color-indigo: #8D9AE8;
+  /* Accent — brand violet, lightened for dark bg. Semantic colors stay iOS-system. */
+  --color-accent: #A78BFA;
+  --color-success: #30D158;
+  --color-warning: #FF9F0A;
+  --color-danger: #FF453A;
+  --color-purple: #BF5AF2;
+  --color-indigo: #5E5CE6;
 }
 
-/* Ровный холст без декоративных цветовых пятен. */
-.warm-canvas-bg {
-  background: var(--color-bg);
-}
-
-.brand-gradient {
-  color: #fff;
-  background: linear-gradient(115deg, var(--color-brand-rose), var(--color-brand-violet), var(--color-brand-sky));
-  background-size: 160% 160%;
-  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--color-brand-violet) 72%, transparent);
-}
-
-.brand-gradient:hover {
-  background-position: 100% 50%;
-  box-shadow: 0 13px 28px -12px color-mix(in srgb, var(--color-brand-violet) 86%, transparent);
-}
-
-.brand-gradient-soft {
-  background: linear-gradient(
-    115deg,
-    color-mix(in srgb, var(--color-brand-rose) 13%, var(--color-surface)),
-    color-mix(in srgb, var(--color-brand-violet) 14%, var(--color-surface)),
-    color-mix(in srgb, var(--color-brand-sky) 12%, var(--color-surface))
-  );
-}
-
-.warm-surface-shadow {
-  box-shadow: 0 16px 44px -30px rgba(50, 39, 27, 0.36);
-}
