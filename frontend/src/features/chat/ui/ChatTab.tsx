@@ -65,7 +65,7 @@ export default function ChatTab({ event }: { event: Event }) {
         {isLoading ? (
           <p className="text-[13px] text-ink-3 py-8 text-center">{t('common.loading', 'Загрузка…')}</p>
         ) : !messages || messages.length === 0 ? (
-          <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
+          <div className="rounded-[var(--radius-card)] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
             <MessageCircle size={26} className="text-ink-3" />
             <p className="text-[13px] text-ink-3">{t('chat.empty', 'Сообщений пока нет. Начните общение!')}</p>
           </div>

@@ -10,7 +10,7 @@ import {
 import { useUserLocation } from '@/features/user-location/model/useUserLocation'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { PublicEventListItem } from '@/entities/event/model/types'
-import { ListGroup, SearchInput, useToast } from '@/shared/ui'
+import { EmptyState, ListGroup, PageHeader, SearchInput, useToast } from '@/shared/ui'
 
 // PublicEventsPage — самостоятельный экран «Найти публичные»: каталог
 // будущих публичных встреч для всех авторизованных пользователей.
@@ -79,14 +79,7 @@ export default function PublicEventsPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Head */}
-      <div>
-        <h1 className="text-[34px] lg:text-[28px] font-bold tracking-[-0.022em] leading-[1.05] lg:leading-[1.15]">
-          {t('nav.publicEvents')}
-        </h1>
-        <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">
-          {t('publicEvents.subtitle', { count: totalCount })}
-        </p>
-      </div>
+      <PageHeader title={t('nav.publicEvents')} subtitle={t('publicEvents.subtitle', { count: totalCount })} />
 
       <SearchInput
         className="max-w-[420px]"
@@ -96,23 +89,12 @@ export default function PublicEventsPage() {
       />
 
       {visibleCount === 0 ? (
-        <div className="rounded-[12px] border border-line bg-surface py-14 px-4 flex flex-col items-center gap-3">
-          {search.trim() ? (
-            <>
-              <SearchX size={28} className="text-ink-3" />
-              <div className="text-[13.5px] text-ink-3">
-                {t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })}
-              </div>
-            </>
-          ) : (
-            <>
-              <Compass size={28} className="text-ink-3" />
-              <div className="text-[13.5px] text-ink-3">
-                {t('publicEvents.empty')}
-              </div>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={search.trim() ? SearchX : Compass}
+          title={search.trim()
+            ? t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })
+            : t('publicEvents.empty')}
+        />
       ) : (
         visibleList.mode === 'fallback' ? (
           <ListGroup>{visibleList.all.map(renderEvent)}</ListGroup>

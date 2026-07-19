@@ -10,7 +10,7 @@ import {
   useMarkRead,
 } from '@/features/notifications/model/hooks'
 import { formatDate } from '@/shared/lib/formatDate'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui'
+import { EmptyState, PageHeader, Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui'
 import { cn } from '@/shared/lib/cn'
 
 export default function NotificationsPage() {
@@ -27,10 +27,8 @@ export default function NotificationsPage() {
   return (
     <div className="flex flex-col gap-4">
       {/* Desktop header — заголовок + действия (на мобиле они в навбаре). */}
-      <div className="hidden lg:flex items-center justify-between">
-        <h1 className="text-[20px] font-bold tracking-[-0.02em] text-ink">
-          {t('nav.notifications', 'Уведомления')}
-        </h1>
+      <div className="hidden min-[761px]:block">
+        <PageHeader title={t('nav.notifications', 'Уведомления')} actions={(
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -61,15 +59,13 @@ export default function NotificationsPage() {
             <TooltipContent>{t('notifications.deleteAll', 'Удалить все')}</TooltipContent>
           </Tooltip>
         </div>
+        )} />
       </div>
 
       {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <Bell size={28} className="text-ink-3" />
-          <div className="text-[14px] text-ink-3">{t('notifications.empty', 'Нет уведомлений')}</div>
-        </div>
+        <EmptyState icon={Bell} title={t('notifications.empty', 'Нет уведомлений')} />
       ) : (
-        <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
+        <div className="rounded-[var(--radius-card)] border border-line bg-surface overflow-hidden">
           <ul className="flex flex-col">
             {notifications.map(n => {
               const href = notificationHref(n)
@@ -79,6 +75,7 @@ export default function NotificationsPage() {
                   className={cn(
                     'flex items-start gap-3 border-b border-line-soft px-4 py-3.5 last:border-b-0 transition',
                     href && 'cursor-pointer active:bg-hover',
+                    !n.is_read && 'bg-[color-mix(in_srgb,var(--color-brand-b)_5%,var(--color-surface))]',
                   )}
                   onClick={href ? () => {
                     if (!n.is_read) markRead.mutate(n.id)

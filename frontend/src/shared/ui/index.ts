@@ -55,10 +55,22 @@ export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent } from './popove
 export { DateRangePicker } from './date-range-picker'
 export { Separator } from './separator'
 export { Toaster, useToast, toast } from './toast'
+export { PageHeader } from './page-header'
+export { EmptyState } from './empty-state'
+export { EventSectionNav, type EventSectionOption } from './event-section-nav'
+export {
+  EventSectionEmpty,
+  EventSectionDataRow,
+  EventSectionHeader,
+  EventSectionList,
+  EventSectionProgress,
+  EventSectionRow,
+  EventSectionStat,
+  EventSectionStats,
+} from './event-section-content'
 
 // applied design-5 building blocks
 export { SegmentedControl } from './segmented-control'
-export { GooeyTabs } from './gooey-tabs'
 export { ListGroup, ListRow } from './list'
 export { DateCell } from './date-cell'
 export { TimeCell } from './time-cell'

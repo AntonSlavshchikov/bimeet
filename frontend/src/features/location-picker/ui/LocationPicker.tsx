@@ -121,7 +121,7 @@ export default function LocationPicker({
       />
       {showMap ? (
         <>
-          <div ref={elRef} className="h-[300px] w-full rounded-[10px] overflow-hidden border border-line" />
+          <div ref={elRef} className="h-[300px] w-full rounded-[var(--radius-control)] overflow-hidden border border-line" />
           <p className="text-[12px] text-ink-3">
             {t('locationPicker.hint', 'Укажите точку на карте кликом или перетащите метку; адрес впишите вручную')}
           </p>

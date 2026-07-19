@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 /* === Design tokens — Warm Canvas ===
@@ -8,9 +8,9 @@
  */
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-wordmark: 'Quicksand', 'Inter', sans-serif;
+  --font-wordmark: 'Inter', sans-serif;
 
-  --color-bg: #FFFFFF;
+  --color-bg: #FAF8F2;
   --color-bg-2: #F3F0E9;
   --color-surface: #FFFFFF;
   --color-hover: rgba(86, 74, 63, 0.06);
@@ -20,6 +20,7 @@
   --color-ink-3: #9A948D;
   --color-ink-4: rgba(94, 90, 85, 0.38);
   --color-line: rgba(18, 18, 20, 0.09);
+  --color-line-strong: rgba(18, 18, 20, 0.15);
   --color-line-soft: rgba(18, 18, 20, 0.055);
 
   /* Brand gradient from the Warm Canvas concept. */
@@ -27,13 +28,12 @@
   --color-brand-b: #A78BFA;
   --color-brand-c: #38BDF8;
 
-  /* Accent — brand violet (was iOS blue #007AFF / #0A84FF). Semantic colors below stay iOS-system on purpose. */
-  --color-accent: #7C3AED;        /* dark: #A78BFA */
-  --color-success: #34C759;       /* dark: #30D158 */
-  --color-warning: #FF9500;       /* dark: #FF9F0A */
-  --color-danger: #FF3B30;        /* dark: #FF453A */
-  --color-purple: #AF52DE;        /* dark: #BF5AF2 */
-  --color-indigo: #5856D6;        /* dark: #5E5CE6 */
+  --color-accent: #7857C8;
+  --color-success: #299764;
+  --color-warning: #D97706;
+  --color-danger: #DC5A62;
+  --color-purple: #7857C8;
+  --color-indigo: #6658B8;
 
   --color-avatar-1: #E89A5E;
   --color-avatar-2: #48A6D8;
@@ -44,7 +44,7 @@
 
   --radius-nav: 10px;
   --radius-control: 12px;
-  --radius-list: 16px;
+  --radius-list: 18px;
   --radius-card: 18px;
   --radius-frame: 30px;
 }
@@ -58,6 +58,8 @@ html, body {
   color: var(--color-ink);
 }
 
+html { overflow-x: hidden; }
+
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -68,6 +70,21 @@ body {
 }
 
 #root { min-height: 100vh }
+
+.warm-canvas-bg {
+  background:
+    radial-gradient(700px 420px at -8% 5%, color-mix(in srgb, var(--color-brand-a) 10%, transparent), transparent 64%),
+    radial-gradient(760px 480px at 106% 96%, color-mix(in srgb, var(--color-brand-c) 9%, transparent), transparent 62%),
+    var(--color-bg);
+}
+
+.warm-surface-shadow {
+  box-shadow: 0 1px 0 rgba(18, 18, 20, 0.02);
+}
+
+.app-shell-shadow {
+  box-shadow: 0 24px 70px rgba(36, 30, 20, 0.11);
+}
 
 /* Tabular numerics utility — широко используется в датах/времени */
 .tnum { font-variant-numeric: tabular-nums }
@@ -108,15 +125,6 @@ body {
   input, textarea, select { font-size: 16px; }
 }
 
-/* На mobile сохраняем тёплый холст из макета; desktop остаётся белым. */
-@media (max-width: 1023.98px) {
-  :root {
-    --color-bg: #FAF8F2;
-    --color-line: rgba(18, 18, 20, 0.1);
-    --color-line-soft: rgba(18, 18, 20, 0.06);
-  }
-}
-
 /* === Dark theme ===
  * Включается классом `dark` на <html> (см. shared/theme). Переопределяет токены —
  * остальной UI адаптируется автоматически, т.к. использует переменные.
@@ -140,13 +148,30 @@ html.dark {
   --color-ink-3: rgba(250, 247, 242, 0.52);
   --color-ink-4: rgba(250, 247, 242, 0.28);
   --color-line: rgba(250, 244, 235, 0.11);
+  --color-line-strong: rgba(250, 244, 235, 0.18);
   --color-line-soft: rgba(250, 244, 235, 0.065);
 
-  /* Accent — brand violet, lightened for dark bg. Semantic colors stay iOS-system. */
   --color-accent: #A78BFA;
-  --color-success: #30D158;
-  --color-warning: #FF9F0A;
-  --color-danger: #FF453A;
-  --color-purple: #BF5AF2;
-  --color-indigo: #5E5CE6;
+  --color-success: #59B789;
+  --color-warning: #E8A84C;
+  --color-danger: #EC7A81;
+  --color-purple: #B99EF6;
+  --color-indigo: #9A8DE0;
+}
+
+@media (max-width: 760px) {
+  .app-page-title { font-size: 31px; }
+}
+
+@media (max-width: 420px) {
+  .app-page-title { font-size: 27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
