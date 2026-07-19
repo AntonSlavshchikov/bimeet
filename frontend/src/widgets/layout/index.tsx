@@ -82,8 +82,10 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
         className="h-[100dvh] text-ink p-3 flex items-stretch justify-center lg:p-5"
         style={{
           background:
-            'radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%), ' +
-            'radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%), ' +
+            'radial-gradient(1100px 700px at 12% -12%, color-mix(in srgb, var(--color-accent) 30%, transparent), transparent 58%), ' +
+            'radial-gradient(900px 650px at 88% -6%, color-mix(in srgb, var(--color-indigo) 24%, transparent), transparent 55%), ' +
+            'radial-gradient(1000px 700px at 100% 108%, color-mix(in srgb, var(--color-purple) 26%, transparent), transparent 58%), ' +
+            'radial-gradient(800px 600px at 0% 100%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 55%), ' +
             'var(--color-bg-2)',
         }}
       >
@@ -94,7 +96,7 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
             'w-full h-full min-h-0 flex flex-col',
             'rounded-[20px] border border-line bg-bg overflow-hidden',
             'shadow-[0_2px_4px_rgba(0,0,0,0.04),0_16px_40px_rgba(0,0,0,0.08)]',
-            'lg:max-w-[1360px] lg:flex-row',
+            'lg:flex-row',
           )}
         >
           {/* Sidebar — секция карточки на десктопе */}

@@ -1,19 +1,20 @@
 import { forwardRef, Children, type HTMLAttributes, type ReactNode } from 'react'
 import { cn } from '@/shared/lib/cn'
 
-/** Цвет фона аватара по 6-цветной системной палитре, выбирается по хэшу строки */
-function avatarColor(seed: string): string {
-  const palette = [
-    'bg-[var(--color-avatar-1)]',
-    'bg-[var(--color-avatar-2)]',
-    'bg-[var(--color-avatar-3)]',
-    'bg-[var(--color-avatar-4)]',
-    'bg-[var(--color-avatar-5)]',
-    'bg-[var(--color-avatar-6)]',
-  ]
+/** Градиент фона аватара, выбирается по хэшу строки — стабилен для пользователя, разный между пользователями */
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, var(--color-accent), var(--color-purple))',
+  'linear-gradient(135deg, var(--color-purple), var(--color-avatar-4))',
+  'linear-gradient(135deg, var(--color-indigo), var(--color-accent))',
+  'linear-gradient(135deg, var(--color-avatar-2), var(--color-indigo))',
+  'linear-gradient(135deg, var(--color-avatar-5), var(--color-avatar-2))',
+  'linear-gradient(135deg, var(--color-avatar-1), var(--color-avatar-4))',
+]
+
+function avatarGradient(seed: string): string {
   let h = 0
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
-  return palette[Math.abs(h) % palette.length]
+  return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length]
 }
 
 function initials(name: string): string {
@@ -40,17 +41,15 @@ export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
 export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
   ({ name, src, size = 'sm', className, style, ...props }, ref) => {
     const initial = initials(name)
-    const color = src ? '' : avatarColor(name)
     return (
       <div
         ref={ref}
         className={cn(
           'inline-flex items-center justify-center rounded-full text-white font-bold border-surface bg-cover bg-center',
           sizeMap[size],
-          color,
           className,
         )}
-        style={src ? { backgroundImage: `url(${src})`, ...style } : style}
+        style={src ? { backgroundImage: `url(${src})`, ...style } : { background: avatarGradient(name), ...style }}
         aria-label={name}
         {...props}
       >

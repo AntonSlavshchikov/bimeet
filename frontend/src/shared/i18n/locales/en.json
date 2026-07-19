@@ -169,7 +169,13 @@
     "deleteAll": "Delete all",
     "empty": "No notifications",
     "markRead": "Mark as read",
-    "deleteOne": "Delete"
+    "deleteOne": "Delete",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "emptyTitle": "Notifications will appear here",
+    "emptyBody": "Invites, event changes, and new messages will show up here.",
+    "emptyUnreadTitle": "All caught up",
+    "emptyUnreadBody": "You have no unread notifications."
   },
   "invite": {
     "invalidTitle": "Invitation not valid",
