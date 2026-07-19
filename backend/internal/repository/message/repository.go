@@ -21,7 +21,7 @@ func New(pool *pgxpool.Pool, cipher *secret.Cipher) *Repository {
 	return &Repository{pool: pool, cipher: cipher}
 }
 
-const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.created_at, m.deleted_at,
+const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.image_url, m.created_at, m.deleted_at,
 	r.id, ru.name, r.body, r.deleted_at`
 
 const fromJoins = `FROM event_messages m
@@ -43,7 +43,7 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UU
 		replyDeletedAt *time.Time
 	)
 	if err := row.Scan(
-		&m.ID, &m.EventID, &authorID, &m.Author.Name, &m.Author.Email, &m.Body, &m.CreatedAt, &deletedAt,
+		&m.ID, &m.EventID, &authorID, &m.Author.Name, &m.Author.Email, &m.Body, &m.ImageURL, &m.CreatedAt, &deletedAt,
 		&replyID, &replyAuthor, &replyBody, &replyDeletedAt,
 	); err != nil {
 		return model.Message{}, err
@@ -53,6 +53,7 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UU
 	if deletedAt != nil {
 		m.Deleted = true
 		m.Body = ""
+		m.ImageURL = nil
 	} else {
 		m.Body = r.cipher.Decrypt(m.Body)
 	}
@@ -71,11 +72,11 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UU
 	return m, nil
 }
 
-func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID) (model.Message, error) {
+func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID, imageURL *string) (model.Message, error) {
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO event_messages (event_id, user_id, body, reply_to_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-		eventID, userID, r.cipher.Encrypt(body), replyToID,
+		`INSERT INTO event_messages (event_id, user_id, body, reply_to_id, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		eventID, userID, r.cipher.Encrypt(body), replyToID, imageURL,
 	).Scan(&id)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("insert message: %w", err)

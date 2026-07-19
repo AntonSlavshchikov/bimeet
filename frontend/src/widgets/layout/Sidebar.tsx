@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useNotifications } from '@/entities/notification/queries'
-import { useEvents } from '@/entities/event/queries'
 import { Avatar } from '@/shared/ui/avatar'
 import {
   DropdownMenu,
@@ -83,14 +82,8 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   const { data: notifications = [] } = useNotifications()
   const unreadCount = notifications.filter(n => !n.is_read).length
 
-  const events = useEvents()
-  const attendingCount = events.filter(e => !e.organizer.is_me && e.status !== 'completed').length
-  const organizingCount = events.filter(e => e.organizer.is_me && e.status !== 'completed').length
-  const pastCount = events.filter(e => e.status === 'completed').length
-
   const onEvents = location.pathname.startsWith('/events') && !location.pathname.includes('/new')
   const onDiscover = location.pathname.startsWith('/discover')
-  const activeTab = onEvents ? new URLSearchParams(location.search).get('tab') ?? 'all' : null
 
   function handleLogout() {
     logout()
@@ -147,36 +140,6 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           />
         )}
       </nav>
-
-      {/* Filters */}
-      <div className="mt-5 px-[14px]">
-        <div className="px-2.5 pb-1.5 text-[9.5px] font-bold tracking-[0.1em] text-ink-3 uppercase">
-          {t('nav.filters', 'Фильтры')}
-        </div>
-        <nav className="flex flex-col gap-px">
-          <NavItem
-            to="/events?tab=attending"
-            label={t('events.tabAttending', 'Иду')}
-            count={attendingCount}
-            active={activeTab === 'attending'}
-            onClick={onClose}
-          />
-          <NavItem
-            to="/events?tab=organizing"
-            label={t('events.tabOrganizing', 'Организую')}
-            count={organizingCount}
-            active={activeTab === 'organizing'}
-            onClick={onClose}
-          />
-          <NavItem
-            to="/events?tab=past"
-            label={t('events.tabPast', 'Прошедшие')}
-            count={pastCount}
-            active={activeTab === 'past'}
-            onClick={onClose}
-          />
-        </nav>
-      </div>
 
       {/* Spacer */}
       <div className="flex-1" />

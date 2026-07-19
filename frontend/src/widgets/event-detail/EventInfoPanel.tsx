@@ -142,7 +142,7 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
 
               <h1
                 id="event-detail-title"
-                className="mt-[13px] text-[clamp(28px,4vw,44px)] font-extrabold leading-[1.05] tracking-[-0.045em] text-ink"
+                className="mt-[13px] text-[clamp(26px,3.5vw,40px)] font-extrabold leading-[1.05] tracking-[-0.045em] text-ink"
               >
                 {event.title}
               </h1>

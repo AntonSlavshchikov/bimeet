@@ -17,6 +17,7 @@ export interface Message {
   event_id: string
   author: MessageAuthor
   body: string
+  image_url?: string | null
   created_at: string
   deleted: boolean
   is_mine: boolean

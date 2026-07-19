@@ -24,6 +24,7 @@ import ChatTab from '@/features/chat/ui/ChatTab'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import { formatDate, formatDateTime } from '@/shared/lib/formatDate'
+import { cn } from '@/shared/lib/cn'
 import { resolveEventTab, withEventTab, type EventTabKey } from './tab-url'
 import {
   Button,
@@ -135,7 +136,7 @@ export default function EventDetailPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5">
+      <div className={cn('flex flex-col gap-5', activeTab === 'chat' && 'h-full min-h-0')}>
 
         <div className="flex items-center gap-1 text-[12px] font-semibold text-ink-2">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
@@ -145,13 +146,17 @@ export default function EventDetailPage() {
           <span>{formatDate(event.date_start)}</span>
         </div>
 
-        <EventInfoPanel event={event} isOrganizer={isOrganizer} />
+        {activeTab !== 'chat' && (
+          <EventInfoPanel event={event} isOrganizer={isOrganizer} />
+        )}
 
         <EventSectionNav
           value={activeTab}
           onChange={selectTab}
           label={t('eventInfo.sections', 'Разделы встречи')}
           description={t('eventInfo.sectionsDescription')}
+          className={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}
+          contentClassName={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}
           options={allTabs.map(td => ({
             key: td.key,
             label: td.key === 'participants' ? t('eventInfo.peopleTab') : t(td.tKey, td.fallback),
@@ -166,13 +171,13 @@ export default function EventDetailPage() {
               : undefined,
           }))}
           action={isOrganizer && event.status === 'active' ? (
-            <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
-              <CheckCircle2 size={13} />
-              {t('eventInfo.menuComplete', 'Завершить')}
-            </Button>
+              <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
+                <CheckCircle2 size={13} />
+                {t('eventInfo.menuComplete', 'Завершить')}
+              </Button>
           ) : undefined}
         >
-          <div>
+          <div className={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}>
             {activeTab === 'participants' && <ParticipantsTab event={event} />}
             {activeTab === 'collections' && <CollectionsTab event={event} />}
             {activeTab === 'polls' && <PollsTab event={event} />}

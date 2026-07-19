@@ -8,6 +8,15 @@ export const chatApi = {
       method: 'POST',
       body: JSON.stringify({ body, reply_to_id: replyToId }),
     }),
+  sendImage: (eventId: string, file: File, caption?: string) => {
+    const form = new FormData()
+    form.append('image', file)
+    if (caption) form.append('body', caption)
+    return apiFetch<Message>(`/api/events/${eventId}/messages/image`, {
+      method: 'POST',
+      body: form,
+    })
+  },
   remove: (eventId: string, messageId: string) =>
     apiFetch<void>(`/api/events/${eventId}/messages/${messageId}`, { method: 'DELETE' }),
   markRead: (eventId: string) =>

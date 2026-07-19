@@ -18,6 +18,7 @@ interface EventSectionNavProps<T extends string> {
   description?: string
   children?: ReactNode
   className?: string
+  contentClassName?: string
 }
 
 export function EventSectionNav<T extends string>({
@@ -29,6 +30,7 @@ export function EventSectionNav<T extends string>({
   description,
   children,
   className,
+  contentClassName,
 }: EventSectionNavProps<T>) {
   return (
     <section
@@ -87,7 +89,11 @@ export function EventSectionNav<T extends string>({
         </div>
       </div>
 
-      {children && <div className="px-[18px] py-[22px] min-[761px]:px-6 min-[761px]:py-[25px]">{children}</div>}
+      {children && (
+        <div className={cn('px-[18px] py-[22px] min-[761px]:px-6 min-[761px]:py-[25px]', contentClassName)}>
+          {children}
+        </div>
+      )}
     </section>
   )
 }

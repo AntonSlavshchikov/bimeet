@@ -1,5 +1,5 @@
 import { Link, useMatch } from 'react-router-dom'
-import { Calendar, User, Bell } from 'lucide-react'
+import { Bell, Calendar, Search, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNotifications } from '@/entities/notification/queries'
 import { cn } from '@/shared/lib/cn'
@@ -43,12 +43,13 @@ export default function BottomNav() {
   return (
     <nav
       className={cn(
-        'fixed inset-x-2 bottom-2 z-40 grid grid-cols-3 rounded-[18px] border border-line bg-surface/90 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden max-[420px]:inset-x-[6px]',
+        'fixed inset-x-2 bottom-2 z-40 grid grid-cols-4 rounded-[18px] border border-line bg-surface/90 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden max-[420px]:inset-x-[6px]',
       )}
       style={{
         paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
       }}
     >
+      <TabLink to="/discover" icon={Search} label={t('nav.publicEvents')} />
       <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
       <TabLink to="/notifications" icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
       <TabLink to="/profile" icon={User} label={t('nav.profile')} />

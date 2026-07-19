@@ -84,6 +84,9 @@
     "changed": "changed «{{field}}»",
     "railToday": "Today",
     "railUpcoming": "Upcoming",
+    "railSelectedDay": "Selected day",
+    "railBackToday": "Today",
+    "dateFilterClear": "Clear date filter",
     "railThisMonth": "This month",
     "railEventsAhead": "events ahead",
     "railOrganizing": "organized by you",
@@ -230,7 +233,13 @@
     "deleteAll": "Delete all",
     "empty": "No notifications",
     "markRead": "Mark as read",
-    "deleteOne": "Delete"
+    "deleteOne": "Delete",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "emptyTitle": "Notifications will appear here",
+    "emptyBody": "Invites, event changes, and new messages will show up here.",
+    "emptyUnreadTitle": "All caught up",
+    "emptyUnreadBody": "You have no unread notifications."
   },
   "invite": {
     "invalidTitle": "Invitation not valid",
@@ -260,7 +269,11 @@
     "reply": "Reply",
     "replyingTo": "Reply to",
     "send": "Send",
-    "you": "You"
+    "you": "You",
+    "attachImage": "Attach image",
+    "imageInvalidType": "Only image files can be attached",
+    "imageTooLarge": "File is too large (max 10 MB)",
+    "imageSendError": "Failed to send image"
   },
   "participants": {
     "kicker": "Event team",

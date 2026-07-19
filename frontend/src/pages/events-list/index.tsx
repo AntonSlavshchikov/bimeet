@@ -112,8 +112,30 @@ function resolveCanAttend(
 
 function UpcomingRail({ events }: { events: EventAny[] }) {
   const { t, i18n } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
-  const todayEvents = events.filter(e => isSameDay(new Date(e.date_start), today))
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
+
+  const selectedDate = useMemo(() => {
+    const raw = searchParams.get('date')
+    if (!raw) return undefined
+    const [y, m, d] = raw.split('-').map(Number)
+    if (!y || !m || !d) return undefined
+    return new Date(y, m - 1, d)
+  }, [searchParams])
+
+  const handleSelectDate = (date: Date) => {
+    const next = new URLSearchParams(searchParams)
+    if (selectedDate && isSameDay(date, selectedDate)) {
+      next.delete('date')
+    } else {
+      next.set('date', isoDay(date))
+    }
+    setSearchParams(next, { replace: true })
+  }
+
+  const activeDay = selectedDate ?? today
+  const dayEvents = events.filter(e => isSameDay(new Date(e.date_start), activeDay))
   const nextFew = events
     .filter(e => new Date(e.date_start) > today)
     .slice(0, 3)
@@ -123,17 +145,37 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
     [events],
   )
 
-  const upcoming = todayEvents.length > 0 ? todayEvents : nextFew
-
+  const upcoming = selectedDate ? dayEvents : (dayEvents.length > 0 ? dayEvents : nextFew)
   return (
     <>
       <RailCard>
-        <RailCardTitle>{todayEvents.length > 0 ? t('events.railToday') : t('events.railUpcoming')}</RailCardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <RailCardTitle>
+            {selectedDate
+              ? t('events.railSelectedDay')
+              : dayEvents.length > 0
+                ? t('events.railToday')
+                : t('events.railUpcoming')}
+          </RailCardTitle>
+          {selectedDate && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.delete('date')
+                setSearchParams(next, { replace: true })
+              }}
+              className="text-[11px] font-semibold text-accent transition hover:opacity-75"
+            >
+              {t('events.railBackToday')}
+            </button>
+          )}
+        </div>
         <div className="text-[44px] font-bold tracking-[-0.03em] leading-none text-ink">
-          {today.getDate()}
+          {activeDay.getDate()}
         </div>
         <div className="text-[13px] text-ink-3 mt-1 mb-3">
-          {today.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {activeDay.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
         {upcoming.length === 0 ? (
           <div className="border-t border-line-soft pt-3 text-[13px] text-ink-3">
@@ -141,7 +183,7 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
           </div>
         ) : (
           upcoming.map(e => {
-            const time = new Date(e.date_start).toLocaleTimeString(i18n.language === 'en' ? 'en-US' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })
+            const time = new Date(e.date_start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
             return (
               <Link
                 key={e.id}
@@ -160,7 +202,7 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
       </RailCard>
 
       <RailCard>
-        <MiniCalendar eventDates={eventDates} />
+        <MiniCalendar eventDates={eventDates} selected={selectedDate} onSelect={handleSelectDate} />
       </RailCard>
     </>
   )
@@ -294,7 +336,10 @@ function EventsListPage() {
     past: pastEvents,
   }
 
-  const visible: EventAny[] = filterBySearch(sourceForTab[tab])
+  const selectedDate = searchParams.get('date')
+  const visible: EventAny[] = filterBySearch(sourceForTab[tab]).filter(event =>
+    !selectedDate || isoDay(new Date(event.date_start)) === selectedDate,
+  )
   const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
   const groups = groupEvents(visible, locale, t)
   const hasSearch = search.trim().length > 0
@@ -376,6 +421,26 @@ function EventsListPage() {
           </div>
         )}
       />
+
+      {selectedDate && (
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-[12.5px] font-medium text-accent">
+            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
+            <button
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.delete('date')
+                setSearchParams(next, { replace: true })
+              }}
+              aria-label={t('events.dateFilterClear')}
+              className="transition hover:opacity-70"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Body */}
       {isEmpty ? (
