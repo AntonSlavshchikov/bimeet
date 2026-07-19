@@ -141,7 +141,7 @@ export default function EventFormPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Button asChild variant="ghost" size="sm" className="self-start -ml-2">
+      <Button asChild variant="ghost" size="sm" className="self-start -ml-2 gap-1.5">
         <Link to={isEdit && id ? `/events/${id}` : '/events'}>
           <ArrowLeft size={14} /> {t('common.back', 'Назад')}
         </Link>
@@ -260,7 +260,7 @@ export default function EventFormPage() {
 
         {/* Submit bar */}
         <div className="sticky bottom-0 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-bg/85 backdrop-blur-xl border-t border-line flex items-center justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
+          <Button type="button" variant="soft" onClick={() => navigate(-1)}>
             {t('common.cancel', 'Отмена')}
           </Button>
           <Button type="submit" disabled={isLoading}>

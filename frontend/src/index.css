@@ -22,6 +22,11 @@
   --color-line: rgba(18, 18, 20, 0.09);
   --color-line-soft: rgba(18, 18, 20, 0.055);
 
+  /* Brand gradient from the Warm Canvas concept. */
+  --color-brand-a: #FB7185;
+  --color-brand-b: #A78BFA;
+  --color-brand-c: #38BDF8;
+
   /* Accent — brand violet (was iOS blue #007AFF / #0A84FF). Semantic colors below stay iOS-system on purpose. */
   --color-accent: #7C3AED;        /* dark: #A78BFA */
   --color-success: #34C759;       /* dark: #30D158 */
@@ -71,6 +76,28 @@ body {
 .focus-ring:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+
+/* Warm Canvas actions. These are named utilities because the gradient is reused
+ * by buttons and selected calendar cells. */
+.brand-gradient {
+  color: #fff;
+  background: linear-gradient(
+    115deg,
+    var(--color-brand-a),
+    var(--color-brand-b),
+    var(--color-brand-c)
+  );
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--color-brand-b) 24%, transparent);
+}
+
+.brand-gradient-soft {
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--color-brand-a) 12%, transparent),
+    color-mix(in srgb, var(--color-brand-b) 12%, transparent),
+    color-mix(in srgb, var(--color-brand-c) 12%, transparent)
+  );
 }
 
 /* iOS Safari зумит страницу при фокусе на input со шрифтом < 16px.
@@ -123,4 +150,3 @@ html.dark {
   --color-purple: #BF5AF2;
   --color-indigo: #5E5CE6;
 }
-
