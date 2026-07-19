@@ -2,6 +2,7 @@ package messagesvc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -99,7 +100,7 @@ func (s *Service) PostImage(ctx context.Context, eventID, userID uuid.UUID, capt
 
 	var sniff [512]byte
 	n, err := io.ReadFull(file, sniff[:])
-	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return model.Message{}, fmt.Errorf("read image: %w", err)
 	}
 	contentType := http.DetectContentType(sniff[:n])

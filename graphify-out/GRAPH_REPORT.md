@@ -1,7 +1,7 @@
 # Graph Report - /Users/adslavschikov/my/ai-app  (2026-07-20)
 
 ## Corpus Check
-- 360 files · ~866,691 words
+- 360 files · ~866,702 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -353,11 +353,11 @@ Nodes (3): MockAuthService, MockAuthServiceMockRecorder, NewMockAuthService()
 
 ### Community 29 - "Community 29"
 Cohesion: 0.29
-Nodes (0):
+Nodes (0): 
 
 ### Community 30 - "Community 30"
 Cohesion: 0.29
-Nodes (0):
+Nodes (0): 
 
 ### Community 31 - "Community 31"
 Cohesion: 0.52
@@ -369,7 +369,7 @@ Nodes (3): eventAccentColor(), EventListRow(), formatRowTime()
 
 ### Community 33 - "Community 33"
 Cohesion: 0.4
-Nodes (0):
+Nodes (0): 
 
 ### Community 34 - "Community 34"
 Cohesion: 0.4
@@ -385,27 +385,27 @@ Nodes (4): EventRepo, MessageRepo, Notifier, Uploader
 
 ### Community 37 - "Community 37"
 Cohesion: 0.4
-Nodes (0):
+Nodes (0): 
 
 ### Community 38 - "Community 38"
 Cohesion: 0.5
-Nodes (0):
+Nodes (0): 
 
 ### Community 39 - "Community 39"
 Cohesion: 0.5
-Nodes (0):
+Nodes (0): 
 
 ### Community 40 - "Community 40"
 Cohesion: 0.5
-Nodes (0):
+Nodes (0): 
 
 ### Community 41 - "Community 41"
 Cohesion: 0.5
-Nodes (0):
+Nodes (0): 
 
 ### Community 42 - "Community 42"
 Cohesion: 0.5
-Nodes (0):
+Nodes (0): 
 
 ### Community 43 - "Community 43"
 Cohesion: 0.83
@@ -417,7 +417,7 @@ Nodes (3): clearBadge(), isBadgeSupported(), setBadge()
 
 ### Community 45 - "Community 45"
 Cohesion: 0.5
-Nodes (0):
+Nodes (0): 
 
 ### Community 46 - "Community 46"
 Cohesion: 0.67
@@ -425,47 +425,47 @@ Nodes (1): App()
 
 ### Community 47 - "Community 47"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 48 - "Community 48"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 49 - "Community 49"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 50 - "Community 50"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 51 - "Community 51"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 52 - "Community 52"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 53 - "Community 53"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 54 - "Community 54"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 55 - "Community 55"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 56 - "Community 56"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 57 - "Community 57"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 58 - "Community 58"
 Cohesion: 0.67
@@ -489,7 +489,7 @@ Nodes (2): EventRepo, PollRepo
 
 ### Community 63 - "Community 63"
 Cohesion: 0.67
-Nodes (0):
+Nodes (0): 
 
 ### Community 64 - "Community 64"
 Cohesion: 1.0
@@ -497,119 +497,119 @@ Nodes (2): pickDefault(), selectDay()
 
 ### Community 65 - "Community 65"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 66 - "Community 66"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 67 - "Community 67"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 68 - "Community 68"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 69 - "Community 69"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 70 - "Community 70"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 71 - "Community 71"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 72 - "Community 72"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 73 - "Community 73"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 74 - "Community 74"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 75 - "Community 75"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 76 - "Community 76"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 77 - "Community 77"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 78 - "Community 78"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 79 - "Community 79"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 80 - "Community 80"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 81 - "Community 81"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 82 - "Community 82"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 83 - "Community 83"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 84 - "Community 84"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 85 - "Community 85"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 86 - "Community 86"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 87 - "Community 87"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 88 - "Community 88"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 89 - "Community 89"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 90 - "Community 90"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 91 - "Community 91"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 92 - "Community 92"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 93 - "Community 93"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 94 - "Community 94"
 Cohesion: 1.0
@@ -641,391 +641,391 @@ Nodes (1): SubscriptionRepo
 
 ### Community 101 - "Community 101"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 102 - "Community 102"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 103 - "Community 103"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 104 - "Community 104"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 105 - "Community 105"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 106 - "Community 106"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 107 - "Community 107"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 108 - "Community 108"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 109 - "Community 109"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 110 - "Community 110"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 111 - "Community 111"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 112 - "Community 112"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 113 - "Community 113"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 114 - "Community 114"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 115 - "Community 115"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 116 - "Community 116"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 117 - "Community 117"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 118 - "Community 118"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 119 - "Community 119"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 120 - "Community 120"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 121 - "Community 121"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 122 - "Community 122"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 123 - "Community 123"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 124 - "Community 124"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 125 - "Community 125"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 126 - "Community 126"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 127 - "Community 127"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 128 - "Community 128"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 129 - "Community 129"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 130 - "Community 130"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 131 - "Community 131"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 132 - "Community 132"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 133 - "Community 133"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 134 - "Community 134"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 135 - "Community 135"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 136 - "Community 136"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 137 - "Community 137"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 138 - "Community 138"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 139 - "Community 139"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 140 - "Community 140"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 141 - "Community 141"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 142 - "Community 142"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 143 - "Community 143"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 144 - "Community 144"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 145 - "Community 145"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 146 - "Community 146"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 147 - "Community 147"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 148 - "Community 148"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 149 - "Community 149"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 150 - "Community 150"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 151 - "Community 151"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 152 - "Community 152"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 153 - "Community 153"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 154 - "Community 154"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 155 - "Community 155"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 156 - "Community 156"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 157 - "Community 157"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 158 - "Community 158"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 159 - "Community 159"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 160 - "Community 160"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 161 - "Community 161"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 162 - "Community 162"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 163 - "Community 163"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 164 - "Community 164"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 165 - "Community 165"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 166 - "Community 166"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 167 - "Community 167"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 168 - "Community 168"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 169 - "Community 169"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 170 - "Community 170"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 171 - "Community 171"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 172 - "Community 172"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 173 - "Community 173"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 174 - "Community 174"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 175 - "Community 175"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 176 - "Community 176"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 177 - "Community 177"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 178 - "Community 178"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 179 - "Community 179"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 180 - "Community 180"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 181 - "Community 181"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 182 - "Community 182"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 183 - "Community 183"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 184 - "Community 184"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 185 - "Community 185"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 186 - "Community 186"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 187 - "Community 187"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 188 - "Community 188"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 189 - "Community 189"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 190 - "Community 190"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 191 - "Community 191"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 192 - "Community 192"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 193 - "Community 193"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 194 - "Community 194"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 195 - "Community 195"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 196 - "Community 196"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ### Community 197 - "Community 197"
 Cohesion: 1.0
-Nodes (0):
+Nodes (0): 
 
 ## Knowledge Gaps
 - **115 isolated node(s):** `CarpoolService`, `CollectionService`, `ErrorResponse`, `StatusResponse`, `VAPIDKeyResponse` (+110 more)
@@ -1301,11 +1301,11 @@ Nodes (0):
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `New()` connect `Community 0` to `Community 3`, `Community 4`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 12`, `Community 17`, `Community 23`, `Community 24`?**
-  _High betweenness centrality (0.108) - this node is a cross-community bridge._
-- **Why does `scan()` connect `Community 2` to `Community 0`, `Community 4`, `Community 5`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+  _High betweenness centrality (0.131) - this node is a cross-community bridge._
 - **Why does `newRouter()` connect `Community 0` to `Community 9`, `Community 10`, `Community 14`, `Community 15`, `Community 18`, `Community 19`, `Community 20`, `Community 21`, `Community 28`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+  _High betweenness centrality (0.103) - this node is a cross-community bridge._
+- **Why does `scan()` connect `Community 2` to `Community 0`, `Community 4`, `Community 5`?**
+  _High betweenness centrality (0.084) - this node is a cross-community bridge._
 - **Are the 115 inferred relationships involving `New()` (e.g. with `main()` and `newRouter()`) actually correct?**
   _`New()` has 115 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 13 inferred relationships involving `newService()` (e.g. with `NewMockCarpoolRepo()` and `NewMockEventRepo()`) actually correct?**
