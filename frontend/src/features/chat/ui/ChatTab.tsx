@@ -119,13 +119,13 @@ export default function ChatTab({ event }: { event: Event }) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 h-full min-h-0">
       <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
         {t('chat.sectionTitle', 'Чат встречи')}
       </div>
 
       {/* Feed */}
-      <div className="flex flex-col gap-3 max-h-[460px] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto pr-1">
         {isLoading ? (
           <p className="text-[13px] text-ink-3 py-8 text-center">{t('common.loading', 'Загрузка…')}</p>
         ) : !messages || messages.length === 0 ? (
@@ -228,13 +228,14 @@ export default function ChatTab({ event }: { event: Event }) {
       {/* Composer */}
       <div className="border-t border-line-soft pt-3 flex flex-col gap-2">
         {replyTo && (
-          <div className="flex items-center gap-2 rounded-[8px] bg-bg-2 border-l-2 border-accent px-2.5 py-1.5">
-            <Reply size={13} className="text-accent shrink-0" />
-            <div className="min-w-0 flex-1 text-[12px]">
-              <span className="font-semibold text-ink">
+          <div className="flex items-stretch gap-2.5 rounded-[8px] bg-bg-2 pl-2.5 pr-2 py-1.5">
+            <span className="w-[3px] shrink-0 rounded-full bg-accent" />
+            <div className="min-w-0 flex-1 text-[12px] py-0.5">
+              <span className="flex items-center gap-1.5 font-semibold text-ink">
+                <Reply size={12} className="text-accent shrink-0" />
                 {t('chat.replyingTo', 'Ответ')} {replyTo.author.name}
               </span>
-              <span className="block truncate text-ink-3">
+              <span className="block truncate text-ink-3 mt-0.5">
                 {replyTo.deleted ? t('chat.deleted', 'Сообщение удалено') : replyTo.body}
               </span>
             </div>
