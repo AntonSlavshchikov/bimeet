@@ -160,6 +160,7 @@ type Message struct {
 	EventID   uuid.UUID     `json:"event_id"`
 	Author    UserInfo      `json:"author"`
 	Body      string        `json:"body"`
+	ImageURL  *string       `json:"image_url,omitempty"`
 	CreatedAt time.Time     `json:"created_at"`
 	Deleted   bool          `json:"deleted"`
 	IsMine    bool          `json:"is_mine"`

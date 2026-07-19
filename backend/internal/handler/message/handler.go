@@ -11,6 +11,7 @@ import (
 	"bimeet/internal/handler/response"
 	"bimeet/internal/middleware"
 	"bimeet/internal/model"
+	"bimeet/internal/observability"
 )
 
 type Handler struct {
@@ -110,6 +111,63 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 	msg, err := h.svc.Post(r.Context(), eventID, userID, req)
 	if err != nil {
 		writeErr(w, err, "failed to post message")
+		return
+	}
+	response.JSON(w, http.StatusCreated, msg)
+}
+
+const (
+	maxImageSize        = 10 << 20 // 10 MB
+	maxImageRequestSize = maxImageSize + 1<<20
+)
+
+// @Summary Post an event chat photo
+// @Tags messages
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param image formData file true "Image"
+// @Param body formData string false "Caption"
+// @Success 201 {object} model.Message
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages/image [post]
+func (h *Handler) PostImage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	eventID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxImageRequestSize)
+	if err := r.ParseMultipartForm(maxImageSize); err != nil {
+		response.Error(w, http.StatusBadRequest, "file too large or invalid form")
+		return
+	}
+	file, header, err := r.FormFile("image")
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "image file is required")
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	msg, err := h.svc.PostImage(r.Context(), eventID, userID, r.FormValue("body"), file, header)
+	if err != nil {
+		observability.FromContext(r.Context()).Error("post chat image", "error", err)
+		if strings.Contains(err.Error(), "unsupported image type") {
+			response.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeErr(w, err, "failed to post image")
 		return
 	}
 	response.JSON(w, http.StatusCreated, msg)

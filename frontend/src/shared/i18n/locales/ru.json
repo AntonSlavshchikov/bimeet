@@ -205,7 +205,11 @@
     "reply": "Ответить",
     "replyingTo": "Ответ",
     "send": "Отправить",
-    "you": "Вы"
+    "you": "Вы",
+    "attachImage": "Прикрепить изображение",
+    "imageInvalidType": "Можно прикрепить только изображение",
+    "imageTooLarge": "Файл слишком большой (макс. 10 МБ)",
+    "imageSendError": "Не удалось отправить изображение"
   },
   "participants": {
     "myStatusTitle": "Ваш статус",

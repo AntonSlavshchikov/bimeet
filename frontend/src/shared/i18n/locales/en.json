@@ -205,7 +205,11 @@
     "reply": "Reply",
     "replyingTo": "Reply to",
     "send": "Send",
-    "you": "You"
+    "you": "You",
+    "attachImage": "Attach image",
+    "imageInvalidType": "Only image files can be attached",
+    "imageTooLarge": "File is too large (max 10 MB)",
+    "imageSendError": "Failed to send image"
   },
   "participants": {
     "myStatusTitle": "Your status",
