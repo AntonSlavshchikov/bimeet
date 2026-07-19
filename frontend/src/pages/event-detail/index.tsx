@@ -24,6 +24,7 @@ import ChatTab from '@/features/chat/ui/ChatTab'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import { formatDateTime } from '@/shared/lib/formatDate'
+import { cn } from '@/shared/lib/cn'
 import {
   Avatar,
   Button,
@@ -96,11 +97,16 @@ export default function EventDetailPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5">
+      <div className={cn('flex flex-col gap-5', activeTab === 'chat' && 'h-full min-h-0')}>
 
-        <EventInfoPanel event={event} isOrganizer={isOrganizer} />
+        {activeTab !== 'chat' && (
+          <EventInfoPanel event={event} isOrganizer={isOrganizer} />
+        )}
 
-        <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
+        <div className={cn(
+          'rounded-[14px] border border-line bg-surface overflow-hidden',
+          activeTab === 'chat' && 'flex-1 min-h-0 flex flex-col',
+        )}>
           {event.status === 'completed' && (
             <div className="flex items-center gap-2 bg-warning/10 text-warning border-b border-warning/20 px-4 py-2.5 text-[13px] font-medium">
               <AlertTriangle size={14} />
@@ -139,7 +145,7 @@ export default function EventDetailPage() {
           </div>
 
           {/* Tab content — feature-tabs пока на Chakra (24.5) */}
-          <div className="p-4 sm:p-6">
+          <div className={cn('p-4 sm:p-6', activeTab === 'chat' && 'flex-1 min-h-0 flex flex-col')}>
             {activeTab === 'participants' && <ParticipantsTab event={event} />}
             {activeTab === 'collections' && <CollectionsTab event={event} />}
             {activeTab === 'polls' && <PollsTab event={event} />}

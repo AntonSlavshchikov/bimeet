@@ -75,6 +75,18 @@ export function useSendMessage(eventId: string, me: MessageAuthor | undefined) {
   })
 }
 
+export function useSendImageMessage(eventId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ file, caption }: { file: File; caption?: string }) =>
+      chatApi.sendImage(eventId, file, caption),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: chatKeys.messages(eventId) })
+      qc.invalidateQueries({ queryKey: chatKeys.unread(eventId) })
+    },
+  })
+}
+
 export function useDeleteMessage(eventId: string) {
   const qc = useQueryClient()
   return useMutation({

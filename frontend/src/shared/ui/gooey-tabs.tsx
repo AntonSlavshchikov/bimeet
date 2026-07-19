@@ -46,7 +46,7 @@ export function GooeyTabs<T extends string>({ value, onChange, options, classNam
     >
       <svg className="absolute w-0 h-0">
         <defs>
-          <filter id={filterId} colorInterpolationFilters="sRGB">
+          <filter id={filterId} colorInterpolationFilters="sRGB" x="-50%" y="-100%" width="200%" height="300%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
             <feColorMatrix
               in="blur"

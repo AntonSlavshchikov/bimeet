@@ -164,14 +164,14 @@ func main() {
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
 	itemSvc := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc := carpoolsvc.New(carpoolRepo, eventRepo)
-	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo)
 	notificationSvc := notificationsvc.New(notificationRepo)
 	adminSvc := adminsvc.New(adminRepo)
 
-	// S3 storage for avatars and receipts
+	// S3 storage for avatars, receipts, and chat images
 	var fileStorage interface {
 		profilesvc.AvatarStorage
 		collectionsvc.Uploader
+		messagesvc.Uploader
 	}
 	if cfg.S3Bucket != "" {
 		awsCfg, err := awsconfig.LoadDefaultConfig(ctx,
@@ -198,6 +198,7 @@ func main() {
 
 	profileSvc := profilesvc.New(userRepo, fileStorage)
 	collectionSvc := collectionsvc.New(collectionRepo, eventRepo, notifyingRepo, fileStorage)
+	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo, fileStorage)
 
 	// Handlers
 	authH := authhandler.New(authSvc)

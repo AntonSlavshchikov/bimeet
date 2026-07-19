@@ -3,7 +3,11 @@ package messagesvc
 import (
 	"context"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
@@ -22,10 +26,11 @@ type Service struct {
 	repo      MessageRepo
 	eventRepo EventRepo
 	notifier  Notifier
+	uploader  Uploader
 }
 
-func New(repo MessageRepo, eventRepo EventRepo, notifier Notifier) *Service {
-	return &Service{repo: repo, eventRepo: eventRepo, notifier: notifier}
+func New(repo MessageRepo, eventRepo EventRepo, notifier Notifier, uploader Uploader) *Service {
+	return &Service{repo: repo, eventRepo: eventRepo, notifier: notifier, uploader: uploader}
 }
 
 // List returns the most recent messages of an event for a participant.
@@ -61,7 +66,7 @@ func (s *Service) Post(ctx context.Context, eventID, userID uuid.UUID, req model
 		}
 	}
 
-	msg, err := s.repo.Create(ctx, eventID, userID, body, replyToID)
+	msg, err := s.repo.Create(ctx, eventID, userID, body, replyToID, nil)
 	if err != nil {
 		return model.Message{}, err
 	}
@@ -70,6 +75,60 @@ func (s *Service) Post(ctx context.Context, eventID, userID uuid.UUID, req model
 	_ = s.repo.MarkRead(ctx, eventID, userID)
 
 	// Notify the other members best-effort, off the request path.
+	go s.notifyMembers(eventID, userID)
+
+	return msg, nil
+}
+
+var allowedImageMIME = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/webp": true,
+}
+
+// PostImage stores a chat photo (with an optional caption) from a participant,
+// uploading it to object storage before creating the message row.
+func (s *Service) PostImage(ctx context.Context, eventID, userID uuid.UUID, caption string, file multipart.File, header *multipart.FileHeader) (model.Message, error) {
+	if err := s.assertParticipant(ctx, eventID, userID); err != nil {
+		return model.Message{}, err
+	}
+	caption = strings.TrimSpace(caption)
+	if utf8.RuneCountInString(caption) > maxMessageLen {
+		return model.Message{}, fmt.Errorf("message is too long")
+	}
+
+	var sniff [512]byte
+	n, err := io.ReadFull(file, sniff[:])
+	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		return model.Message{}, fmt.Errorf("read image: %w", err)
+	}
+	contentType := http.DetectContentType(sniff[:n])
+	if idx := strings.IndexByte(contentType, ';'); idx >= 0 {
+		contentType = contentType[:idx]
+	}
+	if !allowedImageMIME[contentType] {
+		return model.Message{}, fmt.Errorf("unsupported image type: %s", contentType)
+	}
+	// Seek back so the S3 client gets the full, seekable file (a MultiReader
+	// wrapping the sniffed prefix isn't seekable, which breaks checksum
+	// computation over plain HTTP, e.g. local MinIO without TLS).
+	if _, err := file.Seek(0, 0); err != nil {
+		return model.Message{}, fmt.Errorf("seek file: %w", err)
+	}
+
+	key := fmt.Sprintf("chat/%s/%s-%d", eventID, userID, time.Now().UnixMilli())
+	imageURL, err := s.uploader.Upload(ctx, key, contentType, file)
+	if err != nil {
+		return model.Message{}, fmt.Errorf("upload image: %w", err)
+	}
+
+	var replyToID *uuid.UUID
+	msg, err := s.repo.Create(ctx, eventID, userID, caption, replyToID, &imageURL)
+	if err != nil {
+		return model.Message{}, err
+	}
+
+	_ = s.repo.MarkRead(ctx, eventID, userID)
 	go s.notifyMembers(eventID, userID)
 
 	return msg, nil

@@ -127,6 +127,7 @@ func NewRouter(
 				// Chat
 				r.Get("/messages", message.List)
 				r.Post("/messages", message.Post)
+				r.Post("/messages/image", message.PostImage)
 				r.Get("/messages/unread-count", message.UnreadCount)
 				r.Post("/messages/read", message.MarkRead)
 				r.Delete("/messages/{messageId}", message.Delete)

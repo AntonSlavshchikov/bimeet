@@ -20,7 +20,8 @@ func newService(t *testing.T) (*messagesvc.Service, *mock.MockMessageRepo, *mock
 	mr := mock.NewMockMessageRepo(ctrl)
 	er := mock.NewMockEventRepo(ctrl)
 	nf := mock.NewMockNotifier(ctrl)
-	return messagesvc.New(mr, er, nf), mr, er, nf
+	up := mock.NewMockUploader(ctrl)
+	return messagesvc.New(mr, er, nf, up), mr, er, nf
 }
 
 func TestList_Forbidden(t *testing.T) {
