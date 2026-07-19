@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib/cn'
 
 interface MiniCalendarProps {
@@ -12,12 +13,6 @@ interface MiniCalendarProps {
   onSelect?: (date: Date) => void
   className?: string
 }
-
-const WEEKDAYS = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
-const MONTHS = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-]
 
 function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -34,6 +29,8 @@ export function MiniCalendar({
   onSelect,
   className,
 }: MiniCalendarProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
   const today = useMemo(() => new Date(), [])
   const [cursor, setCursor] = useState(() => initialMonth ?? today)
 
@@ -59,19 +56,26 @@ export function MiniCalendar({
     }
     return cells
   }, [cursor])
+  const weekdays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(locale, { weekday: 'short' })
+      .format(new Date(2024, 0, index + 1))
+      .replace('.', '')),
+    [locale],
+  )
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(cursor)
 
   return (
     <div className={cn('flex flex-col', className)}>
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[12.5px] font-bold tracking-[-0.01em]">
-          {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
+          {monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}
         </div>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
             className="flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
-            aria-label="Предыдущий месяц"
+            aria-label={t('calendar.previousMonth')}
           >
             <ChevronLeft size={14} />
           </button>
@@ -79,7 +83,7 @@ export function MiniCalendar({
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
             className="flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
-            aria-label="Следующий месяц"
+            aria-label={t('calendar.nextMonth')}
           >
             <ChevronRight size={14} />
           </button>
@@ -87,7 +91,7 @@ export function MiniCalendar({
       </div>
 
       <div className="grid grid-cols-7 gap-[3px] text-center">
-        {WEEKDAYS.map(wd => (
+        {weekdays.map(wd => (
           <div key={wd} className="py-1.5 text-[9px] font-bold uppercase text-ink-3">
             {wd}
           </div>
@@ -105,7 +109,7 @@ export function MiniCalendar({
                 'relative flex min-h-7 items-center justify-center rounded-[8px] py-1.5 text-[10.5px] font-medium tnum cursor-pointer transition',
                 outOfMonth ? 'text-ink-3 opacity-50' : 'text-ink-2',
                 'hover:bg-hover focus-ring',
-                isToday && 'bg-[linear-gradient(135deg,var(--color-brand-violet),var(--color-brand-sky))] text-white font-bold hover:opacity-92',
+                isToday && 'bg-[linear-gradient(135deg,var(--color-brand-b),var(--color-brand-c))] text-white font-bold hover:opacity-92',
                 !isToday && isSelected && 'border border-accent text-accent font-bold',
               )}
             >

@@ -30,7 +30,7 @@ import AdminKpiCard from '@/widgets/admin-kpi-card'
 import AdminLineChart from '@/widgets/admin-line-chart'
 import { SegmentedControl } from '@/shared/ui'
 
-const PIE_COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE']
+const PIE_COLORS = ['var(--color-brand-b)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)', 'var(--color-brand-a)']
 
 function formatNumber(n: number): string {
   return new Intl.NumberFormat('ru-RU').format(n)
@@ -98,7 +98,7 @@ export default function OverviewTab() {
       </div>
 
       {/* Timeseries chart */}
-      <div className="rounded-[14px] border border-line bg-surface p-5">
+      <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
           <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink">
             {t('admin.charts.timeseries', 'Регистрации и встречи')}
@@ -137,11 +137,11 @@ export default function OverviewTab() {
             <div style={{ height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={categoryData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(60,60,67,0.10)" />
-                  <XAxis dataKey="key" tick={{ fontSize: 12, fill: 'rgba(60,60,67,0.60)' }} tickLine={false} axisLine={{ stroke: 'rgba(60,60,67,0.10)' }} />
-                  <YAxis tick={{ fontSize: 12, fill: 'rgba(60,60,67,0.60)' }} tickLine={false} allowDecimals={false} axisLine={{ stroke: 'rgba(60,60,67,0.10)' }} />
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid rgba(60,60,67,0.14)', borderRadius: 9, fontSize: 12 }} />
-                  <Bar dataKey="count" fill="#007AFF" radius={[6, 6, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-line)" />
+                  <XAxis dataKey="key" tick={{ fontSize: 12, fill: 'var(--color-ink-3)' }} tickLine={false} axisLine={{ stroke: 'var(--color-line)' }} />
+                  <YAxis tick={{ fontSize: 12, fill: 'var(--color-ink-3)' }} tickLine={false} allowDecimals={false} axisLine={{ stroke: 'var(--color-line)' }} />
+                  <Tooltip contentStyle={{ background: 'var(--color-surface)', color: 'var(--color-ink)', border: '1px solid var(--color-line)', borderRadius: 12, fontSize: 12 }} />
+                  <Bar dataKey="count" fill="var(--color-brand-b)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -169,8 +169,8 @@ export default function OverviewTab() {
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid rgba(60,60,67,0.14)', borderRadius: 9, fontSize: 12 }} />
-                  <Legend wrapperStyle={{ fontSize: 12, color: 'rgba(60,60,67,0.60)' }} />
+                  <Tooltip contentStyle={{ background: 'var(--color-surface)', color: 'var(--color-ink)', border: '1px solid var(--color-line)', borderRadius: 12, fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12, color: 'var(--color-ink-3)' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -183,7 +183,7 @@ export default function OverviewTab() {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[14px] border border-line bg-surface p-5">
+    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
       <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">{title}</h3>
       {children}
     </div>

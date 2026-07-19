@@ -1,8 +1,6 @@
 import { Link, useMatch } from 'react-router-dom'
-import { Calendar, Search, User, BarChart3, Bell } from 'lucide-react'
+import { Bell, Calendar, Search, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '@/features/auth/model/AuthContext'
-import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useNotifications } from '@/entities/notification/queries'
 import { cn } from '@/shared/lib/cn'
 
@@ -39,28 +37,22 @@ function TabLink({ to, icon: Icon, label, badge }: TabProps) {
 
 export default function BottomNav() {
   const { t } = useTranslation()
-  const { user } = useAuth()
-  const showAdmin = isAdmin(user)
   const { data: notifications = [] } = useNotifications()
   const unread = notifications.filter(n => !n.is_read).length
 
   return (
     <nav
       className={cn(
-        'lg:hidden shrink-0',
-        'border-t border-line bg-bg',
-        'grid pt-2',
+        'fixed inset-x-2 bottom-2 z-40 grid grid-cols-4 rounded-[18px] border border-line bg-surface/90 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden max-[420px]:inset-x-[6px]',
       )}
       style={{
         paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
-        gridTemplateColumns: `repeat(${showAdmin ? 5 : 4}, 1fr)`,
       }}
     >
-      <TabLink to="/discover" icon={Search} label={t('nav.publicEventsShort', 'Все')} />
+      <TabLink to="/discover" icon={Search} label={t('nav.publicEvents')} />
       <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
       <TabLink to="/notifications" icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
       <TabLink to="/profile" icon={User} label={t('nav.profile')} />
-      {showAdmin && <TabLink to="/admin" icon={BarChart3} label={t('nav.admin')} />}
     </nav>
   )
 }

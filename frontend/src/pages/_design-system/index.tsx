@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Calendar, MapPin, Plus, Bell } from 'lucide-react'
+import { Calendar, MapPin, Plus, Bell, MessageCircle, Moon, Sun, Users } from 'lucide-react'
+import { useTheme } from '@/shared/theme'
 import {
   Avatar,
   AvatarStack,
@@ -18,12 +19,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  EmptyState,
+  EventSectionNav,
   EventTag,
   Input,
   Kbd,
   ListGroup,
   ListRow,
   MiniCalendar,
+  PageHeader,
   RailCard,
   RailCardTitle,
   SearchInput,
@@ -52,19 +56,26 @@ const eventDates = new Set([
 
 export default function DesignSystemPage() {
   const [tab, setTab] = useState<'all' | 'going' | 'host' | 'past'>('all')
+  const [section, setSection] = useState<'people' | 'chat'>('people')
+  const [theme, setTheme] = useTheme()
 
   return (
     <TooltipProvider>
-    <div className="min-h-screen bg-bg text-ink p-8 max-w-[1480px] mx-auto">
+    <div className="w-full text-ink">
 
-      <div className="mb-10">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-2">
-          Bimeet · Design System Preview
+      <div className="mb-10 flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-2">
+            Bimeet · Design System Preview
+          </div>
+          <h1 className="text-[28px] font-bold tracking-[-0.035em]">Warm Canvas · UI stand</h1>
+          <p className="text-[13.5px] text-ink-3 mt-1.5">
+            Эталон: <code className="text-[12.5px] bg-bg-2 px-1.5 py-0.5 rounded">design/new-front.html · 01 Warm Canvas</code>
+          </p>
         </div>
-        <h1 className="text-[28px] font-bold tracking-[-0.022em]">Компоненты дизайна 5</h1>
-        <p className="text-[13.5px] text-ink-3 mt-1.5">
-          Эталон: <code className="text-[12.5px] bg-bg-2 px-1.5 py-0.5 rounded">design/05-app-web.html</code>
-        </p>
+        <Button variant="outline" size="icon" aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-12">
@@ -154,6 +165,25 @@ export default function DesignSystemPage() {
                 { value: 'past', label: 'Архив' },
               ]}
             />
+          </Section>
+
+          <Section title="Page header · Quiet Rail · Empty state">
+            <PageHeader
+              eyebrow="12 июня · среда"
+              title="День рождения Ани"
+              subtitle="Все детали встречи собраны в одном спокойном пространстве"
+              actions={<Button size="sm"><Plus size={14} />Создать</Button>}
+            />
+            <EventSectionNav
+              label="Разделы встречи"
+              value={section}
+              onChange={setSection}
+              options={[
+                { key: 'people', label: 'Участники', icon: Users },
+                { key: 'chat', label: 'Чат', icon: MessageCircle, badge: 3 },
+              ]}
+            />
+            <EmptyState icon={Calendar} title="Пока ничего нет" description="Добавленные элементы появятся здесь единым списком." action={<Button size="sm">Добавить</Button>} />
           </Section>
 
           {/* Section: List + Row */}

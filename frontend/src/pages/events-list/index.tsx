@@ -3,13 +3,16 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bell, CalendarOff, Plus, SearchX, X } from 'lucide-react'
 import { useEvents } from '@/entities/event/queries'
+import { useNotifications } from '@/entities/notification/queries'
 import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import {
   Button,
+  EmptyState,
   ListGroup,
   MiniCalendar,
+  PageHeader,
   RailCard,
   RailCardTitle,
   SearchInput,
@@ -21,11 +24,6 @@ type Tab = 'all' | 'attending' | 'organizing' | 'past'
 type EventAny = EventListItem | PublicEventListItem
 
 const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'past']
-
-const MONTHS_LONG_RU = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-]
 
 function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -45,7 +43,11 @@ interface Group {
   events: EventAny[]
 }
 
-function groupEvents(events: EventAny[]): Group[] {
+function groupEvents(
+  events: EventAny[],
+  locale: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): Group[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const sorted = [...events].sort(
@@ -68,36 +70,28 @@ function groupEvents(events: EventAny[]): Group[] {
 
   const groups: Group[] = []
   if (todayList.length > 0) {
-    const wd = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'][today.getDay()]
+    const dateLabel = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long' }).format(today)
     groups.push({
-      title: `Сегодня · ${wd}, ${today.getDate()} ${MONTHS_LONG_RU[today.getMonth()].toLowerCase()}`,
-      countLabel: `${todayList.length} ${pluralEvents(todayList.length)}`,
+      title: t('events.todayGroup', { date: dateLabel }),
+      countLabel: t('events.eventCount', { count: todayList.length }),
       dateCaption: 'month',
       events: todayList,
     })
   }
   for (const [key, list] of byMonth) {
     const [y, m] = key.split('-').map(Number)
-    const monthName = MONTHS_LONG_RU[m]
+    const monthName = new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(y, m, 1))
+    const title = monthName.charAt(0).toUpperCase() + monthName.slice(1)
     const currentYear = new Date().getFullYear()
     const yearPart = y === currentYear ? '' : ` ${y}`
     groups.push({
-      title: `${monthName}${yearPart}`,
-      countLabel: `${list.length} ${pluralEvents(list.length)}`,
+      title: `${title}${yearPart}`,
+      countLabel: t('events.eventCount', { count: list.length }),
       dateCaption: 'weekday',
       events: list,
     })
   }
   return groups
-}
-
-function pluralEvents(n: number): string {
-  const m10 = n % 10
-  const m100 = n % 100
-  if (m100 >= 11 && m100 <= 14) return 'встреч'
-  if (m10 === 1) return 'встреча'
-  if (m10 >= 2 && m10 <= 4) return 'встречи'
-  return 'встреч'
 }
 
 function resolveCanAttend(
@@ -116,32 +110,11 @@ function resolveCanAttend(
   return undefined
 }
 
-function EmptyState({
-  icon: Icon,
-  title,
-  action,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  title: string
-  action?: { to: string; label: string }
-}) {
-  return (
-    <div className="rounded-[12px] border border-line bg-surface py-14 px-4 flex flex-col items-center gap-3">
-      <Icon size={28} className="text-ink-3" />
-      <div className="text-[13.5px] text-ink-3">{title}</div>
-      {action && (
-        <Button asChild size="sm" className="mt-1">
-          <Link to={action.to}><Plus size={14} /> {action.label}</Link>
-        </Button>
-      )}
-    </div>
-  )
-}
-
 function UpcomingRail({ events }: { events: EventAny[] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
 
   const selectedDate = useMemo(() => {
     const raw = searchParams.get('date')
@@ -173,14 +146,18 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
   )
 
   const upcoming = selectedDate ? dayEvents : (dayEvents.length > 0 ? dayEvents : nextFew)
-  const isToday = isSameDay(activeDay, today)
-
   return (
     <>
       <RailCard>
-        <div className="flex items-center justify-between">
-          <RailCardTitle>{isToday ? 'Сегодня' : (dayEvents.length > 0 ? 'Выбранный день' : 'Ближайшие')}</RailCardTitle>
-          {selectedDate && !isToday && (
+        <div className="flex items-center justify-between gap-2">
+          <RailCardTitle>
+            {selectedDate
+              ? t('events.railSelectedDay')
+              : dayEvents.length > 0
+                ? t('events.railToday')
+                : t('events.railUpcoming')}
+          </RailCardTitle>
+          {selectedDate && (
             <button
               type="button"
               onClick={() => {
@@ -188,9 +165,9 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
                 next.delete('date')
                 setSearchParams(next, { replace: true })
               }}
-              className="text-[12px] font-medium text-accent hover:opacity-80 transition"
+              className="text-[11px] font-semibold text-accent transition hover:opacity-75"
             >
-              Сегодня
+              {t('events.railBackToday')}
             </button>
           )}
         </div>
@@ -198,15 +175,15 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
           {activeDay.getDate()}
         </div>
         <div className="text-[13px] text-ink-3 mt-1 mb-3">
-          {activeDay.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {activeDay.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
         {upcoming.length === 0 ? (
           <div className="border-t border-line-soft pt-3 text-[13px] text-ink-3">
-            {t('events.emptyNoOrganized', 'Пока ничего не запланировано')}
+            {t('events.emptyNoPlanned', 'Пока ничего не запланировано')}
           </div>
         ) : (
           upcoming.map(e => {
-            const time = new Date(e.date_start).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            const time = new Date(e.date_start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
             return (
               <Link
                 key={e.id}
@@ -233,9 +210,12 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
 
 function StatsRail({
   events,
+  unreadCount,
 }: {
   events: EventAny[]
+  unreadCount: number
 }) {
+  const { t } = useTranslation()
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
   const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
@@ -260,12 +240,12 @@ function StatsRail({
 
   return (
     <RailCard>
-      <RailCardTitle>Этот месяц</RailCardTitle>
+      <RailCardTitle>{t('events.railThisMonth')}</RailCardTitle>
       <div className="grid grid-cols-2 gap-3">
-        <StatCell value={upcoming} label="встреч впереди" />
-        <StatCell value={organizing} label="организуете" />
-        <StatCell value={people.size} label="человек рядом" />
-        <StatCell value="—" label="сборов" />
+        <StatCell value={upcoming} label={t('events.railEventsAhead')} />
+        <StatCell value={organizing} label={t('events.railOrganizing')} />
+        <StatCell value={people.size} label={t('events.railPeopleNearby')} />
+        <StatCell value={unreadCount} label={t('events.railNewReplies')} />
       </div>
     </RailCard>
   )
@@ -273,7 +253,7 @@ function StatsRail({
 
 function EventsListPage() {
   const events = useEvents()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -357,32 +337,25 @@ function EventsListPage() {
   }
 
   const selectedDate = searchParams.get('date')
-  function filterByDate(list: EventAny[]): EventAny[] {
-    if (!selectedDate) return list
-    return list.filter(e => isoDay(new Date(e.date_start)) === selectedDate)
-  }
-
-  function clearDateFilter() {
-    const next = new URLSearchParams(searchParams)
-    next.delete('date')
-    setSearchParams(next, { replace: true })
-  }
-
-  const visible: EventAny[] = filterByDate(filterBySearch(sourceForTab[tab]))
-  const groups = groupEvents(visible)
+  const visible: EventAny[] = filterBySearch(sourceForTab[tab]).filter(event =>
+    !selectedDate || isoDay(new Date(event.date_start)) === selectedDate,
+  )
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
+  const groups = groupEvents(visible, locale, t)
   const hasSearch = search.trim().length > 0
   const isEmpty = visible.length === 0
 
   const todayLine = (() => {
     const todayCount = allUpcoming.filter(e => isSameDay(new Date(e.date_start), new Date())).length
-    if (todayCount === 0) return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди`
-    return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди · ${todayCount} ${pluralEvents(todayCount)} сегодня`
+    const upcomingLabel = t('events.upcomingCount', { count: allUpcoming.length })
+    if (todayCount === 0) return upcomingLabel
+    return `${upcomingLabel} · ${t('events.todayCount', { count: todayCount })}`
   })()
 
   return (
     <div className="flex flex-col gap-6">
       {/* Toolbar — DESKTOP only. На mobile «+» переехал в navbar, поиск — компактный icon-toggle ниже. */}
-      <div className="hidden lg:flex items-center gap-2.5">
+      <div className="hidden min-[761px]:flex items-center gap-2.5">
         <SearchInput
           className="min-w-0 flex-1"
           kbdHint="⌘K"
@@ -407,7 +380,7 @@ function EventsListPage() {
 
       {/* Mobile search bar — collapsible */}
       {mobileSearchOpen && (
-        <div className="lg:hidden flex items-center gap-2">
+        <div className="min-[761px]:hidden flex items-center gap-2">
           <SearchInput
             ref={mobileSearchRef}
             className="flex-1"
@@ -428,19 +401,16 @@ function EventsListPage() {
       )}
 
       {/* Заголовок и фильтры образуют один блок, как в макете Warm Canvas. */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-5">
-        <div>
-          <h1 className="text-[31px] lg:text-[28px] font-bold tracking-[-0.035em] leading-[1.05]">
-            {t('nav.events')}
-          </h1>
-          <p className="mt-[7px] text-[11.5px] text-ink-3">{todayLine}</p>
-        </div>
-        <div className="w-full lg:w-auto">
+      <PageHeader
+        title={t('nav.events')}
+        subtitle={todayLine}
+        filters={(
+          <div className="w-full min-[761px]:w-auto">
           <SegmentedControl
             value={tab}
             onChange={setTab}
             fullWidth
-            className="lg:w-auto"
+            className="min-[761px]:w-auto"
             options={[
               { value: 'all',        label: t('events.tabAll') },
               { value: 'attending',  label: t('events.tabAttending') },
@@ -448,18 +418,23 @@ function EventsListPage() {
               { value: 'past',       label: t('events.tabPast') },
             ]}
           />
-        </div>
-      </div>
+          </div>
+        )}
+      />
 
       {selectedDate && (
         <div className="flex items-center gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-[12.5px] font-medium text-accent">
-            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
             <button
               type="button"
-              onClick={clearDateFilter}
-              aria-label="Сбросить фильтр по дате"
-              className="hover:opacity-70 transition"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.delete('date')
+                setSearchParams(next, { replace: true })
+              }}
+              aria-label={t('events.dateFilterClear')}
+              className="transition hover:opacity-70"
             >
               <X size={13} />
             </button>
@@ -477,8 +452,8 @@ function EventsListPage() {
         ) : (
           <EmptyState
             icon={CalendarOff}
-            title={t('events.emptyNoOrganized', 'Пока ничего не запланировано')}
-            action={{ to: '/events/new', label: t('events.emptyCreateButton', 'Создать встречу') }}
+            title={t('events.emptyNoPlanned', 'Пока ничего не запланировано')}
+            action={<Button asChild size="sm"><Link to="/events/new"><Plus size={14} />{t('events.emptyCreateButton', 'Создать встречу')}</Link></Button>}
           />
         )
       ) : (
@@ -531,6 +506,7 @@ export default EventsListPage
 // Reusable Rail composition for this page — exposed for Router
 export function EventsListRail() {
   const events = useEvents()
+  const { data: notifications = [] } = useNotifications()
 
   // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам.
   const allEvents = useMemo<EventAny[]>(() => events, [events])
@@ -538,7 +514,7 @@ export function EventsListRail() {
   return (
     <>
       <UpcomingRail events={allEvents} />
-      <StatsRail events={allEvents} />
+      <StatsRail events={allEvents} unreadCount={notifications.filter(notification => !notification.is_read).length} />
     </>
   )
 }

@@ -201,7 +201,7 @@ export function DateRangePicker({
         collisionPadding={12}
         className="w-[min(calc(100vw-24px),336px)] overflow-hidden rounded-[18px] border-line bg-surface p-0 shadow-[0_20px_56px_-24px_rgba(34,26,20,0.34)] sm:w-[356px]"
       >
-        <div className="h-1 bg-[linear-gradient(90deg,var(--color-brand-rose),var(--color-brand-violet),var(--color-brand-sky))]" />
+        <div className="h-1 bg-[linear-gradient(90deg,var(--color-brand-a),var(--color-brand-b),var(--color-brand-c))]" />
         <div className="flex flex-col">
           <div className="flex items-center justify-between border-b border-line-soft bg-[color-mix(in_srgb,var(--color-bg-2)_58%,var(--color-surface))] px-4 py-3.5">
             <div className="text-[14px] font-bold tracking-[-0.015em] text-ink">

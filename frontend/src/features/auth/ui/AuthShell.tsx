@@ -31,7 +31,7 @@ export default function AuthShell({ title, subtitle, footer, children }: AuthShe
           </Link>
 
           {/* Card */}
-          <div className="rounded-[var(--radius-card)] border border-line bg-surface/[0.92] p-6 flex flex-col gap-5 warm-surface-shadow backdrop-blur-sm">
+          <div className="rounded-[var(--radius-card)] border border-line bg-surface p-6 flex flex-col gap-5 warm-surface-shadow">
             <div>
               <h1 className="text-[22px] font-bold tracking-[-0.02em] leading-[1.2] text-ink">{title}</h1>
               {subtitle && (

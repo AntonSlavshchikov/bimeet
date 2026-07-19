@@ -8,9 +8,6 @@ import { StatusPill, StatusPillButton } from '@/shared/ui/status-pill'
 import { Avatar, AvatarStack } from '@/shared/ui/avatar'
 import { cn } from '@/shared/lib/cn'
 
-const MONTHS_SHORT_RU = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
-const WEEKDAYS_SHORT_RU = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
-
 function formatRowTime(iso: string): string {
   const d = new Date(iso)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
@@ -40,7 +37,10 @@ export default function EventListRow({
   const { t, i18n } = useTranslation()
   const d = new Date(event.date_start)
   const day = d.getDate()
-  const caption = dateCaption === 'month' ? MONTHS_SHORT_RU[d.getMonth()] : WEEKDAYS_SHORT_RU[d.getDay()]
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
+  const caption = new Intl.DateTimeFormat(locale, dateCaption === 'month' ? { month: 'short' } : { weekday: 'short' })
+    .format(d)
+    .replace('.', '')
   const time = formatRowTime(event.date_start)
   const accent = eventAccentColor(event)
   const isCompleted = event.status === 'completed'
@@ -58,8 +58,8 @@ export default function EventListRow({
       to={`/events/${event.id}`}
       className={cn(
         'group relative grid min-w-0 items-center gap-[10px] px-3 py-3 pl-[15px] transition cursor-pointer hover:bg-hover',
-        'grid-cols-[48px_minmax(0,1fr)_auto_11px]',
-        'lg:grid-cols-[47px_minmax(150px,1fr)_92px_64px_48px_72px_12px] lg:gap-3 lg:px-[14px] lg:pl-[17px]',
+        'grid-cols-[48px_minmax(0,1fr)_auto_11px] max-[420px]:grid-cols-[48px_minmax(0,1fr)_11px]',
+        'min-[1081px]:grid-cols-[47px_minmax(150px,1fr)_92px_64px_48px_72px_12px] min-[1081px]:gap-3 min-[1081px]:px-[14px] min-[1081px]:pl-[17px]',
         isCompleted && 'opacity-55',
       )}
     >
@@ -92,9 +92,9 @@ export default function EventListRow({
         )}
       </div>
 
-      <div className="hidden text-[10.5px] text-ink-2 tnum lg:block">{time}</div>
+      <div className="hidden text-[10.5px] text-ink-2 tnum min-[1081px]:block">{time}</div>
 
-      <div className="hidden min-w-0 items-center lg:flex">
+      <div className="hidden min-w-0 items-center min-[1081px]:flex">
         {confirmed.length > 0 && (
           <AvatarStack>
             {confirmed.map((p, index) => (
@@ -104,11 +104,11 @@ export default function EventListRow({
         )}
       </div>
 
-      <div className="hidden whitespace-nowrap text-[9.5px] text-ink-3 tnum lg:block">
+      <div className="hidden whitespace-nowrap text-[9.5px] text-ink-3 tnum min-[1081px]:block">
         {confirmedCount} {t('eventCard.peopleShort')}
       </div>
 
-      <div className="flex min-w-0 items-center justify-end">
+      <div className="flex min-w-0 items-center justify-end max-[420px]:hidden">
         {(() => {
           if (isCompleted) {
             return <StatusPill variant="completed" size="sm">{t('eventCard.statusCompleted')}</StatusPill>

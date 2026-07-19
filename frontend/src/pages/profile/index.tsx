@@ -83,9 +83,9 @@ export default function ProfilePage() {
   const fullName = [user?.name, user?.last_name].filter(Boolean).join(' ')
 
   return (
-    <div className="grid gap-5 items-start xl:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid gap-5 items-start min-[1081px]:grid-cols-[280px_minmax(0,1fr)]">
       {/* Left: profile card */}
-      <div className="rounded-[14px] border border-line bg-surface p-5 xl:sticky xl:top-5 flex flex-col items-center gap-4">
+      <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5 min-[1081px]:sticky min-[1081px]:top-5 flex flex-col items-center gap-4">
         {/* Avatar */}
         <div className="relative">
           <button
@@ -151,7 +151,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Right: tabs */}
-      <div className="rounded-[14px] border border-line bg-surface overflow-hidden">
+      <div className="rounded-[var(--radius-card)] border border-line bg-surface overflow-hidden">
         <div className="border-b border-line-soft px-3 py-3">
           <SegmentedControl
             value={tab}
@@ -237,7 +237,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Язык и выход — только в мобильной версии (на десктопе они в сайдбаре). */}
-      <div className="lg:hidden flex flex-col gap-2">
+      <div className="min-[761px]:hidden flex flex-col gap-2">
         <button
           type="button"
           onClick={() => i18n.changeLanguage(isRu ? 'en' : 'ru')}
@@ -285,4 +285,3 @@ function StatTile({ value, label }: { value: number; label: string }) {
     </div>
   )
 }
-

@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { useNotifications } from '@/entities/notification/queries'
-import { useEvents } from '@/entities/event/queries'
 import { Avatar } from '@/shared/ui/avatar'
 import {
   DropdownMenu,
@@ -42,7 +41,7 @@ function NavItem({ to, icon: Icon, label, count, accentBadge, active, onClick }:
       to={to}
       onClick={onClick}
       className={cn(
-        'group flex items-center gap-2.5 rounded-[7px] px-2.5 py-1.5 text-[13.5px] transition select-none',
+        'group flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-[13px] transition select-none',
         active
           ? 'bg-hover text-ink font-semibold'
           : 'text-ink-2 font-medium hover:bg-hover hover:text-ink',
@@ -83,14 +82,8 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   const { data: notifications = [] } = useNotifications()
   const unreadCount = notifications.filter(n => !n.is_read).length
 
-  const events = useEvents()
-  const attendingCount = events.filter(e => !e.organizer.is_me && e.status !== 'completed').length
-  const organizingCount = events.filter(e => e.organizer.is_me && e.status !== 'completed').length
-  const pastCount = events.filter(e => e.status === 'completed').length
-
   const onEvents = location.pathname.startsWith('/events') && !location.pathname.includes('/new')
   const onDiscover = location.pathname.startsWith('/discover')
-  const activeTab = onEvents ? new URLSearchParams(location.search).get('tab') ?? 'all' : null
 
   function handleLogout() {
     logout()
@@ -101,15 +94,16 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
   return (
     <div className="h-full flex flex-col">
       {/* Brand */}
-      <div className="flex items-center gap-2 px-3 pt-5 pb-4">
-        <img src="/logo-mark.svg" alt="" className="w-10 h-auto shrink-0" />
-        <div className="text-[15.5px] font-bold tracking-[-0.01em] text-ink" style={{ fontFamily: 'var(--font-wordmark)' }}>
+      <div className="flex items-center gap-2 px-[14px] pt-[22px] pb-5">
+        <img src="/logo-mark.svg" alt="" className="w-8 h-auto shrink-0" />
+        <div className="text-[16px] font-extrabold tracking-[-0.025em] text-ink" style={{ fontFamily: 'var(--font-wordmark)' }}>
           bimeet
         </div>
       </div>
 
       {/* Main nav */}
-      <nav className="flex flex-col gap-px px-3">
+      <div className="px-[14px] pb-1.5 text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">{t('layout.navigation', 'Навигация')}</div>
+      <nav className="flex flex-col gap-0.5 px-[14px]">
         <NavItem
           to="/discover"
           icon={Search}
@@ -147,42 +141,12 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
         )}
       </nav>
 
-      {/* Filters */}
-      <div className="mt-5 px-3">
-        <div className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.04em] text-ink-4 uppercase">
-          {t('nav.filters', 'Фильтры')}
-        </div>
-        <nav className="flex flex-col gap-px">
-          <NavItem
-            to="/events?tab=attending"
-            label={t('events.tabAttending', 'Иду')}
-            count={attendingCount}
-            active={activeTab === 'attending'}
-            onClick={onClose}
-          />
-          <NavItem
-            to="/events?tab=organizing"
-            label={t('events.tabOrganizing', 'Организую')}
-            count={organizingCount}
-            active={activeTab === 'organizing'}
-            onClick={onClose}
-          />
-          <NavItem
-            to="/events?tab=past"
-            label={t('events.tabPast', 'Прошедшие')}
-            count={pastCount}
-            active={activeTab === 'past'}
-            onClick={onClose}
-          />
-        </nav>
-      </div>
-
       {/* Spacer */}
       <div className="flex-1" />
 
       {/* User pill */}
       {user && (
-        <div className="px-3 pb-4 border-t border-line pt-2">
+        <div className="mx-[14px] mb-[15px] rounded-[14px] bg-bg-2 p-1.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

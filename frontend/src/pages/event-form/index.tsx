@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
-import { Button, DateRangePicker, Input, Textarea, useToast } from '@/shared/ui'
+import { Button, DateRangePicker, Input, PageHeader, Textarea, useToast } from '@/shared/ui'
 import LocationPicker from '@/features/location-picker/ui/LocationPicker'
 import { cn } from '@/shared/lib/cn'
 
@@ -140,21 +140,17 @@ export default function EventFormPage() {
   const isLoading = createEvent.isPending || updateEvent.isPending
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-5">
       <Button asChild variant="ghost" size="sm" className="self-start -ml-2 gap-1.5">
         <Link to={isEdit && id ? `/events/${id}` : '/events'}>
           <ArrowLeft size={14} /> {t('common.back', 'Назад')}
         </Link>
       </Button>
 
-      <div>
-        <h1 className="text-[24px] font-bold tracking-[-0.02em] leading-[1.2] text-ink">
-          {isEdit ? t('eventForm.titleEdit', 'Редактировать встречу') : t('eventForm.titleCreate', 'Новая встреча')}
-        </h1>
-        <p className="mt-1.5 text-[13.5px] text-ink-3">
-          {isEdit ? t('eventForm.subtitleEdit', 'Обновите детали встречи') : t('eventForm.subtitleCreate', 'Заполните поля — участников пригласите после создания.')}
-        </p>
-      </div>
+      <PageHeader
+        title={isEdit ? t('eventForm.titleEdit', 'Редактировать встречу') : t('eventForm.titleCreate', 'Новая встреча')}
+        subtitle={isEdit ? t('eventForm.subtitleEdit', 'Обновите детали встречи') : t('eventForm.subtitleCreate', 'Заполните поля — участников пригласите после создания.')}
+      />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <Section title={t('eventForm.sectionVisibility', 'Кто может присоединиться')}>
@@ -259,7 +255,7 @@ export default function EventFormPage() {
         </Section>
 
         {/* Submit bar */}
-        <div className="sticky bottom-0 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-bg/85 backdrop-blur-xl border-t border-line flex items-center justify-end gap-2">
+        <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-surface border-t border-line flex items-center justify-end gap-2 min-[761px]:-mx-[26px] min-[761px]:px-[26px] max-[760px]:bottom-[calc(65px+env(safe-area-inset-bottom))]">
           <Button type="button" variant="soft" onClick={() => navigate(-1)}>
             {t('common.cancel', 'Отмена')}
           </Button>
@@ -274,7 +270,7 @@ export default function EventFormPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-[14px] border border-line bg-surface p-5 flex flex-col gap-4">
+    <section className="rounded-[var(--radius-card)] border border-line bg-surface p-5 flex flex-col gap-4">
       <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">{title}</div>
       <div className="flex flex-col gap-4">{children}</div>
     </section>
@@ -322,7 +318,7 @@ function RadioCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'text-left rounded-[10px] border p-3 transition focus-ring',
+        'text-left rounded-[var(--radius-control)] border p-3 transition focus-ring',
         checked
           ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]'
           : 'border-line bg-surface hover:bg-hover',

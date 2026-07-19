@@ -100,7 +100,7 @@ export default function AppRouter() {
           }
         />
         <Route path="/invite/:token" element={<InvitePage />} />
-        <Route path="/_design-system" element={<DesignSystemPage />} />
+        <Route path="/_design-system" element={<Layout><DesignSystemPage /></Layout>} />
         <Route path="*" element={<Navigate to="/discover" replace />} />
       </Routes>
     </BrowserRouter>

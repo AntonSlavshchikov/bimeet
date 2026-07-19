@@ -1,11 +1,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MapPin, Plus, Truck, Users } from 'lucide-react'
+import { Plus, Truck } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddCarpool, useJoinCarpool } from '@/features/carpools/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
-import { Avatar, AvatarStack, Button, Input, StatusPill } from '@/shared/ui'
-import { cn } from '@/shared/lib/cn'
+import {
+  Button,
+  EventSectionDataRow,
+  EventSectionEmpty,
+  EventSectionHeader,
+  EventSectionList,
+  EventSectionStat,
+  EventSectionStats,
+  Input,
+} from '@/shared/ui'
 
 export default function CarpoolTab({ event }: { event: Event }) {
   const { user } = useAuth()
@@ -19,6 +27,18 @@ export default function CarpoolTab({ event }: { event: Event }) {
 
   const isDriver = event.carpools.some(c => c.driver.is_me)
   const isCompleted = event.status === 'completed'
+  const freeSeatsTotal = event.carpools.reduce(
+    (sum, carpool) => sum + Math.max(0, carpool.seats_available - carpool.passengers.length),
+    0,
+  )
+  const departureTimes = event.carpools
+    .flatMap(carpool => carpool.departure_point.match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/g) ?? [])
+    .sort()
+  const departureWindow = departureTimes.length === 0
+    ? t('carpools.byAgreement')
+    : departureTimes.length === 1
+      ? departureTimes[0]
+      : `${departureTimes[0]}–${departureTimes[departureTimes.length - 1]}`
 
   function handleCreate() {
     if (!departure.trim() || !seats) return
@@ -35,34 +55,34 @@ export default function CarpoolTab({ event }: { event: Event }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
-          {t('carpools.sectionTitle', 'Попутчики')}
-        </div>
-        {!isDriver && !isCompleted && (
-          <Button variant="outline" size="sm" onClick={() => setOpen(v => !v)}>
-            <Plus size={13} /> {t('carpools.offerSeats', 'Предложить место')}
+    <div>
+      <EventSectionHeader
+        kicker={t('carpools.kicker')}
+        title={t('carpools.sectionTitle')}
+        description={t('carpools.description', { count: event.carpools.length })}
+        action={!isDriver && !isCompleted ? (
+          <Button size="md" onClick={() => setOpen(v => !v)}>
+            <Plus size={14} /> {t('carpools.offerSeats')}
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {open && (
-        <div className="rounded-[12px] border border-line bg-bg-2 p-3.5 flex flex-col gap-3">
+        <div className="mt-[18px] flex flex-col gap-3 rounded-[15px] border border-line bg-bg-2/55 p-3.5">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
-              {t('carpools.fieldDeparture', 'Откуда едете')}
+            <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-ink-3">
+              {t('carpools.fieldDeparture')}
             </div>
             <Input
               value={departure}
               onChange={e => setDeparture(e.target.value)}
-              placeholder={t('carpools.fieldDeparturePlaceholder', 'м. Сокол, 5:45')}
+              placeholder={t('carpools.fieldDeparturePlaceholder')}
               autoFocus
             />
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
-              {t('carpools.fieldSeats', 'Свободных мест')}
+            <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-ink-3">
+              {t('carpools.fieldSeats')}
             </div>
             <Input
               type="number"
@@ -75,87 +95,61 @@ export default function CarpoolTab({ event }: { event: Event }) {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              {t('common.cancel', 'Отмена')}
+              {t('common.cancel')}
             </Button>
             <Button size="sm" onClick={handleCreate} disabled={addCarpool.isPending}>
-              {t('common.create', 'Создать')}
+              {t('common.create')}
             </Button>
           </div>
         </div>
       )}
 
+      <EventSectionStats>
+        <EventSectionStat label={t('carpools.statCars')} value={t('carpools.carsCount', { count: event.carpools.length })} />
+        <EventSectionStat label={t('carpools.statSeats')} value={t('carpools.freeSeatsCount', { count: freeSeatsTotal })} />
+        <EventSectionStat label={t('carpools.statDeparture')} value={departureWindow} />
+      </EventSectionStats>
+
       {event.carpools.length === 0 ? (
-        <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
-          <Truck size={26} className="text-ink-3" />
-          <p className="text-[13px] text-ink-3">{t('carpools.empty', 'Пока никто не предложил подвезти.')}</p>
-        </div>
+        <EventSectionEmpty icon={Truck}>{t('carpools.empty')}</EventSectionEmpty>
       ) : (
-        <div className="flex flex-col gap-3">
+        <EventSectionList>
           {event.carpools.map(carpool => {
             const freeSeats = carpool.seats_available - carpool.passengers.length
             const iAmDriver = carpool.driver.is_me
             const iAmPassenger = carpool.passengers.some(p => p.is_me)
             const hasFree = freeSeats > 0
+            const initials = carpool.driver.name
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map(part => part[0])
+              .join('')
+              .toUpperCase()
+
             return (
-              <div key={carpool.id} className="rounded-[12px] border border-line bg-surface p-4">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar name={carpool.driver.name} size="md" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[14px] font-medium text-ink truncate">{carpool.driver.name}</span>
-                        {iAmDriver && (
-                          <span className="inline-flex items-center rounded-[4px] px-1.5 py-[1px] text-[10px] font-semibold uppercase tracking-[0.04em] text-accent bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]">
-                            {t('carpools.badgeYou', 'Вы')}
-                          </span>
-                        )}
-                      </div>
-                      <div className="inline-flex items-center gap-1.5 text-[12px] text-ink-3 mt-0.5">
-                        <MapPin size={11} className="shrink-0" />
-                        <span className="truncate">{carpool.departure_point}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 shrink-0">
-                    <Users size={13} className="text-ink-3" />
-                    <span className={cn('text-[13px] font-semibold tnum', hasFree ? 'text-success' : 'text-danger')}>
-                      {freeSeats}/{carpool.seats_available}
-                    </span>
-                  </div>
-                </div>
-
-                {carpool.passengers.length > 0 && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[12px] text-ink-3">{t('carpools.passengers', 'Пассажиры:')}</span>
-                    <AvatarStack max={6}>
-                      {carpool.passengers.map(p => (
-                        <Avatar key={p.email} name={p.name} size="xs" />
-                      ))}
-                    </AvatarStack>
-                  </div>
-                )}
-
-                {!iAmDriver && !isDriver && !isCompleted && (
-                  <Button
-                    className="w-full"
-                    variant={iAmPassenger ? 'outline' : 'primary'}
+              <EventSectionDataRow
+                key={carpool.id}
+                avatar={initials}
+                name={carpool.driver.name}
+                note={t('carpools.departureFrom', { point: carpool.departure_point })}
+                status={!iAmDriver && !isDriver && !isCompleted ? (
+                  <button
+                    type="button"
                     disabled={(!iAmPassenger && !hasFree) || joinCarpool.isPending}
                     onClick={() => user && joinCarpool.mutate(carpool.id)}
+                    className="font-bold text-success transition hover:opacity-70 disabled:text-ink-3 disabled:opacity-60"
                   >
                     {iAmPassenger
-                      ? t('carpools.buttonLeave', 'Отказаться')
-                      : !hasFree
-                        ? t('carpools.buttonNoSeats', 'Мест нет')
-                        : t('carpools.buttonJoin', 'Присоединиться')}
-                  </Button>
-                )}
-                {iAmPassenger && (
-                  <div className="mt-2 inline-flex"><StatusPill variant="going">{t('carpools.statusOnboard', 'Вы едете')}</StatusPill></div>
-                )}
-              </div>
+                      ? t('carpools.buttonLeave')
+                      : t('carpools.seatsCount', { count: freeSeats })}
+                  </button>
+                ) : t('carpools.seatsCount', { count: freeSeats })}
+                statusTone={hasFree ? 'success' : 'neutral'}
+              />
             )
           })}
-        </div>
+        </EventSectionList>
       )}
     </div>
   )
