@@ -136,8 +136,29 @@ function EmptyState({
 
 function UpcomingRail({ events }: { events: EventAny[] }) {
   const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
-  const todayEvents = events.filter(e => isSameDay(new Date(e.date_start), today))
+
+  const selectedDate = useMemo(() => {
+    const raw = searchParams.get('date')
+    if (!raw) return undefined
+    const [y, m, d] = raw.split('-').map(Number)
+    if (!y || !m || !d) return undefined
+    return new Date(y, m - 1, d)
+  }, [searchParams])
+
+  const handleSelectDate = (date: Date) => {
+    const next = new URLSearchParams(searchParams)
+    if (selectedDate && isSameDay(date, selectedDate)) {
+      next.delete('date')
+    } else {
+      next.set('date', isoDay(date))
+    }
+    setSearchParams(next, { replace: true })
+  }
+
+  const activeDay = selectedDate ?? today
+  const dayEvents = events.filter(e => isSameDay(new Date(e.date_start), activeDay))
   const nextFew = events
     .filter(e => new Date(e.date_start) > today)
     .slice(0, 3)
@@ -147,17 +168,33 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
     [events],
   )
 
-  const upcoming = todayEvents.length > 0 ? todayEvents : nextFew
+  const upcoming = selectedDate ? dayEvents : (dayEvents.length > 0 ? dayEvents : nextFew)
+  const isToday = isSameDay(activeDay, today)
 
   return (
     <>
       <RailCard>
-        <RailCardTitle>{todayEvents.length > 0 ? 'Сегодня' : 'Ближайшие'}</RailCardTitle>
+        <div className="flex items-center justify-between">
+          <RailCardTitle>{isToday ? 'Сегодня' : (dayEvents.length > 0 ? 'Выбранный день' : 'Ближайшие')}</RailCardTitle>
+          {selectedDate && !isToday && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.delete('date')
+                setSearchParams(next, { replace: true })
+              }}
+              className="text-[12px] font-medium text-accent hover:opacity-80 transition"
+            >
+              Сегодня
+            </button>
+          )}
+        </div>
         <div className="text-[44px] font-bold tracking-[-0.03em] leading-none text-ink">
-          {today.getDate()}
+          {activeDay.getDate()}
         </div>
         <div className="text-[13px] text-ink-3 mt-1 mb-3">
-          {today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {activeDay.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
         {upcoming.length === 0 ? (
           <div className="border-t border-line-soft pt-3 text-[13px] text-ink-3">
@@ -184,7 +221,7 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
       </RailCard>
 
       <RailCard>
-        <MiniCalendar eventDates={eventDates} />
+        <MiniCalendar eventDates={eventDates} selected={selectedDate} onSelect={handleSelectDate} />
       </RailCard>
     </>
   )
@@ -318,7 +355,19 @@ function EventsListPage() {
     past: pastEvents,
   }
 
-  const visible: EventAny[] = filterBySearch(sourceForTab[tab])
+  const selectedDate = searchParams.get('date')
+  function filterByDate(list: EventAny[]): EventAny[] {
+    if (!selectedDate) return list
+    return list.filter(e => isoDay(new Date(e.date_start)) === selectedDate)
+  }
+
+  function clearDateFilter() {
+    const next = new URLSearchParams(searchParams)
+    next.delete('date')
+    setSearchParams(next, { replace: true })
+  }
+
+  const visible: EventAny[] = filterByDate(filterBySearch(sourceForTab[tab]))
   const groups = groupEvents(visible)
   const hasSearch = search.trim().length > 0
   const isEmpty = visible.length === 0
@@ -394,6 +443,22 @@ function EventsListPage() {
           ]}
         />
       </div>
+
+      {selectedDate && (
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-[12.5px] font-medium text-accent">
+            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+            <button
+              type="button"
+              onClick={clearDateFilter}
+              aria-label="Сбросить фильтр по дате"
+              className="hover:opacity-70 transition"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Body */}
       {isEmpty ? (
