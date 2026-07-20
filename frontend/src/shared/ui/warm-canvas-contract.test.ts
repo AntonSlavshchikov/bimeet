@@ -20,8 +20,10 @@ describe('Warm Canvas structural contract', () => {
   })
 
   it('keeps mobile, tablet and desktop shell visibility classes explicit', () => {
-    expect(layout).toContain('min-[761px]:grid-cols-[200px_minmax(0,1fr)]')
-    expect(layout).toContain('min-[1081px]:grid-cols-[220px_minmax(0,1fr)_276px]')
+    expect(layout).toContain('min-[761px]:flex-row')
+    expect(layout).toContain('min-[761px]:w-[200px]')
+    expect(layout).toContain('min-[1081px]:w-[220px]')
+    expect(layout).toContain('min-[1081px]:w-[276px]')
     expect(layout).toContain('min-[1081px]:flex')
     expect(bottomNav).toContain('min-[761px]:hidden')
   })
