@@ -236,7 +236,7 @@ export function DateRangePicker({
                 key={day}
                 className={cn(
                   'py-1.5 text-center text-[9.5px] font-bold uppercase tracking-[0.06em] text-ink-3',
-                  index >= 5 && 'text-accent',
+                  index >= 5 && 'text-danger',
                 )}
               >
                 {day}
@@ -260,7 +260,9 @@ export function DateRangePicker({
                   onMouseEnter={() => setHoveredDate(date)}
                   className={cn(
                     'relative flex aspect-square items-center justify-center rounded-[10px] text-[12px] font-semibold tnum transition focus-ring',
-                    outOfMonth ? 'text-ink-4' : weekend ? 'text-ink-2' : 'text-ink',
+                    outOfMonth
+                      ? weekend ? 'text-danger opacity-40' : 'text-ink-4'
+                      : weekend ? 'text-danger' : 'text-ink',
                     'hover:bg-hover',
                     (ranged || previewed) && 'brand-gradient-soft text-accent',
                     current && !selectedAsStart && !selectedAsEnd && 'ring-1 ring-inset ring-accent text-accent',

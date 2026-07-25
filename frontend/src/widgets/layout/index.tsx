@@ -81,21 +81,13 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
   return (
     <TooltipProvider delayDuration={250}>
       <div
-        className="h-[100dvh] text-ink p-3 flex items-stretch justify-center lg:p-5"
-        style={{
-          background:
-            'radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%), ' +
-            'radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%), ' +
-            'var(--color-bg-2)',
-        }}
+        className="flex h-[100dvh] items-stretch text-ink"
       >
-        {/* Единая карточка приложения — сайдбар + контент + рейл + bottom-nav как секции.
-            Плавает поверх градиента на всех размерах экрана. */}
+        {/* Полноэкранная оболочка приложения: sidebar + content + rail + bottom-nav. */}
         <div
           className={cn(
             'w-full h-full min-h-0 flex flex-col',
-            'rounded-[20px] border border-line bg-bg overflow-hidden',
-            'shadow-[0_2px_4px_rgba(0,0,0,0.04),0_16px_40px_rgba(0,0,0,0.08)]',
+            'bg-bg overflow-hidden',
             'min-[761px]:flex-row',
           )}
         >

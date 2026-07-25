@@ -254,8 +254,7 @@ export default function EventFormPage() {
           </Field>
         </Section>
 
-        {/* Submit bar */}
-        <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-surface border-t border-line flex items-center justify-end gap-2 min-[761px]:-mx-[26px] min-[761px]:px-[26px] max-[760px]:bottom-[calc(65px+env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-end gap-2 pt-1">
           <Button type="button" variant="soft" onClick={() => navigate(-1)}>
             {t('common.cancel', 'Отмена')}
           </Button>
