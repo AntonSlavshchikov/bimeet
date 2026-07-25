@@ -1,0 +1,7 @@
+.git
+.air
+.env
+.env.*
+!.env.example
+server
+coverage.out
