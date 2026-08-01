@@ -1,12 +1,12 @@
-# Graph Report - /Users/adslavschikov/my/ai-app  (2026-07-25)
+# Graph Report - /Users/adslavschikov/my/ai-app  (2026-08-01)
 
 ## Corpus Check
-- 360 files · ~866,739 words
+- 361 files · ~867,622 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1699 nodes · 3137 edges · 200 communities detected
-- Extraction: 62% EXTRACTED · 38% INFERRED · 0% AMBIGUOUS · INFERRED: 1200 edges (avg confidence: 0.8)
+- 1710 nodes · 3157 edges · 200 communities detected
+- Extraction: 62% EXTRACTED · 38% INFERRED · 0% AMBIGUOUS · INFERRED: 1206 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -212,7 +212,7 @@
 - [[_COMMUNITY_Community 199|Community 199]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `New()` - 133 edges
+1. `New()` - 136 edges
 2. `newService()` - 95 edges
 3. `scan()` - 85 edges
 4. `JSON()` - 64 edges
@@ -238,24 +238,24 @@
 ## Communities
 
 ### Community 0 - "Community 0"
-Cohesion: 0.02
-Nodes (24): Repository, Repository, captureUploader, noopUploader, Repository, Repository, Repository, Repository (+16 more)
+Cohesion: 0.05
+Nodes (102): WithUserID(), Service, newRouter(), post(), TestCreate_Forbidden(), TestCreate_HappyPath(), TestCreate_InvalidBody(), TestCreate_ValidationError() (+94 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.04
 Nodes (46): AdminService, Handler, RequireAdmin(), AuthService, CompanyIDFromCtx(), Handler, UserIDFromCtx(), Handler (+38 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.06
-Nodes (98): WithUserID(), Service, newRouter(), post(), TestCreate_Forbidden(), TestCreate_HappyPath(), TestCreate_InvalidBody(), TestCreate_ValidationError() (+90 more)
+Cohesion: 0.02
+Nodes (20): Repository, Repository, Repository, Repository, Repository, Repository, Repository, Repository (+12 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.04
-Nodes (58): CompanyRepo, fakeCompanyRepo, fakeInviteRepo, fakeUserRepo, InvitationRepo, LoginCodeRepo, Mailer, Service (+50 more)
+Nodes (55): CompanyRepo, fakeCompanyRepo, fakeInviteRepo, fakeUserRepo, InvitationRepo, LoginCodeRepo, Mailer, Service (+47 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.03
-Nodes (41): BrandScope(), onKeyDown(), onPickImage(), submit(), AdminPanelPage(), closeMobileSearch(), disablePush(), enablePush() (+33 more)
+Cohesion: 0.04
+Nodes (47): BrandScope(), Config, getenvDefault(), Load(), parseAdminEmails(), parseBool(), parseCSV(), parseIntDefault() (+39 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.03
@@ -267,11 +267,11 @@ Nodes (14): MockCollectionRepo, MockLoginCodeRepo, MockMailer, MockMailerMockRec
 
 ### Community 7 - "Community 7"
 Cohesion: 0.05
-Nodes (42): Auth(), RequireOwner(), RoleFromCtx(), stringClaim(), unauthorized(), FromContext(), InitLogger(), parseLevel() (+34 more)
+Nodes (19): EventRepo, fakeEventRepo, fakeNotifyRepo, fakeUserRepo, fieldChange, Mailer, NotificationRepo, Service (+11 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.05
-Nodes (19): EventRepo, fakeEventRepo, fakeNotifyRepo, fakeUserRepo, fieldChange, Mailer, NotificationRepo, Service (+11 more)
+Cohesion: 0.04
+Nodes (29): onKeyDown(), onPickImage(), submit(), AdminPanelPage(), disablePush(), enablePush(), getPushState(), getRegistration() (+21 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.04
@@ -282,123 +282,123 @@ Cohesion: 0.06
 Nodes (13): Service, MockMessageRepo, MockMessageRepoMockRecorder, MockNotifier, MockNotifierMockRecorder, MockUploader, NewMockMessageRepo(), NewMockNotifier() (+5 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.08
-Nodes (10): Service, Service, EventAccessor, LinkRepo, Service, ValidationError, MockCollectionRepoMockRecorder, detectReceiptContentType() (+2 more)
+Cohesion: 0.07
+Nodes (24): CORS(), corsResponse(), TestCORS_DevFallbackAllowsAny(), TestCORS_RestrictedAllowsListedOrigin(), TestCORS_RestrictedBlocksUnlistedOrigin(), closeMobileSearch(), groupEvents(), handleSelectDate() (+16 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.07
-Nodes (23): CompanyRepo, InvitationRepo, Mailer, Service, UserRepo, ValidationError, CORS(), corsResponse() (+15 more)
+Cohesion: 0.09
+Nodes (20): Auth(), RequireOwner(), RoleFromCtx(), stringClaim(), unauthorized(), avatarRequest(), TestUploadAvatar_AllowsFileAtFiveMB(), TestUploadAvatar_RejectsFileOverFiveMB() (+12 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.07
-Nodes (16): AdminRoute(), AppBadgeSync(), BadgeSync(), useAuth(), CompanyProvider(), useCompany(), LoginPage(), RegisterCompanyPage() (+8 more)
+Cohesion: 0.09
+Nodes (8): captureUploader, noopUploader, Service, MockCollectionRepoMockRecorder, MockUploaderMockRecorder, Service, detectReceiptContentType(), isAllowedReceiptType()
 
 ### Community 14 - "Community 14"
 Cohesion: 0.07
-Nodes (13): formatTime(), toDatetimeLocal(), useCompleteEvent(), useCreateEvent(), useDeleteEvent(), useUpdateEvent(), EventForm(), EventFormPage() (+5 more)
+Nodes (16): AdminRoute(), AppBadgeSync(), BadgeSync(), useAuth(), CompanyProvider(), useCompany(), LoginPage(), RegisterCompanyPage() (+8 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.07
-Nodes (3): MockEventService, MockEventServiceMockRecorder, NewMockEventService()
+Nodes (13): formatTime(), toDatetimeLocal(), useCompleteEvent(), useCreateEvent(), useDeleteEvent(), useUpdateEvent(), EventForm(), EventFormPage() (+5 more)
 
 ### Community 16 - "Community 16"
+Cohesion: 0.07
+Nodes (3): MockEventService, MockEventServiceMockRecorder, NewMockEventService()
+
+### Community 17 - "Community 17"
 Cohesion: 0.1
 Nodes (3): MockCollectionService, MockCollectionServiceMockRecorder, NewMockCollectionService()
 
-### Community 17 - "Community 17"
+### Community 18 - "Community 18"
 Cohesion: 0.12
 Nodes (2): MockMessageService, MockMessageServiceMockRecorder
 
-### Community 18 - "Community 18"
+### Community 19 - "Community 19"
 Cohesion: 0.15
 Nodes (6): Repo, Service, useAdminRecentEvents(), useAdminRecentUsers(), useAdminTimeseries(), useAdminTopOrganizers()
 
-### Community 19 - "Community 19"
+### Community 20 - "Community 20"
 Cohesion: 0.13
 Nodes (3): MockNotificationService, MockNotificationServiceMockRecorder, NewMockNotificationService()
 
-### Community 20 - "Community 20"
+### Community 21 - "Community 21"
 Cohesion: 0.15
 Nodes (3): MockPushService, MockPushServiceMockRecorder, NewMockPushService()
 
-### Community 21 - "Community 21"
+### Community 22 - "Community 22"
 Cohesion: 0.18
 Nodes (3): MockCarpoolService, MockCarpoolServiceMockRecorder, NewMockCarpoolService()
 
-### Community 22 - "Community 22"
+### Community 23 - "Community 23"
 Cohesion: 0.18
 Nodes (3): MockItemService, MockItemServiceMockRecorder, NewMockItemService()
 
-### Community 23 - "Community 23"
+### Community 24 - "Community 24"
 Cohesion: 0.18
 Nodes (3): MockPollService, MockPollServiceMockRecorder, NewMockPollService()
-
-### Community 24 - "Community 24"
-Cohesion: 0.33
-Nodes (8): Config, getenvDefault(), Load(), parseAdminEmails(), parseBool(), parseCSV(), parseIntDefault(), parseOrigins()
 
 ### Community 25 - "Community 25"
 Cohesion: 0.33
 Nodes (7): dayTime(), isBeforeDay(), isInPreviewRange(), isInRange(), isSameDay(), selectDay(), toIsoDay()
 
 ### Community 26 - "Community 26"
+Cohesion: 0.27
+Nodes (4): EventAccessor, LinkRepo, Service, ValidationError
+
+### Community 27 - "Community 27"
 Cohesion: 0.22
 Nodes (4): CTA(), Footer(), useLanguage(), LanguageSwitcher()
 
-### Community 27 - "Community 27"
+### Community 28 - "Community 28"
 Cohesion: 0.31
 Nodes (7): buildPublicEventList(), compareRanked(), compareStartDate(), hasAvailableSpot(), eventAt(), grouped(), latitudeAt()
 
-### Community 28 - "Community 28"
+### Community 29 - "Community 29"
 Cohesion: 0.25
 Nodes (5): distanceKm(), toRadians(), shouldUpdatePosition(), Probe(), useUserLocation()
 
-### Community 29 - "Community 29"
+### Community 30 - "Community 30"
 Cohesion: 0.22
 Nodes (3): MockAuthService, MockAuthServiceMockRecorder, NewMockAuthService()
 
-### Community 30 - "Community 30"
+### Community 31 - "Community 31"
 Cohesion: 0.25
 Nodes (5): EventAccessor, EventRepo, PollRepo, ValidationError, cleanOptions()
-
-### Community 31 - "Community 31"
-Cohesion: 0.29
-Nodes (0): 
 
 ### Community 32 - "Community 32"
 Cohesion: 0.29
 Nodes (0): 
 
 ### Community 33 - "Community 33"
+Cohesion: 0.29
+Nodes (0): 
+
+### Community 34 - "Community 34"
 Cohesion: 0.52
 Nodes (5): dateGroupLabel(), formatDate(), formatRelative(), formatTime(), isSameDay()
 
-### Community 34 - "Community 34"
+### Community 35 - "Community 35"
 Cohesion: 0.4
 Nodes (3): eventAccentColor(), EventListRow(), formatRowTime()
 
-### Community 35 - "Community 35"
-Cohesion: 0.4
-Nodes (0): 
-
 ### Community 36 - "Community 36"
 Cohesion: 0.4
-Nodes (2): cn(), ListRow()
+Nodes (0):
 
 ### Community 37 - "Community 37"
 Cohesion: 0.4
-Nodes (4): CollectionRepo, EventRepo, NotificationRepo, Uploader
+Nodes (2): cn(), ListRow()
 
 ### Community 38 - "Community 38"
 Cohesion: 0.4
-Nodes (4): EventRepo, MessageRepo, Notifier, Uploader
+Nodes (4): CollectionRepo, EventRepo, NotificationRepo, Uploader
 
 ### Community 39 - "Community 39"
 Cohesion: 0.4
-Nodes (0): 
+Nodes (4): EventRepo, MessageRepo, Notifier, Uploader
 
 ### Community 40 - "Community 40"
-Cohesion: 0.5
+Cohesion: 0.4
 Nodes (0): 
 
 ### Community 41 - "Community 41"
@@ -414,28 +414,28 @@ Cohesion: 0.5
 Nodes (0): 
 
 ### Community 44 - "Community 44"
-Cohesion: 0.83
-Nodes (2): apiFetch(), getToken()
+Cohesion: 0.5
+Nodes (0):
 
 ### Community 45 - "Community 45"
 Cohesion: 0.83
-Nodes (3): clearBadge(), isBadgeSupported(), setBadge()
+Nodes (2): apiFetch(), getToken()
 
 ### Community 46 - "Community 46"
+Cohesion: 0.83
+Nodes (3): clearBadge(), isBadgeSupported(), setBadge()
+
+### Community 47 - "Community 47"
 Cohesion: 0.5
 Nodes (0): 
 
-### Community 47 - "Community 47"
+### Community 48 - "Community 48"
 Cohesion: 0.67
 Nodes (1): cn()
 
-### Community 48 - "Community 48"
-Cohesion: 0.67
-Nodes (1): App()
-
 ### Community 49 - "Community 49"
 Cohesion: 0.67
-Nodes (0): 
+Nodes (1): App()
 
 ### Community 50 - "Community 50"
 Cohesion: 0.67
@@ -1310,14 +1310,14 @@ Nodes (0):
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `scan()` connect `Community 0` to `Community 11`, `Community 3`, `Community 12`, `Community 4`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `New()` connect `Community 2` to `Community 0`, `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 8`, `Community 10`, `Community 11`, `Community 12`, `Community 18`, `Community 30`?**
-  _High betweenness centrality (0.097) - this node is a cross-community bridge._
-- **Why does `newRouter()` connect `Community 2` to `Community 10`, `Community 12`, `Community 15`, `Community 16`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 29`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
-- **Are the 115 inferred relationships involving `New()` (e.g. with `main()` and `newRouter()`) actually correct?**
-  _`New()` has 115 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `New()` connect `Community 0` to `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 10`, `Community 12`, `Community 13`, `Community 19`, `Community 26`, `Community 31`?**
+  _High betweenness centrality (0.150) - this node is a cross-community bridge._
+- **Why does `scan()` connect `Community 2` to `Community 0`, `Community 4`?**
+  _High betweenness centrality (0.104) - this node is a cross-community bridge._
+- **Why does `newRouter()` connect `Community 0` to `Community 10`, `Community 11`, `Community 16`, `Community 17`, `Community 20`, `Community 22`, `Community 23`, `Community 24`, `Community 30`?**
+  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+- **Are the 118 inferred relationships involving `New()` (e.g. with `main()` and `newRouter()`) actually correct?**
+  _`New()` has 118 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 13 inferred relationships involving `newService()` (e.g. with `NewMockCarpoolRepo()` and `NewMockEventRepo()`) actually correct?**
   _`newService()` has 13 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 72 inferred relationships involving `scan()` (e.g. with `.Create()` and `.GetByID()`) actually correct?**

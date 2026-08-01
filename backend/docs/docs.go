@@ -371,6 +371,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
                         }
                     },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {

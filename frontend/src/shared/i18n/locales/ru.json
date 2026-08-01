@@ -447,6 +447,9 @@
     "avatarDeleted": "Аватарка удалена",
     "deleteAvatar": "Удалить аватарку",
     "uploadError": "Не удалось загрузить аватарку",
+    "avatarHint": "JPG, PNG или WebP · до 5 МБ",
+    "avatarTooLarge": "Файл слишком большой. Максимум — 5 МБ",
+    "avatarInvalidType": "Выберите изображение JPG, PNG или WebP",
     "theme": "Тема оформления",
     "themeLight": "Светлая",
     "themeDark": "Тёмная"

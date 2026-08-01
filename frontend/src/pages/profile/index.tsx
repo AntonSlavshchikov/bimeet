@@ -13,6 +13,9 @@ import { cn } from '@/shared/lib/cn'
 
 type Tab = 'edit' | 'stats'
 
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024
+const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
 export default function ProfilePage() {
   const { user, updateUser, logout } = useAuth()
   const { t, i18n } = useTranslation()
@@ -43,7 +46,11 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       toast({ title: t('profile.avatarSaved', 'Аватар обновлён'), status: 'success' })
     },
-    onError: () => toast({ title: t('profile.uploadError', 'Не удалось загрузить'), status: 'error' }),
+    onError: error => toast({
+      title: t('profile.uploadError', 'Не удалось загрузить'),
+      description: error.message,
+      status: 'error',
+    }),
   })
 
   const deleteAvatarMutation = useMutation({
@@ -78,6 +85,18 @@ export default function ProfilePage() {
   function handleLogout() {
     logout()
     navigate('/login')
+  }
+
+  function handleAvatarSelected(file: File) {
+    if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+      toast({ title: t('profile.avatarInvalidType'), status: 'error' })
+      return
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      toast({ title: t('profile.avatarTooLarge'), status: 'error' })
+      return
+    }
+    avatarMutation.mutate(file)
   }
 
   const fullName = [user?.name, user?.last_name].filter(Boolean).join(' ')
@@ -119,11 +138,15 @@ export default function ProfilePage() {
             className="hidden"
             onChange={e => {
               const file = e.target.files?.[0]
-              if (file) avatarMutation.mutate(file)
+              if (file) handleAvatarSelected(file)
               e.target.value = ''
             }}
           />
         </div>
+
+        <p className="-mt-2 text-center text-[11px] text-ink-3">
+          {t('profile.avatarHint')}
+        </p>
 
         <div className="text-center">
           <div className="text-[16px] font-semibold tracking-[-0.015em] text-ink">{fullName || user?.name}</div>
