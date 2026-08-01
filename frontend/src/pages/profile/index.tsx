@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Calendar, Camera, Globe, Loader2, LogOut, Mail, MapPin, Moon, Sun, Trash2, User } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/model/AuthContext'
+import { profileStatHref, type ProfileStatKey } from '@/features/profile-stats/model'
 import { formatDate } from '@/shared/lib/formatDate'
 import { useTheme, type Theme } from '@/shared/theme'
 import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
@@ -25,7 +26,8 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const avatarInputRef = useRef<HTMLInputElement>(null)
-  const [tab, setTab] = useState<Tab>('edit')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab: Tab = searchParams.get('tab') === 'stats' ? 'stats' : 'edit'
 
   const { data: stats } = useQuery({
     queryKey: ['profile', 'stats'],
@@ -85,6 +87,13 @@ export default function ProfilePage() {
   function handleLogout() {
     logout()
     navigate('/login')
+  }
+
+  function handleTabChange(next: Tab) {
+    const params = new URLSearchParams(searchParams)
+    if (next === 'stats') params.set('tab', next)
+    else params.delete('tab')
+    setSearchParams(params, { replace: true })
   }
 
   function handleAvatarSelected(file: File) {
@@ -178,7 +187,7 @@ export default function ProfilePage() {
         <div className="border-b border-line-soft px-3 py-3">
           <SegmentedControl
             value={tab}
-            onChange={setTab}
+            onChange={handleTabChange}
             options={[
               { value: 'edit', label: t('profile.editTab', 'Редактировать') },
               { value: 'stats', label: t('profile.statsTab', 'Статистика') },
@@ -250,10 +259,10 @@ export default function ProfilePage() {
 
           {tab === 'stats' && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatTile value={stats?.organized ?? 0} label={t('profile.statsOrganized', 'Организую')} />
-              <StatTile value={stats?.participated ?? 0} label={t('profile.statsParticipated', 'Участвую')} />
-              <StatTile value={stats?.completed ?? 0} label={t('profile.statsCompleted', 'Завершено')} />
-              <StatTile value={stats?.upcoming ?? 0} label={t('profile.statsUpcoming', 'Впереди')} />
+              <StatTile stat="organized" value={stats?.organized ?? 0} label={t('profile.statsOrganized', 'Организую')} />
+              <StatTile stat="participated" value={stats?.participated ?? 0} label={t('profile.statsParticipated', 'Участвую')} />
+              <StatTile stat="completed" value={stats?.completed ?? 0} label={t('profile.statsCompleted', 'Завершено')} />
+              <StatTile stat="upcoming" value={stats?.upcoming ?? 0} label={t('profile.statsUpcoming', 'Впереди')} />
             </div>
           )}
         </div>
@@ -300,11 +309,17 @@ function ProfileMeta({ icon: Icon, children }: { icon: React.ComponentType<{ siz
   )
 }
 
-function StatTile({ value, label }: { value: number; label: string }) {
+function StatTile({ stat, value, label }: { stat: ProfileStatKey; value: number; label: string }) {
   return (
-    <div className={cn('rounded-[12px] bg-bg-2 p-4 flex flex-col items-center text-center gap-1')}>
+    <Link
+      to={profileStatHref(stat)}
+      className={cn(
+        'rounded-[12px] bg-bg-2 p-4 flex flex-col items-center text-center gap-1 cursor-pointer',
+        'transition hover:-translate-y-0.5 hover:bg-hover focus-ring',
+      )}
+    >
       <div className="text-[32px] leading-none font-bold tracking-[-0.025em] text-accent tnum">{value}</div>
       <div className="text-[12px] text-ink-3 font-medium">{label}</div>
-    </div>
+    </Link>
   )
 }
