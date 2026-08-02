@@ -113,7 +113,7 @@ export default function ProfilePage() {
   return (
     <div className="grid gap-5 items-start min-[1081px]:grid-cols-[280px_minmax(0,1fr)]">
       {/* Left: profile card */}
-      <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5 min-[1081px]:sticky min-[1081px]:top-5 flex flex-col items-center gap-4">
+      <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5 min-[1081px]:sticky min-[1081px]:top-0 flex flex-col items-center gap-4">
         {/* Avatar */}
         <div className="relative">
           <button

@@ -456,8 +456,9 @@ make up    # detached
 ```
 
 The development compose stack starts PostgreSQL, MailHog, MinIO, the Go backend
-with Air live reload, and the Vite frontend with HMR. Backend and frontend
-dependencies are cached in Docker volumes.
+with Air live reload, the Vite frontend with HMR, and the Next.js landing page
+with Fast Refresh. Backend, frontend, and landing dependencies are cached in
+Docker volumes.
 
 Useful commands:
 
@@ -479,6 +480,7 @@ Docker networking.
 
 | Service | URL |
 |---|---|
+| Landing dev | `http://localhost:3000` |
 | Frontend dev | `http://localhost:5173` |
 | Backend API | `http://localhost:8080` |
 | MinIO console | `http://localhost:9001` |
