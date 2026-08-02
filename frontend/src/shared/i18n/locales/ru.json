@@ -289,7 +289,7 @@
     "description": "{{confirmed}} участников подтвердили участие, ещё {{free}} места свободны.",
     "empty": "Участников пока нет",
     "noLimit": "Без лимита",
-    "statGoing": "Идут",
+    "statGoing": "Участвуют",
     "statInvited": "Приглашены",
     "statFree": "Свободно",
     "peopleCount": "{{count}} человек",
