@@ -9,6 +9,7 @@ import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { BrandMark } from '@/shared/ui/brand-mark'
 import { cn } from '@/shared/lib/cn'
+import { usePrimarySwipeNavigation } from './model/primary-navigation'
 
 interface LayoutProps {
   children: ReactNode
@@ -77,6 +78,7 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
   const hasRail = !!rail
   const mobileTitle = useMobileTitle(t)
   const autoMobileActions = useMobileNavbarActions(t)
+  const primarySwipeNavigation = usePrimarySwipeNavigation()
 
   return (
     <TooltipProvider delayDuration={250}>
@@ -118,7 +120,10 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
 
             {/* Main + rail */}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[86px] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]">
+              <main
+                {...primarySwipeNavigation.handlers}
+                className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[86px] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]"
+              >
                 {children}
               </main>
             </div>
