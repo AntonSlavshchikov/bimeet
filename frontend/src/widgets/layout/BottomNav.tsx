@@ -44,10 +44,11 @@ export default function BottomNav() {
   return (
     <nav
       className={cn(
-        'fixed inset-x-2 bottom-2 z-40 grid grid-cols-4 rounded-[18px] border border-line bg-surface/90 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden max-[420px]:inset-x-[6px]',
+        'fixed inset-x-2 z-40 grid grid-cols-4 rounded-[18px] border border-line bg-surface/90 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden max-[420px]:inset-x-[6px]',
       )}
       style={{
-        paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
+        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+        paddingBottom: '8px',
       }}
     >
       <TabLink to={primaryNavRoutes.discover} icon={Search} label={t('nav.publicEvents')} />

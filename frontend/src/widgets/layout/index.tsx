@@ -122,7 +122,7 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <main
                 {...primarySwipeNavigation.handlers}
-                className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[86px] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]"
+                className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[calc(94px+env(safe-area-inset-bottom,0px))] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]"
               >
                 {children}
               </main>

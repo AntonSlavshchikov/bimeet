@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -198,12 +199,16 @@ func newFIASClient(ctx context.Context) (*fiasClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get FIAS settings: %w", err)
 	}
-	defer response.Body.Close()
+	responseBody, readErr := io.ReadAll(response.Body)
+	closeErr := response.Body.Close()
+	if err := errors.Join(readErr, closeErr); err != nil {
+		return nil, fmt.Errorf("read FIAS settings response: %w", err)
+	}
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("get FIAS settings: status %s", response.Status)
 	}
 	var cfg settings
-	if err := json.NewDecoder(response.Body).Decode(&cfg); err != nil {
+	if err := json.Unmarshal(responseBody, &cfg); err != nil {
 		return nil, fmt.Errorf("decode FIAS settings: %w", err)
 	}
 	if cfg.URL == "" || cfg.Token == "" {
@@ -233,9 +238,9 @@ func (c *fiasClient) addresses(ctx context.Context, filter map[string]any) ([]ad
 			continue
 		}
 		responseBody, readErr := io.ReadAll(response.Body)
-		response.Body.Close()
-		if readErr != nil {
-			lastErr = readErr
+		closeErr := response.Body.Close()
+		if err := errors.Join(readErr, closeErr); err != nil {
+			lastErr = err
 			continue
 		}
 		if response.StatusCode != http.StatusOK {
