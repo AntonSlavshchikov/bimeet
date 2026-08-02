@@ -107,6 +107,7 @@ export default function ParticipantsTab({ event }: { event: Event }) {
           </div>
           <div className="flex flex-col gap-2 min-[541px]:flex-row">
             <Input
+              className="min-w-0"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -114,15 +115,20 @@ export default function ParticipantsTab({ event }: { event: Event }) {
               onKeyDown={e => e.key === 'Enter' && handleInvite()}
               autoFocus
             />
-            <div className="flex shrink-0 justify-end gap-2">
-              <Button size="sm" variant="soft" onClick={handleCopyLink}>
+            <div className="grid grid-cols-2 gap-2 min-[421px]:flex min-[421px]:shrink-0 min-[421px]:justify-end">
+              <Button
+                className="col-span-2 w-full min-[421px]:w-auto"
+                size="sm"
+                variant="soft"
+                onClick={handleCopyLink}
+              >
                 <Link2 size={13} />
                 {t('participants.copyLink')}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setInviteOpen(false)}>
+              <Button className="w-full min-[421px]:w-auto" size="sm" variant="ghost" onClick={() => setInviteOpen(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button size="sm" onClick={handleInvite} disabled={invite.isPending}>
+              <Button className="w-full min-[421px]:w-auto" size="sm" onClick={handleInvite} disabled={invite.isPending}>
                 {t('participants.inviteButton')}
               </Button>
             </div>

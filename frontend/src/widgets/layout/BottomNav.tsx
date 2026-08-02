@@ -3,6 +3,7 @@ import { Bell, Calendar, Search, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNotifications } from '@/entities/notification/queries'
 import { cn } from '@/shared/lib/cn'
+import { primaryNavRoutes } from './model/primary-navigation'
 
 interface TabProps {
   to: string
@@ -49,10 +50,10 @@ export default function BottomNav() {
         paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
       }}
     >
-      <TabLink to="/discover" icon={Search} label={t('nav.publicEvents')} />
-      <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
-      <TabLink to="/notifications" icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
-      <TabLink to="/profile" icon={User} label={t('nav.profile')} />
+      <TabLink to={primaryNavRoutes.discover} icon={Search} label={t('nav.publicEvents')} />
+      <TabLink to={primaryNavRoutes.events} icon={Calendar} label={t('nav.events')} />
+      <TabLink to={primaryNavRoutes.notifications} icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
+      <TabLink to={primaryNavRoutes.profile} icon={User} label={t('nav.profile')} />
     </nav>
   )
 }

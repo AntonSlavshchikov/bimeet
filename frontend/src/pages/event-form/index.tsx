@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
-import { Button, DateRangePicker, Input, PageHeader, Textarea, useToast } from '@/shared/ui'
+import { Button, DateRangePicker, Input, PageHeader, SegmentedControl, Textarea, useToast } from '@/shared/ui'
 import LocationPicker from '@/features/location-picker/ui/LocationPicker'
+import CitySelect from '@/features/city-select/ui/CitySelect'
 import { cn } from '@/shared/lib/cn'
 
 interface FormValues {
@@ -16,10 +17,13 @@ interface FormValues {
   location: string
   locationLat?: number
   locationLng?: number
+  cityId: string
   dressCode: string
   isPublic: boolean
   maxGuests: string
 }
+
+type DateSelectionMode = 'single' | 'range'
 
 function toDatetimeLocal(iso: string) {
   if (!iso) return ''
@@ -38,6 +42,22 @@ function combineDateTime(date: string, time: string) {
   return date ? `${date}T${time}` : ''
 }
 
+function todayIsoDay() {
+  const today = new Date()
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+}
+
+function ensureEndTimeAfterStart(startTime: string, endTime: string) {
+  const [startHours, startMinutes] = startTime.split(':').map(Number)
+  const [endHours, endMinutes] = endTime.split(':').map(Number)
+  const start = startHours * 60 + startMinutes
+  const end = endHours * 60 + endMinutes
+  if (end > start) return endTime
+
+  const adjusted = Math.min(start + 60, 23 * 60 + 59)
+  return `${String(Math.floor(adjusted / 60)).padStart(2, '0')}:${String(adjusted % 60).padStart(2, '0')}`
+}
+
 export default function EventFormPage() {
   const { id } = useParams<{ id?: string }>()
   const isEdit = Boolean(id)
@@ -48,6 +68,7 @@ export default function EventFormPage() {
   const event = useEvent(id ?? '')
   const createEvent = useCreateEvent()
   const updateEvent = useUpdateEvent(id ?? '')
+  const [dateSelectionMode, setDateSelectionMode] = useState<DateSelectionMode>('single')
 
   const [form, setForm] = useState<FormValues>({
     title: '',
@@ -55,6 +76,7 @@ export default function EventFormPage() {
     dateStart: '',
     dateEnd: '',
     location: '',
+    cityId: '',
     dressCode: '',
     isPublic: false,
     maxGuests: '',
@@ -70,10 +92,12 @@ export default function EventFormPage() {
         location: event.location,
         locationLat: event.location_lat,
         locationLng: event.location_lng,
+        cityId: event.city?.id ?? '',
         dressCode: event.dress_code ?? '',
         isPublic: event.is_public ?? false,
         maxGuests: event.max_guests != null ? String(event.max_guests) : '',
       })
+      setDateSelectionMode(datePart(event.date_start) === datePart(event.date_end) ? 'single' : 'range')
     }
   }, [event])
 
@@ -89,6 +113,28 @@ export default function EventFormPage() {
     }))
   }
 
+  function updateDateSelectionMode(mode: DateSelectionMode) {
+    setDateSelectionMode(mode)
+    setForm(f => {
+      const startDate = datePart(f.dateStart)
+      const endDate = datePart(f.dateEnd)
+
+      if (mode === 'single') {
+        const startTime = timePart(f.dateStart, '12:00')
+        const endTime = ensureEndTimeAfterStart(startTime, timePart(f.dateEnd, '13:00'))
+        return {
+          ...f,
+          dateEnd: combineDateTime(startDate, endTime),
+        }
+      }
+
+      return {
+        ...f,
+        dateEnd: startDate && startDate === endDate ? '' : f.dateEnd,
+      }
+    })
+  }
+
   function updateDateTime(field: 'dateStart' | 'dateEnd', time: string, fallback: string) {
     setForm(f => ({
       ...f,
@@ -98,8 +144,13 @@ export default function EventFormPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!form.title || !form.dateStart || !form.dateEnd || !form.location) {
+    if (!form.title || !form.dateStart || !form.dateEnd || !form.cityId || !form.location) {
       toast({ title: t('eventForm.requiredFieldsWarning', 'Заполните обязательные поля'), status: 'warning' })
+      return
+    }
+
+    if (new Date(form.dateEnd) <= new Date(form.dateStart)) {
+      toast({ title: t('eventForm.endAfterStartWarning', 'Окончание должно быть позже начала'), status: 'warning' })
       return
     }
 
@@ -110,6 +161,7 @@ export default function EventFormPage() {
       date_start: new Date(form.dateStart).toISOString(),
       date_end: new Date(form.dateEnd).toISOString(),
       location: form.location,
+      city_id: form.cityId,
       is_public: form.isPublic,
       ...(form.locationLat != null && form.locationLng != null
         ? { location_lat: form.locationLat, location_lng: form.locationLng }
@@ -119,7 +171,10 @@ export default function EventFormPage() {
     }
 
     if (isEdit && id) {
-      updateEvent.mutate(payload, {
+      updateEvent.mutate({
+        ...payload,
+        city_id: form.cityId === event?.city?.id ? undefined : form.cityId,
+      }, {
         onSuccess: () => {
           toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
           navigate(`/events/${id}`)
@@ -206,17 +261,34 @@ export default function EventFormPage() {
 
         <Section title={t('eventForm.sectionWhenWhere', 'Когда и где')}>
           <Field label={t('eventForm.fieldDates', 'Даты')} required>
-            <DateRangePicker
-              startDate={datePart(form.dateStart)}
-              endDate={datePart(form.dateEnd)}
-              onChange={({ startDate, endDate }) => updateDateRange(startDate, endDate)}
-              placeholder={t('eventForm.dateRangePlaceholder', 'Выберите период')}
-              clearLabel={t('eventForm.dateRangeClear', 'Сбросить даты')}
-              previousMonthLabel={t('eventForm.dateRangePreviousMonth', 'Предыдущий месяц')}
-              nextMonthLabel={t('eventForm.dateRangeNextMonth', 'Следующий месяц')}
-              locale={i18n.language === 'en' ? 'en-US' : 'ru-RU'}
-              required
-            />
+            <div className="flex flex-col gap-2.5">
+              <SegmentedControl<DateSelectionMode>
+                value={dateSelectionMode}
+                onChange={updateDateSelectionMode}
+                options={[
+                  { value: 'single', label: t('eventForm.dateModeSingle', 'Один день') },
+                  { value: 'range', label: t('eventForm.dateModeRange', 'Несколько дней') },
+                ]}
+                fullWidth
+                selectionRole="radio"
+                ariaLabel={t('eventForm.dateModeLabel', 'Продолжительность встречи')}
+              />
+              <DateRangePicker
+                startDate={datePart(form.dateStart)}
+                endDate={datePart(form.dateEnd)}
+                onChange={({ startDate, endDate }) => updateDateRange(startDate, endDate)}
+                placeholder={dateSelectionMode === 'single'
+                  ? t('eventForm.singleDatePlaceholder', 'Выберите дату')
+                  : t('eventForm.dateRangePlaceholder', 'Выберите период')}
+                clearLabel={t('eventForm.dateRangeClear', 'Сбросить даты')}
+                previousMonthLabel={t('eventForm.dateRangePreviousMonth', 'Предыдущий месяц')}
+                nextMonthLabel={t('eventForm.dateRangeNextMonth', 'Следующий месяц')}
+                locale={i18n.language === 'en' ? 'en-US' : 'ru-RU'}
+                minDate={todayIsoDay()}
+                selectionMode={dateSelectionMode}
+                required
+              />
+            </div>
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label={t('eventForm.fieldStartTime', 'Время начала')} required>
@@ -238,6 +310,14 @@ export default function EventFormPage() {
               />
             </Field>
           </div>
+          <Field label={t('eventForm.fieldCity', 'Город')} required>
+            <CitySelect
+              value={form.cityId}
+              onValueChange={cityId => update('cityId', cityId)}
+              disabled={isLoading}
+              currentCity={event?.city ?? undefined}
+            />
+          </Field>
           <Field label={t('eventForm.fieldLocation', 'Место')} required>
             <LocationPicker
               value={{ address: form.location, lat: form.locationLat, lng: form.locationLng }}
@@ -254,8 +334,7 @@ export default function EventFormPage() {
           </Field>
         </Section>
 
-        {/* Submit bar */}
-        <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-surface border-t border-line flex items-center justify-end gap-2 min-[761px]:-mx-[26px] min-[761px]:px-[26px] max-[760px]:bottom-[calc(65px+env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-end gap-2 pt-1">
           <Button type="button" variant="soft" onClick={() => navigate(-1)}>
             {t('common.cancel', 'Отмена')}
           </Button>

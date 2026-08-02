@@ -22,6 +22,7 @@ function eventAt(
     date_start: '2026-07-16T12:00:00Z',
     date_end: '2026-07-16T14:00:00Z',
     location: 'Place',
+    city: null,
     ...(distanceKm == null
       ? {}
       : { location_lat: latitudeAt(distanceKm), location_lng: 0 }),

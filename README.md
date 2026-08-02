@@ -444,47 +444,44 @@ erDiagram
 ## Local Development
 
 ### Prerequisites
-- Docker + Docker Compose (for services)
-- Go 1.26+
-- Node.js 20+ and pnpm
+- Docker + Docker Compose
+- Make
 
-### Start infrastructure services
-
-```bash
-cd backend
-docker compose up -d   # starts PostgreSQL :5432, MinIO :9000/:9001, MailHog :1025/:8025
-```
-
-### Backend
+### Start the full development stack
 
 ```bash
-cd backend
-cp .env.example .env   # edit as needed
-go run ./cmd/server    # starts on :8080, runs migrations automatically
+make dev   # foreground, with all logs
+# or
+make up    # detached
 ```
 
-### Frontend
+The development compose stack starts PostgreSQL, MailHog, MinIO, the Go backend
+with Air live reload, the Vite frontend with HMR, and the Next.js landing page
+with Fast Refresh. Backend, frontend, and landing dependencies are cached in
+Docker volumes.
+
+Useful commands:
 
 ```bash
-cd frontend
-pnpm install
-pnpm run dev           # starts Vite dev server on :5173
+make logs SERVICE=backend
+make ps
+make restart
+make down
+make db-shell
+make test
+make lint
 ```
 
-### Landing
+Local `.env` files are optional. If present, `backend/.env` and `frontend/.env`
+are loaded and the service-to-service addresses are overridden automatically for
+Docker networking.
 
-```bash
-cd landing
-npm install
-npm run dev            # starts Next.js dev server on :3000
-```
-
-###Local service URLs
+### Local service URLs
 
 | Service | URL |
 |---|---|
-| Frontend dev | `http://localhost:5173` |
 | Landing dev | `http://localhost:3000` |
+| Frontend dev | `http://localhost:5173` |
 | Backend API | `http://localhost:8080` |
 | MinIO console | `http://localhost:9001` |
 | MailHog UI | `http://localhost:8025` |

@@ -91,8 +91,14 @@ export function MiniCalendar({
       </div>
 
       <div className="grid grid-cols-7 gap-[3px] text-center">
-        {weekdays.map(wd => (
-          <div key={wd} className="py-1.5 text-[9px] font-bold uppercase text-ink-3">
+        {weekdays.map((wd, index) => (
+          <div
+            key={wd}
+            className={cn(
+              'py-1.5 text-[9px] font-bold uppercase text-ink-3',
+              index >= 5 && 'text-danger',
+            )}
+          >
             {wd}
           </div>
         ))}
@@ -100,6 +106,7 @@ export function MiniCalendar({
           const isToday = sameDay(date, today)
           const isSelected = selected && sameDay(date, selected)
           const hasEvent = eventDates?.has(isoDay(date))
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6
           return (
             <button
               key={isoDay(date)}
@@ -107,7 +114,9 @@ export function MiniCalendar({
               onClick={() => onSelect?.(date)}
               className={cn(
                 'relative flex min-h-7 items-center justify-center rounded-[8px] py-1.5 text-[10.5px] font-medium tnum cursor-pointer transition',
-                outOfMonth ? 'text-ink-3 opacity-50' : 'text-ink-2',
+                outOfMonth
+                  ? isWeekend ? 'text-danger opacity-40' : 'text-ink-3 opacity-50'
+                  : isWeekend ? 'text-danger' : 'text-ink-2',
                 'hover:bg-hover focus-ring',
                 isToday && 'bg-[linear-gradient(135deg,var(--color-brand-b),var(--color-brand-c))] text-white font-bold hover:opacity-92',
                 !isToday && isSelected && 'border border-accent text-accent font-bold',

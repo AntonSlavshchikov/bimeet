@@ -1,6 +1,7 @@
 package profilehandler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -134,7 +135,10 @@ func (h *Handler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, user)
 }
 
-const maxAvatarSize = 5 << 20 // 5 MB
+const (
+	maxAvatarSize        = 5 << 20 // 5 MB
+	maxAvatarRequestSize = maxAvatarSize + 1<<20
+)
 
 // @Summary Upload current user avatar
 // @Tags profile
@@ -144,6 +148,7 @@ const maxAvatarSize = 5 << 20 // 5 MB
 // @Param avatar formData file true "Avatar image"
 // @Success 200 {object} model.User
 // @Failure 400 {object} response.ErrorResponse
+// @Failure 413 {object} response.ErrorResponse
 // @Failure 401 {object} response.ErrorResponse
 // @Failure 503 {object} response.ErrorResponse
 // @Failure 500 {object} response.ErrorResponse
@@ -155,7 +160,13 @@ func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarRequestSize)
 	if err := r.ParseMultipartForm(maxAvatarSize); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			response.Error(w, http.StatusRequestEntityTooLarge, "avatar exceeds 5 MB limit")
+			return
+		}
 		response.Error(w, http.StatusBadRequest, "file too large or invalid form")
 		return
 	}
@@ -166,6 +177,10 @@ func (h *Handler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer func() { _ = file.Close() }()
+	if header.Size > maxAvatarSize {
+		response.Error(w, http.StatusRequestEntityTooLarge, "avatar exceeds 5 MB limit")
+		return
+	}
 
 	user, err := h.svc.UploadAvatar(r.Context(), userID, file, header)
 	if err != nil {

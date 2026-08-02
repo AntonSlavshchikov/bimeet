@@ -9,6 +9,7 @@ import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { BrandMark } from '@/shared/ui/brand-mark'
 import { cn } from '@/shared/lib/cn'
+import { usePrimarySwipeNavigation } from './model/primary-navigation'
 
 interface LayoutProps {
   children: ReactNode
@@ -77,25 +78,18 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
   const hasRail = !!rail
   const mobileTitle = useMobileTitle(t)
   const autoMobileActions = useMobileNavbarActions(t)
+  const primarySwipeNavigation = usePrimarySwipeNavigation()
 
   return (
     <TooltipProvider delayDuration={250}>
       <div
-        className="h-[100dvh] text-ink p-3 flex items-stretch justify-center lg:p-5"
-        style={{
-          background:
-            'radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%), ' +
-            'radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%), ' +
-            'var(--color-bg-2)',
-        }}
+        className="flex h-[100dvh] items-stretch text-ink"
       >
-        {/* Единая карточка приложения — сайдбар + контент + рейл + bottom-nav как секции.
-            Плавает поверх градиента на всех размерах экрана. */}
+        {/* Полноэкранная оболочка приложения: sidebar + content + rail + bottom-nav. */}
         <div
           className={cn(
             'w-full h-full min-h-0 flex flex-col',
-            'rounded-[20px] border border-line bg-bg overflow-hidden',
-            'shadow-[0_2px_4px_rgba(0,0,0,0.04),0_16px_40px_rgba(0,0,0,0.08)]',
+            'bg-bg overflow-hidden',
             'min-[761px]:flex-row',
           )}
         >
@@ -126,7 +120,10 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
 
             {/* Main + rail */}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[86px] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]">
+              <main
+                {...primarySwipeNavigation.handlers}
+                className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[86px] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]"
+              >
                 {children}
               </main>
             </div>

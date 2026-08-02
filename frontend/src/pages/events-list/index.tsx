@@ -1,10 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Bell, CalendarOff, Plus, SearchX, X } from 'lucide-react'
 import { useEvents } from '@/entities/event/queries'
 import { useNotifications } from '@/entities/notification/queries'
 import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
+import {
+  filterEventsByProfileStat,
+  profileStatBaseTab,
+  resolveProfileStat,
+  type ProfileStatKey,
+} from '@/features/profile-stats/model'
+import {
+  filterEventsByTab,
+  parseEventsListTab,
+  type EventsListTab,
+} from './model/tabs'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import {
@@ -20,10 +31,7 @@ import {
   StatCell,
   useToast,
 } from '@/shared/ui'
-type Tab = 'all' | 'attending' | 'organizing' | 'past'
 type EventAny = EventListItem | PublicEventListItem
-
-const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'past']
 
 function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -257,19 +265,14 @@ function EventsListPage() {
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // tab синхронизируется с ?tab=… в URL — кликабельно из Sidebar (фильтры)
-  const urlTab = searchParams.get('tab') as Tab | null
-  const [tab, setTabState] = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'all')
+  // URL — единый источник состояния вкладки и перехода из статистики профиля.
+  const profileStat = resolveProfileStat(searchParams.get('stat'))
+  const urlTab = parseEventsListTab(searchParams.get('tab'))
+  const tab: EventsListTab = urlTab ?? (profileStat ? profileStatBaseTab(profileStat) : 'all')
 
-  useEffect(() => {
-    if (urlTab && VALID_TABS.includes(urlTab) && urlTab !== tab) setTabState(urlTab)
-    if (!urlTab && tab !== 'all') setTabState('all')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlTab])
-
-  function setTab(next: Tab) {
-    setTabState(next)
+  function setTab(next: EventsListTab) {
     const params = new URLSearchParams(searchParams)
+    params.delete('stat')
     if (next === 'all') params.delete('tab')
     else params.set('tab', next)
     setSearchParams(params, { replace: true })
@@ -291,14 +294,10 @@ function EventsListPage() {
 
   // «Встречи» — только мои: организатор, приглашён или участвую. Публичные чужие
   // встречи живут в отдельной вкладке «Найти публичные».
-  const allUpcoming = useMemo<EventAny[]>(
-    () => events.filter(e => e.status !== 'completed'),
+  const allActive = useMemo(
+    () => filterEventsByTab(events, 'all'),
     [events],
   )
-
-  const attendingEvents = events.filter(e => !e.organizer.is_me && e.status !== 'completed')
-  const organizingEvents = events.filter(e => e.organizer.is_me && e.status !== 'completed')
-  const pastEvents = events.filter(e => e.status === 'completed')
 
   function handleAttend(event: EventAny) {
     const myParticipant = event.participants.find(p => p.user.is_me)
@@ -329,25 +328,28 @@ function EventsListPage() {
     )
   }
 
-  const sourceForTab: Record<Tab, EventAny[]> = {
-    all: allUpcoming,
-    attending: attendingEvents,
-    organizing: organizingEvents,
-    past: pastEvents,
-  }
+  const profileStatEvents = useMemo(
+    () => profileStat ? filterEventsByProfileStat(events, profileStat) : null,
+    [events, profileStat],
+  )
+  const tabEvents = useMemo(() => filterEventsByTab(events, tab), [events, tab])
+  const sourceEvents: EventAny[] = profileStatEvents ?? tabEvents
 
   const selectedDate = searchParams.get('date')
-  const visible: EventAny[] = filterBySearch(sourceForTab[tab]).filter(event =>
+  const visible: EventAny[] = filterBySearch(sourceEvents).filter(event =>
     !selectedDate || isoDay(new Date(event.date_start)) === selectedDate,
   )
   const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
   const groups = groupEvents(visible, locale, t)
   const hasSearch = search.trim().length > 0
   const isEmpty = visible.length === 0
+  const profileStatLabel = profileStat ? getProfileStatLabel(profileStat, t) : ''
+  const emptyTitle = getTabEmptyTitle(tab, t)
+  const showCreateAction = tab === 'all' || tab === 'organizing'
 
   const todayLine = (() => {
-    const todayCount = allUpcoming.filter(e => isSameDay(new Date(e.date_start), new Date())).length
-    const upcomingLabel = t('events.upcomingCount', { count: allUpcoming.length })
+    const todayCount = allActive.filter(e => isSameDay(new Date(e.date_start), new Date())).length
+    const upcomingLabel = t('events.upcomingCount', { count: allActive.length })
     if (todayCount === 0) return upcomingLabel
     return `${upcomingLabel} · ${t('events.todayCount', { count: todayCount })}`
   })()
@@ -412,10 +414,11 @@ function EventsListPage() {
             fullWidth
             className="min-[761px]:w-auto"
             options={[
-              { value: 'all',        label: t('events.tabAll') },
-              { value: 'attending',  label: t('events.tabAttending') },
-              { value: 'organizing', label: t('events.tabOrganizing') },
-              { value: 'past',       label: t('events.tabPast') },
+              { value: 'all',          label: t('events.tabAll') },
+              { value: 'invited',      label: t('events.tabInvited') },
+              { value: 'attending',    label: t('events.tabAttending') },
+              { value: 'organizing',   label: t('events.tabOrganizing') },
+              { value: 'participated', label: t('events.tabParticipated') },
             ]}
           />
           </div>
@@ -423,7 +426,7 @@ function EventsListPage() {
       />
 
       {selectedDate && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-[12.5px] font-medium text-accent">
             {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
             <button
@@ -449,11 +452,18 @@ function EventsListPage() {
             icon={SearchX}
             title={t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })}
           />
+        ) : profileStat ? (
+          <EmptyState
+            icon={CalendarOff}
+            title={t('events.emptyProfileStat', { label: profileStatLabel })}
+          />
         ) : (
           <EmptyState
             icon={CalendarOff}
-            title={t('events.emptyNoPlanned', 'Пока ничего не запланировано')}
-            action={<Button asChild size="sm"><Link to="/events/new"><Plus size={14} />{t('events.emptyCreateButton', 'Создать встречу')}</Link></Button>}
+            title={emptyTitle}
+            action={showCreateAction
+              ? <Button asChild size="sm"><Link to="/events/new"><Plus size={14} />{t('events.emptyCreateButton', 'Создать встречу')}</Link></Button>
+              : undefined}
           />
         )
       ) : (
@@ -497,6 +507,33 @@ function EventsListPage() {
       )}
     </div>
   )
+}
+
+function getTabEmptyTitle(
+  tab: EventsListTab,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  const keys: Record<EventsListTab, string> = {
+    all: 'events.emptyNoPlanned',
+    invited: 'events.emptyNoInvited',
+    attending: 'events.emptyNoAttending',
+    organizing: 'events.emptyNoOrganized',
+    participated: 'events.emptyNoParticipated',
+  }
+  return t(keys[tab])
+}
+
+function getProfileStatLabel(
+  stat: ProfileStatKey,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  const keys: Record<ProfileStatKey, string> = {
+    organized: 'profile.statsOrganized',
+    participated: 'profile.statsParticipated',
+    completed: 'profile.statsCompleted',
+    upcoming: 'profile.statsUpcoming',
+  }
+  return t(keys[stat])
 }
 
 EventsListPage.displayName = 'EventsListPage'

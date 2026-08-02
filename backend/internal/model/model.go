@@ -44,23 +44,25 @@ type ReminderEvent struct {
 }
 
 type Event struct {
-	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	DateStart   time.Time `json:"date_start"`
-	DateEnd     time.Time `json:"date_end"`
-	Location    string    `json:"location"`
-	LocationLat *float64  `json:"location_lat,omitempty"`
-	LocationLng *float64  `json:"location_lng,omitempty"`
-	Category    string    `json:"category"` // ordinary | business
-	DressCode   *string   `json:"dress_code,omitempty"`
-	Status      string    `json:"status"` // active | completed
-	IsPublic    bool      `json:"is_public"`
-	MaxGuests   *int      `json:"max_guests,omitempty"`
-	OrganizerID uuid.UUID `json:"organizer_id"`
-	InviteToken uuid.UUID `json:"invite_token"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uuid.UUID  `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	DateStart   time.Time  `json:"date_start"`
+	DateEnd     time.Time  `json:"date_end"`
+	Location    string     `json:"location"`
+	LocationLat *float64   `json:"location_lat,omitempty"`
+	LocationLng *float64   `json:"location_lng,omitempty"`
+	CityID      *uuid.UUID `json:"-"`
+	City        *City      `json:"city"`
+	Category    string     `json:"category"` // ordinary | business
+	DressCode   *string    `json:"dress_code,omitempty"`
+	Status      string     `json:"status"` // active | completed
+	IsPublic    bool       `json:"is_public"`
+	MaxGuests   *int       `json:"max_guests,omitempty"`
+	OrganizerID uuid.UUID  `json:"organizer_id"`
+	InviteToken uuid.UUID  `json:"invite_token"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 type EventParticipant struct {
@@ -245,6 +247,7 @@ type CreateEventRequest struct {
 	Location    string    `json:"location"`
 	LocationLat *float64  `json:"location_lat,omitempty"`
 	LocationLng *float64  `json:"location_lng,omitempty"`
+	CityID      uuid.UUID `json:"city_id"`
 	Category    string    `json:"category"` // ordinary | business; defaults to ordinary
 	DressCode   *string   `json:"dress_code,omitempty"`
 	IsPublic    bool      `json:"is_public"`
@@ -259,6 +262,7 @@ type UpdateEventRequest struct {
 	Location    *string    `json:"location,omitempty"`
 	LocationLat *float64   `json:"location_lat,omitempty"`
 	LocationLng *float64   `json:"location_lng,omitempty"`
+	CityID      *uuid.UUID `json:"city_id,omitempty"`
 	Category    *string    `json:"category,omitempty"`
 	DressCode   *string    `json:"dress_code,omitempty"`
 	IsPublic    *bool      `json:"is_public,omitempty"`
@@ -324,6 +328,13 @@ type CreateCarpoolRequest struct {
 
 // ─── Enriched API response types ───────────────────────────────────────────
 
+// City is a normalized Russian city from the locally seeded FIAS catalog.
+type City struct {
+	ID     uuid.UUID `json:"id"`
+	Name   string    `json:"name"`
+	Region string    `json:"region"`
+}
+
 type InviteEventInfo struct {
 	ID             uuid.UUID      `json:"id"`
 	Title          string         `json:"title"`
@@ -331,6 +342,7 @@ type InviteEventInfo struct {
 	DateStart      time.Time      `json:"date_start"`
 	DateEnd        time.Time      `json:"date_end"`
 	Location       string         `json:"location"`
+	City           *City          `json:"city"`
 	Category       string         `json:"category"`
 	DressCode      *string        `json:"dress_code,omitempty"`
 	IsPublic       bool           `json:"is_public"`
@@ -418,6 +430,7 @@ type EventDetail struct {
 	Location       string            `json:"location"`
 	LocationLat    *float64          `json:"location_lat,omitempty"`
 	LocationLng    *float64          `json:"location_lng,omitempty"`
+	City           *City             `json:"city"`
 	Category       string            `json:"category"`
 	DressCode      *string           `json:"dress_code,omitempty"`
 	Status         string            `json:"status"`
@@ -443,6 +456,7 @@ type EventListItem struct {
 	DateStart      time.Time         `json:"date_start"`
 	DateEnd        time.Time         `json:"date_end"`
 	Location       string            `json:"location"`
+	City           *City             `json:"city"`
 	Category       string            `json:"category"`
 	DressCode      *string           `json:"dress_code,omitempty"`
 	Status         string            `json:"status"`
@@ -476,6 +490,7 @@ type PublicEventListItem struct {
 	Location       string                  `json:"location"`
 	LocationLat    *float64                `json:"location_lat,omitempty"`
 	LocationLng    *float64                `json:"location_lng,omitempty"`
+	City           *City                   `json:"city"`
 	Category       string                  `json:"category"`
 	DressCode      *string                 `json:"dress_code,omitempty"`
 	Status         string                  `json:"status"`

@@ -13,6 +13,8 @@ interface DateRangePickerProps {
   nextMonthLabel: string
   locale?: string
   required?: boolean
+  minDate?: string
+  selectionMode?: 'single' | 'range'
   className?: string
 }
 
@@ -69,19 +71,31 @@ export function DateRangePicker({
   nextMonthLabel,
   locale = 'ru-RU',
   required,
+  minDate,
+  selectionMode = 'range',
   className,
 }: DateRangePickerProps) {
   const today = useMemo(() => new Date(), [])
   const selectedStart = parseIsoDay(startDate)
   const selectedEnd = parseIsoDay(endDate)
-  const [cursor, setCursor] = useState(() => selectedStart ?? today)
+  const minimumDate = parseIsoDay(minDate)
+  const [cursor, setCursor] = useState(() =>
+    minimumDate && (!selectedStart || isBeforeDay(selectedStart, minimumDate))
+      ? minimumDate
+      : selectedStart ?? today,
+  )
   const [hoveredDate, setHoveredDate] = useState<Date | undefined>()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
     const nextStart = parseIsoDay(startDate)
-    if (nextStart) setCursor(nextStart)
-  }, [startDate])
+    const nextMinimum = parseIsoDay(minDate)
+    if (nextMinimum && (!nextStart || isBeforeDay(nextStart, nextMinimum))) {
+      setCursor(nextMinimum)
+    } else if (nextStart) {
+      setCursor(nextStart)
+    }
+  }, [startDate, minDate])
 
   const monthFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }),
@@ -128,7 +142,7 @@ export function DateRangePicker({
   }, [cursor])
 
   const label = selectedStart
-    ? selectedEnd
+    ? selectedEnd && selectionMode === 'range' && !isSameDay(selectedStart, selectedEnd)
       ? `${dayFormatter.format(selectedStart)} – ${dayFormatter.format(selectedEnd)}`
       : dayFormatter.format(selectedStart)
     : placeholder
@@ -137,10 +151,18 @@ export function DateRangePicker({
   const capitalizedMonthLabel = monthLabel.charAt(0).toLocaleUpperCase(locale) + monthLabel.slice(1)
 
   function selectDay(day: Date) {
+    if (minimumDate && isBeforeDay(day, minimumDate)) return
+
     const iso = toIsoDay(day)
     setHoveredDate(undefined)
 
-    if (!selectedStart || selectedEnd) {
+    if (selectionMode === 'single') {
+      onChange({ startDate: iso, endDate: iso })
+      setOpen(false)
+      return
+    }
+
+    if (!selectedStart || selectedEnd || (minimumDate && isBeforeDay(selectedStart, minimumDate))) {
       onChange({ startDate: iso, endDate: '' })
       return
     }
@@ -154,6 +176,9 @@ export function DateRangePicker({
     onChange({ startDate: toIsoDay(selectedStart), endDate: iso })
     setOpen(false)
   }
+
+  const previousMonthLastDay = new Date(cursor.getFullYear(), cursor.getMonth(), 0)
+  const previousMonthDisabled = Boolean(minimumDate && isBeforeDay(previousMonthLastDay, minimumDate))
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -211,7 +236,8 @@ export function DateRangePicker({
               <button
                 type="button"
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-3 transition hover:bg-hover hover:text-ink focus-ring"
+                disabled={previousMonthDisabled}
+                className="flex h-8 w-8 items-center justify-center rounded-[9px] border border-line bg-surface text-ink-3 transition hover:bg-hover hover:text-ink focus-ring disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-surface disabled:hover:text-ink-3"
                 aria-label={previousMonthLabel}
               >
                 <ChevronLeft size={15} />
@@ -236,7 +262,7 @@ export function DateRangePicker({
                 key={day}
                 className={cn(
                   'py-1.5 text-center text-[9.5px] font-bold uppercase tracking-[0.06em] text-ink-3',
-                  index >= 5 && 'text-accent',
+                  index >= 5 && 'text-danger',
                 )}
               >
                 {day}
@@ -250,21 +276,26 @@ export function DateRangePicker({
               const previewed = !selectedEnd && isInPreviewRange(date, selectedStart, hoveredDate)
               const current = isSameDay(date, today)
               const weekend = index % 7 >= 5
+              const disabled = Boolean(minimumDate && isBeforeDay(date, minimumDate))
 
               return (
                 <button
                   key={toIsoDay(date)}
                   type="button"
                   onClick={() => selectDay(date)}
-                  onFocus={() => setHoveredDate(date)}
-                  onMouseEnter={() => setHoveredDate(date)}
+                  onFocus={() => !disabled && setHoveredDate(date)}
+                  onMouseEnter={() => !disabled && setHoveredDate(date)}
+                  disabled={disabled}
                   className={cn(
                     'relative flex aspect-square items-center justify-center rounded-[10px] text-[12px] font-semibold tnum transition focus-ring',
-                    outOfMonth ? 'text-ink-4' : weekend ? 'text-ink-2' : 'text-ink',
+                    outOfMonth
+                      ? weekend ? 'text-danger opacity-40' : 'text-ink-4'
+                      : weekend ? 'text-danger' : 'text-ink',
                     'hover:bg-hover',
                     (ranged || previewed) && 'brand-gradient-soft text-accent',
                     current && !selectedAsStart && !selectedAsEnd && 'ring-1 ring-inset ring-accent text-accent',
                     (selectedAsStart || selectedAsEnd) && 'brand-gradient text-white font-bold hover:opacity-92',
+                    disabled && 'cursor-not-allowed opacity-30 hover:bg-transparent',
                   )}
                   aria-label={dayFormatter.format(date)}
                   aria-pressed={Boolean(selectedAsStart || selectedAsEnd)}

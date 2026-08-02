@@ -2,3 +2,4 @@
 .impeccable/
 backend/.env
 graphify-out/
+.idea

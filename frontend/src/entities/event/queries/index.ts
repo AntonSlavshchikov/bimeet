@@ -9,6 +9,7 @@ export const eventKeys = {
 
 export const publicEventKeys = {
   all: ['publicEvents'] as const,
+  list: (cityId?: string) => [...publicEventKeys.all, cityId ?? 'all'] as const,
 }
 
 export function useEvents() {
@@ -28,10 +29,9 @@ export function useEvent(id: string) {
   return data as Event | undefined
 }
 
-export function usePublicEvents() {
-  const { data = [] } = useQuery({
-    queryKey: publicEventKeys.all,
-    queryFn: eventsReadApi.listPublic,
+export function usePublicEvents(cityId?: string) {
+  return useQuery({
+    queryKey: publicEventKeys.list(cityId),
+    queryFn: () => eventsReadApi.listPublic(cityId),
   })
-  return data
 }

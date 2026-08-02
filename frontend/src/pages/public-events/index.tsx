@@ -8,23 +8,30 @@ import {
   type RankedPublicEvent,
 } from '@/features/user-location/model/rankPublicEvents'
 import { useUserLocation } from '@/features/user-location/model/useUserLocation'
+import CitySelect from '@/features/city-select/ui/CitySelect'
+import { useCities } from '@/entities/city/queries'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { PublicEventListItem } from '@/entities/event/model/types'
-import { EmptyState, ListGroup, PageHeader, SearchInput, useToast } from '@/shared/ui'
+import { Button, EmptyState, ListGroup, PageHeader, SearchInput, useToast } from '@/shared/ui'
 
 // PublicEventsPage — самостоятельный экран «Найти публичные»: каталог
 // будущих публичных встреч для всех авторизованных пользователей.
 export default function PublicEventsPage() {
-  const publicEvents = usePublicEvents()
+  const [cityId, setCityId] = useState('')
+  const publicEventsQuery = usePublicEvents(cityId || undefined)
+  const citiesQuery = useCities()
+  const cities = citiesQuery.data ?? []
   const { t } = useTranslation()
   const toast = useToast()
   const joinPublicEvent = useJoinPublicEvent()
   const { position } = useUserLocation()
   const [search, setSearch] = useState('')
 
+  const selectedCity = cities.find(city => city.id === cityId)
+
   const eventList = useMemo(
-    () => buildPublicEventList(publicEvents, position),
-    [position, publicEvents],
+    () => buildPublicEventList(publicEventsQuery.data ?? [], position),
+    [position, publicEventsQuery.data],
   )
 
   const visibleList = useMemo(() => {
@@ -81,19 +88,47 @@ export default function PublicEventsPage() {
       {/* Head */}
       <PageHeader title={t('nav.publicEvents')} subtitle={t('publicEvents.subtitle', { count: totalCount })} />
 
-      <SearchInput
-        className="max-w-[420px]"
-        placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-      />
+      <div className="flex w-full max-w-[760px] flex-col gap-2 sm:flex-row">
+        <SearchInput
+          className="min-w-0 flex-1"
+          placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <CitySelect
+          value={cityId}
+          onValueChange={setCityId}
+          allowAll
+          className="sm:w-[300px]"
+        />
+      </div>
 
-      {visibleCount === 0 ? (
+      {publicEventsQuery.isPending ? (
+        <EmptyState
+          icon={Compass}
+          title={t('publicEvents.loading', 'Загрузка публичных встреч...')}
+        />
+      ) : publicEventsQuery.isError ? (
+        <EmptyState
+          icon={SearchX}
+          title={t('publicEvents.loadError', 'Не удалось загрузить публичные встречи')}
+          action={(
+            <Button type="button" variant="soft" onClick={() => publicEventsQuery.refetch()}>
+              {t('common.retry', 'Повторить')}
+            </Button>
+          )}
+        />
+      ) : visibleCount === 0 ? (
         <EmptyState
           icon={search.trim() ? SearchX : Compass}
           title={search.trim()
             ? t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })
-            : t('publicEvents.empty')}
+            : selectedCity
+              ? t('publicEvents.emptyCity', {
+                  city: selectedCity.name,
+                  defaultValue: `В городе ${selectedCity.name} пока нет публичных встреч`,
+                })
+              : t('publicEvents.empty')}
         />
       ) : (
         visibleList.mode === 'fallback' ? (

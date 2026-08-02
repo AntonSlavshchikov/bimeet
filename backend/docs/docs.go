@@ -371,6 +371,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
                         }
                     },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -539,6 +545,45 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cities": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "List active Russian cities",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/bimeet_internal_model.City"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
                         }
@@ -765,6 +810,15 @@ const docTemplate = `{
                     "events"
                 ],
                 "summary": "List public events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Filter by FIAS city UUID",
+                        "name": "city_id",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -773,6 +827,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/bimeet_internal_model.PublicEventListItem"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2168,6 +2228,85 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{id}/messages/image": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Post an event chat photo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Caption",
+                        "name": "body",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_model.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/events/{id}/messages/read": {
             "post": {
                 "security": [
@@ -3379,6 +3518,20 @@ const docTemplate = `{
                 }
             }
         },
+        "bimeet_internal_model.City": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                }
+            }
+        },
         "bimeet_internal_model.Collection": {
             "type": "object",
             "properties": {
@@ -3537,6 +3690,9 @@ const docTemplate = `{
                     "description": "ordinary | business; defaults to ordinary",
                     "type": "string"
                 },
+                "city_id": {
+                    "type": "string"
+                },
                 "date_end": {
                     "type": "string"
                 },
@@ -3597,6 +3753,9 @@ const docTemplate = `{
                 "category": {
                     "description": "ordinary | business",
                     "type": "string"
+                },
+                "city": {
+                    "$ref": "#/definitions/bimeet_internal_model.City"
                 },
                 "created_at": {
                     "type": "string"
@@ -3687,6 +3846,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/bimeet_internal_model.ChangeLogInfo"
                     }
                 },
+                "city": {
+                    "$ref": "#/definitions/bimeet_internal_model.City"
+                },
                 "collections": {
                     "type": "array",
                     "items": {
@@ -3770,6 +3932,9 @@ const docTemplate = `{
                 "category": {
                     "type": "string"
                 },
+                "city": {
+                    "$ref": "#/definitions/bimeet_internal_model.City"
+                },
                 "confirmed_count": {
                     "type": "integer"
                 },
@@ -3846,6 +4011,9 @@ const docTemplate = `{
             "properties": {
                 "category": {
                     "type": "string"
+                },
+                "city": {
+                    "$ref": "#/definitions/bimeet_internal_model.City"
                 },
                 "confirmed_count": {
                     "type": "integer"
@@ -3946,6 +4114,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "image_url": {
                     "type": "string"
                 },
                 "is_mine": {
@@ -4135,6 +4306,9 @@ const docTemplate = `{
                 "category": {
                     "type": "string"
                 },
+                "city": {
+                    "$ref": "#/definitions/bimeet_internal_model.City"
+                },
                 "confirmed_count": {
                     "type": "integer"
                 },
@@ -4164,6 +4338,12 @@ const docTemplate = `{
                 },
                 "location": {
                     "type": "string"
+                },
+                "location_lat": {
+                    "type": "number"
+                },
+                "location_lng": {
+                    "type": "number"
                 },
                 "max_guests": {
                     "type": "integer"
@@ -4277,6 +4457,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "category": {
+                    "type": "string"
+                },
+                "city_id": {
                     "type": "string"
                 },
                 "date_end": {
