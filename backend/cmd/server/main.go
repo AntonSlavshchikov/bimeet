@@ -15,6 +15,7 @@ import (
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
 	carpoolhandler "bimeet/internal/handler/carpool"
+	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
@@ -28,6 +29,7 @@ import (
 	"bimeet/internal/reminder"
 	adminrepo "bimeet/internal/repository/admin"
 	carpoolrepo "bimeet/internal/repository/carpool"
+	cityrepo "bimeet/internal/repository/city"
 	collectionrepo "bimeet/internal/repository/collection"
 	eventrepo "bimeet/internal/repository/event"
 	itemrepo "bimeet/internal/repository/item"
@@ -41,6 +43,7 @@ import (
 	adminsvc "bimeet/internal/service/admin"
 	authsvc "bimeet/internal/service/auth"
 	carpoolsvc "bimeet/internal/service/carpool"
+	citysvc "bimeet/internal/service/city"
 	collectionsvc "bimeet/internal/service/collection"
 	eventsvc "bimeet/internal/service/event"
 	itemsvc "bimeet/internal/service/item"
@@ -115,6 +118,7 @@ func main() {
 	// Repositories
 	userRepo := userrepo.New(pool)
 	eventRepo := eventrepo.New(pool)
+	cityRepo := cityrepo.New(pool)
 	collectionRepo := collectionrepo.New(pool)
 	pollRepo := pollrepo.New(pool)
 	itemRepo := itemrepo.New(pool)
@@ -160,7 +164,8 @@ func main() {
 		FrontendURL:  cfg.FrontendURL,
 	})
 	authSvc := authsvc.New(userRepo, loginCodeRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
-	eventSvc := eventsvc.New(eventRepo, userRepo, notifyingRepo, m)
+	citySvc := citysvc.New(cityRepo)
+	eventSvc := eventsvc.New(eventRepo, cityRepo, userRepo, notifyingRepo, m)
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
 	itemSvc := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc := carpoolsvc.New(carpoolRepo, eventRepo)
@@ -203,6 +208,7 @@ func main() {
 	// Handlers
 	authH := authhandler.New(authSvc)
 	eventH := eventhandler.New(eventSvc)
+	cityH := cityhandler.New(citySvc)
 	collectionH := collectionhandler.New(collectionSvc)
 	pollH := pollhandler.New(pollSvc)
 	itemH := itemhandler.New(itemSvc)
@@ -221,6 +227,7 @@ func main() {
 	router := handler.NewRouter(
 		authH,
 		eventH,
+		cityH,
 		collectionH,
 		pollH,
 		itemH,

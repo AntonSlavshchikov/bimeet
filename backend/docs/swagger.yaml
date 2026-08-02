@@ -159,6 +159,15 @@ definitions:
       old_value:
         type: string
     type: object
+  bimeet_internal_model.City:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      region:
+        type: string
+    type: object
   bimeet_internal_model.Collection:
     properties:
       created_at:
@@ -263,6 +272,8 @@ definitions:
       category:
         description: ordinary | business; defaults to ordinary
         type: string
+      city_id:
+        type: string
       date_end:
         type: string
       date_start:
@@ -303,6 +314,8 @@ definitions:
       category:
         description: ordinary | business
         type: string
+      city:
+        $ref: '#/definitions/bimeet_internal_model.City'
       created_at:
         type: string
       date_end:
@@ -362,6 +375,8 @@ definitions:
         items:
           $ref: '#/definitions/bimeet_internal_model.ChangeLogInfo'
         type: array
+      city:
+        $ref: '#/definitions/bimeet_internal_model.City'
       collections:
         items:
           $ref: '#/definitions/bimeet_internal_model.CollectionInfo'
@@ -417,6 +432,8 @@ definitions:
     properties:
       category:
         type: string
+      city:
+        $ref: '#/definitions/bimeet_internal_model.City'
       confirmed_count:
         type: integer
       created_at:
@@ -468,6 +485,8 @@ definitions:
     properties:
       category:
         type: string
+      city:
+        $ref: '#/definitions/bimeet_internal_model.City'
       confirmed_count:
         type: integer
       date_end:
@@ -533,6 +552,8 @@ definitions:
       event_id:
         type: string
       id:
+        type: string
+      image_url:
         type: string
       is_mine:
         type: boolean
@@ -656,6 +677,8 @@ definitions:
     properties:
       category:
         type: string
+      city:
+        $ref: '#/definitions/bimeet_internal_model.City'
       confirmed_count:
         type: integer
       created_at:
@@ -676,6 +699,10 @@ definitions:
         type: boolean
       location:
         type: string
+      location_lat:
+        type: number
+      location_lng:
+        type: number
       max_guests:
         type: integer
       my_status:
@@ -748,6 +775,8 @@ definitions:
   bimeet_internal_model.UpdateEventRequest:
     properties:
       category:
+        type: string
+      city_id:
         type: string
       date_end:
         type: string
@@ -1178,6 +1207,30 @@ paths:
       summary: Verify a one-time login code
       tags:
       - auth
+  /cities:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/bimeet_internal_model.City'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List active Russian cities
+      tags:
+      - cities
   /events/:
     get:
       produces:
@@ -2159,6 +2212,57 @@ paths:
       summary: Delete an event chat message
       tags:
       - messages
+  /events/{id}/messages/image:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Caption
+        in: formData
+        name: body
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/bimeet_internal_model.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Post an event chat photo
+      tags:
+      - messages
   /events/{id}/messages/read:
     post:
       parameters:
@@ -2567,6 +2671,12 @@ paths:
       - events
   /events/public:
     get:
+      parameters:
+      - description: Filter by FIAS city UUID
+        format: uuid
+        in: query
+        name: city_id
+        type: string
       produces:
       - application/json
       responses:
@@ -2576,6 +2686,10 @@ paths:
             items:
               $ref: '#/definitions/bimeet_internal_model.PublicEventListItem'
             type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:

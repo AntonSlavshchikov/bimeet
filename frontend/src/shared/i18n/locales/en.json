@@ -16,7 +16,8 @@
     "backToList": "Back to list",
     "edit": "Edit",
     "optional": "(optional)",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "retry": "Retry"
   },
   "auth": {
     "tagline": "Organize events easily",
@@ -117,7 +118,20 @@
     "nearbyTitle": "Near you",
     "otherTitle": "Other public events",
     "nearbyMeta": "{{count}} · within {{radius}} km",
-    "sectionCount": "{{count}}"
+    "sectionCount": "{{count}}",
+    "emptyCity": "There are no public events in {{city}} yet",
+    "loading": "Loading public events...",
+    "loadError": "Could not load public events"
+  },
+  "cities": {
+    "all": "All cities",
+    "placeholder": "Select a city",
+    "searchPlaceholder": "Find a city or region...",
+    "notFound": "City not found",
+    "commandLabel": "City selection",
+    "suggestionsLabel": "Cities",
+    "loading": "Loading cities...",
+    "loadError": "Could not load cities"
   },
   "eventCard": {
     "statusCompleted": "Completed",
@@ -166,6 +180,7 @@
     "dateRangeClear": "Clear dates",
     "dateRangePreviousMonth": "Previous month",
     "dateRangeNextMonth": "Next month",
+    "fieldCity": "City",
     "fieldLocation": "Location",
     "fieldLocationPlaceholder": "Address or place name",
     "fieldDressCode": "Dress code",

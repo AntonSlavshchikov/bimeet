@@ -16,7 +16,8 @@
     "backToList": "К списку",
     "edit": "Редактировать",
     "optional": "(необязательно)",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "retry": "Повторить"
   },
   "auth": {
     "tagline": "Организуйте встречи легко",
@@ -117,7 +118,20 @@
     "nearbyTitle": "Рядом с вами",
     "otherTitle": "Другие публичные встречи",
     "nearbyMeta": "{{count}} · до {{radius}} км",
-    "sectionCount": "{{count}}"
+    "sectionCount": "{{count}}",
+    "emptyCity": "В городе {{city}} пока нет публичных встреч",
+    "loading": "Загрузка публичных встреч...",
+    "loadError": "Не удалось загрузить публичные встречи"
+  },
+  "cities": {
+    "all": "Все города",
+    "placeholder": "Выберите город",
+    "searchPlaceholder": "Найти город или регион...",
+    "notFound": "Город не найден",
+    "commandLabel": "Выбор города",
+    "suggestionsLabel": "Города",
+    "loading": "Загрузка городов...",
+    "loadError": "Не удалось загрузить города"
   },
   "eventCard": {
     "statusCompleted": "Завершена",
@@ -166,6 +180,7 @@
     "dateRangeClear": "Сбросить даты",
     "dateRangePreviousMonth": "Предыдущий месяц",
     "dateRangeNextMonth": "Следующий месяц",
+    "fieldCity": "Город",
     "fieldLocation": "Место",
     "fieldLocationPlaceholder": "Адрес или название места",
     "fieldDressCode": "Дресс-код",

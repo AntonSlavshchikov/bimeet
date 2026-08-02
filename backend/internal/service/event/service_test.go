@@ -25,8 +25,12 @@ func newService(t *testing.T) (*eventsvc.Service, *mock.MockEventRepo, *mock.Moc
 	ur := mock.NewMockUserRepo(ctrl)
 	nr := mock.NewMockNotificationRepo(ctrl)
 	ml := mock.NewMockMailer(ctrl)
-	return eventsvc.New(er, ur, nr, ml), er, ur, nr, ml
+	return eventsvc.New(er, activeCityRepo{}, ur, nr, ml), er, ur, nr, ml
 }
+
+type activeCityRepo struct{}
+
+func (activeCityRepo) ExistsActive(context.Context, uuid.UUID) (bool, error) { return true, nil }
 
 // ─── Create ────────────────────────────────────────────────────────────────
 
@@ -57,6 +61,93 @@ func TestCreate_DateEndBeforeDateStart(t *testing.T) {
 	assert.Contains(t, err.Error(), "date_end must be after date_start")
 }
 
+func TestCreate_MissingCity(t *testing.T) {
+	svc, _, _, _, _ := newService(t)
+	now := time.Now()
+	_, err := svc.Create(context.Background(), model.CreateEventRequest{
+		Title: "Party", DateStart: now, DateEnd: now.Add(time.Hour),
+	}, uuid.New())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "city is required")
+}
+
+func TestCreate_RejectsInactiveCity(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	er := mock.NewMockEventRepo(ctrl)
+	cr := mock.NewMockCityRepo(ctrl)
+	ur := mock.NewMockUserRepo(ctrl)
+	nr := mock.NewMockNotificationRepo(ctrl)
+	ml := mock.NewMockMailer(ctrl)
+	svc := eventsvc.New(er, cr, ur, nr, ml)
+	cityID := uuid.New()
+	now := time.Now()
+	cr.EXPECT().ExistsActive(gomock.Any(), cityID).Return(false, nil)
+
+	_, err := svc.Create(context.Background(), model.CreateEventRequest{
+		Title: "Party", DateStart: now, DateEnd: now.Add(time.Hour), CityID: cityID,
+	}, uuid.New())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "active catalog city")
+}
+
+func TestUpdate_LegacyEventRequiresCity(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+	eventID := uuid.New()
+	organizerID := uuid.New()
+	now := time.Now()
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
+		ID: eventID, OrganizerID: organizerID, DateStart: now, DateEnd: now.Add(time.Hour),
+	}, nil)
+
+	_, err := svc.Update(context.Background(), eventID, organizerID, model.UpdateEventRequest{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "city is required")
+}
+
+func TestUpdate_KeepsPreviouslyAssignedInactiveCity(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	er := mock.NewMockEventRepo(ctrl)
+	cr := mock.NewMockCityRepo(ctrl)
+	ur := mock.NewMockUserRepo(ctrl)
+	nr := mock.NewMockNotificationRepo(ctrl)
+	ml := mock.NewMockMailer(ctrl)
+	svc := eventsvc.New(er, cr, ur, nr, ml)
+
+	eventID := uuid.New()
+	organizerID := uuid.New()
+	cityID := uuid.New()
+	now := time.Now()
+	title := "Updated title"
+	existing := model.Event{
+		ID: eventID, OrganizerID: organizerID, Title: "Original title",
+		DateStart: now, DateEnd: now.Add(time.Hour), CityID: &cityID,
+	}
+	updated := existing
+	updated.Title = title
+
+	er.EXPECT().GetByID(gomock.Any(), eventID).Return(existing, nil)
+	er.EXPECT().Update(gomock.Any(), eventID, model.UpdateEventRequest{Title: &title}).Return(updated, nil)
+	er.EXPECT().AddChangeLog(gomock.Any(), eventID, organizerID, "title", existing.Title, title).Return(nil)
+	participantsListed := make(chan struct{})
+	er.EXPECT().ListParticipants(gomock.Any(), eventID).
+		DoAndReturn(func(context.Context, uuid.UUID) ([]model.EventParticipant, error) {
+			close(participantsListed)
+			return nil, nil
+		})
+
+	result, err := svc.Update(
+		context.Background(), eventID, organizerID, model.UpdateEventRequest{Title: &title},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, title, result.Title)
+
+	select {
+	case <-participantsListed:
+	case <-time.After(time.Second):
+		t.Fatal("update notification worker did not finish")
+	}
+}
+
 // Bimeet for People знает только обычные встречи: любая входящая категория
 // (включая legacy "business") принудительно становится "ordinary".
 func TestCreate_ForcesOrdinary(t *testing.T) {
@@ -68,6 +159,7 @@ func TestCreate_ForcesOrdinary(t *testing.T) {
 		Title:     "Sync",
 		DateStart: now,
 		DateEnd:   now.Add(1 * time.Hour),
+		CityID:    uuid.New(),
 		Category:  "business",
 	}
 
@@ -86,7 +178,7 @@ func TestCreate_DefaultsToOrdinary(t *testing.T) {
 
 	organizerID := uuid.New()
 	now := time.Now()
-	req := model.CreateEventRequest{Title: "Party", DateStart: now, DateEnd: now.Add(2 * time.Hour)}
+	req := model.CreateEventRequest{Title: "Party", DateStart: now, DateEnd: now.Add(2 * time.Hour), CityID: uuid.New()}
 	expected := model.Event{ID: uuid.New(), Title: "Party"}
 
 	er.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(model.CreateEventRequest{}), organizerID).

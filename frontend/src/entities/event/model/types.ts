@@ -3,6 +3,7 @@ import type { Collection } from '@/entities/collection/model/types'
 import type { Poll } from '@/entities/poll/model/types'
 import type { Item } from '@/entities/item/model/types'
 import type { Carpool } from '@/entities/carpool/model/types'
+import type { City } from '@/shared/api/types/city'
 
 export interface ChangeLogEntry {
   id: string
@@ -22,6 +23,7 @@ export interface Event {
   location: string
   location_lat?: number
   location_lng?: number
+  city: City | null
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean
@@ -47,6 +49,7 @@ export interface EventListItem {
   date_start: string
   date_end: string
   location: string
+  city: City | null
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean
@@ -73,6 +76,7 @@ export interface PublicEventListItem {
   location: string
   location_lat?: number
   location_lng?: number
+  city: City | null
   dress_code?: string
   status: 'active' | 'completed'
   is_public: boolean
@@ -92,6 +96,7 @@ export interface InviteEventInfo {
   date_start: string
   date_end: string
   location: string
+  city: City | null
   dress_code?: string
   organizer: PublicEventUser
   confirmed_count: number
@@ -105,7 +110,10 @@ export interface CreateEventData {
   location: string
   location_lat?: number
   location_lng?: number
+  city_id: string
   dress_code?: string
+  is_public: boolean
+  max_guests?: number
 }
 
 export interface UpdateEventData {
@@ -116,5 +124,8 @@ export interface UpdateEventData {
   location?: string
   location_lat?: number
   location_lng?: number
+  city_id?: string
   dress_code?: string
+  is_public?: boolean
+  max_guests?: number
 }

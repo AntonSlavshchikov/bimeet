@@ -6,6 +6,7 @@ import { useEvent } from '@/entities/event/queries'
 import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
 import { Button, DateRangePicker, Input, PageHeader, SegmentedControl, Textarea, useToast } from '@/shared/ui'
 import LocationPicker from '@/features/location-picker/ui/LocationPicker'
+import CitySelect from '@/features/city-select/ui/CitySelect'
 import { cn } from '@/shared/lib/cn'
 
 interface FormValues {
@@ -16,6 +17,7 @@ interface FormValues {
   location: string
   locationLat?: number
   locationLng?: number
+  cityId: string
   dressCode: string
   isPublic: boolean
   maxGuests: string
@@ -74,6 +76,7 @@ export default function EventFormPage() {
     dateStart: '',
     dateEnd: '',
     location: '',
+    cityId: '',
     dressCode: '',
     isPublic: false,
     maxGuests: '',
@@ -89,6 +92,7 @@ export default function EventFormPage() {
         location: event.location,
         locationLat: event.location_lat,
         locationLng: event.location_lng,
+        cityId: event.city?.id ?? '',
         dressCode: event.dress_code ?? '',
         isPublic: event.is_public ?? false,
         maxGuests: event.max_guests != null ? String(event.max_guests) : '',
@@ -140,7 +144,7 @@ export default function EventFormPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!form.title || !form.dateStart || !form.dateEnd || !form.location) {
+    if (!form.title || !form.dateStart || !form.dateEnd || !form.cityId || !form.location) {
       toast({ title: t('eventForm.requiredFieldsWarning', 'Заполните обязательные поля'), status: 'warning' })
       return
     }
@@ -157,6 +161,7 @@ export default function EventFormPage() {
       date_start: new Date(form.dateStart).toISOString(),
       date_end: new Date(form.dateEnd).toISOString(),
       location: form.location,
+      city_id: form.cityId,
       is_public: form.isPublic,
       ...(form.locationLat != null && form.locationLng != null
         ? { location_lat: form.locationLat, location_lng: form.locationLng }
@@ -166,7 +171,10 @@ export default function EventFormPage() {
     }
 
     if (isEdit && id) {
-      updateEvent.mutate(payload, {
+      updateEvent.mutate({
+        ...payload,
+        city_id: form.cityId === event?.city?.id ? undefined : form.cityId,
+      }, {
         onSuccess: () => {
           toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
           navigate(`/events/${id}`)
@@ -302,6 +310,14 @@ export default function EventFormPage() {
               />
             </Field>
           </div>
+          <Field label={t('eventForm.fieldCity', 'Город')} required>
+            <CitySelect
+              value={form.cityId}
+              onValueChange={cityId => update('cityId', cityId)}
+              disabled={isLoading}
+              currentCity={event?.city ?? undefined}
+            />
+          </Field>
           <Field label={t('eventForm.fieldLocation', 'Место')} required>
             <LocationPicker
               value={{ address: form.location, lat: form.locationLat, lng: form.locationLng }}

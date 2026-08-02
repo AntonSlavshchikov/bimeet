@@ -13,6 +13,7 @@ import (
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
 	carpoolhandler "bimeet/internal/handler/carpool"
+	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
@@ -27,6 +28,7 @@ import (
 func NewRouter(
 	auth *authhandler.Handler,
 	event *eventhandler.Handler,
+	city *cityhandler.Handler,
 	collection *collectionhandler.Handler,
 	poll *pollhandler.Handler,
 	item *itemhandler.Handler,
@@ -90,6 +92,7 @@ func NewRouter(
 
 		// Public events list (must be before /{id} to avoid conflict)
 		r.Get("/api/events/public", event.ListPublic)
+		r.Get("/api/cities", city.List)
 
 		// Events
 		r.Route("/api/events", func(r chi.Router) {

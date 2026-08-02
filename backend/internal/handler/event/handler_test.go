@@ -100,7 +100,7 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 			{User: model.PublicUserInfo{Name: "Bob"}, Status: "confirmed"},
 		},
 	}}
-	svc.EXPECT().ListPublic(gomock.Any(), userID).Return(items, nil)
+	svc.EXPECT().ListPublic(gomock.Any(), userID, nil).Return(items, nil)
 
 	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public", nil), userID)
 	w := httptest.NewRecorder()
@@ -126,6 +126,28 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	require.True(t, ok)
 	assert.NotContains(t, user, "email")
 	assert.NotContains(t, user, "id")
+}
+
+func TestListPublic_PassesCityFilter(t *testing.T) {
+	router, svc := newRouter(t)
+	userID := uuid.New()
+	cityID := uuid.New()
+	svc.EXPECT().ListPublic(gomock.Any(), userID, gomock.Eq(&cityID)).Return([]model.PublicEventListItem{}, nil)
+
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public?city_id="+cityID.String(), nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestListPublic_RejectsInvalidCityFilter(t *testing.T) {
+	router, _ := newRouter(t)
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public?city_id=bad", nil), uuid.New())
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // ─── GetByID ───────────────────────────────────────────────────────────────

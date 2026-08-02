@@ -18,6 +18,7 @@ function event(
     date_start: '2026-08-02T12:00:00Z',
     date_end: '2026-08-02T14:00:00Z',
     location: 'Place',
+    city: null,
     status: 'active',
     is_public: false,
     confirmed_count: 1,
