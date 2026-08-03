@@ -198,7 +198,7 @@ export default function EventListRow({
     >
       {swipeEnabled && (
         <div
-          className="absolute inset-y-0 right-0 grid auto-cols-fr grid-flow-col gap-0.5 bg-bg-2 p-1 min-[761px]:hidden"
+          className="absolute inset-y-0 right-0 z-0 grid auto-cols-fr grid-flow-col bg-bg-2 min-[761px]:hidden"
           style={{ width: actionWidth }}
         >
           {swipeActions.map(action => {
@@ -208,9 +208,8 @@ export default function EventListRow({
                 key={action.key}
                 type="button"
                 className={cn(
-                  'flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] px-1 py-1 text-center text-[10px] font-semibold leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
+                  'flex h-full min-w-0 flex-col items-center justify-center gap-1 px-1 text-center text-[10px] font-semibold leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
                   action.tileClass,
-                  action.active && 'ring-1 ring-inset ring-current/30',
                 )}
                 onFocus={() => setOffset(-actionWidth)}
                 onClick={() => runAction(action.onClick)}
@@ -233,7 +232,7 @@ export default function EventListRow({
         to={`/events/${event.id}`}
         onClick={handleRowClick}
         className={cn(
-          'group relative grid min-h-16 min-w-0 items-center gap-[10px] bg-surface px-3 py-3 pl-[15px] cursor-pointer hover:bg-hover',
+          'group relative z-10 grid min-h-16 min-w-0 items-center gap-[10px] bg-surface px-3 py-3 pl-[15px] cursor-pointer hover:bg-hover',
           'grid-cols-[48px_minmax(0,1fr)_auto_11px] max-[420px]:grid-cols-[48px_minmax(0,1fr)_11px]',
           'min-[1081px]:grid-cols-[47px_minmax(150px,1fr)_92px_64px_48px_72px_12px] min-[1081px]:gap-3 min-[1081px]:px-[14px] min-[1081px]:pl-[17px]',
           !isDragging && 'transition-transform duration-200 ease-out',
