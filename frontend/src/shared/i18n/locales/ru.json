@@ -241,9 +241,11 @@
     "completeDialogTitle": "Завершить встречу",
     "completeDialogBody": "Встреча будет отмечена как завершённая. Это действие нельзя отменить.",
     "completeDialogConfirm": "Завершить",
+    "completeSuccess": "Встреча завершена",
     "deleteDialogTitle": "Удалить встречу",
     "deleteDialogBody": "Встреча и все связанные данные будут удалены безвозвратно.",
-    "deleteDialogConfirm": "Удалить"
+    "deleteDialogConfirm": "Удалить",
+    "deleteSuccess": "Встреча удалена"
   },
   "participantsSummary": {
     "title": "Участники",

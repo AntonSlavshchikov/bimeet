@@ -241,9 +241,11 @@
     "completeDialogTitle": "Complete event",
     "completeDialogBody": "The event will be marked as completed. This action cannot be undone.",
     "completeDialogConfirm": "Complete",
+    "completeSuccess": "Event completed",
     "deleteDialogTitle": "Delete event",
     "deleteDialogBody": "The event and all associated data will be permanently deleted.",
-    "deleteDialogConfirm": "Delete"
+    "deleteDialogConfirm": "Delete",
+    "deleteSuccess": "Event deleted"
   },
   "participantsSummary": {
     "title": "Participants",

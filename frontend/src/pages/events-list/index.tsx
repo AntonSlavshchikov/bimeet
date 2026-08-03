@@ -4,7 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { Bell, CalendarOff, Plus, SearchX, X } from 'lucide-react'
 import { useEvents } from '@/entities/event/queries'
 import { useNotifications } from '@/entities/notification/queries'
-import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
+import {
+  useCompleteEvent,
+  useConfirmAttendance,
+  useDeleteEvent,
+  useJoinPublicEvent,
+} from '@/features/event-manage/model/hooks'
 import {
   filterEventsByProfileStat,
   profileStatBaseTab,
@@ -20,6 +25,12 @@ import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import {
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   EmptyState,
   ListGroup,
   MiniCalendar,
@@ -279,6 +290,8 @@ function EventsListPage() {
   }
 
   const [search, setSearch] = useState('')
+  const [eventToComplete, setEventToComplete] = useState<EventAny | null>(null)
+  const [eventToDelete, setEventToDelete] = useState<EventAny | null>(null)
   const mobileSearchRef = useRef<HTMLInputElement>(null)
   const mobileSearchOpen = searchParams.get('search') === '1'
 
@@ -291,6 +304,30 @@ function EventsListPage() {
 
   const joinPublicEvent = useJoinPublicEvent()
   const confirmAttendance = useConfirmAttendance()
+  const completeEvent = useCompleteEvent(eventToComplete?.id ?? '')
+  const deleteEvent = useDeleteEvent()
+
+  function handleComplete() {
+    if (!eventToComplete) return
+    completeEvent.mutate(undefined, {
+      onSuccess: () => {
+        setEventToComplete(null)
+        toast({ title: t('eventInfo.completeSuccess'), status: 'success' })
+      },
+      onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+    })
+  }
+
+  function handleDelete() {
+    if (!eventToDelete) return
+    deleteEvent.mutate(eventToDelete.id, {
+      onSuccess: () => {
+        setEventToDelete(null)
+        toast({ title: t('eventInfo.deleteSuccess'), status: 'success' })
+      },
+      onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+    })
+  }
 
   // «Встречи» — только мои: организатор, приглашён или участвую. Публичные чужие
   // встречи живут в отдельной вкладке «Найти публичные».
@@ -496,6 +533,12 @@ function EventsListPage() {
                         canJoin={canAttend}
                         onJoin={canAttend ? () => handleAttend(event) : undefined}
                         dateCaption={g.dateCaption}
+                        onComplete={event.organizer.is_me && event.status === 'active'
+                          ? () => setEventToComplete(event)
+                          : undefined}
+                        onDelete={event.organizer.is_me
+                          ? () => setEventToDelete(event)
+                          : undefined}
                       />
                     )
                   })}
@@ -505,6 +548,39 @@ function EventsListPage() {
           })}
         </div>
       )}
+      <Dialog open={eventToComplete != null} onOpenChange={open => { if (!open) setEventToComplete(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('eventInfo.completeDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('eventInfo.completeDialogBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEventToComplete(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleComplete} disabled={completeEvent.isPending}>
+              {t('eventInfo.completeDialogConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={eventToDelete != null} onOpenChange={open => { if (!open) setEventToDelete(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('eventInfo.deleteDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('eventInfo.deleteDialogBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEventToDelete(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" onClick={handleDelete} disabled={deleteEvent.isPending}>
+              {t('eventInfo.deleteDialogConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

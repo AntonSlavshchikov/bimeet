@@ -44,10 +44,10 @@ export default function BottomNav() {
   return (
     <nav
       className={cn(
-        'fixed inset-x-2 z-40 grid grid-cols-4 rounded-[18px] border border-line bg-surface/90 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden max-[420px]:inset-x-[6px]',
+        'fixed inset-x-3 z-40 grid grid-cols-4 rounded-full border border-line bg-surface/90 px-2 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden',
       )}
       style={{
-        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+        bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
         paddingBottom: '8px',
       }}
     >
