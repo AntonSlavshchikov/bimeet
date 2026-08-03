@@ -60,13 +60,15 @@ export function useJoinPublicEvent() {
   })
 }
 
-export function useConfirmAttendance() {
+export function useUpdateAttendance() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ eventId }: { eventId: string }) =>
-      eventMutationsApi.updateParticipantStatus(eventId, 'confirmed'),
-    onSuccess: () => {
+    mutationFn: ({ eventId, status }: { eventId: string; status: 'confirmed' | 'declined' }) =>
+      eventMutationsApi.updateParticipantStatus(eventId, status),
+    onSuccess: (_data, { eventId }) => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
     },
   })
 }

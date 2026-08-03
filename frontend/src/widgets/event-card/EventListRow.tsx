@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSwipeable } from 'react-swipeable'
-import { CheckCircle2, ChevronRight, Trash2 } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Trash2, UserCheck, UserX, type LucideIcon } from 'lucide-react'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import { eventAccentColor } from '@/shared/lib/eventAccentColor'
 import { DateCell } from '@/shared/ui/date-cell'
@@ -30,9 +30,20 @@ interface EventListRowProps {
   /** Действия организатора, открывающиеся свайпом влево на мобильных устройствах. */
   onComplete?: () => void
   onDelete?: () => void
+  onAttend?: () => void
+  onDecline?: () => void
 }
 
 const SWIPE_ACTION_WIDTH = 88
+
+interface SwipeAction {
+  key: string
+  label: string
+  colorClass: string
+  icon: LucideIcon
+  active?: boolean
+  onClick: () => void
+}
 
 export default function EventListRow({
   event,
@@ -43,6 +54,8 @@ export default function EventListRow({
   distanceKm,
   onComplete,
   onDelete,
+  onAttend,
+  onDecline,
 }: EventListRowProps) {
   const { t, i18n } = useTranslation()
   const d = new Date(event.date_start)
@@ -62,14 +75,52 @@ export default function EventListRow({
     : new Intl.NumberFormat(i18n.language, {
         maximumFractionDigits: distanceKm < 10 ? 1 : 0,
       }).format(distanceKm)
-  const actionCount = Number(Boolean(onComplete)) + Number(Boolean(onDelete))
-  const actionWidth = actionCount * SWIPE_ACTION_WIDTH
+  const swipeActions: SwipeAction[] = []
+  if (onComplete) {
+    swipeActions.push({
+      key: 'complete',
+      label: t('eventInfo.menuComplete'),
+      colorClass: 'bg-warning',
+      icon: CheckCircle2,
+      onClick: onComplete,
+    })
+  }
+  if (onDelete) {
+    swipeActions.push({
+      key: 'delete',
+      label: t('eventInfo.menuDelete'),
+      colorClass: 'bg-danger',
+      icon: Trash2,
+      onClick: onDelete,
+    })
+  }
+  if (onAttend) {
+    swipeActions.push({
+      key: 'attend',
+      label: t('eventCard.swipeParticipating'),
+      colorClass: 'bg-success',
+      icon: UserCheck,
+      active: myStatus === 'confirmed',
+      onClick: onAttend,
+    })
+  }
+  if (onDecline) {
+    swipeActions.push({
+      key: 'decline',
+      label: t('eventCard.swipeNotParticipating'),
+      colorClass: 'bg-danger',
+      icon: UserX,
+      active: myStatus === 'declined',
+      onClick: onDecline,
+    })
+  }
+  const actionWidth = swipeActions.length * SWIPE_ACTION_WIDTH
   const [offset, setOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches,
   )
-  const swipeEnabled = actionCount > 0 && isMobile
+  const swipeEnabled = swipeActions.length > 0 && isMobile
   const startOffsetRef = useRef(0)
   const swipeMovedRef = useRef(false)
 
@@ -145,30 +196,27 @@ export default function EventListRow({
           className="absolute inset-y-0 right-0 flex items-stretch min-[761px]:hidden"
           style={{ width: actionWidth }}
         >
-          {onComplete && (
-            <button
-              type="button"
-              className="flex w-[88px] flex-col items-center justify-center gap-1 bg-warning px-1 text-[10px] font-semibold text-white transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
-              onFocus={() => setOffset(-actionWidth)}
-              onClick={() => runAction(onComplete)}
-              aria-label={`${t('eventInfo.menuComplete')}: ${event.title}`}
-            >
-              <CheckCircle2 size={19} strokeWidth={2.1} />
-              {t('eventInfo.menuComplete')}
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              className="flex w-[88px] flex-col items-center justify-center gap-1 bg-danger px-1 text-[10px] font-semibold text-white transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
-              onFocus={() => setOffset(-actionWidth)}
-              onClick={() => runAction(onDelete)}
-              aria-label={`${t('eventInfo.menuDelete')}: ${event.title}`}
-            >
-              <Trash2 size={19} strokeWidth={2.1} />
-              {t('eventInfo.menuDelete')}
-            </button>
-          )}
+          {swipeActions.map(action => {
+            const Icon = action.icon
+            return (
+              <button
+                key={action.key}
+                type="button"
+                className={cn(
+                  'flex w-[88px] flex-col items-center justify-center gap-1 px-1 text-center text-[10px] font-semibold leading-tight text-white transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white',
+                  action.colorClass,
+                  action.active && 'ring-2 ring-inset ring-white/80',
+                )}
+                onFocus={() => setOffset(-actionWidth)}
+                onClick={() => runAction(action.onClick)}
+                aria-label={`${action.label}: ${event.title}`}
+                aria-pressed={action.active}
+              >
+                <Icon size={19} strokeWidth={2.1} />
+                {action.label}
+              </button>
+            )
+          })}
         </div>
       )}
 

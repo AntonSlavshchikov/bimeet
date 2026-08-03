@@ -6,9 +6,9 @@ import { useEvents } from '@/entities/event/queries'
 import { useNotifications } from '@/entities/notification/queries'
 import {
   useCompleteEvent,
-  useConfirmAttendance,
   useDeleteEvent,
   useJoinPublicEvent,
+  useUpdateAttendance,
 } from '@/features/event-manage/model/hooks'
 import {
   filterEventsByProfileStat,
@@ -303,7 +303,7 @@ function EventsListPage() {
   }
 
   const joinPublicEvent = useJoinPublicEvent()
-  const confirmAttendance = useConfirmAttendance()
+  const updateAttendance = useUpdateAttendance()
   const completeEvent = useCompleteEvent(eventToComplete?.id ?? '')
   const deleteEvent = useDeleteEvent()
 
@@ -341,8 +341,8 @@ function EventsListPage() {
     const myStatus = myParticipant?.status ?? event.my_status
 
     if (myStatus === 'invited') {
-      confirmAttendance.mutate(
-        { eventId: event.id },
+      updateAttendance.mutate(
+        { eventId: event.id, status: 'confirmed' },
         {
           onSuccess: () => toast({ title: t('eventCard.statusConfirmed', 'Подтверждено'), status: 'success' }),
           onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
@@ -354,6 +354,21 @@ function EventsListPage() {
         onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
       })
     }
+  }
+
+  function handleAttendance(event: EventAny, status: 'confirmed' | 'declined') {
+    updateAttendance.mutate(
+      { eventId: event.id, status },
+      {
+        onSuccess: () => toast({
+          title: status === 'confirmed'
+            ? t('eventCard.swipeParticipating')
+            : t('eventCard.swipeNotParticipating'),
+          status: 'success',
+        }),
+        onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+      },
+    )
   }
 
   function filterBySearch(list: EventAny[]): EventAny[] {
@@ -538,6 +553,12 @@ function EventsListPage() {
                           : undefined}
                         onDelete={event.organizer.is_me
                           ? () => setEventToDelete(event)
+                          : undefined}
+                        onAttend={!event.organizer.is_me && event.status === 'active'
+                          ? () => handleAttendance(event, 'confirmed')
+                          : undefined}
+                        onDecline={!event.organizer.is_me && event.status === 'active'
+                          ? () => handleAttendance(event, 'declined')
                           : undefined}
                       />
                     )

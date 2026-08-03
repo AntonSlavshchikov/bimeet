@@ -142,7 +142,9 @@
     "peopleShort": "чел.",
     "publicBadge": "Публичная",
     "personalBadge": "Персональная",
-    "attendButton": "Иду"
+    "attendButton": "Иду",
+    "swipeParticipating": "Участвую",
+    "swipeNotParticipating": "Не участвую"
   },
   "locationPicker": {
     "hint": "Укажите точку на карте кликом или перетащите метку; адрес впишите вручную",

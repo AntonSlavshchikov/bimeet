@@ -142,7 +142,9 @@
     "peopleShort": "people",
     "publicBadge": "Public",
     "personalBadge": "Personal",
-    "attendButton": "I'm going"
+    "attendButton": "I'm going",
+    "swipeParticipating": "Participating",
+    "swipeNotParticipating": "Not participating"
   },
   "locationPicker": {
     "hint": "Click the map or drag the pin to set the point; type the address manually",
