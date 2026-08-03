@@ -39,7 +39,8 @@ const SWIPE_ACTION_WIDTH = 88
 interface SwipeAction {
   key: string
   label: string
-  colorClass: string
+  tileClass: string
+  iconClass: string
   icon: LucideIcon
   active?: boolean
   onClick: () => void
@@ -80,7 +81,8 @@ export default function EventListRow({
     swipeActions.push({
       key: 'complete',
       label: t('eventInfo.menuComplete'),
-      colorClass: 'bg-warning',
+      tileClass: 'bg-[color-mix(in_srgb,var(--color-warning)_10%,transparent)] text-warning hover:bg-[color-mix(in_srgb,var(--color-warning)_15%,transparent)]',
+      iconClass: 'bg-[color-mix(in_srgb,var(--color-warning)_15%,transparent)]',
       icon: CheckCircle2,
       onClick: onComplete,
     })
@@ -89,7 +91,8 @@ export default function EventListRow({
     swipeActions.push({
       key: 'delete',
       label: t('eventInfo.menuDelete'),
-      colorClass: 'bg-danger',
+      tileClass: 'bg-[color-mix(in_srgb,var(--color-danger)_9%,transparent)] text-danger hover:bg-[color-mix(in_srgb,var(--color-danger)_14%,transparent)]',
+      iconClass: 'bg-[color-mix(in_srgb,var(--color-danger)_14%,transparent)]',
       icon: Trash2,
       onClick: onDelete,
     })
@@ -98,7 +101,8 @@ export default function EventListRow({
     swipeActions.push({
       key: 'attend',
       label: t('eventCard.swipeParticipating'),
-      colorClass: 'bg-success',
+      tileClass: 'bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] text-success hover:bg-[color-mix(in_srgb,var(--color-success)_15%,transparent)]',
+      iconClass: 'bg-[color-mix(in_srgb,var(--color-success)_15%,transparent)]',
       icon: UserCheck,
       active: myStatus === 'confirmed',
       onClick: onAttend,
@@ -108,7 +112,8 @@ export default function EventListRow({
     swipeActions.push({
       key: 'decline',
       label: t('eventCard.swipeNotParticipating'),
-      colorClass: 'bg-danger',
+      tileClass: 'bg-[color-mix(in_srgb,var(--color-danger)_9%,transparent)] text-danger hover:bg-[color-mix(in_srgb,var(--color-danger)_14%,transparent)]',
+      iconClass: 'bg-[color-mix(in_srgb,var(--color-danger)_14%,transparent)]',
       icon: UserX,
       active: myStatus === 'declined',
       onClick: onDecline,
@@ -193,7 +198,7 @@ export default function EventListRow({
     >
       {swipeEnabled && (
         <div
-          className="absolute inset-y-0 right-0 flex items-stretch min-[761px]:hidden"
+          className="absolute inset-y-0 right-0 grid auto-cols-fr grid-flow-col gap-0.5 bg-bg-2 p-1 min-[761px]:hidden"
           style={{ width: actionWidth }}
         >
           {swipeActions.map(action => {
@@ -203,17 +208,21 @@ export default function EventListRow({
                 key={action.key}
                 type="button"
                 className={cn(
-                  'flex w-[88px] flex-col items-center justify-center gap-1 px-1 text-center text-[10px] font-semibold leading-tight text-white transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white',
-                  action.colorClass,
-                  action.active && 'ring-2 ring-inset ring-white/80',
+                  'flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] px-1 py-1 text-center text-[10px] font-semibold leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
+                  action.tileClass,
+                  action.active && 'ring-1 ring-inset ring-current/30',
                 )}
                 onFocus={() => setOffset(-actionWidth)}
                 onClick={() => runAction(action.onClick)}
                 aria-label={`${action.label}: ${event.title}`}
                 aria-pressed={action.active}
               >
-                <Icon size={19} strokeWidth={2.1} />
-                {action.label}
+                <span className={cn('grid size-7 shrink-0 place-items-center rounded-full', action.iconClass)} aria-hidden>
+                  <Icon size={17} strokeWidth={2} />
+                </span>
+                <span className="flex min-h-6 items-center justify-center text-balance">
+                  {action.label}
+                </span>
               </button>
             )
           })}
@@ -224,7 +233,7 @@ export default function EventListRow({
         to={`/events/${event.id}`}
         onClick={handleRowClick}
         className={cn(
-          'group relative grid min-w-0 items-center gap-[10px] bg-surface px-3 py-3 pl-[15px] cursor-pointer hover:bg-hover',
+          'group relative grid min-h-16 min-w-0 items-center gap-[10px] bg-surface px-3 py-3 pl-[15px] cursor-pointer hover:bg-hover',
           'grid-cols-[48px_minmax(0,1fr)_auto_11px] max-[420px]:grid-cols-[48px_minmax(0,1fr)_11px]',
           'min-[1081px]:grid-cols-[47px_minmax(150px,1fr)_92px_64px_48px_72px_12px] min-[1081px]:gap-3 min-[1081px]:px-[14px] min-[1081px]:pl-[17px]',
           !isDragging && 'transition-transform duration-200 ease-out',
