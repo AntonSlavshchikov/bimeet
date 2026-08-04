@@ -7,6 +7,7 @@ import { authApi } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { profileStatHref, type ProfileStatKey } from '@/features/profile-stats/model'
 import { formatDate } from '@/shared/lib/formatDate'
+import { useDesign, type Design } from '@/shared/design'
 import { useTheme, type Theme } from '@/shared/theme'
 import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
 import PushSettings from '@/features/push/ui/PushSettings'
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   const { user, updateUser, logout } = useAuth()
   const { t, i18n } = useTranslation()
   const isRu = i18n.language === 'ru'
+  const [design, setDesign] = useDesign()
   const [theme, setTheme] = useTheme()
   const toast = useToast()
   const navigate = useNavigate()
@@ -242,10 +244,25 @@ export default function ProfilePage() {
                 {t('profile.save', 'Сохранить')}
               </Button>
 
-              <div className="border-t border-line-soft pt-4">
+              <div className="border-t border-line-soft pt-4 flex flex-col gap-4">
+                <Field label={t('profile.design')}>
+                  <SegmentedControl<Design>
+                    fullWidth
+                    selectionRole="radio"
+                    ariaLabel={t('profile.design')}
+                    value={design}
+                    onChange={setDesign}
+                    options={[
+                      { value: 'modern', label: t('profile.designModern') },
+                      { value: 'dashboard', label: t('profile.designDashboard') },
+                    ]}
+                  />
+                </Field>
                 <Field label={t('profile.theme', 'Тема оформления')}>
                   <SegmentedControl<Theme>
                     fullWidth
+                    selectionRole="radio"
+                    ariaLabel={t('profile.theme', 'Тема оформления')}
                     value={theme}
                     onChange={setTheme}
                     options={[

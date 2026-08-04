@@ -28,6 +28,13 @@ describe('Warm Canvas structural contract', () => {
     expect(bottomNav).toContain('min-[761px]:hidden')
   })
 
+  it('keeps modern and dashboard shell variants explicit', () => {
+    expect(layout).toContain("design === 'dashboard'")
+    expect(layout).toContain("'justify-center p-3 lg:p-5'")
+    expect(layout).toContain("'app-shell-shadow rounded-[20px] border border-line'")
+    expect(layout).toContain('DASHBOARD_BACKGROUND')
+  })
+
   it('keeps event sections aligned to the 760px reference breakpoint', () => {
     expect(eventSectionNav).toContain('min-[761px]:flex-row')
     expect(eventSectionNav).toContain('min-[761px]:px-6')

@@ -47,6 +47,8 @@
   --radius-list: 18px;
   --radius-card: 18px;
   --radius-frame: 30px;
+
+  --shadow-app-shell: 0 2px 4px rgba(0, 0, 0, 0.04), 0 16px 40px rgba(0, 0, 0, 0.08);
 }
 
 /* Base reset + global rules */
@@ -83,7 +85,7 @@ body {
 }
 
 .app-shell-shadow {
-  box-shadow: 0 24px 70px rgba(36, 30, 20, 0.11);
+  box-shadow: var(--shadow-app-shell);
 }
 
 /* Tabular numerics utility — широко используется в датах/времени */
@@ -157,6 +159,8 @@ html.dark {
   --color-danger: #EC7A81;
   --color-purple: #B99EF6;
   --color-indigo: #9A8DE0;
+
+  --shadow-app-shell: 0 2px 4px rgba(0, 0, 0, 0.22), 0 18px 44px rgba(0, 0, 0, 0.36);
 }
 
 @media (max-width: 760px) {

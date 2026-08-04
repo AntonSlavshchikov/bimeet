@@ -9,7 +9,13 @@ import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { BrandMark } from '@/shared/ui/brand-mark'
 import { cn } from '@/shared/lib/cn'
+import { useDesign } from '@/shared/design'
 import { usePrimarySwipeNavigation } from './model/primary-navigation'
+
+const DASHBOARD_BACKGROUND =
+  'radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%), ' +
+  'radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%), ' +
+  'var(--color-bg-2)'
 
 interface LayoutProps {
   children: ReactNode
@@ -79,17 +85,26 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
   const mobileTitle = useMobileTitle(t)
   const autoMobileActions = useMobileNavbarActions(t)
   const primarySwipeNavigation = usePrimarySwipeNavigation()
+  const [design] = useDesign()
+  const isDashboard = design === 'dashboard'
 
   return (
     <TooltipProvider delayDuration={250}>
       <div
-        className="flex h-[100dvh] items-stretch text-ink"
+        className={cn(
+          'flex h-[100dvh] items-stretch text-ink',
+          isDashboard && 'justify-center p-3 lg:p-5',
+        )}
+        style={isDashboard ? { background: DASHBOARD_BACKGROUND } : undefined}
       >
-        {/* Полноэкранная оболочка приложения: sidebar + content + rail + bottom-nav. */}
+        {/* Общая оболочка приложения: полноэкранная или плавающий dashboard. */}
         <div
           className={cn(
             'w-full h-full min-h-0 flex flex-col',
             'bg-bg overflow-hidden',
+            isDashboard && [
+              'app-shell-shadow rounded-[20px] border border-line',
+            ],
             'min-[761px]:flex-row',
           )}
         >
