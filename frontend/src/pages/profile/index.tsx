@@ -10,9 +10,10 @@ import { formatDate } from '@/shared/lib/formatDate'
 import { useTheme, type Theme } from '@/shared/theme'
 import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
 import PushSettings from '@/features/push/ui/PushSettings'
+import SessionsPanel from '@/features/sessions/ui/SessionsPanel'
 import { cn } from '@/shared/lib/cn'
 
-type Tab = 'edit' | 'stats'
+type Tab = 'edit' | 'stats' | 'sessions'
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -27,7 +28,8 @@ export default function ProfilePage() {
   const queryClient = useQueryClient()
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab: Tab = searchParams.get('tab') === 'stats' ? 'stats' : 'edit'
+  const tabParam = searchParams.get('tab')
+  const tab: Tab = tabParam === 'stats' || tabParam === 'sessions' ? tabParam : 'edit'
 
   const { data: stats } = useQuery({
     queryKey: ['profile', 'stats'],
@@ -91,7 +93,7 @@ export default function ProfilePage() {
 
   function handleTabChange(next: Tab) {
     const params = new URLSearchParams(searchParams)
-    if (next === 'stats') params.set('tab', next)
+    if (next !== 'edit') params.set('tab', next)
     else params.delete('tab')
     setSearchParams(params, { replace: true })
   }
@@ -191,6 +193,7 @@ export default function ProfilePage() {
             options={[
               { value: 'edit', label: t('profile.editTab', 'Редактировать') },
               { value: 'stats', label: t('profile.statsTab', 'Статистика') },
+              { value: 'sessions', label: t('profile.sessionsTab') },
             ]}
           />
         </div>
@@ -265,6 +268,8 @@ export default function ProfilePage() {
               <StatTile stat="upcoming" value={stats?.upcoming ?? 0} label={t('profile.statsUpcoming', 'Впереди')} />
             </div>
           )}
+
+          {tab === 'sessions' && <SessionsPanel />}
         </div>
       </div>
 

@@ -120,11 +120,13 @@ for gate in "${passed[@]}"; do
   printf '    - %s\n' "$gate"
 done
 printf '  Failed: %d\n' "${#failed[@]}"
-for gate in "${failed[@]}"; do
-  printf '    - %s\n' "$gate"
-done
+if [[ -n "${failed[*]-}" ]]; then
+  for gate in "${failed[@]}"; do
+    printf '    - %s\n' "$gate"
+  done
+fi
 
-if (( ${#failed[@]} > 0 )); then
+if [[ -n "${failed[*]-}" ]]; then
   echo "RESULT: NOT READY"
   exit 1
 fi

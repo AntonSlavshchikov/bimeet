@@ -1,20 +1,5 @@
 basePath: /api
 definitions:
-  bimeet_internal_handler_response.ErrorResponse:
-    properties:
-      error:
-        type: string
-    type: object
-  bimeet_internal_handler_response.StatusResponse:
-    properties:
-      status:
-        type: string
-    type: object
-  bimeet_internal_handler_response.VAPIDKeyResponse:
-    properties:
-      key:
-        type: string
-    type: object
   bimeet_internal_model.AdminDistribution:
     properties:
       by_category:
@@ -115,6 +100,21 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/bimeet_internal_model.User'
+    type: object
+  bimeet_internal_model.AuthSession:
+    properties:
+      created_at:
+        type: string
+      current:
+        type: boolean
+      expires_at:
+        type: string
+      id:
+        type: string
+      last_seen_at:
+        type: string
+      user_agent:
+        type: string
     type: object
   bimeet_internal_model.Carpool:
     properties:
@@ -751,6 +751,11 @@ definitions:
       endpoint:
         type: string
     type: object
+  bimeet_internal_model.RefreshResponse:
+    properties:
+      token:
+        type: string
+    type: object
   bimeet_internal_model.ReplyPreview:
     properties:
       author_name:
@@ -861,6 +866,21 @@ definitions:
   bimeet_internal_model.VoteRequest:
     properties:
       option_id:
+        type: string
+    type: object
+  bimeet_internal_handler_response.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  bimeet_internal_handler_response.StatusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  bimeet_internal_handler_response.VAPIDKeyResponse:
+    properties:
+      key:
         type: string
     type: object
 info:
@@ -1004,6 +1024,18 @@ paths:
       summary: Get top event organizers
       tags:
       - admin
+  /auth/logout:
+    post:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      summary: Log out and revoke the current session
+      tags:
+      - auth
   /auth/me:
     get:
       produces:
@@ -1123,6 +1155,80 @@ paths:
       summary: Upload current user avatar
       tags:
       - profile
+  /auth/me/sessions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/bimeet_internal_model.AuthSession'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List current user sessions
+      tags:
+      - auth
+  /auth/me/sessions/{id}:
+    delete:
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke a current user session
+      tags:
+      - auth
+  /auth/me/sessions/others:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke all other current user sessions
+      tags:
+      - auth
   /auth/me/stats:
     get:
       produces:
@@ -1145,6 +1251,26 @@ paths:
       summary: Get current user profile statistics
       tags:
       - profile
+  /auth/refresh:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/bimeet_internal_model.RefreshResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+      summary: Refresh an authenticated session
+      tags:
+      - auth
   /auth/request-code:
     post:
       consumes:

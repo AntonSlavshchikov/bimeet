@@ -24,6 +24,8 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, code }),
     }),
+  logout: () =>
+    apiFetch<void>('/api/auth/logout', { method: 'POST' }),
   getMe: () =>
     apiFetch<User>('/api/auth/me'),
   updateProfile: (data: UpdateProfileData) =>

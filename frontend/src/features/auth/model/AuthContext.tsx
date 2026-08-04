@@ -16,6 +16,7 @@ interface AuthState {
   /** Verifies a one-time login code; on success stores token+user and returns true. */
   verifyCode: (email: string, code: string) => Promise<boolean>
   logout: () => void
+  clearLocalSession: () => void
   updateUser: (user: User) => void
 }
 
@@ -71,6 +72,11 @@ export const useAuthStore = create<AuthState>()(
         // Подписку на пуши НЕ трогаем: при следующем входе она тихо
         // перепривязывается к актуальному пользователю (syncPushSubscription).
         clearBadge()
+        void authApi.logout().catch(() => undefined)
+        set({ token: null, user: null })
+      },
+      clearLocalSession() {
+        clearBadge()
         set({ token: null, user: null })
       },
       updateUser(user) {
@@ -86,12 +92,16 @@ export const useAuthStore = create<AuthState>()(
   ),
 )
 
-// Сессия истекла: client.ts на 401 уже очистил localStorage и шлёт событие —
-// обнуляем стор. ProtectedRoute сам редиректит на /login.
+// Refresh не удался: client.ts очищает localStorage и шлёт событие — обнуляем
+// стор. ProtectedRoute сам редиректит на /login.
 if (typeof window !== 'undefined') {
   window.addEventListener('auth:unauthorized', () => {
     clearBadge()
     useAuthStore.setState({ token: null, user: null })
+  })
+  window.addEventListener('auth:refreshed', (event) => {
+    const token = (event as CustomEvent<{ token?: string }>).detail?.token
+    if (token) useAuthStore.setState({ token })
   })
 }
 

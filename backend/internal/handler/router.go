@@ -39,6 +39,7 @@ func NewRouter(
 	admin *adminhandler.Handler,
 	push *pushhandler.Handler,
 	userLookup middleware.UserLookup,
+	sessionValidator middleware.SessionValidator,
 	adminEmails []string,
 	jwtSecret string,
 	corsOrigins []string,
@@ -78,6 +79,8 @@ func NewRouter(
 		r.Use(middleware.RateLimitAuth())
 		r.Post("/request-code", auth.RequestCode)
 		r.Post("/verify-code", auth.VerifyCode)
+		r.Post("/refresh", auth.Refresh)
+		r.Post("/logout", auth.Logout)
 	})
 
 	// Public invite link (GET only)
@@ -85,7 +88,7 @@ func NewRouter(
 
 	// Protected routes
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.Auth(jwtSecret))
+		r.Use(middleware.Auth(jwtSecret, sessionValidator))
 
 		// Join by invite token (POST requires auth)
 		r.Post("/api/events/invite/{token}", event.JoinByInviteToken)
@@ -166,6 +169,9 @@ func NewRouter(
 		r.Get("/api/auth/me/stats", profile.GetStats)
 		r.Post("/api/auth/me/avatar", profile.UploadAvatar)
 		r.Delete("/api/auth/me/avatar", profile.DeleteAvatar)
+		r.Get("/api/auth/me/sessions", auth.ListSessions)
+		r.Delete("/api/auth/me/sessions/others", auth.RevokeOtherSessions)
+		r.Delete("/api/auth/me/sessions/{id}", auth.RevokeSession)
 
 		// Admin (whitelisted by email)
 		r.Route("/api/admin", func(r chi.Router) {

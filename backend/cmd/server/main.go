@@ -38,6 +38,7 @@ import (
 	notificationrepo "bimeet/internal/repository/notification"
 	pollrepo "bimeet/internal/repository/poll"
 	pushsubrepo "bimeet/internal/repository/pushsub"
+	refreshrepo "bimeet/internal/repository/refreshrepo"
 	userrepo "bimeet/internal/repository/user"
 	"bimeet/internal/secret"
 	adminsvc "bimeet/internal/service/admin"
@@ -135,6 +136,7 @@ func main() {
 	messageRepo := messagerepo.New(pool, chatCipher)
 	notificationRepo := notificationrepo.New(pool)
 	loginCodeRepo := loginrepo.New(pool)
+	refreshTokenRepo := refreshrepo.New(pool)
 	pushSubRepo := pushsubrepo.New(pool)
 	adminRepo := adminrepo.New(pool)
 
@@ -163,7 +165,7 @@ func main() {
 		SMTPFrom:     cfg.SMTPFrom,
 		FrontendURL:  cfg.FrontendURL,
 	})
-	authSvc := authsvc.New(userRepo, loginCodeRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
+	authSvc := authsvc.New(userRepo, loginCodeRepo, refreshTokenRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
 	citySvc := citysvc.New(cityRepo)
 	eventSvc := eventsvc.New(eventRepo, cityRepo, userRepo, notifyingRepo, m)
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
@@ -206,7 +208,7 @@ func main() {
 	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo, fileStorage)
 
 	// Handlers
-	authH := authhandler.New(authSvc)
+	authH := authhandler.New(authSvc, cfg.IsProduction())
 	eventH := eventhandler.New(eventSvc)
 	cityH := cityhandler.New(citySvc)
 	collectionH := collectionhandler.New(collectionSvc)
@@ -238,6 +240,7 @@ func main() {
 		adminH,
 		pushH,
 		userRepo,
+		refreshTokenRepo,
 		cfg.AdminEmails,
 		cfg.JWTSecret,
 		cfg.CORSAllowedOrigins,

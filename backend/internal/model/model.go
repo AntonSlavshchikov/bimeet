@@ -198,6 +198,18 @@ type LoginCode struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+// AuthSession is one signed-in browser/device. The raw refresh token is never
+// persisted or returned; Current is derived from the access token's sid claim.
+type AuthSession struct {
+	ID         uuid.UUID `json:"id"`
+	UserID     uuid.UUID `json:"-"`
+	UserAgent  string    `json:"user_agent"`
+	CreatedAt  time.Time `json:"created_at"`
+	LastSeenAt time.Time `json:"last_seen_at"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	Current    bool      `json:"current"`
+}
+
 type PushSubscription struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
@@ -235,8 +247,14 @@ type VerifyCodeRequest struct {
 }
 
 type AuthResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"-"`
+	User         User   `json:"user"`
+}
+
+type RefreshResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"-"`
 }
 
 type CreateEventRequest struct {
