@@ -32,6 +32,11 @@ interface EventListRowProps {
   onDelete?: () => void
   onAttend?: () => void
   onDecline?: () => void
+  /** Управляемое состояние свайп-меню; позволяет списку держать открытой только одну строку. */
+  swipeOpen?: boolean
+  onSwipeOpenChange?: (open: boolean) => void
+  /** Закрывает меню другой строки сразу при начале взаимодействия с этой строкой. */
+  onInteractionStart?: () => void
 }
 
 const SWIPE_ACTION_WIDTH = 88
@@ -57,6 +62,9 @@ export default function EventListRow({
   onDelete,
   onAttend,
   onDecline,
+  swipeOpen,
+  onSwipeOpenChange,
+  onInteractionStart,
 }: EventListRowProps) {
   const { t, i18n } = useTranslation()
   const d = new Date(event.date_start)
@@ -130,6 +138,11 @@ export default function EventListRow({
   const swipeMovedRef = useRef(false)
 
   useEffect(() => {
+    if (swipeOpen == null) return
+    setOffset(swipeOpen ? -actionWidth : 0)
+  }, [actionWidth, swipeOpen])
+
+  useEffect(() => {
     if (typeof window.matchMedia !== 'function') return
     const media = window.matchMedia('(max-width: 760px)')
     const handleChange = (event: MediaQueryListEvent) => {
@@ -153,12 +166,14 @@ export default function EventListRow({
     },
     onSwiped: data => {
       if (data.dir === 'Left' || data.dir === 'Right') {
-        setOffset(resolveSwipeRestingOffset({
+        const nextOffset = resolveSwipeRestingOffset({
           startOffset: startOffsetRef.current,
           deltaX: data.deltaX,
           velocity: data.velocity,
           actionWidth,
-        }))
+        })
+        setOffset(nextOffset)
+        onSwipeOpenChange?.(nextOffset < 0)
       }
       setIsDragging(false)
     },
@@ -182,23 +197,26 @@ export default function EventListRow({
       e.preventDefault()
       e.stopPropagation()
       setOffset(0)
+      onSwipeOpenChange?.(false)
     }
   }
 
   function runAction(action: () => void) {
     setOffset(0)
+    onSwipeOpenChange?.(false)
     action()
   }
 
   return (
     <div
       {...swipeHandlers}
+      onPointerDown={onInteractionStart}
       data-swipe-navigation-ignore={swipeEnabled ? '' : undefined}
       className={cn('relative min-w-0 overflow-hidden bg-surface', swipeEnabled && 'touch-pan-y')}
     >
       {swipeEnabled && (
         <div
-          className="absolute inset-y-0 right-0 z-0 grid auto-cols-fr grid-flow-col bg-bg-2 min-[761px]:hidden"
+          className="absolute inset-y-0 right-0 z-0 grid auto-cols-fr grid-flow-col gap-0.5 bg-bg-2 p-1 min-[761px]:hidden"
           style={{ width: actionWidth }}
         >
           {swipeActions.map(action => {
@@ -208,10 +226,13 @@ export default function EventListRow({
                 key={action.key}
                 type="button"
                 className={cn(
-                  'flex h-full min-w-0 flex-col items-center justify-center gap-1 px-1 text-center text-[10px] font-semibold leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
+                  'flex min-w-0 flex-col items-center justify-center gap-1 rounded-[14px] px-1 text-center text-[10px] font-semibold leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
                   action.tileClass,
                 )}
-                onFocus={() => setOffset(-actionWidth)}
+                onFocus={() => {
+                  setOffset(-actionWidth)
+                  onSwipeOpenChange?.(true)
+                }}
                 onClick={() => runAction(action.onClick)}
                 aria-label={`${action.label}: ${event.title}`}
                 aria-pressed={action.active}
@@ -219,7 +240,7 @@ export default function EventListRow({
                 <span className={cn('grid size-7 shrink-0 place-items-center rounded-full', action.iconClass)} aria-hidden>
                   <Icon size={17} strokeWidth={2} />
                 </span>
-                <span className="flex min-h-6 items-center justify-center text-balance">
+                <span className="text-balance">
                   {action.label}
                 </span>
               </button>

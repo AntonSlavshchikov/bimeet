@@ -292,6 +292,7 @@ function EventsListPage() {
   const [search, setSearch] = useState('')
   const [eventToComplete, setEventToComplete] = useState<EventAny | null>(null)
   const [eventToDelete, setEventToDelete] = useState<EventAny | null>(null)
+  const [openSwipeEventId, setOpenSwipeEventId] = useState<string | null>(null)
   const mobileSearchRef = useRef<HTMLInputElement>(null)
   const mobileSearchOpen = searchParams.get('search') === '1'
 
@@ -560,6 +561,16 @@ function EventsListPage() {
                         onDecline={!event.organizer.is_me && event.status === 'active'
                           ? () => handleAttendance(event, 'declined')
                           : undefined}
+                        swipeOpen={openSwipeEventId === event.id}
+                        onSwipeOpenChange={open => {
+                          setOpenSwipeEventId(currentId => {
+                            if (open) return event.id
+                            return currentId === event.id ? null : currentId
+                          })
+                        }}
+                        onInteractionStart={() => {
+                          setOpenSwipeEventId(currentId => currentId === event.id ? currentId : null)
+                        }}
                       />
                     )
                   })}
