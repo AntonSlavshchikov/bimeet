@@ -45,7 +45,19 @@
     "notificationsShort": "Уведом.",
     "publicEvents": "Все встречи",
     "publicEventsShort": "Все",
+    "chats": "Чаты",
+    "chatsShort": "Чаты",
     "filters": "Фильтры"
+  },
+  "chats": {
+    "title": "Чат",
+    "empty": "Пока нет ни одной беседы",
+    "noMessages": "Нет сообщений",
+    "messageDeleted": "Сообщение удалено",
+    "photo": "Фото",
+    "you": "Вы",
+    "backToList": "К списку чатов",
+    "selectChat": "Выберите чат слева"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -64,6 +76,8 @@
     "tabOrganizing": "Организую",
     "tabAttending": "Участвую",
     "tabPublic": "Публичные",
+    "tabPermanent": "Постоянные",
+    "permanentLabel": "Постоянная",
     "emptyNoOrganized": "У вас нет организуемых встреч",
     "emptyNoInvited": "Нет активных приглашений",
     "emptyNoPublic": "Нет публичных встреч",
@@ -111,6 +125,10 @@
     "fieldDescription": "Описание",
     "fieldDescriptionPlaceholder": "Расскажите подробности...",
     "sectionWhenWhere": "Когда и где",
+    "scheduleDated": "По расписанию",
+    "scheduleDatedDesc": "Даты, начало и конец",
+    "schedulePermanent": "Постоянная встреча",
+    "schedulePermanentDesc": "Без даты — чат живёт вечно",
     "fieldStart": "Начало",
     "fieldEnd": "Конец",
     "fieldDates": "Даты",
@@ -132,6 +150,7 @@
     "errorUpdate": "Ошибка обновления"
   },
   "eventInfo": {
+    "permanentDates": "Постоянная встреча — без даты",
     "statusCompleted": "Завершена",
     "statusHost": "Вы организатор",
     "statusGoing": "Вы идёте",
@@ -209,7 +228,11 @@
     "attachImage": "Прикрепить изображение",
     "imageInvalidType": "Можно прикрепить только изображение",
     "imageTooLarge": "Файл слишком большой (макс. 10 МБ)",
-    "imageSendError": "Не удалось отправить изображение"
+    "imageSendError": "Не удалось отправить изображение",
+    "react": "Реакция",
+    "search": "Поиск по чату",
+    "searchPlaceholder": "Поиск по загруженным сообщениям…",
+    "searchEmpty": "Ничего не найдено"
   },
   "participants": {
     "myStatusTitle": "Ваш статус",

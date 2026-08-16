@@ -15,6 +15,7 @@ import (
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
 	carpoolhandler "bimeet/internal/handler/carpool"
+	chatlisthandler "bimeet/internal/handler/chatlist"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
@@ -23,11 +24,14 @@ import (
 	pollhandler "bimeet/internal/handler/poll"
 	profilehandler "bimeet/internal/handler/profile"
 	pushhandler "bimeet/internal/handler/push"
+	streamhandler "bimeet/internal/handler/stream"
 	"bimeet/internal/notify"
 	"bimeet/internal/observability"
+	"bimeet/internal/realtime"
 	"bimeet/internal/reminder"
 	adminrepo "bimeet/internal/repository/admin"
 	carpoolrepo "bimeet/internal/repository/carpool"
+	chatlistrepo "bimeet/internal/repository/chatlist"
 	collectionrepo "bimeet/internal/repository/collection"
 	eventrepo "bimeet/internal/repository/event"
 	itemrepo "bimeet/internal/repository/item"
@@ -41,6 +45,7 @@ import (
 	adminsvc "bimeet/internal/service/admin"
 	authsvc "bimeet/internal/service/auth"
 	carpoolsvc "bimeet/internal/service/carpool"
+	chatlistsvc "bimeet/internal/service/chatlist"
 	collectionsvc "bimeet/internal/service/collection"
 	eventsvc "bimeet/internal/service/event"
 	itemsvc "bimeet/internal/service/item"
@@ -129,6 +134,7 @@ func main() {
 		slog.Info("chat message encryption disabled (CHAT_ENCRYPTION_KEY not set)")
 	}
 	messageRepo := messagerepo.New(pool, chatCipher)
+	chatListRepo := chatlistrepo.New(pool, chatCipher)
 	notificationRepo := notificationrepo.New(pool)
 	loginCodeRepo := loginrepo.New(pool)
 	pushSubRepo := pushsubrepo.New(pool)
@@ -198,7 +204,9 @@ func main() {
 
 	profileSvc := profilesvc.New(userRepo, fileStorage)
 	collectionSvc := collectionsvc.New(collectionRepo, eventRepo, notifyingRepo, fileStorage)
-	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo, fileStorage)
+	hub := realtime.NewHub()
+	messageSvc := messagesvc.New(messageRepo, eventRepo, notifyingRepo, fileStorage, hub)
+	chatListSvc := chatlistsvc.New(chatListRepo)
 
 	// Handlers
 	authH := authhandler.New(authSvc)
@@ -208,6 +216,8 @@ func main() {
 	itemH := itemhandler.New(itemSvc)
 	carpoolH := carpoolhandler.New(carpoolSvc)
 	messageH := messagehandler.New(messageSvc)
+	chatListH := chatlisthandler.New(chatListSvc)
+	streamH := streamhandler.New(hub, eventRepo)
 	notificationH := notificationhandler.New(notificationSvc)
 	profileH := profilehandler.New(profileSvc)
 	adminH := adminhandler.New(adminSvc)
@@ -226,6 +236,8 @@ func main() {
 		itemH,
 		carpoolH,
 		messageH,
+		chatListH,
+		streamH,
 		notificationH,
 		profileH,
 		adminH,

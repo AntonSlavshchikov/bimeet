@@ -5,6 +5,7 @@ import {
   Calendar,
   Globe,
   LogOut,
+  MessageCircle,
   MoreHorizontal,
   Search,
   User,
@@ -123,6 +124,14 @@ export default function Sidebar({ onClose }: SidebarProps = {}) {
           icon={Calendar}
           label={t('nav.events', 'Мои встречи')}
           active={onEvents}
+          onClick={onClose}
+        />
+
+        <NavItem
+          to="/chats"
+          icon={MessageCircle}
+          label={t('nav.chats', 'Чаты')}
+          active={location.pathname.startsWith('/chats')}
           onClick={onClose}
         />
 

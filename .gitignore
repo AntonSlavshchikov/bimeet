@@ -2,3 +2,6 @@
 .impeccable/
 backend/.env
 graphify-out/
+.idea/
+.claude-flow/
+landing/public/

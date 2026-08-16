@@ -52,28 +52,31 @@ Follows **Feature-Sliced Design** with import direction: `app → pages → widg
 
 ```
 src/
-  app/           # providers (Chakra+Query+Auth), router, theme
-  pages/         # route-level components (events-list, event-detail, event-form, login, register, invite)
+  app/           # providers (React Query+Auth), router
+  pages/         # route-level components (events-list, event-detail, event-form, login, register, invite, chats)
   widgets/       # layout (navbar), event-card
-  features/      # auth, event-manage, participants, collections, polls, items, carpools, links
-  entities/      # event (types, api, queries), user, collection, poll, item, carpool, notification
-  shared/        # apiFetch client, formatDate utilities
+  features/      # auth, event-manage, participants, collections, polls, items, carpools, links, chat, chat-list
+  entities/      # event (types, api, queries), user, collection, poll, item, carpool, notification, message, chat
+  shared/        # apiFetch client, formatDate utilities, SSE client
 ```
 
 **Data fetching pattern:**
 - Read queries (`useEvents`, `useEvent`) live in `entities/event/queries/index.ts` and export `eventKeys`.
 - Mutation hooks in `features/*/model/hooks.ts` call `invalidateQueries(eventKeys.all)` or `eventKeys.detail(id)` after mutations — always import `eventKeys` from entities, never redefine them.
 - All HTTP calls go through `shared/api/client.ts` → `apiFetch<T>()`, which reads the JWT from `localStorage` and throws `Error(body.error)` on failure.
+- Live updates (chat feed, cross-event chat list) use `shared/api/sse.ts` → `subscribeSSE()`, a `fetch()`+`ReadableStream` client (not the native `EventSource` API, which can't send an `Authorization` header).
 - Backend URL: `VITE_API_URL` env var (defaults to `http://localhost:8080`).
 
 **Theme / design system:**
-- Chakra UI v2 with custom theme in `src/app/styles/theme.ts`.
-- Use **semantic tokens** for backgrounds and borders instead of hardcoded colors or Chakra's `gray.X`:
-  - `pageBg`, `cardBg`, `subtleBg`, `inputBg` — surface backgrounds
-  - `cardBorder`, `defaultBorder`, `subtleBorder` — border colors
-  - `mainText`, `dimText`, `faintText` — text colors
-- These tokens auto-switch between light/dark mode. Dark mode toggle lives in the Layout navbar.
-- All primary buttons use `colorScheme="blue"` — the theme maps this to Indigo (`brand.600`). There is only one brand color; do not introduce `colorScheme="brand"` and `colorScheme="blue"` as different things.
-- For `_dark`-aware component styles, add `_dark: {}` overrides in `theme.ts` component definitions rather than scattering `useColorModeValue` across JSX.
+- Tailwind CSS v4 + Radix UI primitives (`shared/ui/`), CSS custom properties defined in `src/index.css` under `@theme` (light) and `.dark` (dark overrides).
+- Use **semantic color tokens** instead of hardcoded hex or Tailwind's default gray scale:
+  - `bg`, `bg-2`, `surface`, `hover` — surface backgrounds
+  - `line`, `line-soft` — border colors
+  - `ink`, `ink-2`, `ink-3`, `ink-4` — text colors, darkest to lightest emphasis
+  - `accent`, `success`, `warning`, `danger`, `purple`, `indigo` — semantic/role colors
+- Applied via Tailwind utility classes (`bg-surface`, `text-ink-3`, `border-line`), not inline styles.
+- These tokens auto-switch between light/dark mode via `.dark` class overrides in `index.css`. Dark mode toggle lives in the Layout navbar.
+- All primary buttons use `variant="primary"` (`shared/ui/button.tsx`), which maps to `bg-accent`. There is only one brand color (`accent`, indigo/violet) — don't introduce a second one.
+- Component variants (`class-variance-authority`) live alongside each component in `shared/ui/`; dark-mode styling comes for free from the CSS custom properties, so components rarely need their own dark-mode branch.
 
 **Path alias:** `@/` → `src/` (configured in both `vite.config.ts` and `tsconfig.app.json`).

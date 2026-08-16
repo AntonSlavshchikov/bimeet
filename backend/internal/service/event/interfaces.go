@@ -4,6 +4,7 @@ package eventsvc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -19,6 +20,8 @@ type EventRepo interface {
 	ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error)
 	JoinPublic(ctx context.Context, eventID, userID uuid.UUID) (model.EventParticipant, error)
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateEventRequest) (model.Event, error)
+	Schedule(ctx context.Context, id uuid.UUID, dateStart, dateEnd time.Time) (model.Event, error)
+	Unschedule(ctx context.Context, id uuid.UUID) (model.Event, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	Complete(ctx context.Context, id uuid.UUID) error
 	AddParticipant(ctx context.Context, eventID, userID uuid.UUID, status string) (model.EventParticipant, error)

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, Globe, Lock } from 'lucide-react'
+import { ChevronRight, Globe, Lock, MessageCircle } from 'lucide-react'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import { eventAccentColor } from '@/shared/lib/eventAccentColor'
 import { DateCell } from '@/shared/ui/date-cell'
@@ -37,10 +37,11 @@ export default function EventListRow({
   dateCaption = 'weekday',
 }: EventListRowProps) {
   const { t } = useTranslation()
-  const d = new Date(event.date_start)
-  const day = d.getDate()
-  const caption = dateCaption === 'month' ? MONTHS_SHORT_RU[d.getMonth()] : WEEKDAYS_SHORT_RU[d.getDay()]
-  const time = formatRowTime(event.date_start)
+  const isPermanent = event.date_start == null
+  const d = event.date_start ? new Date(event.date_start) : null
+  const day = d?.getDate()
+  const caption = d ? (dateCaption === 'month' ? MONTHS_SHORT_RU[d.getMonth()] : WEEKDAYS_SHORT_RU[d.getDay()]) : undefined
+  const time = event.date_start ? formatRowTime(event.date_start) : ''
   const accent = eventAccentColor(event)
   const isCompleted = event.status === 'completed'
   const confirmedCount =
@@ -77,9 +78,15 @@ export default function EventListRow({
         aria-hidden
       />
 
-      {/* Date */}
+      {/* Date — or a chat icon for a permanent (dateless) event */}
       <div className="flex justify-center">
-        <DateCell day={day} caption={caption} />
+        {isPermanent ? (
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent/10 text-accent">
+            <MessageCircle size={16} />
+          </div>
+        ) : (
+          <DateCell day={day!} caption={caption} />
+        )}
       </div>
 
       {/* Info — title, tags, description */}
@@ -107,9 +114,9 @@ export default function EventListRow({
         )}
       </div>
 
-      {/* Time + place (≥sm) */}
+      {/* Time + place (≥sm) — permanent events show a "постоянная" label instead */}
       <div className="hidden sm:block">
-        <TimeCell time={time} place={event.location} />
+        <TimeCell time={isPermanent ? t('events.permanentLabel', 'Постоянная') : time} place={event.location} />
       </div>
 
       {/* Avatars (≥lg) */}

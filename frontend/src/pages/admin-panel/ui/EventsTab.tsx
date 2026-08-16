@@ -63,7 +63,9 @@ export default function EventsTab() {
                   <Td className="text-ink-2 max-w-[220px]">
                     <span className="truncate inline-block max-w-full">{ev.organizer_email}</span>
                   </Td>
-                  <Td className="text-ink-2 tnum">{formatDate(ev.date_start)}</Td>
+                  <Td className="text-ink-2 tnum">
+                    {ev.date_start ? formatDate(ev.date_start) : t('events.permanentLabel', 'Постоянная')}
+                  </Td>
                   <Td className="text-ink-3 tnum">{formatDate(ev.created_at)}</Td>
                 </tr>
               ))}

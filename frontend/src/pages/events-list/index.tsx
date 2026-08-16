@@ -17,10 +17,16 @@ import {
   StatCell,
   useToast,
 } from '@/shared/ui'
-type Tab = 'all' | 'attending' | 'organizing' | 'public' | 'past'
+type Tab = 'all' | 'attending' | 'organizing' | 'public' | 'permanent' | 'past'
 type EventAny = EventListItem | PublicEventListItem
+/** EventAny narrowed to events that do have a schedule — used by the day/month rail widgets. */
+type DatedEventAny = EventAny & { date_start: string; date_end: string }
 
-const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'public', 'past']
+const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'public', 'permanent', 'past']
+
+function isDated<T extends { date_start: string | null }>(e: T): e is T & { date_start: string; date_end: string } {
+  return e.date_start != null
+}
 
 const MONTHS_LONG_RU = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -43,18 +49,30 @@ interface Group {
   events: EventAny[]
 }
 
+/** Splits out permanent (dateless) events — they never enter date-based grouping. */
+function splitByPermanence(events: EventAny[]): { permanent: EventAny[]; dated: EventAny[] } {
+  const permanent: EventAny[] = []
+  const dated: EventAny[] = []
+  for (const e of events) {
+    if (e.date_start == null) permanent.push(e)
+    else dated.push(e)
+  }
+  return { permanent, dated }
+}
+
+// events here are guaranteed dated — see buildGroups, the only caller.
 function groupEvents(events: EventAny[]): Group[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const sorted = [...events].sort(
-    (a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
+    (a, b) => new Date(a.date_start!).getTime() - new Date(b.date_start!).getTime()
   )
 
   const todayList: EventAny[] = []
   const byMonth = new Map<string, EventAny[]>()
 
   for (const e of sorted) {
-    const d = new Date(e.date_start)
+    const d = new Date(e.date_start!)
     if (isSameDay(d, today)) {
       todayList.push(e)
       continue
@@ -82,6 +100,22 @@ function groupEvents(events: EventAny[]): Group[] {
       title: `${monthName}${yearPart} · ${list.length} ${pluralEvents(list.length)}`,
       dateCaption: 'weekday',
       events: list,
+    })
+  }
+  return groups
+}
+
+// Permanent events get their own section, always first — sorted by nothing in
+// particular here (EventListRow doesn't show a date for them); the events
+// themselves come pre-sorted by last_activity_at from the API.
+function buildGroups(events: EventAny[]): Group[] {
+  const { permanent, dated } = splitByPermanence(events)
+  const groups = groupEvents(dated)
+  if (permanent.length > 0) {
+    groups.unshift({
+      title: `Постоянные · ${permanent.length} ${pluralEvents(permanent.length)}`,
+      dateCaption: 'weekday',
+      events: permanent,
     })
   }
   return groups
@@ -134,7 +168,7 @@ function EmptyState({
   )
 }
 
-function UpcomingRail({ events }: { events: EventAny[] }) {
+function UpcomingRail({ events }: { events: DatedEventAny[] }) {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
@@ -230,7 +264,7 @@ function UpcomingRail({ events }: { events: EventAny[] }) {
 function StatsRail({
   events,
 }: {
-  events: EventAny[]
+  events: DatedEventAny[]
 }) {
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -316,6 +350,7 @@ function EventsListPage() {
   const organizingEvents = events.filter(e => e.organizer.is_me && e.status !== 'completed')
   // «Публичные» внутри моих встреч = мои публичные (например, которые я организовал).
   const myPublicEvents = events.filter(e => e.is_public && e.status !== 'completed')
+  const permanentEvents = events.filter(e => e.date_start == null && e.status !== 'completed')
   const pastEvents = events.filter(e => e.status === 'completed')
 
   function handleAttend(event: EventAny) {
@@ -352,13 +387,16 @@ function EventsListPage() {
     attending: attendingEvents,
     organizing: organizingEvents,
     public: myPublicEvents,
+    permanent: permanentEvents,
     past: pastEvents,
   }
 
   const selectedDate = searchParams.get('date')
   function filterByDate(list: EventAny[]): EventAny[] {
     if (!selectedDate) return list
-    return list.filter(e => isoDay(new Date(e.date_start)) === selectedDate)
+    // A date filter (from the mini calendar) is meaningless for permanent
+    // events — they have no day to match, so they drop out entirely.
+    return list.filter(isDated).filter(e => isoDay(new Date(e.date_start)) === selectedDate)
   }
 
   function clearDateFilter() {
@@ -368,12 +406,12 @@ function EventsListPage() {
   }
 
   const visible: EventAny[] = filterByDate(filterBySearch(sourceForTab[tab]))
-  const groups = groupEvents(visible)
+  const groups = buildGroups(visible)
   const hasSearch = search.trim().length > 0
   const isEmpty = visible.length === 0
 
   const todayLine = (() => {
-    const todayCount = allUpcoming.filter(e => isSameDay(new Date(e.date_start), new Date())).length
+    const todayCount = allUpcoming.filter(isDated).filter(e => isSameDay(new Date(e.date_start), new Date())).length
     if (todayCount === 0) return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди`
     return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди · ${todayCount} ${pluralEvents(todayCount)} сегодня`
   })()
@@ -439,6 +477,7 @@ function EventsListPage() {
             { value: 'attending',  label: t('events.tabAttending', 'Участвую'),   count: attendingEvents.length },
             { value: 'organizing', label: t('events.tabOrganizing', 'Организую'), count: organizingEvents.length },
             { value: 'public',     label: t('events.tabPublic', 'Публичные'),     count: myPublicEvents.length },
+            { value: 'permanent',  label: t('events.tabPermanent', 'Постоянные'), count: permanentEvents.length },
             { value: 'past',       label: t('events.tabPast', 'Прошедшие'),       count: pastEvents.length },
           ]}
         />
@@ -522,8 +561,9 @@ export default EventsListPage
 export function EventsListRail() {
   const events = useEvents()
 
-  // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам.
-  const allEvents = useMemo<EventAny[]>(() => events, [events])
+  // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам. Постоянные
+  // (dateless) события не участвуют в дне/месяце — им тут нечего показывать.
+  const allEvents = useMemo<DatedEventAny[]>(() => events.filter(isDated), [events])
 
   return (
     <>

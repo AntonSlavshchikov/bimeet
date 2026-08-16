@@ -54,6 +54,7 @@ export interface AdminEventRow {
   is_public: boolean
   organizer_id: string
   organizer_email: string
-  date_start: string
+  /** null = постоянная встреча без расписания */
+  date_start: string | null
   created_at: string
 }

@@ -2,7 +2,10 @@ import { apiFetch } from '@/shared/api/client'
 import type { Message } from '@/entities/message/model/types'
 
 export const chatApi = {
-  list: (eventId: string) => apiFetch<Message[]>(`/api/events/${eventId}/messages`),
+  list: (eventId: string, before?: string) => {
+    const qs = before ? `?before=${encodeURIComponent(before)}` : ''
+    return apiFetch<Message[]>(`/api/events/${eventId}/messages${qs}`)
+  },
   send: (eventId: string, body: string, replyToId?: string) =>
     apiFetch<Message>(`/api/events/${eventId}/messages`, {
       method: 'POST',
@@ -23,4 +26,9 @@ export const chatApi = {
     apiFetch<void>(`/api/events/${eventId}/messages/read`, { method: 'POST' }),
   unreadCount: (eventId: string) =>
     apiFetch<{ count: number }>(`/api/events/${eventId}/messages/unread-count`),
+  toggleReaction: (eventId: string, messageId: string, emoji: string) =>
+    apiFetch<Message>(`/api/events/${eventId}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    }),
 }

@@ -27,6 +27,24 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// Flush forwards to the underlying ResponseWriter's http.Flusher — embedding
+// the http.ResponseWriter interface does not itself promote Flush, since
+// Flush isn't part of that interface. Without this, SSE handlers silently
+// lose their ability to stream through this middleware.
+func (rw *responseWriter) Flush() {
+	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Unwrap exposes the underlying ResponseWriter to http.ResponseController
+// (Go 1.21+), which uses it to reach methods this wrapper doesn't forward
+// itself — notably SetWriteDeadline, which SSE handlers need to lift the
+// server's global WriteTimeout for their connection's lifetime.
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 // Logging emits one structured line per request once it completes, using the
 // request-scoped logger (so the line carries trace_id/request_id) plus status,
 // duration, response size, the matched chi route and — if authenticated —

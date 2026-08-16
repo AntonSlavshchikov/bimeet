@@ -92,7 +92,11 @@ func (r *Repository) GetByID(ctx context.Context, id, userID uuid.UUID) (model.M
 	if err != nil {
 		return model.Message{}, fmt.Errorf("get message: %w", err)
 	}
-	return m, nil
+	msgs := []model.Message{m}
+	if err := r.attachReactions(ctx, msgs, userID); err != nil {
+		return model.Message{}, err
+	}
+	return msgs[0], nil
 }
 
 // ListByEvent returns up to limit most-recent messages older than `before`
@@ -123,7 +127,73 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID, userID uuid.UUID,
 	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {
 		msgs[i], msgs[j] = msgs[j], msgs[i]
 	}
+	if err := r.attachReactions(ctx, msgs, userID); err != nil {
+		return nil, err
+	}
 	return msgs, nil
+}
+
+// attachReactions batch-loads every reaction on the given messages (one
+// query regardless of count) and fills in msgs[i].Reactions, grouped by
+// emoji with a count and whether the requesting user reacted with it.
+func (r *Repository) attachReactions(ctx context.Context, msgs []model.Message, userID uuid.UUID) error {
+	if len(msgs) == 0 {
+		return nil
+	}
+	ids := make([]uuid.UUID, len(msgs))
+	idxByID := make(map[uuid.UUID]int, len(msgs))
+	for i, m := range msgs {
+		ids[i] = m.ID
+		idxByID[m.ID] = i
+	}
+
+	rows, err := r.pool.Query(ctx,
+		`SELECT message_id, emoji, count(*), bool_or(user_id = $2)
+		 FROM message_reactions
+		 WHERE message_id = ANY($1)
+		 GROUP BY message_id, emoji
+		 ORDER BY message_id, min(created_at)`,
+		ids, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("list reactions: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var messageID uuid.UUID
+		var rs model.ReactionSummary
+		if err := rows.Scan(&messageID, &rs.Emoji, &rs.Count, &rs.Mine); err != nil {
+			return fmt.Errorf("scan reaction: %w", err)
+		}
+		if i, ok := idxByID[messageID]; ok {
+			msgs[i].Reactions = append(msgs[i].Reactions, rs)
+		}
+	}
+	return rows.Err()
+}
+
+// ToggleReaction adds the user's reaction if absent, removes it if present.
+// Returns whether it ended up added (true) or removed (false).
+func (r *Repository) ToggleReaction(ctx context.Context, messageID, userID uuid.UUID, emoji string) (bool, error) {
+	tag, err := r.pool.Exec(ctx,
+		`DELETE FROM message_reactions WHERE message_id=$1 AND user_id=$2 AND emoji=$3`,
+		messageID, userID, emoji,
+	)
+	if err != nil {
+		return false, fmt.Errorf("remove reaction: %w", err)
+	}
+	if tag.RowsAffected() > 0 {
+		return false, nil
+	}
+	if _, err := r.pool.Exec(ctx,
+		`INSERT INTO message_reactions (message_id, user_id, emoji) VALUES ($1, $2, $3)
+		 ON CONFLICT DO NOTHING`,
+		messageID, userID, emoji,
+	); err != nil {
+		return false, fmt.Errorf("add reaction: %w", err)
+	}
+	return true, nil
 }
 
 func (r *Repository) SoftDelete(ctx context.Context, id uuid.UUID) error {

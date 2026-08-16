@@ -189,6 +189,36 @@ func (mr *MockEventServiceMockRecorder) ListPublic(ctx, userID any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublic", reflect.TypeOf((*MockEventService)(nil).ListPublic), ctx, userID)
 }
 
+// Schedule mocks base method.
+func (m *MockEventService) Schedule(ctx context.Context, id, userID uuid.UUID, req model.ScheduleEventRequest) (model.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Schedule", ctx, id, userID, req)
+	ret0, _ := ret[0].(model.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Schedule indicates an expected call of Schedule.
+func (mr *MockEventServiceMockRecorder) Schedule(ctx, id, userID, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Schedule", reflect.TypeOf((*MockEventService)(nil).Schedule), ctx, id, userID, req)
+}
+
+// Unschedule mocks base method.
+func (m *MockEventService) Unschedule(ctx context.Context, id, userID uuid.UUID) (model.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unschedule", ctx, id, userID)
+	ret0, _ := ret[0].(model.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Unschedule indicates an expected call of Unschedule.
+func (mr *MockEventServiceMockRecorder) Unschedule(ctx, id, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unschedule", reflect.TypeOf((*MockEventService)(nil).Unschedule), ctx, id, userID)
+}
+
 // Update mocks base method.
 func (m *MockEventService) Update(ctx context.Context, id, userID uuid.UUID, req model.UpdateEventRequest) (model.Event, error) {
 	m.ctrl.T.Helper()

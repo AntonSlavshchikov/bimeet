@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ func writeErr(w http.ResponseWriter, err error, fallbackMsg string) {
 		response.Error(w, http.StatusForbidden, "forbidden")
 	case strings.Contains(msg, "not found"):
 		response.Error(w, http.StatusNotFound, msg)
-	case strings.Contains(msg, "required"), strings.Contains(msg, "too long"), strings.Contains(msg, "belong"):
+	case strings.Contains(msg, "required"), strings.Contains(msg, "too long"), strings.Contains(msg, "belong"), strings.Contains(msg, "not a single emoji"):
 		response.Error(w, http.StatusBadRequest, msg)
 	default:
 		response.Error(w, http.StatusInternalServerError, fallbackMsg)
@@ -65,8 +66,14 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	if v := r.URL.Query().Get("limit"); v != "" {
 		limit, _ = strconv.Atoi(v)
 	}
+	var before *time.Time
+	if v := r.URL.Query().Get("before"); v != "" {
+		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
+			before = &t
+		}
+	}
 
-	msgs, err := h.svc.List(r.Context(), eventID, userID, limit)
+	msgs, err := h.svc.List(r.Context(), eventID, userID, before, limit)
 	if err != nil {
 		writeErr(w, err, "failed to list messages")
 		return
@@ -269,4 +276,49 @@ func (h *Handler) UnreadCount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.JSON(w, http.StatusOK, model.UnreadCountResponse{Count: count})
+}
+
+// @Summary Toggle the caller's emoji reaction on a message
+// @Tags messages
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param messageId path string true "Message ID"
+// @Param request body model.ToggleReactionRequest true "Emoji"
+// @Success 200 {object} model.Message
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/messages/{messageId}/reactions [post]
+func (h *Handler) ToggleReaction(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	eventID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+	messageID, err := uuid.Parse(chi.URLParam(r, "messageId"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid message id")
+		return
+	}
+	var req model.ToggleReactionRequest
+	if err := response.ParseJSON(r, &req); err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	msg, err := h.svc.ToggleReaction(r.Context(), eventID, messageID, userID, req.Emoji)
+	if err != nil {
+		writeErr(w, err, "failed to toggle reaction")
+		return
+	}
+	response.JSON(w, http.StatusOK, msg)
 }

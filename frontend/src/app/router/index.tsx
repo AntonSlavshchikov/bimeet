@@ -7,6 +7,7 @@ import EventsListPage, { EventsListRail } from '@/pages/events-list'
 import PublicEventsPage from '@/pages/public-events'
 import EventDetailPage from '@/pages/event-detail'
 import EventFormPage from '@/pages/event-form'
+import ChatsPage from '@/pages/chats'
 import InvitePage from '@/pages/invite'
 import ProfilePage from '@/pages/profile'
 import NotificationsPage from '@/pages/notifications'
@@ -65,6 +66,26 @@ export default function AppRouter() {
             <ProtectedRoute>
               <Layout>
                 <EventFormPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chats"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ChatsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chats/:eventId"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ChatsPage />
               </Layout>
             </ProtectedRoute>
           }

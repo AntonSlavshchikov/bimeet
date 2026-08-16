@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -65,6 +65,16 @@ export default function EventDetailPage() {
   const tabParam = searchParams.get('tab') as TabKey | null
   const [tab, setTab] = useState<TabKey>(tabParam ?? 'participants')
 
+  // A permanent (dateless) event opens on Chat by default — it's the whole
+  // point of the event. Runs once, and only when the URL didn't already say
+  // which tab to open.
+  const appliedPermanentDefault = useRef(false)
+  useEffect(() => {
+    if (appliedPermanentDefault.current || !event) return
+    appliedPermanentDefault.current = true
+    if (!tabParam && event.date_start == null) setTab('chat')
+  }, [event, tabParam])
+
   const completeEvent = useCompleteEvent(id ?? '')
   // Chat is members-only: the organizer or anyone already on the participant list.
   const isMember =
@@ -86,7 +96,10 @@ export default function EventDetailPage() {
   const isOrganizer = event.organizer.is_me
 
   // Chat tab only for members; history only when there are changes.
-  const baseTabs: TabDef[] = isMember ? [...ORDINARY_TABS, CHAT_TAB] : ORDINARY_TABS
+  const isPermanent = event.date_start == null
+  const baseTabs: TabDef[] = isMember
+    ? isPermanent ? [CHAT_TAB, ...ORDINARY_TABS] : [...ORDINARY_TABS, CHAT_TAB]
+    : ORDINARY_TABS
   const allTabs: TabDef[] =
     event.change_log.length > 0
       ? [...baseTabs, { key: 'changelog', tKey: 'tabs.history', fallback: 'История', icon: History }]

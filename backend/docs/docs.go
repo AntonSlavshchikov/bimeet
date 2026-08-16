@@ -33,13 +33,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.AdminDistribution"
+                            "$ref": "#/definitions/model.AdminDistribution"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -63,13 +63,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.AdminOverview"
+                            "$ref": "#/definitions/model.AdminOverview"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -103,14 +103,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.AdminEventRow"
+                                "$ref": "#/definitions/model.AdminEventRow"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -144,14 +144,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.AdminUserRow"
+                                "$ref": "#/definitions/model.AdminUserRow"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -183,13 +183,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.AdminTimeseries"
+                            "$ref": "#/definitions/model.AdminTimeseries"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -223,14 +223,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.OrganizerStat"
+                                "$ref": "#/definitions/model.OrganizerStat"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -254,19 +254,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.User"
+                            "$ref": "#/definitions/model.User"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -294,7 +294,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.UpdateProfileRequest"
+                            "$ref": "#/definitions/model.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -302,25 +302,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.User"
+                            "$ref": "#/definitions/model.User"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -356,31 +356,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.User"
+                            "$ref": "#/definitions/model.User"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -402,19 +402,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.User"
+                            "$ref": "#/definitions/model.User"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -438,19 +438,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.ProfileStats"
+                            "$ref": "#/definitions/model.ProfileStats"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -475,7 +475,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.RequestCodeRequest"
+                            "$ref": "#/definitions/model.RequestCodeRequest"
                         }
                     }
                 ],
@@ -483,25 +483,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.StatusResponse"
+                            "$ref": "#/definitions/response.StatusResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -526,7 +526,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.VerifyCodeRequest"
+                            "$ref": "#/definitions/model.VerifyCodeRequest"
                         }
                     }
                 ],
@@ -534,19 +534,88 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.AuthResponse"
+                            "$ref": "#/definitions/model.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chats"
+                ],
+                "summary": "List all chats (events the caller organizes or participates in)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.ChatSummary"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chats/stream": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "chats"
+                ],
+                "summary": "Stream chat-list activity across all of the caller's events",
+                "responses": {
+                    "200": {
+                        "description": "text/event-stream",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -572,20 +641,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.EventListItem"
+                                "$ref": "#/definitions/model.EventListItem"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -613,7 +682,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CreateEventRequest"
+                            "$ref": "#/definitions/model.CreateEventRequest"
                         }
                     }
                 ],
@@ -621,25 +690,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Event"
+                            "$ref": "#/definitions/model.Event"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -667,19 +736,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.InviteEventInfo"
+                            "$ref": "#/definitions/model.InviteEventInfo"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -713,7 +782,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.JoinByInviteTokenRequest"
+                            "$ref": "#/definitions/model.JoinByInviteTokenRequest"
                         }
                     }
                 ],
@@ -721,31 +790,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.EventParticipant"
+                            "$ref": "#/definitions/model.EventParticipant"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -771,20 +840,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.PublicEventListItem"
+                                "$ref": "#/definitions/model.PublicEventListItem"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -817,31 +886,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.EventDetail"
+                            "$ref": "#/definitions/model.EventDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -876,7 +945,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.UpdateEventRequest"
+                            "$ref": "#/definitions/model.UpdateEventRequest"
                         }
                     }
                 ],
@@ -884,37 +953,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Event"
+                            "$ref": "#/definitions/model.Event"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -945,31 +1014,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1004,32 +1073,32 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.Carpool"
+                                "$ref": "#/definitions/model.Carpool"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1064,7 +1133,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CreateCarpoolRequest"
+                            "$ref": "#/definitions/model.CreateCarpoolRequest"
                         }
                     }
                 ],
@@ -1072,25 +1141,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Carpool"
+                            "$ref": "#/definitions/model.Carpool"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1130,37 +1199,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1195,32 +1264,32 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.Collection"
+                                "$ref": "#/definitions/model.Collection"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1255,7 +1324,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CreateCollectionRequest"
+                            "$ref": "#/definitions/model.CreateCollectionRequest"
                         }
                     }
                 ],
@@ -1263,31 +1332,31 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Collection"
+                            "$ref": "#/definitions/model.Collection"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1320,31 +1389,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.EventCollectionsSummaryResponse"
+                            "$ref": "#/definitions/model.EventCollectionsSummaryResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1384,31 +1453,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1458,43 +1527,43 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CollectionContribution"
+                            "$ref": "#/definitions/model.CollectionContribution"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1534,31 +1603,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CollectionContribution"
+                            "$ref": "#/definitions/model.CollectionContribution"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1605,31 +1674,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CollectionContribution"
+                            "$ref": "#/definitions/model.CollectionContribution"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1676,31 +1745,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CollectionContribution"
+                            "$ref": "#/definitions/model.CollectionContribution"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1733,31 +1802,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1792,32 +1861,32 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.Item"
+                                "$ref": "#/definitions/model.Item"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1852,7 +1921,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CreateItemRequest"
+                            "$ref": "#/definitions/model.CreateItemRequest"
                         }
                     }
                 ],
@@ -1860,25 +1929,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Item"
+                            "$ref": "#/definitions/model.Item"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1922,7 +1991,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.UpdateItemRequest"
+                            "$ref": "#/definitions/model.UpdateItemRequest"
                         }
                     }
                 ],
@@ -1930,37 +1999,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Item"
+                            "$ref": "#/definitions/model.Item"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -1993,31 +2062,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.StatusResponse"
+                            "$ref": "#/definitions/response.StatusResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2058,38 +2127,38 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.Message"
+                                "$ref": "#/definitions/model.Message"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2124,7 +2193,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.PostMessageRequest"
+                            "$ref": "#/definitions/model.PostMessageRequest"
                         }
                     }
                 ],
@@ -2132,37 +2201,116 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Message"
+                            "$ref": "#/definitions/model.Message"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/messages/image": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Post an event chat photo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Caption",
+                        "name": "body",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2195,31 +2343,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2252,37 +2400,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.UnreadCountResponse"
+                            "$ref": "#/definitions/model.UnreadCountResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2322,31 +2470,113 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/messages/{messageId}/reactions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Toggle the caller's emoji reaction on a message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message ID",
+                        "name": "messageId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Emoji",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.ToggleReactionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2383,7 +2613,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.InviteParticipantRequest"
+                            "$ref": "#/definitions/model.InviteParticipantRequest"
                         }
                     }
                 ],
@@ -2391,31 +2621,31 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.EventParticipant"
+                            "$ref": "#/definitions/model.EventParticipant"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2450,7 +2680,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.UpdateParticipantStatusRequest"
+                            "$ref": "#/definitions/model.UpdateParticipantStatusRequest"
                         }
                     }
                 ],
@@ -2458,31 +2688,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.EventParticipant"
+                            "$ref": "#/definitions/model.EventParticipant"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2526,7 +2756,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.UpdateParticipantStatusRequest"
+                            "$ref": "#/definitions/model.UpdateParticipantStatusRequest"
                         }
                     }
                 ],
@@ -2534,31 +2764,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.EventParticipant"
+                            "$ref": "#/definitions/model.EventParticipant"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2593,32 +2823,32 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.Poll"
+                                "$ref": "#/definitions/model.Poll"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2653,7 +2883,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.CreatePollRequest"
+                            "$ref": "#/definitions/model.CreatePollRequest"
                         }
                     }
                 ],
@@ -2661,31 +2891,31 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Poll"
+                            "$ref": "#/definitions/model.Poll"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2726,7 +2956,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.VoteRequest"
+                            "$ref": "#/definitions/model.VoteRequest"
                         }
                     }
                 ],
@@ -2737,25 +2967,199 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/schedule": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Schedule a permanent event, or reschedule an existing one",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Date range",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.ScheduleEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/stream": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "chats"
+                ],
+                "summary": "Stream live messages for one event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "text/event-stream",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}/unschedule": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Clear an event's dates, turning it into a permanent event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Event"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2781,20 +3185,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/bimeet_internal_model.Notification"
+                                "$ref": "#/definitions/model.Notification"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2816,13 +3220,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2846,13 +3250,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2885,31 +3289,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2942,37 +3346,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.Notification"
+                            "$ref": "#/definitions/model.Notification"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -2999,7 +3403,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.PushSubscribeRequest"
+                            "$ref": "#/definitions/model.PushSubscribeRequest"
                         }
                     }
                 ],
@@ -3010,19 +3414,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -3046,13 +3450,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -3079,7 +3483,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_model.PushUnsubscribeRequest"
+                            "$ref": "#/definitions/model.PushUnsubscribeRequest"
                         }
                     }
                 ],
@@ -3090,19 +3494,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -3126,7 +3530,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/bimeet_internal_handler_response.VAPIDKeyResponse"
+                            "$ref": "#/definitions/response.VAPIDKeyResponse"
                         }
                     }
                 }
@@ -3134,54 +3538,30 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "bimeet_internal_handler_response.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "bimeet_internal_handler_response.StatusResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "bimeet_internal_handler_response.VAPIDKeyResponse": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                }
-            }
-        },
-        "bimeet_internal_model.AdminDistribution": {
+        "model.AdminDistribution": {
             "type": "object",
             "properties": {
                 "by_category": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.AdminDistributionItem"
+                        "$ref": "#/definitions/model.AdminDistributionItem"
                     }
                 },
                 "by_status": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.AdminDistributionItem"
+                        "$ref": "#/definitions/model.AdminDistributionItem"
                     }
                 },
                 "by_visibility": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.AdminDistributionItem"
+                        "$ref": "#/definitions/model.AdminDistributionItem"
                     }
                 }
             }
         },
-        "bimeet_internal_model.AdminDistributionItem": {
+        "model.AdminDistributionItem": {
             "type": "object",
             "properties": {
                 "count": {
@@ -3192,7 +3572,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.AdminEventRow": {
+        "model.AdminEventRow": {
             "type": "object",
             "properties": {
                 "category": {
@@ -3224,7 +3604,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.AdminOverview": {
+        "model.AdminOverview": {
             "type": "object",
             "properties": {
                 "events_active": {
@@ -3253,18 +3633,18 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.AdminTimeseries": {
+        "model.AdminTimeseries": {
             "type": "object",
             "properties": {
                 "points": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.AdminTimeseriesPoint"
+                        "$ref": "#/definitions/model.AdminTimeseriesPoint"
                     }
                 }
             }
         },
-        "bimeet_internal_model.AdminTimeseriesPoint": {
+        "model.AdminTimeseriesPoint": {
             "type": "object",
             "properties": {
                 "date": {
@@ -3279,7 +3659,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.AdminUserRow": {
+        "model.AdminUserRow": {
             "type": "object",
             "properties": {
                 "city": {
@@ -3302,18 +3682,18 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.AuthResponse": {
+        "model.AuthResponse": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/bimeet_internal_model.User"
+                    "$ref": "#/definitions/model.User"
                 }
             }
         },
-        "bimeet_internal_model.Carpool": {
+        "model.Carpool": {
             "type": "object",
             "properties": {
                 "departure_point": {
@@ -3333,14 +3713,14 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CarpoolInfo": {
+        "model.CarpoolInfo": {
             "type": "object",
             "properties": {
                 "departure_point": {
                     "type": "string"
                 },
                 "driver": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 },
                 "id": {
                     "type": "string"
@@ -3348,7 +3728,7 @@ const docTemplate = `{
                 "passengers": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                        "$ref": "#/definitions/model.UserInfo"
                     }
                 },
                 "seats_available": {
@@ -3356,14 +3736,14 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.ChangeLogInfo": {
+        "model.ChangeLogInfo": {
             "type": "object",
             "properties": {
                 "changed_at": {
                     "type": "string"
                 },
                 "changed_by": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 },
                 "field_name": {
                     "type": "string"
@@ -3379,7 +3759,53 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.Collection": {
+        "model.ChatLastMessage": {
+            "type": "object",
+            "properties": {
+                "author_name": {
+                    "type": "string"
+                },
+                "body": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_mine": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.ChatSummary": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "type": "string"
+                },
+                "event_title": {
+                    "type": "string"
+                },
+                "is_permanent": {
+                    "type": "boolean"
+                },
+                "last_activity_at": {
+                    "type": "string"
+                },
+                "last_message": {
+                    "$ref": "#/definitions/model.ChatLastMessage"
+                },
+                "unread_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Collection": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -3402,7 +3828,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CollectionContribution": {
+        "model.CollectionContribution": {
             "type": "object",
             "properties": {
                 "collection_id": {
@@ -3429,13 +3855,13 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CollectionInfo": {
+        "model.CollectionInfo": {
             "type": "object",
             "properties": {
                 "contributions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.ContributionInfo"
+                        "$ref": "#/definitions/model.ContributionInfo"
                     }
                 },
                 "created_at": {
@@ -3455,7 +3881,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CollectionSummary": {
+        "model.CollectionSummary": {
             "type": "object",
             "properties": {
                 "collection_id": {
@@ -3484,7 +3910,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.ContributionInfo": {
+        "model.ContributionInfo": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3504,11 +3930,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 }
             }
         },
-        "bimeet_internal_model.CreateCarpoolRequest": {
+        "model.CreateCarpoolRequest": {
             "type": "object",
             "properties": {
                 "departure_point": {
@@ -3519,7 +3945,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CreateCollectionRequest": {
+        "model.CreateCollectionRequest": {
             "type": "object",
             "properties": {
                 "per_person_amount": {
@@ -3530,7 +3956,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CreateEventRequest": {
+        "model.CreateEventRequest": {
             "type": "object",
             "properties": {
                 "category": {
@@ -3569,7 +3995,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CreateItemRequest": {
+        "model.CreateItemRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -3577,7 +4003,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.CreatePollRequest": {
+        "model.CreatePollRequest": {
             "type": "object",
             "properties": {
                 "options": {
@@ -3591,7 +4017,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.Event": {
+        "model.Event": {
             "type": "object",
             "properties": {
                 "category": {
@@ -3605,6 +4031,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "date_start": {
+                    "description": "nil = permanent event (no schedule)",
                     "type": "string"
                 },
                 "description": {
@@ -3621,6 +4048,9 @@ const docTemplate = `{
                 },
                 "is_public": {
                     "type": "boolean"
+                },
+                "last_activity_at": {
+                    "type": "string"
                 },
                 "location": {
                     "type": "string"
@@ -3649,13 +4079,13 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.EventCollectionsSummaryResponse": {
+        "model.EventCollectionsSummaryResponse": {
             "type": "object",
             "properties": {
                 "collections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.CollectionSummary"
+                        "$ref": "#/definitions/model.CollectionSummary"
                     }
                 },
                 "grand_total": {
@@ -3669,13 +4099,13 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.EventDetail": {
+        "model.EventDetail": {
             "type": "object",
             "properties": {
                 "carpools": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.CarpoolInfo"
+                        "$ref": "#/definitions/model.CarpoolInfo"
                     }
                 },
                 "category": {
@@ -3684,13 +4114,13 @@ const docTemplate = `{
                 "change_log": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.ChangeLogInfo"
+                        "$ref": "#/definitions/model.ChangeLogInfo"
                     }
                 },
                 "collections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.CollectionInfo"
+                        "$ref": "#/definitions/model.CollectionInfo"
                     }
                 },
                 "confirmed_count": {
@@ -3723,8 +4153,11 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.ItemInfo"
+                        "$ref": "#/definitions/model.ItemInfo"
                     }
+                },
+                "last_activity_at": {
+                    "type": "string"
                 },
                 "location": {
                     "type": "string"
@@ -3739,18 +4172,18 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "organizer": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 },
                 "participants": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.ParticipantInfo"
+                        "$ref": "#/definitions/model.ParticipantInfo"
                     }
                 },
                 "polls": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.PollInfo"
+                        "$ref": "#/definitions/model.PollInfo"
                     }
                 },
                 "status": {
@@ -3764,7 +4197,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.EventListItem": {
+        "model.EventListItem": {
             "type": "object",
             "properties": {
                 "category": {
@@ -3797,6 +4230,9 @@ const docTemplate = `{
                 "is_public": {
                     "type": "boolean"
                 },
+                "last_activity_at": {
+                    "type": "string"
+                },
                 "location": {
                     "type": "string"
                 },
@@ -3807,12 +4243,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "organizer": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 },
                 "participants": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.ParticipantInfo"
+                        "$ref": "#/definitions/model.ParticipantInfo"
                     }
                 },
                 "status": {
@@ -3823,7 +4259,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.EventParticipant": {
+        "model.EventParticipant": {
             "type": "object",
             "properties": {
                 "event_id": {
@@ -3841,7 +4277,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.InviteEventInfo": {
+        "model.InviteEventInfo": {
             "type": "object",
             "properties": {
                 "category": {
@@ -3872,14 +4308,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "organizer": {
-                    "$ref": "#/definitions/bimeet_internal_model.PublicUserInfo"
+                    "$ref": "#/definitions/model.PublicUserInfo"
                 },
                 "title": {
                     "type": "string"
                 }
             }
         },
-        "bimeet_internal_model.InviteParticipantRequest": {
+        "model.InviteParticipantRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -3887,7 +4323,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.Item": {
+        "model.Item": {
             "type": "object",
             "properties": {
                 "assigned_to": {
@@ -3904,11 +4340,11 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.ItemInfo": {
+        "model.ItemInfo": {
             "type": "object",
             "properties": {
                 "assigned_to": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 },
                 "id": {
                     "type": "string"
@@ -3918,7 +4354,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.JoinByInviteTokenRequest": {
+        "model.JoinByInviteTokenRequest": {
             "type": "object",
             "properties": {
                 "action": {
@@ -3927,11 +4363,11 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.Message": {
+        "model.Message": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 },
                 "body": {
                     "type": "string"
@@ -3948,15 +4384,24 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "is_mine": {
                     "type": "boolean"
                 },
+                "reactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ReactionSummary"
+                    }
+                },
                 "reply_to": {
-                    "$ref": "#/definitions/bimeet_internal_model.ReplyPreview"
+                    "$ref": "#/definitions/model.ReplyPreview"
                 }
             }
         },
-        "bimeet_internal_model.Notification": {
+        "model.Notification": {
             "type": "object",
             "properties": {
                 "count": {
@@ -3986,7 +4431,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.OrganizerStat": {
+        "model.OrganizerStat": {
             "type": "object",
             "properties": {
                 "email": {
@@ -4003,7 +4448,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.ParticipantInfo": {
+        "model.ParticipantInfo": {
             "type": "object",
             "properties": {
                 "is_organizer": {
@@ -4013,11 +4458,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/bimeet_internal_model.UserInfo"
+                    "$ref": "#/definitions/model.UserInfo"
                 }
             }
         },
-        "bimeet_internal_model.Poll": {
+        "model.Poll": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -4035,7 +4480,7 @@ const docTemplate = `{
                 "options": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.PollOption"
+                        "$ref": "#/definitions/model.PollOption"
                     }
                 },
                 "question": {
@@ -4043,7 +4488,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PollInfo": {
+        "model.PollInfo": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -4058,7 +4503,7 @@ const docTemplate = `{
                 "options": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.PollOptionInfo"
+                        "$ref": "#/definitions/model.PollOptionInfo"
                     }
                 },
                 "question": {
@@ -4066,7 +4511,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PollOption": {
+        "model.PollOption": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4083,7 +4528,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PollOptionInfo": {
+        "model.PollOptionInfo": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4101,7 +4546,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PostMessageRequest": {
+        "model.PostMessageRequest": {
             "type": "object",
             "properties": {
                 "body": {
@@ -4112,7 +4557,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.ProfileStats": {
+        "model.ProfileStats": {
             "type": "object",
             "properties": {
                 "completed": {
@@ -4129,7 +4574,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PublicEventListItem": {
+        "model.PublicEventListItem": {
             "type": "object",
             "properties": {
                 "category": {
@@ -4172,12 +4617,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "organizer": {
-                    "$ref": "#/definitions/bimeet_internal_model.PublicUserInfo"
+                    "$ref": "#/definitions/model.PublicUserInfo"
                 },
                 "participants": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/bimeet_internal_model.PublicParticipantInfo"
+                        "$ref": "#/definitions/model.PublicParticipantInfo"
                     }
                 },
                 "status": {
@@ -4188,7 +4633,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PublicParticipantInfo": {
+        "model.PublicParticipantInfo": {
             "type": "object",
             "properties": {
                 "is_organizer": {
@@ -4198,11 +4643,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/bimeet_internal_model.PublicUserInfo"
+                    "$ref": "#/definitions/model.PublicUserInfo"
                 }
             }
         },
-        "bimeet_internal_model.PublicUserInfo": {
+        "model.PublicUserInfo": {
             "type": "object",
             "properties": {
                 "is_me": {
@@ -4213,7 +4658,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PushSubscribeRequest": {
+        "model.PushSubscribeRequest": {
             "type": "object",
             "properties": {
                 "endpoint": {
@@ -4232,7 +4677,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.PushUnsubscribeRequest": {
+        "model.PushUnsubscribeRequest": {
             "type": "object",
             "properties": {
                 "endpoint": {
@@ -4240,7 +4685,21 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.ReplyPreview": {
+        "model.ReactionSummary": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "emoji": {
+                    "type": "string"
+                },
+                "mine": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.ReplyPreview": {
             "type": "object",
             "properties": {
                 "author_name": {
@@ -4257,7 +4716,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.RequestCodeRequest": {
+        "model.RequestCodeRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -4265,7 +4724,26 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.UnreadCountResponse": {
+        "model.ScheduleEventRequest": {
+            "type": "object",
+            "properties": {
+                "date_end": {
+                    "type": "string"
+                },
+                "date_start": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.ToggleReactionRequest": {
+            "type": "object",
+            "properties": {
+                "emoji": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UnreadCountResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -4273,16 +4751,10 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.UpdateEventRequest": {
+        "model.UpdateEventRequest": {
             "type": "object",
             "properties": {
                 "category": {
-                    "type": "string"
-                },
-                "date_end": {
-                    "type": "string"
-                },
-                "date_start": {
                     "type": "string"
                 },
                 "description": {
@@ -4311,7 +4783,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.UpdateItemRequest": {
+        "model.UpdateItemRequest": {
             "type": "object",
             "properties": {
                 "assigned": {
@@ -4320,7 +4792,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.UpdateParticipantStatusRequest": {
+        "model.UpdateParticipantStatusRequest": {
             "type": "object",
             "properties": {
                 "status": {
@@ -4329,7 +4801,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.UpdateProfileRequest": {
+        "model.UpdateProfileRequest": {
             "type": "object",
             "properties": {
                 "birth_date": {
@@ -4347,7 +4819,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.User": {
+        "model.User": {
             "type": "object",
             "properties": {
                 "avatar_url": {
@@ -4376,7 +4848,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.UserInfo": {
+        "model.UserInfo": {
             "type": "object",
             "properties": {
                 "email": {
@@ -4390,7 +4862,7 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.VerifyCodeRequest": {
+        "model.VerifyCodeRequest": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4401,10 +4873,34 @@ const docTemplate = `{
                 }
             }
         },
-        "bimeet_internal_model.VoteRequest": {
+        "model.VoteRequest": {
             "type": "object",
             "properties": {
                 "option_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.VAPIDKeyResponse": {
+            "type": "object",
+            "properties": {
+                "key": {
                     "type": "string"
                 }
             }

@@ -82,7 +82,8 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
     event.is_public && !isOrganizer && !isParticipant && spotsLeft != null && spotsLeft <= 0
   const canRespond = isParticipant && !isOrganizer && event.status === 'active'
 
-  const sameDay = formatDate(event.date_start) === formatDate(event.date_end)
+  const isPermanent = event.date_start == null
+  const sameDay = !isPermanent && formatDate(event.date_start!) === formatDate(event.date_end!)
   const descLong = (event.description ?? '').length > 160
   const accent = eventAccentColor(event)
 
@@ -208,9 +209,11 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-ink-2">
             <span className="inline-flex items-center gap-1.5">
               <Calendar size={14} className="text-ink-3 shrink-0" />
-              {sameDay
-                ? `${formatDate(event.date_start)} · ${formatTime(event.date_start)}–${formatTime(event.date_end)}`
-                : `${formatDate(event.date_start)} — ${formatDate(event.date_end)}`}
+              {isPermanent
+                ? t('eventInfo.permanentDates', 'Постоянная встреча — без даты')
+                : sameDay
+                  ? `${formatDate(event.date_start!)} · ${formatTime(event.date_start!)}–${formatTime(event.date_end!)}`
+                  : `${formatDate(event.date_start!)} — ${formatDate(event.date_end!)}`}
             </span>
 
             {event.location && (

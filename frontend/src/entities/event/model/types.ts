@@ -17,8 +17,9 @@ export interface Event {
   id: string
   title: string
   description: string
-  date_start: string
-  date_end: string
+  /** null = постоянная встреча без расписания */
+  date_start: string | null
+  date_end: string | null
   location: string
   location_lat?: number
   location_lng?: number
@@ -29,6 +30,7 @@ export interface Event {
   confirmed_count: number
   organizer: EventUser
   invite_token: string
+  last_activity_at: string
   created_at: string
   updated_at: string
   my_status?: string
@@ -44,8 +46,9 @@ export interface EventListItem {
   id: string
   title: string
   description: string
-  date_start: string
-  date_end: string
+  /** null = постоянная встреча без расписания */
+  date_start: string | null
+  date_end: string | null
   location: string
   dress_code?: string
   status: 'active' | 'completed'
@@ -54,6 +57,7 @@ export interface EventListItem {
   confirmed_count: number
   organizer: EventUser
   invite_token: string
+  last_activity_at: string
   created_at: string
   my_status: string
   participants: Array<{ user: EventUser; status: string; is_organizer: boolean }>
@@ -87,32 +91,41 @@ export interface InviteEventInfo {
   id: string
   title: string
   description: string
-  date_start: string
-  date_end: string
+  date_start: string | null
+  date_end: string | null
   location: string
   dress_code?: string
   organizer: PublicEventUser
   confirmed_count: number
 }
 
+// date_start/date_end must be provided together, or omitted together (a
+// permanent event has no schedule at all, not a half-set one) — see
+// eventsvc.validateCreateEvent on the backend.
 export interface CreateEventData {
   title: string
   description: string
-  date_start: string
-  date_end: string
+  date_start?: string
+  date_end?: string
   location: string
   location_lat?: number
   location_lng?: number
   dress_code?: string
 }
 
+// Never carries dates — a generic PUT can't tell "field omitted" from "field
+// explicitly cleared", so scheduling changes go through ScheduleEventData /
+// the dedicated schedule|unschedule endpoints instead.
 export interface UpdateEventData {
   title?: string
   description?: string
-  date_start?: string
-  date_end?: string
   location?: string
   location_lat?: number
   location_lng?: number
   dress_code?: string
+}
+
+export interface ScheduleEventData {
+  date_start: string
+  date_end: string
 }

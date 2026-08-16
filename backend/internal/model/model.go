@@ -44,23 +44,24 @@ type ReminderEvent struct {
 }
 
 type Event struct {
-	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	DateStart   time.Time `json:"date_start"`
-	DateEnd     time.Time `json:"date_end"`
-	Location    string    `json:"location"`
-	LocationLat *float64  `json:"location_lat,omitempty"`
-	LocationLng *float64  `json:"location_lng,omitempty"`
-	Category    string    `json:"category"` // ordinary | business
-	DressCode   *string   `json:"dress_code,omitempty"`
-	Status      string    `json:"status"` // active | completed
-	IsPublic    bool      `json:"is_public"`
-	MaxGuests   *int      `json:"max_guests,omitempty"`
-	OrganizerID uuid.UUID `json:"organizer_id"`
-	InviteToken uuid.UUID `json:"invite_token"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID             uuid.UUID  `json:"id"`
+	Title          string     `json:"title"`
+	Description    string     `json:"description"`
+	DateStart      *time.Time `json:"date_start"` // nil = permanent event (no schedule)
+	DateEnd        *time.Time `json:"date_end"`
+	Location       string     `json:"location"`
+	LocationLat    *float64   `json:"location_lat,omitempty"`
+	LocationLng    *float64   `json:"location_lng,omitempty"`
+	Category       string     `json:"category"` // ordinary | business
+	DressCode      *string    `json:"dress_code,omitempty"`
+	Status         string     `json:"status"` // active | completed
+	IsPublic       bool       `json:"is_public"`
+	MaxGuests      *int       `json:"max_guests,omitempty"`
+	OrganizerID    uuid.UUID  `json:"organizer_id"`
+	InviteToken    uuid.UUID  `json:"invite_token"`
+	LastActivityAt time.Time  `json:"last_activity_at"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type EventParticipant struct {
@@ -156,15 +157,29 @@ type Notification struct {
 // Message is a single chat message in an event. A soft-deleted message keeps its
 // row (Deleted=true) but its Body is blanked before leaving the repository.
 type Message struct {
-	ID        uuid.UUID     `json:"id"`
-	EventID   uuid.UUID     `json:"event_id"`
-	Author    UserInfo      `json:"author"`
-	Body      string        `json:"body"`
-	ImageURL  *string       `json:"image_url,omitempty"`
-	CreatedAt time.Time     `json:"created_at"`
-	Deleted   bool          `json:"deleted"`
-	IsMine    bool          `json:"is_mine"`
-	ReplyTo   *ReplyPreview `json:"reply_to,omitempty"`
+	ID        uuid.UUID         `json:"id"`
+	EventID   uuid.UUID         `json:"event_id"`
+	Author    UserInfo          `json:"author"`
+	Body      string            `json:"body"`
+	ImageURL  *string           `json:"image_url,omitempty"`
+	CreatedAt time.Time         `json:"created_at"`
+	Deleted   bool              `json:"deleted"`
+	IsMine    bool              `json:"is_mine"`
+	ReplyTo   *ReplyPreview     `json:"reply_to,omitempty"`
+	Reactions []ReactionSummary `json:"reactions,omitempty"`
+}
+
+// ReactionSummary is one emoji's aggregate on a message — how many reacted,
+// and whether the requesting user is one of them.
+type ReactionSummary struct {
+	Emoji string `json:"emoji"`
+	Count int    `json:"count"`
+	Mine  bool   `json:"mine"`
+}
+
+// ToggleReactionRequest adds the caller's reaction if absent, removes it if present.
+type ToggleReactionRequest struct {
+	Emoji string `json:"emoji"`
 }
 
 // ReplyPreview is a lightweight snapshot of the message being replied to.
@@ -183,6 +198,28 @@ type PostMessageRequest struct {
 // UnreadCountResponse carries the chat unread badge number.
 type UnreadCountResponse struct {
 	Count int `json:"count"`
+}
+
+// ChatSummary is one row of the cross-event chat list (GET /api/chats) — an
+// event the caller organizes or participates in, with its most recent
+// message and unread count. Ordered by LastActivityAt, newest first.
+type ChatSummary struct {
+	EventID        uuid.UUID        `json:"event_id"`
+	EventTitle     string           `json:"event_title"`
+	IsPermanent    bool             `json:"is_permanent"`
+	LastActivityAt time.Time        `json:"last_activity_at"`
+	UnreadCount    int              `json:"unread_count"`
+	LastMessage    *ChatLastMessage `json:"last_message,omitempty"`
+}
+
+// ChatLastMessage is a lightweight preview of an event's most recent message.
+type ChatLastMessage struct {
+	AuthorName string    `json:"author_name"`
+	IsMine     bool      `json:"is_mine"`
+	Body       string    `json:"body"`
+	ImageURL   *string   `json:"image_url,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	Deleted    bool      `json:"deleted"`
 }
 
 // LoginCode is a one-time passwordless login code (hashed) for a given email.
@@ -237,32 +274,45 @@ type AuthResponse struct {
 	User  User   `json:"user"`
 }
 
+// CreateEventRequest.DateStart/DateEnd are both omitted to create a permanent
+// event (no schedule); both must be present otherwise — see Service.Create.
 type CreateEventRequest struct {
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	DateStart   time.Time `json:"date_start"`
-	DateEnd     time.Time `json:"date_end"`
-	Location    string    `json:"location"`
-	LocationLat *float64  `json:"location_lat,omitempty"`
-	LocationLng *float64  `json:"location_lng,omitempty"`
-	Category    string    `json:"category"` // ordinary | business; defaults to ordinary
-	DressCode   *string   `json:"dress_code,omitempty"`
-	IsPublic    bool      `json:"is_public"`
-	MaxGuests   *int      `json:"max_guests,omitempty"`
-}
-
-type UpdateEventRequest struct {
-	Title       *string    `json:"title,omitempty"`
-	Description *string    `json:"description,omitempty"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
 	DateStart   *time.Time `json:"date_start,omitempty"`
 	DateEnd     *time.Time `json:"date_end,omitempty"`
-	Location    *string    `json:"location,omitempty"`
+	Location    string     `json:"location"`
 	LocationLat *float64   `json:"location_lat,omitempty"`
 	LocationLng *float64   `json:"location_lng,omitempty"`
-	Category    *string    `json:"category,omitempty"`
+	Category    string     `json:"category"` // ordinary | business; defaults to ordinary
 	DressCode   *string    `json:"dress_code,omitempty"`
-	IsPublic    *bool      `json:"is_public,omitempty"`
+	IsPublic    bool       `json:"is_public"`
 	MaxGuests   *int       `json:"max_guests,omitempty"`
+}
+
+// UpdateEventRequest never carries dates — a generic PUT can't tell "field
+// omitted" from "field explicitly cleared" for a *time.Time, so scheduling
+// changes go through the dedicated /schedule and /unschedule endpoints
+// instead (see ScheduleEventRequest).
+type UpdateEventRequest struct {
+	Title       *string  `json:"title,omitempty"`
+	Description *string  `json:"description,omitempty"`
+	Location    *string  `json:"location,omitempty"`
+	LocationLat *float64 `json:"location_lat,omitempty"`
+	LocationLng *float64 `json:"location_lng,omitempty"`
+	Category    *string  `json:"category,omitempty"`
+	DressCode   *string  `json:"dress_code,omitempty"`
+	IsPublic    *bool    `json:"is_public,omitempty"`
+	MaxGuests   *int     `json:"max_guests,omitempty"`
+}
+
+// ScheduleEventRequest gives a permanent event a date range (or changes the
+// dates of a scheduled one). Both fields are required — a partial schedule
+// isn't meaningful. POST /events/{id}/unschedule takes no body and clears
+// both dates back to permanent.
+type ScheduleEventRequest struct {
+	DateStart time.Time `json:"date_start"`
+	DateEnd   time.Time `json:"date_end"`
 }
 
 type InviteParticipantRequest struct {
@@ -328,8 +378,8 @@ type InviteEventInfo struct {
 	ID             uuid.UUID      `json:"id"`
 	Title          string         `json:"title"`
 	Description    string         `json:"description"`
-	DateStart      time.Time      `json:"date_start"`
-	DateEnd        time.Time      `json:"date_end"`
+	DateStart      *time.Time     `json:"date_start"`
+	DateEnd        *time.Time     `json:"date_end"`
 	Location       string         `json:"location"`
 	Category       string         `json:"category"`
 	DressCode      *string        `json:"dress_code,omitempty"`
@@ -413,8 +463,8 @@ type EventDetail struct {
 	ID             uuid.UUID         `json:"id"`
 	Title          string            `json:"title"`
 	Description    string            `json:"description"`
-	DateStart      time.Time         `json:"date_start"`
-	DateEnd        time.Time         `json:"date_end"`
+	DateStart      *time.Time        `json:"date_start"`
+	DateEnd        *time.Time        `json:"date_end"`
 	Location       string            `json:"location"`
 	LocationLat    *float64          `json:"location_lat,omitempty"`
 	LocationLng    *float64          `json:"location_lng,omitempty"`
@@ -426,6 +476,7 @@ type EventDetail struct {
 	ConfirmedCount int               `json:"confirmed_count"`
 	Organizer      UserInfo          `json:"organizer"`
 	InviteToken    uuid.UUID         `json:"invite_token"`
+	LastActivityAt time.Time         `json:"last_activity_at"`
 	CreatedAt      time.Time         `json:"created_at"`
 	UpdatedAt      time.Time         `json:"updated_at"`
 	Participants   []ParticipantInfo `json:"participants"`
@@ -440,8 +491,8 @@ type EventListItem struct {
 	ID             uuid.UUID         `json:"id"`
 	Title          string            `json:"title"`
 	Description    string            `json:"description"`
-	DateStart      time.Time         `json:"date_start"`
-	DateEnd        time.Time         `json:"date_end"`
+	DateStart      *time.Time        `json:"date_start"`
+	DateEnd        *time.Time        `json:"date_end"`
 	Location       string            `json:"location"`
 	Category       string            `json:"category"`
 	DressCode      *string           `json:"dress_code,omitempty"`
@@ -451,6 +502,7 @@ type EventListItem struct {
 	ConfirmedCount int               `json:"confirmed_count"`
 	Organizer      UserInfo          `json:"organizer"`
 	InviteToken    uuid.UUID         `json:"invite_token"`
+	LastActivityAt time.Time         `json:"last_activity_at"`
 	CreatedAt      time.Time         `json:"created_at"`
 	MyStatus       string            `json:"my_status"`
 	Participants   []ParticipantInfo `json:"participants"`
@@ -538,13 +590,13 @@ type AdminUserRow struct {
 }
 
 type AdminEventRow struct {
-	ID             uuid.UUID `json:"id"`
-	Title          string    `json:"title"`
-	Category       string    `json:"category"`
-	Status         string    `json:"status"`
-	IsPublic       bool      `json:"is_public"`
-	OrganizerID    uuid.UUID `json:"organizer_id"`
-	OrganizerEmail string    `json:"organizer_email"`
-	DateStart      time.Time `json:"date_start"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             uuid.UUID  `json:"id"`
+	Title          string     `json:"title"`
+	Category       string     `json:"category"`
+	Status         string     `json:"status"`
+	IsPublic       bool       `json:"is_public"`
+	OrganizerID    uuid.UUID  `json:"organizer_id"`
+	OrganizerEmail string     `json:"organizer_email"`
+	DateStart      *time.Time `json:"date_start"`
+	CreatedAt      time.Time  `json:"created_at"`
 }

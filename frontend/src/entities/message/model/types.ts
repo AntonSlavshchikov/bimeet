@@ -12,6 +12,12 @@ export interface ReplyPreview {
   deleted: boolean
 }
 
+export interface ReactionSummary {
+  emoji: string
+  count: number
+  mine: boolean
+}
+
 export interface Message {
   id: string
   event_id: string
@@ -22,4 +28,5 @@ export interface Message {
   deleted: boolean
   is_mine: boolean
   reply_to?: ReplyPreview | null
+  reactions?: ReactionSummary[]
 }

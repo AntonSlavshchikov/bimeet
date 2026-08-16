@@ -45,7 +45,19 @@
     "notificationsShort": "Alerts",
     "publicEvents": "All events",
     "publicEventsShort": "All",
+    "chats": "Chats",
+    "chatsShort": "Chats",
     "filters": "Filters"
+  },
+  "chats": {
+    "title": "Chat",
+    "empty": "No conversations yet",
+    "noMessages": "No messages",
+    "messageDeleted": "Message deleted",
+    "photo": "Photo",
+    "you": "You",
+    "backToList": "Back to chats",
+    "selectChat": "Select a chat"
   },
   "layout": {
     "openMenu": "Open menu",
@@ -64,6 +76,8 @@
     "tabOrganizing": "Organizing",
     "tabAttending": "Attending",
     "tabPublic": "Public",
+    "tabPermanent": "Permanent",
+    "permanentLabel": "Permanent",
     "emptyNoOrganized": "You have no organized events",
     "emptyNoInvited": "No active invitations",
     "emptyNoPublic": "No public events",
@@ -111,6 +125,10 @@
     "fieldDescription": "Description",
     "fieldDescriptionPlaceholder": "Tell the details...",
     "sectionWhenWhere": "When and where",
+    "scheduleDated": "Scheduled",
+    "scheduleDatedDesc": "Dates, start and end",
+    "schedulePermanent": "Permanent event",
+    "schedulePermanentDesc": "No date — the chat lives on",
     "fieldStart": "Start",
     "fieldEnd": "End",
     "fieldDates": "Dates",
@@ -132,6 +150,7 @@
     "errorUpdate": "Update error"
   },
   "eventInfo": {
+    "permanentDates": "Permanent event — no date",
     "statusCompleted": "Completed",
     "statusHost": "You're hosting",
     "statusGoing": "You're going",
@@ -209,7 +228,11 @@
     "attachImage": "Attach image",
     "imageInvalidType": "Only image files can be attached",
     "imageTooLarge": "File is too large (max 10 MB)",
-    "imageSendError": "Failed to send image"
+    "imageSendError": "Failed to send image",
+    "react": "React",
+    "search": "Search chat",
+    "searchPlaceholder": "Search loaded messages…",
+    "searchEmpty": "Nothing found"
   },
   "participants": {
     "myStatusTitle": "Your status",

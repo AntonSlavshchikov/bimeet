@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -208,18 +209,6 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 			}
 			return event.Location
 		}(), changed: req.Location != nil && *req.Location != event.Location},
-		{name: "date_start", oldVal: event.DateStart.String(), newVal: func() string {
-			if req.DateStart != nil {
-				return req.DateStart.String()
-			}
-			return event.DateStart.String()
-		}(), changed: req.DateStart != nil && !req.DateStart.Equal(event.DateStart)},
-		{name: "date_end", oldVal: event.DateEnd.String(), newVal: func() string {
-			if req.DateEnd != nil {
-				return req.DateEnd.String()
-			}
-			return event.DateEnd.String()
-		}(), changed: req.DateEnd != nil && !req.DateEnd.Equal(event.DateEnd)},
 	}
 
 	updated, err := s.eventRepo.Update(ctx, id, req)
@@ -233,22 +222,82 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 		}
 	}
 
+	s.notifyUpdated(id, userID, updated.Title)
+
+	return updated, nil
+}
+
+// Schedule gives a permanent event a date range, or reschedules an event that
+// already has one. Split from Update because a generic PUT can't distinguish
+// "don't touch the dates" from "clear them" for a *time.Time field.
+func (s *Service) Schedule(ctx context.Context, id, userID uuid.UUID, req model.ScheduleEventRequest) (model.Event, error) {
+	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return model.Event{}, fmt.Errorf("event not found")
+	}
+	if event.OrganizerID != userID {
+		return model.Event{}, ErrForbidden
+	}
+	if req.DateEnd.Before(req.DateStart) {
+		return model.Event{}, fmt.Errorf("date_end must not be before date_start")
+	}
+
+	updated, err := s.eventRepo.Schedule(ctx, id, req.DateStart, req.DateEnd)
+	if err != nil {
+		return model.Event{}, err
+	}
+
+	_ = s.eventRepo.AddChangeLog(ctx, id, userID, "date_start", dateLabel(event.DateStart), req.DateStart.String())
+	_ = s.eventRepo.AddChangeLog(ctx, id, userID, "date_end", dateLabel(event.DateEnd), req.DateEnd.String())
+
+	s.notifyUpdated(id, userID, updated.Title)
+	return updated, nil
+}
+
+// Unschedule clears an event's dates, turning it into a permanent event.
+func (s *Service) Unschedule(ctx context.Context, id, userID uuid.UUID) (model.Event, error) {
+	event, err := s.eventRepo.GetByID(ctx, id)
+	if err != nil {
+		return model.Event{}, fmt.Errorf("event not found")
+	}
+	if event.OrganizerID != userID {
+		return model.Event{}, ErrForbidden
+	}
+
+	updated, err := s.eventRepo.Unschedule(ctx, id)
+	if err != nil {
+		return model.Event{}, err
+	}
+
+	_ = s.eventRepo.AddChangeLog(ctx, id, userID, "date_start", dateLabel(event.DateStart), "permanent")
+	_ = s.eventRepo.AddChangeLog(ctx, id, userID, "date_end", dateLabel(event.DateEnd), "permanent")
+
+	s.notifyUpdated(id, userID, updated.Title)
+	return updated, nil
+}
+
+func dateLabel(t *time.Time) string {
+	if t == nil {
+		return "permanent"
+	}
+	return t.String()
+}
+
+func (s *Service) notifyUpdated(eventID, actorID uuid.UUID, title string) {
 	go func() {
 		bgCtx := context.Background()
-		participants, err := s.eventRepo.ListParticipants(bgCtx, id)
+		participants, err := s.eventRepo.ListParticipants(bgCtx, eventID)
 		if err != nil {
 			return
 		}
 		for _, p := range participants {
-			if p.UserID == userID {
+			if p.UserID == actorID {
 				continue
 			}
-			_, _ = s.notificationRepo.Create(bgCtx, p.UserID, &id, "event_updated",
-				fmt.Sprintf("Event '%s' has been updated", updated.Title))
+			_, _ = s.notificationRepo.Create(bgCtx, p.UserID, &eventID, "event_updated",
+				fmt.Sprintf("Event '%s' has been updated", title))
 		}
 	}()
-
-	return updated, nil
 }
 
 func (s *Service) Delete(ctx context.Context, id, userID uuid.UUID) error {
@@ -364,14 +413,16 @@ func isNotFound(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
 }
 
+// validateCreateEvent requires both dates or neither: a permanent event has
+// no schedule at all, not a half-set one.
 func validateCreateEvent(req model.CreateEventRequest) error {
 	if strings.TrimSpace(req.Title) == "" {
 		return fmt.Errorf("title is required")
 	}
-	if req.DateStart.IsZero() || req.DateEnd.IsZero() {
-		return fmt.Errorf("date_start and date_end are required")
+	if (req.DateStart == nil) != (req.DateEnd == nil) {
+		return fmt.Errorf("date_start and date_end must be provided together")
 	}
-	if req.DateEnd.Before(req.DateStart) {
+	if req.DateStart != nil && req.DateEnd.Before(*req.DateStart) {
 		return fmt.Errorf("date_end must be after date_start")
 	}
 	if req.MaxGuests != nil && *req.MaxGuests <= 0 {
@@ -380,23 +431,9 @@ func validateCreateEvent(req model.CreateEventRequest) error {
 	return nil
 }
 
-func validateUpdateEvent(event model.Event, req model.UpdateEventRequest) error {
+func validateUpdateEvent(_ model.Event, req model.UpdateEventRequest) error {
 	if req.Title != nil && strings.TrimSpace(*req.Title) == "" {
 		return fmt.Errorf("title is required")
-	}
-	start := event.DateStart
-	if req.DateStart != nil {
-		start = *req.DateStart
-	}
-	end := event.DateEnd
-	if req.DateEnd != nil {
-		end = *req.DateEnd
-	}
-	if start.IsZero() || end.IsZero() {
-		return fmt.Errorf("date_start and date_end are required")
-	}
-	if end.Before(start) {
-		return fmt.Errorf("date_end must be after date_start")
 	}
 	if req.MaxGuests != nil && *req.MaxGuests <= 0 {
 		return fmt.Errorf("max_guests must be positive")
