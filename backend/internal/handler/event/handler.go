@@ -294,7 +294,7 @@ func (h *Handler) Schedule(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusNotFound, "event not found")
 			return
 		}
-		if strings.Contains(msg, "must not be") {
+		if strings.Contains(msg, "must not be") || strings.Contains(msg, "are required") {
 			response.Error(w, http.StatusBadRequest, msg)
 			return
 		}

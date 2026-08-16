@@ -16,6 +16,9 @@ export const chatKeys = {
 // one shared payload to every subscriber, so it only reflects the sender's
 // own perspective. Recompute it here against the viewer's own email before
 // caching, or every other participant would see their own messages as "Вы".
+// (Reactions don't need this: ReactionSummary.reactors is viewer-neutral by
+// construction, so every recipient of the same SSE payload derives its own
+// "did I react" locally instead of trusting a baked-in bool.)
 function withViewerPerspective(msg: Message, myEmail: string | undefined): Message {
   const isMine = !!myEmail && msg.author.email === myEmail
   return { ...msg, is_mine: isMine, author: { ...msg.author, is_me: isMine } }
@@ -154,7 +157,7 @@ export function useDeleteMessage(eventId: string) {
 // useToggleReaction flips the caller's reaction optimistically (instant
 // feedback), then reconciles with the server response — which also arrives
 // via SSE to every other viewer, so no separate invalidate is needed here.
-export function useToggleReaction(eventId: string) {
+export function useToggleReaction(eventId: string, myEmail: string | undefined) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ messageId, emoji }: { messageId: string; emoji: string }) =>
@@ -164,14 +167,17 @@ export function useToggleReaction(eventId: string) {
       const previous = qc.getQueryData<Message[]>(chatKeys.messages(eventId))
       qc.setQueryData<Message[]>(chatKeys.messages(eventId), prev =>
         (prev ?? []).map(m => {
-          if (m.id !== messageId) return m
+          if (m.id !== messageId || !myEmail) return m
           const reactions = m.reactions ?? []
           const existing = reactions.find(r => r.emoji === emoji)
+          const mine = !!existing?.reactors.includes(myEmail)
           const nextReactions = existing
-            ? existing.count === 1 && existing.mine
+            ? existing.count === 1 && mine
               ? reactions.filter(r => r.emoji !== emoji)
-              : reactions.map(r => r.emoji === emoji ? { ...r, count: r.mine ? r.count - 1 : r.count + 1, mine: !r.mine } : r)
-            : [...reactions, { emoji, count: 1, mine: true }]
+              : reactions.map(r => r.emoji === emoji
+                  ? { ...r, count: mine ? r.count - 1 : r.count + 1, reactors: mine ? r.reactors.filter(e => e !== myEmail) : [...r.reactors, myEmail] }
+                  : r)
+            : [...reactions, { emoji, count: 1, reactors: [myEmail] }]
           return { ...m, reactions: nextReactions }
         }),
       )

@@ -147,7 +147,8 @@
     "successCreate": "Event created",
     "successUpdate": "Event updated",
     "errorCreate": "Create error",
-    "errorUpdate": "Update error"
+    "errorUpdate": "Update error",
+    "errorSchedule": "Main fields saved, but the schedule change failed"
   },
   "eventInfo": {
     "permanentDates": "Permanent event — no date",

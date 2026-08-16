@@ -238,6 +238,9 @@ func (s *Service) Schedule(ctx context.Context, id, userID uuid.UUID, req model.
 	if event.OrganizerID != userID {
 		return model.Event{}, ErrForbidden
 	}
+	if req.DateStart.IsZero() || req.DateEnd.IsZero() {
+		return model.Event{}, fmt.Errorf("date_start and date_end are required")
+	}
 	if req.DateEnd.Before(req.DateStart) {
 		return model.Event{}, fmt.Errorf("date_end must not be before date_start")
 	}

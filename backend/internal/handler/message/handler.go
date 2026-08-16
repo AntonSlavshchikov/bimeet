@@ -68,9 +68,12 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	var before *time.Time
 	if v := r.URL.Query().Get("before"); v != "" {
-		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
-			before = &t
+		t, err := time.Parse(time.RFC3339Nano, v)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, "invalid before")
+			return
 		}
+		before = &t
 	}
 
 	msgs, err := h.svc.List(r.Context(), eventID, userID, before, limit)

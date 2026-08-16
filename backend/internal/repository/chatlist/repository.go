@@ -9,6 +9,7 @@ package chatlistrepo
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,11 +65,25 @@ func (r *Repository) ListForUser(ctx context.Context, userID uuid.UUID) ([]model
 		eventIDs = append(eventIDs, s.EventID)
 	}
 
-	if err := r.attachLastMessages(ctx, summaries, idxByEvent, eventIDs, userID); err != nil {
-		return nil, err
+	// Independent queries over the same eventIDs — run concurrently instead
+	// of serializing two round-trips to Postgres.
+	var lastMsgErr, unreadErr error
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		lastMsgErr = r.attachLastMessages(ctx, summaries, idxByEvent, eventIDs, userID)
+	}()
+	go func() {
+		defer wg.Done()
+		unreadErr = r.attachUnreadCounts(ctx, summaries, idxByEvent, eventIDs, userID)
+	}()
+	wg.Wait()
+	if lastMsgErr != nil {
+		return nil, lastMsgErr
 	}
-	if err := r.attachUnreadCounts(ctx, summaries, idxByEvent, eventIDs, userID); err != nil {
-		return nil, err
+	if unreadErr != nil {
+		return nil, unreadErr
 	}
 
 	return summaries, nil
@@ -99,12 +114,10 @@ func (r *Repository) attachLastMessages(ctx context.Context, summaries []model.C
 			return fmt.Errorf("scan last message: %w", err)
 		}
 		lm.IsMine = authorID == userID
-		if deletedAt != nil {
-			lm.Deleted = true
-			lm.Body = ""
+		lm.Deleted = deletedAt != nil
+		lm.Body = r.cipher.DecryptBody(lm.Body, lm.Deleted)
+		if lm.Deleted {
 			lm.ImageURL = nil
-		} else {
-			lm.Body = r.cipher.Decrypt(lm.Body)
 		}
 		if i, ok := idxByEvent[eventID]; ok {
 			summaries[i].LastMessage = &lm

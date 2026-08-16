@@ -50,22 +50,18 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UU
 	}
 	m.IsMine = authorID == userID
 	m.Author.IsMe = m.IsMine
-	if deletedAt != nil {
-		m.Deleted = true
-		m.Body = ""
+	m.Deleted = deletedAt != nil
+	m.Body = r.cipher.DecryptBody(m.Body, m.Deleted)
+	if m.Deleted {
 		m.ImageURL = nil
-	} else {
-		m.Body = r.cipher.Decrypt(m.Body)
 	}
 	if replyID != nil {
-		rp := model.ReplyPreview{ID: *replyID}
+		rp := model.ReplyPreview{ID: *replyID, Deleted: replyDeletedAt != nil}
 		if replyAuthor != nil {
 			rp.AuthorName = *replyAuthor
 		}
-		if replyDeletedAt != nil {
-			rp.Deleted = true
-		} else if replyBody != nil {
-			rp.Body = r.cipher.Decrypt(*replyBody)
+		if replyBody != nil {
+			rp.Body = r.cipher.DecryptBody(*replyBody, rp.Deleted)
 		}
 		m.ReplyTo = &rp
 	}
@@ -93,7 +89,7 @@ func (r *Repository) GetByID(ctx context.Context, id, userID uuid.UUID) (model.M
 		return model.Message{}, fmt.Errorf("get message: %w", err)
 	}
 	msgs := []model.Message{m}
-	if err := r.attachReactions(ctx, msgs, userID); err != nil {
+	if err := r.attachReactions(ctx, msgs); err != nil {
 		return model.Message{}, err
 	}
 	return msgs[0], nil
@@ -127,7 +123,7 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID, userID uuid.UUID,
 	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {
 		msgs[i], msgs[j] = msgs[j], msgs[i]
 	}
-	if err := r.attachReactions(ctx, msgs, userID); err != nil {
+	if err := r.attachReactions(ctx, msgs); err != nil {
 		return nil, err
 	}
 	return msgs, nil
@@ -135,8 +131,9 @@ func (r *Repository) ListByEvent(ctx context.Context, eventID, userID uuid.UUID,
 
 // attachReactions batch-loads every reaction on the given messages (one
 // query regardless of count) and fills in msgs[i].Reactions, grouped by
-// emoji with a count and whether the requesting user reacted with it.
-func (r *Repository) attachReactions(ctx context.Context, msgs []model.Message, userID uuid.UUID) error {
+// emoji with a count and the emails of everyone who reacted — viewer-neutral,
+// so the same result is valid whether serialized directly or broadcast via SSE.
+func (r *Repository) attachReactions(ctx context.Context, msgs []model.Message) error {
 	if len(msgs) == 0 {
 		return nil
 	}
@@ -148,12 +145,13 @@ func (r *Repository) attachReactions(ctx context.Context, msgs []model.Message, 
 	}
 
 	rows, err := r.pool.Query(ctx,
-		`SELECT message_id, emoji, count(*), bool_or(user_id = $2)
-		 FROM message_reactions
-		 WHERE message_id = ANY($1)
-		 GROUP BY message_id, emoji
-		 ORDER BY message_id, min(created_at)`,
-		ids, userID,
+		`SELECT mr.message_id, mr.emoji, count(*), array_agg(u.email ORDER BY mr.created_at)
+		 FROM message_reactions mr
+		 JOIN users u ON u.id = mr.user_id
+		 WHERE mr.message_id = ANY($1)
+		 GROUP BY mr.message_id, mr.emoji
+		 ORDER BY mr.message_id, min(mr.created_at)`,
+		ids,
 	)
 	if err != nil {
 		return fmt.Errorf("list reactions: %w", err)
@@ -163,7 +161,7 @@ func (r *Repository) attachReactions(ctx context.Context, msgs []model.Message, 
 	for rows.Next() {
 		var messageID uuid.UUID
 		var rs model.ReactionSummary
-		if err := rows.Scan(&messageID, &rs.Emoji, &rs.Count, &rs.Mine); err != nil {
+		if err := rows.Scan(&messageID, &rs.Emoji, &rs.Count, &rs.Reactors); err != nil {
 			return fmt.Errorf("scan reaction: %w", err)
 		}
 		if i, ok := idxByID[messageID]; ok {
@@ -175,25 +173,28 @@ func (r *Repository) attachReactions(ctx context.Context, msgs []model.Message, 
 
 // ToggleReaction adds the user's reaction if absent, removes it if present.
 // Returns whether it ended up added (true) or removed (false).
+// ToggleReaction removes the (message, user, emoji) row if present, otherwise
+// inserts it — as a single statement so concurrent toggles (double-click,
+// client retry) can't race a separate DELETE against a separate INSERT.
 func (r *Repository) ToggleReaction(ctx context.Context, messageID, userID uuid.UUID, emoji string) (bool, error) {
-	tag, err := r.pool.Exec(ctx,
-		`DELETE FROM message_reactions WHERE message_id=$1 AND user_id=$2 AND emoji=$3`,
+	var added bool
+	err := r.pool.QueryRow(ctx,
+		`WITH deleted AS (
+		   DELETE FROM message_reactions WHERE message_id=$1 AND user_id=$2 AND emoji=$3
+		   RETURNING 1
+		 ), inserted AS (
+		   INSERT INTO message_reactions (message_id, user_id, emoji)
+		   SELECT $1, $2, $3 WHERE NOT EXISTS (SELECT 1 FROM deleted)
+		   ON CONFLICT DO NOTHING
+		   RETURNING 1
+		 )
+		 SELECT EXISTS (SELECT 1 FROM inserted)`,
 		messageID, userID, emoji,
-	)
+	).Scan(&added)
 	if err != nil {
-		return false, fmt.Errorf("remove reaction: %w", err)
+		return false, fmt.Errorf("toggle reaction: %w", err)
 	}
-	if tag.RowsAffected() > 0 {
-		return false, nil
-	}
-	if _, err := r.pool.Exec(ctx,
-		`INSERT INTO message_reactions (message_id, user_id, emoji) VALUES ($1, $2, $3)
-		 ON CONFLICT DO NOTHING`,
-		messageID, userID, emoji,
-	); err != nil {
-		return false, fmt.Errorf("add reaction: %w", err)
-	}
-	return true, nil
+	return added, nil
 }
 
 func (r *Repository) SoftDelete(ctx context.Context, id uuid.UUID) error {

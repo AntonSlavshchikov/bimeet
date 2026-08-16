@@ -12,10 +12,13 @@ export interface ReplyPreview {
   deleted: boolean
 }
 
+// reactors (not a "mine" bool) — viewer-neutral, so the same payload is
+// correct whether it came from a direct fetch or an SSE broadcast to every
+// participant. "Did I react" is derived client-side from the viewer's email.
 export interface ReactionSummary {
   emoji: string
   count: number
-  mine: boolean
+  reactors: string[]
 }
 
 export interface Message {

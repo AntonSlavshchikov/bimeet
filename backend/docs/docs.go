@@ -4694,8 +4694,11 @@ const docTemplate = `{
                 "emoji": {
                     "type": "string"
                 },
-                "mine": {
-                    "type": "boolean"
+                "reactors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

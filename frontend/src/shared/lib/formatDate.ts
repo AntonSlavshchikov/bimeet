@@ -30,8 +30,21 @@ export function formatRelative(iso: string) {
   return formatDate(iso)
 }
 
-function isSameDay(a: Date, b: Date) {
+export function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+export const MONTHS_SHORT_RU = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+
+/** Заголовок чата в списке: "12:34" сегодня, "вчера", иначе "DD MMM". */
+export function chatListTimestamp(iso: string) {
+  const date = new Date(iso)
+  const now = new Date()
+  if (isSameDay(date, now)) return formatTime(iso)
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (isSameDay(date, yesterday)) return 'вчера'
+  return `${date.getDate()} ${MONTHS_SHORT_RU[date.getMonth()]}`
 }
 
 /** Заголовок группы по дате: "Сегодня" / "Вчера" / полная дата. */

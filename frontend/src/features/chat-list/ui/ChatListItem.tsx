@@ -2,21 +2,9 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Image as ImageIcon } from 'lucide-react'
 import type { ChatSummary } from '@/entities/chat/model/types'
-import { formatTime } from '@/shared/lib/formatDate'
+import { chatListTimestamp } from '@/shared/lib/formatDate'
 import { Avatar } from '@/shared/ui/avatar'
 import { cn } from '@/shared/lib/cn'
-
-const MONTHS_SHORT_RU = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
-
-function chatTimestamp(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  if (d.toDateString() === now.toDateString()) return formatTime(iso)
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
-  if (d.toDateString() === yesterday.toDateString()) return 'вчера'
-  return `${d.getDate()} ${MONTHS_SHORT_RU[d.getMonth()]}`
-}
 
 interface ChatListItemProps {
   chat: ChatSummary
@@ -59,7 +47,7 @@ export default function ChatListItem({ chat, active }: ChatListItemProps) {
             {chat.event_title}
           </span>
           <span className="text-[11.5px] text-ink-3 tnum shrink-0">
-            {chatTimestamp(chat.last_activity_at)}
+            {chatListTimestamp(chat.last_activity_at)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">

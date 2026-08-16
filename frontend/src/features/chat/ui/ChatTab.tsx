@@ -66,7 +66,7 @@ export default function ChatTab({ event }: { event: Event }) {
   const sendImage = useSendImageMessage(event.id)
   const deleteMessage = useDeleteMessage(event.id)
   const markRead = useMarkChatRead(event.id)
-  const toggleReaction = useToggleReaction(event.id)
+  const toggleReaction = useToggleReaction(event.id, user?.email)
   const loadOlder = useLoadOlderMessages(event.id)
   const [hasMoreHistory, setHasMoreHistory] = useState(true)
   const toast = useToast()
@@ -94,7 +94,7 @@ export default function ChatTab({ event }: { event: Event }) {
     return Array.from(new Set(list))
   }, [event.participants, event.organizer])
 
-  const mentionMatch = /@([\p{L}\p{N}_]*)$/u.exec(text)
+  const mentionMatch = /@([\p{L}\p{N}_]+)$/u.exec(text)
   const mentionQuery = mentionMatch?.[1]?.toLowerCase()
   const mentionSuggestions = mentionQuery == null
     ? []
@@ -317,7 +317,7 @@ export default function ChatTab({ event }: { event: Event }) {
                           onClick={() => toggleReaction.mutate({ messageId: m.id, emoji: r.emoji })}
                           className={cn(
                             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] border transition',
-                            r.mine
+                            !!user?.email && r.reactors.includes(user.email)
                               ? 'bg-accent/10 border-accent text-accent'
                               : 'bg-bg-2 border-line-soft text-ink-2 hover:bg-hover',
                           )}

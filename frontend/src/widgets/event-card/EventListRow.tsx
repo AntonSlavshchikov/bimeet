@@ -9,8 +9,8 @@ import { StatusPill, StatusPillButton } from '@/shared/ui/status-pill'
 import { EventTag } from '@/shared/ui/event-tag'
 import { Avatar, AvatarStack } from '@/shared/ui/avatar'
 import { cn } from '@/shared/lib/cn'
+import { MONTHS_SHORT_RU } from '@/shared/lib/formatDate'
 
-const MONTHS_SHORT_RU = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 const WEEKDAYS_SHORT_RU = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
 
 function formatRowTime(iso: string): string {

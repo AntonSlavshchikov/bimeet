@@ -170,11 +170,14 @@ type Message struct {
 }
 
 // ReactionSummary is one emoji's aggregate on a message — how many reacted,
-// and whether the requesting user is one of them.
+// and the emails of who reacted. Reactors (not a viewer-relative "mine" bool)
+// so the same JSON is valid for every recipient of a broadcast SSE push, not
+// just the user who happened to trigger the toggle — the client derives its
+// own "did I react" by checking its email against Reactors.
 type ReactionSummary struct {
-	Emoji string `json:"emoji"`
-	Count int    `json:"count"`
-	Mine  bool   `json:"mine"`
+	Emoji    string   `json:"emoji"`
+	Count    int      `json:"count"`
+	Reactors []string `json:"reactors"`
 }
 
 // ToggleReactionRequest adds the caller's reaction if absent, removes it if present.

@@ -147,7 +147,8 @@
     "successCreate": "Встреча создана",
     "successUpdate": "Встреча обновлена",
     "errorCreate": "Ошибка создания",
-    "errorUpdate": "Ошибка обновления"
+    "errorUpdate": "Ошибка обновления",
+    "errorSchedule": "Основные поля сохранены, но не удалось изменить расписание"
   },
   "eventInfo": {
     "permanentDates": "Постоянная встреча — без даты",

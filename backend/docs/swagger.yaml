@@ -758,8 +758,10 @@ definitions:
         type: integer
       emoji:
         type: string
-      mine:
-        type: boolean
+      reactors:
+        items:
+          type: string
+        type: array
     type: object
   model.ReplyPreview:
     properties:

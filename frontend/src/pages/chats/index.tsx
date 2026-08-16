@@ -43,7 +43,7 @@ function Conversation({ eventId }: { eventId: string }) {
         <ArrowLeft size={14} /> {t('chats.backToList', 'К списку чатов')}
       </Link>
       <div className="flex-1 min-h-0 flex flex-col p-4 sm:p-6">
-        <ChatTab event={event} />
+        <ChatTab key={eventId} event={event} />
       </div>
     </div>
   )

@@ -141,7 +141,7 @@ func TestToggleReaction_MessageWrongEvent(t *testing.T) {
 func TestToggleReaction_HappyPath(t *testing.T) {
 	svc, mr, er, _, pb := newService(t)
 	eventID, userID, msgID := uuid.New(), uuid.New(), uuid.New()
-	updated := model.Message{ID: msgID, EventID: eventID, Reactions: []model.ReactionSummary{{Emoji: "👍", Count: 1, Mine: true}}}
+	updated := model.Message{ID: msgID, EventID: eventID, Reactions: []model.ReactionSummary{{Emoji: "👍", Count: 1, Reactors: []string{"user@example.com"}}}}
 
 	er.EXPECT().IsParticipant(gomock.Any(), eventID, userID).Return(true, nil)
 	mr.EXPECT().GetByID(gomock.Any(), msgID, userID).Return(model.Message{ID: msgID, EventID: eventID}, nil)

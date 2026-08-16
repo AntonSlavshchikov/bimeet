@@ -127,10 +127,18 @@ export default function EventFormPage() {
     if (isEdit && id) {
       try {
         await updateEvent.mutateAsync(basePayload)
+      } catch (err) {
+        toast({ title: t('eventForm.errorUpdate', 'Не удалось сохранить'), description: (err as Error).message, status: 'error' })
+        return
+      }
 
+      try {
         // Dates never travel through the generic update — a PATCH can't tell
         // "field omitted" from "field explicitly cleared", so scheduling
         // changes go through the dedicated schedule/unschedule endpoints.
+        // This runs as a second request after the base fields already
+        // committed, so a failure here is reported separately — the title/
+        // location change above is not rolled back.
         const wasPermanent = event?.date_start == null
         if (form.isPermanent && !wasPermanent) {
           await unscheduleEvent.mutateAsync()
@@ -138,12 +146,18 @@ export default function EventFormPage() {
           const datesChanged = wasPermanent || dateStartISO !== event?.date_start || dateEndISO !== event?.date_end
           if (datesChanged) await scheduleEvent.mutateAsync({ date_start: dateStartISO, date_end: dateEndISO })
         }
-
-        toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
-        navigate(`/events/${id}`)
       } catch (err) {
-        toast({ title: t('eventForm.errorUpdate', 'Не удалось сохранить'), description: (err as Error).message, status: 'error' })
+        toast({
+          title: t('eventForm.errorSchedule', 'Основные поля сохранены, но не удалось изменить расписание'),
+          description: (err as Error).message,
+          status: 'error',
+        })
+        navigate(`/events/${id}`)
+        return
       }
+
+      toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
+      navigate(`/events/${id}`)
     } else {
       createEvent.mutate(
         { ...basePayload, ...(dateStartISO && dateEndISO ? { date_start: dateStartISO, date_end: dateEndISO } : {}) },
