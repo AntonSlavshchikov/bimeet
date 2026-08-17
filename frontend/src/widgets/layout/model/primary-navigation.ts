@@ -5,14 +5,14 @@ import { useSwipeable, type SwipeableHandlers } from 'react-swipeable'
 export const primaryNavRoutes = {
   discover: '/discover',
   events: '/events',
-  notifications: '/notifications',
+  chats: '/chats',
   profile: '/profile',
 } as const
 
 export const primaryNavOrder = [
   primaryNavRoutes.discover,
   primaryNavRoutes.events,
-  primaryNavRoutes.notifications,
+  primaryNavRoutes.chats,
   primaryNavRoutes.profile,
 ] as const
 

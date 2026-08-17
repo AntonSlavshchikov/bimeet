@@ -83,3 +83,14 @@ func (c *Cipher) Decrypt(stored string) string {
 	}
 	return string(plain)
 }
+
+// DecryptBody returns "" for a soft-deleted message body, otherwise the
+// decrypted body — the "blank if deleted, else decrypt" rule shared by every
+// place that surfaces a stored message body (full message rows, chat-list
+// previews).
+func (c *Cipher) DecryptBody(stored string, deleted bool) string {
+	if deleted {
+		return ""
+	}
+	return c.Decrypt(stored)
+}

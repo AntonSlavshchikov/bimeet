@@ -48,7 +48,9 @@ export default function PollsTab({ event }: { event: Event }) {
   const pollVoteTotals = event.polls.map(poll => poll.options.reduce((sum, option) => sum + option.vote_count, 0))
   const answeredParticipants = pollVoteTotals.length > 0 ? Math.max(...pollVoteTotals) : 0
   const participantCount = Math.max(event.participants.length, event.confirmed_count)
-  const daysUntilEvent = Math.max(0, Math.ceil((new Date(event.date_start).getTime() - renderedAt) / 86_400_000))
+  const daysUntilEvent = event.date_start == null
+    ? 0
+    : Math.max(0, Math.ceil((new Date(event.date_start).getTime() - renderedAt) / 86_400_000))
 
   return (
     <div>

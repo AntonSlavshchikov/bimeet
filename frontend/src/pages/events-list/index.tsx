@@ -43,6 +43,12 @@ import {
   useToast,
 } from '@/shared/ui'
 type EventAny = EventListItem | PublicEventListItem
+/** EventAny narrowed to events that do have a schedule — used by the day/month rail widgets. */
+type DatedEventAny = EventAny & { date_start: string; date_end: string }
+
+function isDated<T extends { date_start: string | null }>(e: T): e is T & { date_start: string; date_end: string } {
+  return e.date_start != null
+}
 
 function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -62,6 +68,18 @@ interface Group {
   events: EventAny[]
 }
 
+/** Splits out permanent (dateless) events — they never enter date-based grouping. */
+function splitByPermanence(events: EventAny[]): { permanent: EventAny[]; dated: EventAny[] } {
+  const permanent: EventAny[] = []
+  const dated: EventAny[] = []
+  for (const e of events) {
+    if (e.date_start == null) permanent.push(e)
+    else dated.push(e)
+  }
+  return { permanent, dated }
+}
+
+// events here are guaranteed dated — see buildGroups, the only caller.
 function groupEvents(
   events: EventAny[],
   locale: string,
@@ -70,14 +88,14 @@ function groupEvents(
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const sorted = [...events].sort(
-    (a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime()
+    (a, b) => new Date(a.date_start!).getTime() - new Date(b.date_start!).getTime()
   )
 
   const todayList: EventAny[] = []
   const byMonth = new Map<string, EventAny[]>()
 
   for (const e of sorted) {
-    const d = new Date(e.date_start)
+    const d = new Date(e.date_start!)
     if (isSameDay(d, today)) {
       todayList.push(e)
       continue
@@ -113,6 +131,27 @@ function groupEvents(
   return groups
 }
 
+// Permanent events get their own section, always first — sorted by nothing in
+// particular here (EventListRow doesn't show a date for them); the events
+// themselves come pre-sorted by last_activity_at from the API.
+function buildGroups(
+  events: EventAny[],
+  locale: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): Group[] {
+  const { permanent, dated } = splitByPermanence(events)
+  const groups = groupEvents(dated, locale, t)
+  if (permanent.length > 0) {
+    groups.unshift({
+      title: t('events.permanentGroup', 'Постоянные'),
+      countLabel: t('events.eventCount', { count: permanent.length }),
+      dateCaption: 'weekday',
+      events: permanent,
+    })
+  }
+  return groups
+}
+
 function resolveCanAttend(
   event: EventAny,
   myStatus: string | undefined,
@@ -129,7 +168,7 @@ function resolveCanAttend(
   return undefined
 }
 
-function UpcomingRail({ events }: { events: EventAny[] }) {
+function UpcomingRail({ events }: { events: DatedEventAny[] }) {
   const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
@@ -231,7 +270,7 @@ function StatsRail({
   events,
   unreadCount,
 }: {
-  events: EventAny[]
+  events: DatedEventAny[]
   unreadCount: number
 }) {
   const { t } = useTranslation()
@@ -389,11 +428,13 @@ function EventsListPage() {
   const sourceEvents: EventAny[] = profileStatEvents ?? tabEvents
 
   const selectedDate = searchParams.get('date')
+  // A date filter (from the mini calendar) is meaningless for permanent
+  // events — they have no day to match, so they drop out entirely.
   const visible: EventAny[] = filterBySearch(sourceEvents).filter(event =>
-    !selectedDate || isoDay(new Date(event.date_start)) === selectedDate,
+    !selectedDate || (isDated(event) && isoDay(new Date(event.date_start)) === selectedDate),
   )
   const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
-  const groups = groupEvents(visible, locale, t)
+  const groups = buildGroups(visible, locale, t)
   const hasSearch = search.trim().length > 0
   const isEmpty = visible.length === 0
   const profileStatLabel = profileStat ? getProfileStatLabel(profileStat, t) : ''
@@ -401,7 +442,7 @@ function EventsListPage() {
   const showCreateAction = tab === 'all' || tab === 'organizing'
 
   const todayLine = (() => {
-    const todayCount = allActive.filter(e => isSameDay(new Date(e.date_start), new Date())).length
+    const todayCount = allActive.filter(isDated).filter(e => isSameDay(new Date(e.date_start), new Date())).length
     const upcomingLabel = t('events.upcomingCount', { count: allActive.length })
     if (todayCount === 0) return upcomingLabel
     return `${upcomingLabel} · ${t('events.todayCount', { count: todayCount })}`
@@ -653,8 +694,9 @@ export function EventsListRail() {
   const events = useEvents()
   const { data: notifications = [] } = useNotifications()
 
-  // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам.
-  const allEvents = useMemo<EventAny[]>(() => events, [events])
+  // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам. Постоянные
+  // (dateless) события не участвуют в дне/месяце — им тут нечего показывать.
+  const allEvents = useMemo<DatedEventAny[]>(() => events.filter(isDated), [events])
 
   return (
     <>

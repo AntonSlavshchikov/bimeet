@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDesignStore, type Design } from '@/shared/design'
 import Layout from './index'
@@ -13,6 +14,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('./Sidebar', () => ({ default: () => null }))
 vi.mock('./BottomNav', () => ({ default: () => null }))
 vi.mock('@/features/notifications/ui/NotificationsNavbarActions', () => ({ default: () => null }))
+vi.mock('@/entities/notification/queries', () => ({ useNotifications: () => ({ data: [] }) }))
 vi.mock('./model/primary-navigation', () => ({
   usePrimarySwipeNavigation: () => ({ handlers: {} }),
 }))
@@ -37,10 +39,13 @@ describe('Layout design variants', () => {
 
   async function renderShell(design: Design) {
     useDesignStore.getState().setDesign(design)
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     await act(async () => root.render(
-      <MemoryRouter>
-        <Layout>Content</Layout>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Layout>Content</Layout>
+        </MemoryRouter>
+      </QueryClientProvider>,
     ))
 
     const outer = container.firstElementChild as HTMLElement

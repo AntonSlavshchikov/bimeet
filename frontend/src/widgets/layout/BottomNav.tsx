@@ -1,7 +1,8 @@
 import { Link, useMatch } from 'react-router-dom'
-import { Bell, Calendar, Search, User } from 'lucide-react'
+import { BarChart3, Calendar, MessageCircle, Search, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useNotifications } from '@/entities/notification/queries'
+import { useAuth } from '@/features/auth/model/AuthContext'
+import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { cn } from '@/shared/lib/cn'
 import { primaryNavRoutes } from './model/primary-navigation'
 
@@ -38,23 +39,25 @@ function TabLink({ to, icon: Icon, label, badge }: TabProps) {
 
 export default function BottomNav() {
   const { t } = useTranslation()
-  const { data: notifications = [] } = useNotifications()
-  const unread = notifications.filter(n => !n.is_read).length
+  const { user } = useAuth()
+  const showAdmin = isAdmin(user)
 
   return (
     <nav
       className={cn(
-        'fixed inset-x-3 z-40 grid grid-cols-4 rounded-full border border-line bg-surface/90 px-2 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden',
+        'fixed inset-x-3 z-40 grid rounded-full border border-line bg-surface/90 px-2 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden',
       )}
       style={{
         bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
         paddingBottom: '8px',
+        gridTemplateColumns: `repeat(${showAdmin ? 5 : 4}, 1fr)`,
       }}
     >
-      <TabLink to={primaryNavRoutes.discover} icon={Search} label={t('nav.publicEvents')} />
+      <TabLink to={primaryNavRoutes.discover} icon={Search} label={t('nav.publicEventsShort', 'Все')} />
       <TabLink to={primaryNavRoutes.events} icon={Calendar} label={t('nav.events')} />
-      <TabLink to={primaryNavRoutes.notifications} icon={Bell} label={t('nav.notificationsShort', 'Уведом.')} badge={unread} />
+      <TabLink to={primaryNavRoutes.chats} icon={MessageCircle} label={t('nav.chatsShort', 'Чаты')} />
       <TabLink to={primaryNavRoutes.profile} icon={User} label={t('nav.profile')} />
+      {showAdmin && <TabLink to="/admin" icon={BarChart3} label={t('nav.admin')} />}
     </nav>
   )
 }

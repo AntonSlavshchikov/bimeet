@@ -47,7 +47,19 @@
     "notifications": "Уведомления",
     "notificationsShort": "Уведом.",
     "publicEvents": "Все встречи",
-    "publicEventsShort": "Все"
+    "publicEventsShort": "Все",
+    "chats": "Чаты",
+    "chatsShort": "Чаты"
+  },
+  "chats": {
+    "title": "Чат",
+    "empty": "Пока нет ни одной беседы",
+    "noMessages": "Нет сообщений",
+    "messageDeleted": "Сообщение удалено",
+    "photo": "Фото",
+    "you": "Вы",
+    "backToList": "К списку чатов",
+    "selectChat": "Выберите чат слева"
   },
   "layout": {
     "openMenu": "Открыть меню",
@@ -74,6 +86,8 @@
     "tabAttending": "Участвую",
     "tabPublic": "Публичные",
     "tabParticipated": "Участвовал",
+    "permanentLabel": "Постоянная",
+    "permanentGroup": "Постоянные",
     "emptyNoOrganized": "У вас нет организуемых встреч",
     "emptyNoPlanned": "Пока ничего не запланировано",
     "emptyNoInvited": "Нет активных приглашений",
@@ -169,6 +183,10 @@
     "fieldDescription": "Описание",
     "fieldDescriptionPlaceholder": "Расскажите подробности...",
     "sectionWhenWhere": "Когда и где",
+    "scheduleDated": "По расписанию",
+    "scheduleDatedDesc": "Даты, начало и конец",
+    "schedulePermanent": "Постоянная встреча",
+    "schedulePermanentDesc": "Без даты — чат живёт вечно",
     "fieldStart": "Начало",
     "fieldEnd": "Конец",
     "fieldDates": "Даты",
@@ -193,9 +211,11 @@
     "successCreate": "Встреча создана",
     "successUpdate": "Встреча обновлена",
     "errorCreate": "Ошибка создания",
-    "errorUpdate": "Ошибка обновления"
+    "errorUpdate": "Ошибка обновления",
+    "errorSchedule": "Основные поля сохранены, но не удалось изменить расписание"
   },
   "eventInfo": {
+    "permanentDates": "Постоянная встреча — без даты",
     "backAllEvents": "Ко всем встречам",
     "sections": "Разделы встречи",
     "sectionsDescription": "Всё, что нужно участникам, в одном месте.",
@@ -301,7 +321,11 @@
     "attachImage": "Прикрепить изображение",
     "imageInvalidType": "Можно прикрепить только изображение",
     "imageTooLarge": "Файл слишком большой (макс. 10 МБ)",
-    "imageSendError": "Не удалось отправить изображение"
+    "imageSendError": "Не удалось отправить изображение",
+    "react": "Реакция",
+    "search": "Поиск по чату",
+    "searchPlaceholder": "Поиск по загруженным сообщениям…",
+    "searchEmpty": "Ничего не найдено"
   },
   "participants": {
     "kicker": "Команда встречи",

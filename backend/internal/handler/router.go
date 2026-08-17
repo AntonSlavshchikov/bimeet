@@ -13,6 +13,7 @@ import (
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
 	carpoolhandler "bimeet/internal/handler/carpool"
+	chatlisthandler "bimeet/internal/handler/chatlist"
 	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
@@ -22,6 +23,7 @@ import (
 	pollhandler "bimeet/internal/handler/poll"
 	profilehandler "bimeet/internal/handler/profile"
 	pushhandler "bimeet/internal/handler/push"
+	streamhandler "bimeet/internal/handler/stream"
 	"bimeet/internal/middleware"
 )
 
@@ -34,6 +36,8 @@ func NewRouter(
 	item *itemhandler.Handler,
 	carpool *carpoolhandler.Handler,
 	message *messagehandler.Handler,
+	chatList *chatlisthandler.Handler,
+	stream *streamhandler.Handler,
 	notification *notificationhandler.Handler,
 	profile *profilehandler.Handler,
 	admin *adminhandler.Handler,
@@ -107,6 +111,8 @@ func NewRouter(
 				r.Put("/", event.Update)
 				r.Delete("/", event.Delete)
 				r.Post("/complete", event.Complete)
+				r.Post("/schedule", event.Schedule)
+				r.Post("/unschedule", event.Unschedule)
 				r.Post("/join", event.JoinPublic)
 
 				// Participants. The status update always targets the caller; the
@@ -131,12 +137,14 @@ func NewRouter(
 				r.Post("/polls/{pollId}/vote", poll.Vote)
 
 				// Chat
+				r.Get("/stream", stream.StreamEvent)
 				r.Get("/messages", message.List)
 				r.Post("/messages", message.Post)
 				r.Post("/messages/image", message.PostImage)
 				r.Get("/messages/unread-count", message.UnreadCount)
 				r.Post("/messages/read", message.MarkRead)
 				r.Delete("/messages/{messageId}", message.Delete)
+				r.Post("/messages/{messageId}/reactions", message.ToggleReaction)
 
 				// Items
 				r.Get("/items", item.List)
@@ -149,6 +157,10 @@ func NewRouter(
 				r.Post("/carpools/{carpoolId}/join", carpool.Join)
 			})
 		})
+
+		// Cross-event chat list
+		r.Get("/api/chats", chatList.List)
+		r.Get("/api/chats/stream", stream.StreamChats)
 
 		// Notifications
 		r.Get("/api/notifications", notification.List)

@@ -252,6 +252,100 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, event)
 }
 
+// @Summary Schedule a permanent event, or reschedule an existing one
+// @Tags events
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Param body body model.ScheduleEventRequest true "Date range"
+// @Success 200 {object} model.Event
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/schedule [post]
+func (h *Handler) Schedule(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	var req model.ScheduleEventRequest
+	if err := response.ParseJSON(r, &req); err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	event, err := h.svc.Schedule(r.Context(), id, userID, req)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "forbidden") {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if strings.Contains(msg, "not found") {
+			response.Error(w, http.StatusNotFound, "event not found")
+			return
+		}
+		if strings.Contains(msg, "must not be") || strings.Contains(msg, "are required") {
+			response.Error(w, http.StatusBadRequest, msg)
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to schedule event")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, event)
+}
+
+// @Summary Clear an event's dates, turning it into a permanent event
+// @Tags events
+// @Security BearerAuth
+// @Param id path string true "Event ID"
+// @Success 200 {object} model.Event
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 403 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /events/{id}/unschedule [post]
+func (h *Handler) Unschedule(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromCtx(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid event id")
+		return
+	}
+
+	event, err := h.svc.Unschedule(r.Context(), id, userID)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "forbidden") {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if strings.Contains(msg, "not found") {
+			response.Error(w, http.StatusNotFound, "event not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "failed to unschedule event")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, event)
+}
+
 // @Summary Delete an event
 // @Tags events
 // @Security BearerAuth

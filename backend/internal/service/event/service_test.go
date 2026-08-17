@@ -41,20 +41,41 @@ func TestCreate_MissingTitle(t *testing.T) {
 	assert.Contains(t, err.Error(), "title is required")
 }
 
-func TestCreate_MissingDates(t *testing.T) {
+// TestCreate_PermanentEvent asserts omitting both dates creates a permanent
+// (dateless) event rather than erroring — the chat-hub use case.
+func TestCreate_PermanentEvent(t *testing.T) {
+	svc, er, _, _, _ := newService(t)
+	organizerID := uuid.New()
+
+	er.EXPECT().Create(gomock.Any(), gomock.Any(), organizerID).
+		DoAndReturn(func(_ context.Context, r model.CreateEventRequest, _ uuid.UUID) (model.Event, error) {
+			assert.Nil(t, r.DateStart)
+			assert.Nil(t, r.DateEnd)
+			return model.Event{ID: uuid.New()}, nil
+		})
+
+	_, err := svc.Create(context.Background(), model.CreateEventRequest{Title: "Standing chat", CityID: uuid.New()}, organizerID)
+	require.NoError(t, err)
+}
+
+func TestCreate_OneDateWithoutTheOther(t *testing.T) {
 	svc, _, _, _, _ := newService(t)
-	_, err := svc.Create(context.Background(), model.CreateEventRequest{Title: "Party"}, uuid.New())
+	now := time.Now()
+	req := model.CreateEventRequest{Title: "Party", DateStart: &now}
+	_, err := svc.Create(context.Background(), req, uuid.New())
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "required")
+	assert.Contains(t, err.Error(), "must be provided together")
 }
 
 func TestCreate_DateEndBeforeDateStart(t *testing.T) {
 	svc, _, _, _, _ := newService(t)
 	now := time.Now()
+	start := now.Add(2 * time.Hour)
+	end := now.Add(1 * time.Hour)
 	req := model.CreateEventRequest{
 		Title:     "Party",
-		DateStart: now.Add(2 * time.Hour),
-		DateEnd:   now.Add(1 * time.Hour),
+		DateStart: &start,
+		DateEnd:   &end,
 	}
 	_, err := svc.Create(context.Background(), req, uuid.New())
 	require.Error(t, err)
@@ -64,8 +85,9 @@ func TestCreate_DateEndBeforeDateStart(t *testing.T) {
 func TestCreate_MissingCity(t *testing.T) {
 	svc, _, _, _, _ := newService(t)
 	now := time.Now()
+	end := now.Add(time.Hour)
 	_, err := svc.Create(context.Background(), model.CreateEventRequest{
-		Title: "Party", DateStart: now, DateEnd: now.Add(time.Hour),
+		Title: "Party", DateStart: &now, DateEnd: &end,
 	}, uuid.New())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "city is required")
@@ -81,10 +103,11 @@ func TestCreate_RejectsInactiveCity(t *testing.T) {
 	svc := eventsvc.New(er, cr, ur, nr, ml)
 	cityID := uuid.New()
 	now := time.Now()
+	end := now.Add(time.Hour)
 	cr.EXPECT().ExistsActive(gomock.Any(), cityID).Return(false, nil)
 
 	_, err := svc.Create(context.Background(), model.CreateEventRequest{
-		Title: "Party", DateStart: now, DateEnd: now.Add(time.Hour), CityID: cityID,
+		Title: "Party", DateStart: &now, DateEnd: &end, CityID: cityID,
 	}, uuid.New())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "active catalog city")
@@ -95,8 +118,9 @@ func TestUpdate_LegacyEventRequiresCity(t *testing.T) {
 	eventID := uuid.New()
 	organizerID := uuid.New()
 	now := time.Now()
+	end := now.Add(time.Hour)
 	er.EXPECT().GetByID(gomock.Any(), eventID).Return(model.Event{
-		ID: eventID, OrganizerID: organizerID, DateStart: now, DateEnd: now.Add(time.Hour),
+		ID: eventID, OrganizerID: organizerID, DateStart: &now, DateEnd: &end,
 	}, nil)
 
 	_, err := svc.Update(context.Background(), eventID, organizerID, model.UpdateEventRequest{})
@@ -117,10 +141,11 @@ func TestUpdate_KeepsPreviouslyAssignedInactiveCity(t *testing.T) {
 	organizerID := uuid.New()
 	cityID := uuid.New()
 	now := time.Now()
+	end := now.Add(time.Hour)
 	title := "Updated title"
 	existing := model.Event{
 		ID: eventID, OrganizerID: organizerID, Title: "Original title",
-		DateStart: now, DateEnd: now.Add(time.Hour), CityID: &cityID,
+		DateStart: &now, DateEnd: &end, CityID: &cityID,
 	}
 	updated := existing
 	updated.Title = title
@@ -155,10 +180,11 @@ func TestCreate_ForcesOrdinary(t *testing.T) {
 
 	organizerID := uuid.New()
 	now := time.Now()
+	end := now.Add(1 * time.Hour)
 	req := model.CreateEventRequest{
 		Title:     "Sync",
-		DateStart: now,
-		DateEnd:   now.Add(1 * time.Hour),
+		DateStart: &now,
+		DateEnd:   &end,
 		CityID:    uuid.New(),
 		Category:  "business",
 	}
@@ -178,7 +204,8 @@ func TestCreate_DefaultsToOrdinary(t *testing.T) {
 
 	organizerID := uuid.New()
 	now := time.Now()
-	req := model.CreateEventRequest{Title: "Party", DateStart: now, DateEnd: now.Add(2 * time.Hour), CityID: uuid.New()}
+	end := now.Add(2 * time.Hour)
+	req := model.CreateEventRequest{Title: "Party", DateStart: &now, DateEnd: &end, CityID: uuid.New()}
 	expected := model.Event{ID: uuid.New(), Title: "Party"}
 
 	er.EXPECT().Create(gomock.Any(), gomock.AssignableToTypeOf(model.CreateEventRequest{}), organizerID).

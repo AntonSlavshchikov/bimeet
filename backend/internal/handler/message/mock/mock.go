@@ -14,6 +14,7 @@ import (
 	context "context"
 	multipart "mime/multipart"
 	reflect "reflect"
+	time "time"
 
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
@@ -58,18 +59,18 @@ func (mr *MockMessageServiceMockRecorder) Delete(ctx, eventID, messageID, userID
 }
 
 // List mocks base method.
-func (m *MockMessageService) List(ctx context.Context, eventID, userID uuid.UUID, limit int) ([]model.Message, error) {
+func (m *MockMessageService) List(ctx context.Context, eventID, userID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, eventID, userID, limit)
+	ret := m.ctrl.Call(m, "List", ctx, eventID, userID, before, limit)
 	ret0, _ := ret[0].([]model.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockMessageServiceMockRecorder) List(ctx, eventID, userID, limit any) *gomock.Call {
+func (mr *MockMessageServiceMockRecorder) List(ctx, eventID, userID, before, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockMessageService)(nil).List), ctx, eventID, userID, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockMessageService)(nil).List), ctx, eventID, userID, before, limit)
 }
 
 // MarkRead mocks base method.
@@ -114,6 +115,21 @@ func (m *MockMessageService) PostImage(ctx context.Context, eventID, userID uuid
 func (mr *MockMessageServiceMockRecorder) PostImage(ctx, eventID, userID, caption, file, header any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostImage", reflect.TypeOf((*MockMessageService)(nil).PostImage), ctx, eventID, userID, caption, file, header)
+}
+
+// ToggleReaction mocks base method.
+func (m *MockMessageService) ToggleReaction(ctx context.Context, eventID, messageID, userID uuid.UUID, emoji string) (model.Message, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ToggleReaction", ctx, eventID, messageID, userID, emoji)
+	ret0, _ := ret[0].(model.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ToggleReaction indicates an expected call of ToggleReaction.
+func (mr *MockMessageServiceMockRecorder) ToggleReaction(ctx, eventID, messageID, userID, emoji any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ToggleReaction", reflect.TypeOf((*MockMessageService)(nil).ToggleReaction), ctx, eventID, messageID, userID, emoji)
 }
 
 // UnreadCount mocks base method.

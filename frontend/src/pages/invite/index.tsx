@@ -68,7 +68,11 @@ export default function InvitePage() {
       )}
 
       <div className="flex flex-col gap-2">
-        <Meta icon={Calendar}>{formatDate(event.date_start)}, {formatTime(event.date_start)}</Meta>
+        <Meta icon={Calendar}>
+          {event.date_start
+            ? `${formatDate(event.date_start)}, ${formatTime(event.date_start)}`
+            : t('events.permanentLabel', 'Постоянная встреча')}
+        </Meta>
         <Meta icon={MapPin}>{event.location}</Meta>
         <Meta icon={Users}>
           {t('invite.confirmedCount', { count: event.confirmed_count, defaultValue: `${event.confirmed_count} уже подтвердили` })}

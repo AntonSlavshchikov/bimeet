@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -71,6 +71,18 @@ export default function EventDetailPage() {
     setSearchParams(withEventTab(searchParams, next), { replace: true })
   }
 
+  // A permanent (dateless) event opens on Chat by default — it's the whole
+  // point of the event. Runs once, and only when the URL didn't already say
+  // which tab to open.
+  const appliedPermanentDefault = useRef(false)
+  useEffect(() => {
+    if (appliedPermanentDefault.current || !event) return
+    appliedPermanentDefault.current = true
+    if (!tabParam && event.date_start == null) selectTab('chat')
+    // selectTab is stable; depend on the event and URL tab param only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event, tabParam])
+
   const completeEvent = useCompleteEvent(id ?? '')
   // Chat is members-only: the organizer or anyone already on the participant list.
   const isMember =
@@ -92,7 +104,10 @@ export default function EventDetailPage() {
   const isOrganizer = event.organizer.is_me
 
   // Chat tab only for members; history only when there are changes.
-  const baseTabs: TabDef[] = isMember ? [...ORDINARY_TABS, CHAT_TAB] : ORDINARY_TABS
+  const isPermanent = event.date_start == null
+  const baseTabs: TabDef[] = isMember
+    ? isPermanent ? [CHAT_TAB, ...ORDINARY_TABS] : [...ORDINARY_TABS, CHAT_TAB]
+    : ORDINARY_TABS
   const allTabs: TabDef[] =
     event.change_log.length > 0
       ? [...baseTabs, { key: 'changelog', tKey: 'tabs.history', fallback: 'История', icon: History }]
@@ -143,7 +158,7 @@ export default function EventDetailPage() {
             <Link to="/events"><ChevronLeft size={14} />{t('eventInfo.backAllEvents', 'Ко всем встречам')}</Link>
           </Button>
           <span aria-hidden>·</span>
-          <span>{formatDate(event.date_start)}</span>
+          <span>{event.date_start ? formatDate(event.date_start) : t('events.permanentLabel', 'Постоянная')}</span>
         </div>
 
         {activeTab !== 'chat' && (

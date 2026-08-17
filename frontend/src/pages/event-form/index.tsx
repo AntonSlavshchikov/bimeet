@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { useEvent } from '@/entities/event/queries'
-import { useCreateEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
+import { useCreateEvent, useScheduleEvent, useUnscheduleEvent, useUpdateEvent } from '@/features/event-manage/model/hooks'
 import { Button, DateRangePicker, Input, PageHeader, SegmentedControl, Textarea, useToast } from '@/shared/ui'
 import LocationPicker from '@/features/location-picker/ui/LocationPicker'
 import CitySelect from '@/features/city-select/ui/CitySelect'
@@ -12,6 +12,8 @@ import { cn } from '@/shared/lib/cn'
 interface FormValues {
   title: string
   description: string
+  /** Встреча без расписания — чат живёт вечно, даты не задаются. */
+  isPermanent: boolean
   dateStart: string
   dateEnd: string
   location: string
@@ -25,7 +27,7 @@ interface FormValues {
 
 type DateSelectionMode = 'single' | 'range'
 
-function toDatetimeLocal(iso: string) {
+function toDatetimeLocal(iso: string | null) {
   if (!iso) return ''
   return iso.slice(0, 16)
 }
@@ -68,11 +70,14 @@ export default function EventFormPage() {
   const event = useEvent(id ?? '')
   const createEvent = useCreateEvent()
   const updateEvent = useUpdateEvent(id ?? '')
+  const scheduleEvent = useScheduleEvent(id ?? '')
+  const unscheduleEvent = useUnscheduleEvent(id ?? '')
   const [dateSelectionMode, setDateSelectionMode] = useState<DateSelectionMode>('single')
 
   const [form, setForm] = useState<FormValues>({
     title: '',
     description: '',
+    isPermanent: false,
     dateStart: '',
     dateEnd: '',
     location: '',
@@ -87,6 +92,7 @@ export default function EventFormPage() {
       setForm({
         title: event.title,
         description: event.description,
+        isPermanent: event.date_start == null,
         dateStart: toDatetimeLocal(event.date_start),
         dateEnd: toDatetimeLocal(event.date_end),
         location: event.location,
@@ -97,7 +103,9 @@ export default function EventFormPage() {
         isPublic: event.is_public ?? false,
         maxGuests: event.max_guests != null ? String(event.max_guests) : '',
       })
-      setDateSelectionMode(datePart(event.date_start) === datePart(event.date_end) ? 'single' : 'range')
+      if (event.date_start && event.date_end) {
+        setDateSelectionMode(datePart(event.date_start) === datePart(event.date_end) ? 'single' : 'range')
+      }
     }
   }, [event])
 
@@ -144,22 +152,20 @@ export default function EventFormPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!form.title || !form.dateStart || !form.dateEnd || !form.cityId || !form.location) {
+    if (!form.title || !form.location || !form.cityId || (!form.isPermanent && (!form.dateStart || !form.dateEnd))) {
       toast({ title: t('eventForm.requiredFieldsWarning', 'Заполните обязательные поля'), status: 'warning' })
       return
     }
 
-    if (new Date(form.dateEnd) <= new Date(form.dateStart)) {
+    if (!form.isPermanent && new Date(form.dateEnd) <= new Date(form.dateStart)) {
       toast({ title: t('eventForm.endAfterStartWarning', 'Окончание должно быть позже начала'), status: 'warning' })
       return
     }
 
     const maxGuests = form.isPublic && form.maxGuests.trim() ? parseInt(form.maxGuests) : undefined
-    const payload = {
+    const basePayload = {
       title: form.title,
       description: form.description,
-      date_start: new Date(form.dateStart).toISOString(),
-      date_end: new Date(form.dateEnd).toISOString(),
       location: form.location,
       city_id: form.cityId,
       is_public: form.isPublic,
@@ -169,30 +175,58 @@ export default function EventFormPage() {
       ...(form.dressCode.trim() ? { dress_code: form.dressCode.trim() } : {}),
       ...(maxGuests != null ? { max_guests: maxGuests } : {}),
     }
+    const dateStartISO = form.isPermanent ? undefined : new Date(form.dateStart).toISOString()
+    const dateEndISO = form.isPermanent ? undefined : new Date(form.dateEnd).toISOString()
 
     if (isEdit && id) {
-      updateEvent.mutate({
-        ...payload,
-        city_id: form.cityId === event?.city?.id ? undefined : form.cityId,
-      }, {
-        onSuccess: () => {
-          toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
-          navigate(`/events/${id}`)
-        },
-        onError: err => toast({ title: t('eventForm.errorUpdate', 'Не удалось сохранить'), description: err.message, status: 'error' }),
-      })
+      try {
+        await updateEvent.mutateAsync(basePayload)
+      } catch (err) {
+        toast({ title: t('eventForm.errorUpdate', 'Не удалось сохранить'), description: (err as Error).message, status: 'error' })
+        return
+      }
+
+      try {
+        // Dates never travel through the generic update — a PATCH can't tell
+        // "field omitted" from "field explicitly cleared", so scheduling
+        // changes go through the dedicated schedule/unschedule endpoints.
+        // This runs as a second request after the base fields already
+        // committed, so a failure here is reported separately — the title/
+        // location change above is not rolled back.
+        const wasPermanent = event?.date_start == null
+        if (form.isPermanent && !wasPermanent) {
+          await unscheduleEvent.mutateAsync()
+        } else if (!form.isPermanent && dateStartISO && dateEndISO) {
+          const datesChanged = wasPermanent || dateStartISO !== event?.date_start || dateEndISO !== event?.date_end
+          if (datesChanged) await scheduleEvent.mutateAsync({ date_start: dateStartISO, date_end: dateEndISO })
+        }
+      } catch (err) {
+        toast({
+          title: t('eventForm.errorSchedule', 'Основные поля сохранены, но не удалось изменить расписание'),
+          description: (err as Error).message,
+          status: 'error',
+        })
+        navigate(`/events/${id}`)
+        return
+      }
+
+      toast({ title: t('eventForm.successUpdate', 'Сохранено'), status: 'success' })
+      navigate(`/events/${id}`)
     } else {
-      createEvent.mutate(payload, {
-        onSuccess: (newEvent) => {
-          toast({ title: t('eventForm.successCreate', 'Встреча создана'), status: 'success' })
-          navigate(`/events/${newEvent.id}`)
+      createEvent.mutate(
+        { ...basePayload, ...(dateStartISO && dateEndISO ? { date_start: dateStartISO, date_end: dateEndISO } : {}) },
+        {
+          onSuccess: (newEvent) => {
+            toast({ title: t('eventForm.successCreate', 'Встреча создана'), status: 'success' })
+            navigate(`/events/${newEvent.id}`)
+          },
+          onError: err => toast({ title: t('eventForm.errorCreate', 'Не удалось создать'), description: err.message, status: 'error' }),
         },
-        onError: err => toast({ title: t('eventForm.errorCreate', 'Не удалось создать'), description: err.message, status: 'error' }),
-      })
+      )
     }
   }
 
-  const isLoading = createEvent.isPending || updateEvent.isPending
+  const isLoading = createEvent.isPending || updateEvent.isPending || scheduleEvent.isPending || unscheduleEvent.isPending
 
   return (
     <div className="mx-auto flex w-full max-w-[720px] flex-col gap-5">
@@ -260,56 +294,75 @@ export default function EventFormPage() {
         </Section>
 
         <Section title={t('eventForm.sectionWhenWhere', 'Когда и где')}>
-          <Field label={t('eventForm.fieldDates', 'Даты')} required>
-            <div className="flex flex-col gap-2.5">
-              <SegmentedControl<DateSelectionMode>
-                value={dateSelectionMode}
-                onChange={updateDateSelectionMode}
-                options={[
-                  { value: 'single', label: t('eventForm.dateModeSingle', 'Один день') },
-                  { value: 'range', label: t('eventForm.dateModeRange', 'Несколько дней') },
-                ]}
-                fullWidth
-                selectionRole="radio"
-                ariaLabel={t('eventForm.dateModeLabel', 'Продолжительность встречи')}
-              />
-              <DateRangePicker
-                startDate={datePart(form.dateStart)}
-                endDate={datePart(form.dateEnd)}
-                onChange={({ startDate, endDate }) => updateDateRange(startDate, endDate)}
-                placeholder={dateSelectionMode === 'single'
-                  ? t('eventForm.singleDatePlaceholder', 'Выберите дату')
-                  : t('eventForm.dateRangePlaceholder', 'Выберите период')}
-                clearLabel={t('eventForm.dateRangeClear', 'Сбросить даты')}
-                previousMonthLabel={t('eventForm.dateRangePreviousMonth', 'Предыдущий месяц')}
-                nextMonthLabel={t('eventForm.dateRangeNextMonth', 'Следующий месяц')}
-                locale={i18n.language === 'en' ? 'en-US' : 'ru-RU'}
-                minDate={todayIsoDay()}
-                selectionMode={dateSelectionMode}
-                required
-              />
-            </div>
-          </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label={t('eventForm.fieldStartTime', 'Время начала')} required>
-              <Input
-                type="time"
-                value={timePart(form.dateStart, '12:00')}
-                onChange={e => updateDateTime('dateStart', e.target.value, '12:00')}
-                disabled={!datePart(form.dateStart)}
-                required
-              />
-            </Field>
-            <Field label={t('eventForm.fieldEndTime', 'Время конца')} required>
-              <Input
-                type="time"
-                value={timePart(form.dateEnd, '13:00')}
-                onChange={e => updateDateTime('dateEnd', e.target.value, '13:00')}
-                disabled={!datePart(form.dateEnd)}
-                required
-              />
-            </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <RadioCard
+              checked={!form.isPermanent}
+              onClick={() => update('isPermanent', false)}
+              title={t('eventForm.scheduleDated', 'По расписанию')}
+              description={t('eventForm.scheduleDatedDesc', 'Даты, начало и конец')}
+            />
+            <RadioCard
+              checked={form.isPermanent}
+              onClick={() => update('isPermanent', true)}
+              title={t('eventForm.schedulePermanent', 'Постоянная встреча')}
+              description={t('eventForm.schedulePermanentDesc', 'Без даты — чат живёт вечно')}
+            />
           </div>
+
+          {!form.isPermanent && (
+            <>
+              <Field label={t('eventForm.fieldDates', 'Даты')} required>
+                <div className="flex flex-col gap-2.5">
+                  <SegmentedControl<DateSelectionMode>
+                    value={dateSelectionMode}
+                    onChange={updateDateSelectionMode}
+                    options={[
+                      { value: 'single', label: t('eventForm.dateModeSingle', 'Один день') },
+                      { value: 'range', label: t('eventForm.dateModeRange', 'Несколько дней') },
+                    ]}
+                    fullWidth
+                    selectionRole="radio"
+                    ariaLabel={t('eventForm.dateModeLabel', 'Продолжительность встречи')}
+                  />
+                  <DateRangePicker
+                    startDate={datePart(form.dateStart)}
+                    endDate={datePart(form.dateEnd)}
+                    onChange={({ startDate, endDate }) => updateDateRange(startDate, endDate)}
+                    placeholder={dateSelectionMode === 'single'
+                      ? t('eventForm.singleDatePlaceholder', 'Выберите дату')
+                      : t('eventForm.dateRangePlaceholder', 'Выберите период')}
+                    clearLabel={t('eventForm.dateRangeClear', 'Сбросить даты')}
+                    previousMonthLabel={t('eventForm.dateRangePreviousMonth', 'Предыдущий месяц')}
+                    nextMonthLabel={t('eventForm.dateRangeNextMonth', 'Следующий месяц')}
+                    locale={i18n.language === 'en' ? 'en-US' : 'ru-RU'}
+                    minDate={todayIsoDay()}
+                    selectionMode={dateSelectionMode}
+                    required
+                  />
+                </div>
+              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label={t('eventForm.fieldStartTime', 'Время начала')} required>
+                  <Input
+                    type="time"
+                    value={timePart(form.dateStart, '12:00')}
+                    onChange={e => updateDateTime('dateStart', e.target.value, '12:00')}
+                    disabled={!datePart(form.dateStart)}
+                    required
+                  />
+                </Field>
+                <Field label={t('eventForm.fieldEndTime', 'Время конца')} required>
+                  <Input
+                    type="time"
+                    value={timePart(form.dateEnd, '13:00')}
+                    onChange={e => updateDateTime('dateEnd', e.target.value, '13:00')}
+                    disabled={!datePart(form.dateEnd)}
+                    required
+                  />
+                </Field>
+              </div>
+            </>
+          )}
           <Field label={t('eventForm.fieldCity', 'Город')} required>
             <CitySelect
               value={form.cityId}

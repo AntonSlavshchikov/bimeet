@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSwipeable } from 'react-swipeable'
-import { CheckCircle2, ChevronRight, Trash2, UserCheck, UserX, type LucideIcon } from 'lucide-react'
+import { CheckCircle2, ChevronRight, MessageCircle, Trash2, UserCheck, UserX, type LucideIcon } from 'lucide-react'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import { eventAccentColor } from '@/shared/lib/eventAccentColor'
 import { DateCell } from '@/shared/ui/date-cell'
@@ -67,13 +67,16 @@ export default function EventListRow({
   onInteractionStart,
 }: EventListRowProps) {
   const { t, i18n } = useTranslation()
-  const d = new Date(event.date_start)
-  const day = d.getDate()
+  const isPermanent = event.date_start == null
   const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
-  const caption = new Intl.DateTimeFormat(locale, dateCaption === 'month' ? { month: 'short' } : { weekday: 'short' })
-    .format(d)
-    .replace('.', '')
-  const time = formatRowTime(event.date_start)
+  const d = event.date_start ? new Date(event.date_start) : null
+  const day = d?.getDate()
+  const caption = d
+    ? new Intl.DateTimeFormat(locale, dateCaption === 'month' ? { month: 'short' } : { weekday: 'short' })
+        .format(d)
+        .replace('.', '')
+    : undefined
+  const time = event.date_start ? formatRowTime(event.date_start) : ''
   const accent = eventAccentColor(event)
   const isCompleted = event.status === 'completed'
   const confirmedCount =
@@ -275,8 +278,15 @@ export default function EventListRow({
         aria-hidden
       />
 
+      {/* Date — or a chat icon for a permanent (dateless) event */}
       <div className="flex justify-center">
-        <DateCell day={day} caption={caption} />
+        {isPermanent ? (
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-accent/10 text-accent">
+            <MessageCircle size={16} />
+          </div>
+        ) : (
+          <DateCell day={day!} caption={caption} />
+        )}
       </div>
 
       <div className="flex min-w-0 flex-col gap-1">
@@ -291,7 +301,9 @@ export default function EventListRow({
         )}
       </div>
 
-      <div className="hidden text-[10.5px] text-ink-2 tnum min-[1081px]:block">{time}</div>
+      <div className="hidden text-[10.5px] text-ink-2 tnum min-[1081px]:block">
+        {isPermanent ? t('events.permanentLabel', 'Постоянная') : time}
+      </div>
 
       <div className="hidden min-w-0 items-center min-[1081px]:flex">
         {confirmed.length > 0 && (

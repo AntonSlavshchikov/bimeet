@@ -13,6 +13,7 @@ import (
 	model "bimeet/internal/model"
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
@@ -217,6 +218,36 @@ func (m *MockEventRepo) ListPublic(ctx context.Context, userID uuid.UUID, cityID
 func (mr *MockEventRepoMockRecorder) ListPublic(ctx, userID, cityID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublic", reflect.TypeOf((*MockEventRepo)(nil).ListPublic), ctx, userID, cityID)
+}
+
+// Schedule mocks base method.
+func (m *MockEventRepo) Schedule(ctx context.Context, id uuid.UUID, dateStart, dateEnd time.Time) (model.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Schedule", ctx, id, dateStart, dateEnd)
+	ret0, _ := ret[0].(model.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Schedule indicates an expected call of Schedule.
+func (mr *MockEventRepoMockRecorder) Schedule(ctx, id, dateStart, dateEnd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Schedule", reflect.TypeOf((*MockEventRepo)(nil).Schedule), ctx, id, dateStart, dateEnd)
+}
+
+// Unschedule mocks base method.
+func (m *MockEventRepo) Unschedule(ctx context.Context, id uuid.UUID) (model.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unschedule", ctx, id)
+	ret0, _ := ret[0].(model.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Unschedule indicates an expected call of Unschedule.
+func (mr *MockEventRepoMockRecorder) Unschedule(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unschedule", reflect.TypeOf((*MockEventRepo)(nil).Unschedule), ctx, id)
 }
 
 // Update mocks base method.

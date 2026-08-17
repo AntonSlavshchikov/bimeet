@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Bell, Plus, Search } from 'lucide-react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
 import NotificationsNavbarActions from '@/features/notifications/ui/NotificationsNavbarActions'
+import { useNotifications } from '@/entities/notification/queries'
 import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
-import { BrandMark } from '@/shared/ui/brand-mark'
 import { cn } from '@/shared/lib/cn'
 import { useDesign } from '@/shared/design'
 import { usePrimarySwipeNavigation } from './model/primary-navigation'
@@ -35,6 +35,8 @@ function useMobileTitle(t: ReturnType<typeof useTranslation>['t']): string {
   if (pathname === '/profile') return t('nav.profile', 'Профиль')
   if (pathname === '/admin') return t('nav.admin', 'Админка')
   if (pathname === '/notifications') return t('nav.notifications', 'Уведомления')
+  if (pathname === '/chats') return t('nav.chats', 'Чаты')
+  if (pathname.startsWith('/chats/')) return t('chats.title', 'Чат')
   return ''
 }
 
@@ -84,6 +86,8 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
   const hasRail = !!rail
   const mobileTitle = useMobileTitle(t)
   const autoMobileActions = useMobileNavbarActions(t)
+  const { data: notifications = [] } = useNotifications()
+  const unreadNotifications = notifications.filter(n => !n.is_read).length
   const primarySwipeNavigation = usePrimarySwipeNavigation()
   const [design] = useDesign()
   const isDashboard = design === 'dashboard'
@@ -115,7 +119,7 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
 
           {/* Правая часть карточки: mobile navbar + main/rail + bottom-nav (mobile) */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col min-[761px]:overflow-hidden">
-            {/* Mobile navbar — brand mark left, title center, action-icons right */}
+            {/* Mobile navbar — bell (notifications) left, title center, action-icons right */}
             <header
               className={cn(
                 'grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1.5 border-b border-line px-3 min-[761px]:hidden',
@@ -123,7 +127,21 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
               )}
             >
               <div className="flex items-center justify-self-start">
-                <BrandMark size={32} />
+                <Link
+                  to="/notifications"
+                  aria-label={t('nav.notifications', 'Уведомления')}
+                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-[9px] text-accent hover:bg-hover transition focus-ring"
+                >
+                  <Bell size={20} />
+                  {unreadNotifications > 0 && (
+                    <span
+                      className="absolute top-1 right-1 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-danger px-[3px] text-[9px] font-semibold text-white tnum"
+                      aria-hidden
+                    >
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </span>
+                  )}
+                </Link>
               </div>
               <div className="text-[15px] font-semibold tracking-[-0.015em] text-ink truncate justify-self-center">
                 {mobileTitle}

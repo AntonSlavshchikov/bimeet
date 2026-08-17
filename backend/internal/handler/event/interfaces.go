@@ -19,6 +19,8 @@ type EventService interface {
 	JoinByInviteToken(ctx context.Context, token, userID uuid.UUID, req model.JoinByInviteTokenRequest) (model.EventParticipant, error)
 	JoinPublic(ctx context.Context, eventID, userID uuid.UUID) error
 	Update(ctx context.Context, id, userID uuid.UUID, req model.UpdateEventRequest) (model.Event, error)
+	Schedule(ctx context.Context, id, userID uuid.UUID, req model.ScheduleEventRequest) (model.Event, error)
+	Unschedule(ctx context.Context, id, userID uuid.UUID) (model.Event, error)
 	Delete(ctx context.Context, id, userID uuid.UUID) error
 	Complete(ctx context.Context, id, userID uuid.UUID) error
 	InviteParticipant(ctx context.Context, eventID, organizerID uuid.UUID, req model.InviteParticipantRequest) (model.EventParticipant, error)

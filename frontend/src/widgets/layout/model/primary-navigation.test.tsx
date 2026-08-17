@@ -36,7 +36,7 @@ describe('primary navigation route model', () => {
     expect(primaryNavOrder).toEqual([
       '/discover',
       '/events',
-      '/notifications',
+      '/chats',
       '/profile',
     ])
   })
@@ -44,14 +44,14 @@ describe('primary navigation route model', () => {
   it('resolves adjacent routes without wrapping at the boundaries', () => {
     expect(getAdjacentPrimaryNavRoute('/discover', 'left')).toBe('/events')
     expect(getAdjacentPrimaryNavRoute('/events', 'right')).toBe('/discover')
-    expect(getAdjacentPrimaryNavRoute('/notifications', 'left')).toBe('/profile')
+    expect(getAdjacentPrimaryNavRoute('/chats', 'left')).toBe('/profile')
     expect(getAdjacentPrimaryNavRoute('/profile', 'left')).toBeUndefined()
     expect(getAdjacentPrimaryNavRoute('/discover', 'right')).toBeUndefined()
   })
 
   it('accepts trailing slashes but rejects nested routes', () => {
     expect(isPrimaryNavRoute('/events/')).toBe(true)
-    expect(getAdjacentPrimaryNavRoute('/events/', 'left')).toBe('/notifications')
+    expect(getAdjacentPrimaryNavRoute('/events/', 'left')).toBe('/chats')
     expect(isPrimaryNavRoute('/events/123')).toBe(false)
     expect(getAdjacentPrimaryNavRoute('/events/123', 'right')).toBeUndefined()
   })
@@ -130,7 +130,7 @@ describe('usePrimarySwipeNavigation', () => {
     await renderAt('/events')
 
     await act(async () => fireSwipe('left'))
-    expect(container.firstElementChild?.getAttribute('data-pathname')).toBe('/notifications')
+    expect(container.firstElementChild?.getAttribute('data-pathname')).toBe('/chats')
 
     await act(async () => fireSwipe('right'))
     expect(container.firstElementChild?.getAttribute('data-pathname')).toBe('/events')
@@ -157,6 +157,6 @@ describe('usePrimarySwipeNavigation', () => {
     latestOptions?.onTouchEndOrOnMouseUp?.({ event: { target: input } as unknown as TouchEvent })
     latestOptions?.onTouchStartOrOnMouseDown?.({ event: { target: container } as unknown as TouchEvent })
     await act(async () => fireSwipe('left'))
-    expect(container.firstElementChild?.getAttribute('data-pathname')).toBe('/notifications')
+    expect(container.firstElementChild?.getAttribute('data-pathname')).toBe('/chats')
   })
 })

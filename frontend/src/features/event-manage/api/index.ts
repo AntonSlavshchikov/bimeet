@@ -1,5 +1,5 @@
 import { apiFetch } from '@/shared/api/client'
-import type { Event, CreateEventData, UpdateEventData } from '@/entities/event/model/types'
+import type { Event, CreateEventData, UpdateEventData, ScheduleEventData } from '@/entities/event/model/types'
 
 export const eventMutationsApi = {
   create: (data: CreateEventData) =>
@@ -7,6 +7,12 @@ export const eventMutationsApi = {
 
   update: (id: string, data: UpdateEventData) =>
     apiFetch<Event>(`/api/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  schedule: (id: string, data: ScheduleEventData) =>
+    apiFetch<Event>(`/api/events/${id}/schedule`, { method: 'POST', body: JSON.stringify(data) }),
+
+  unschedule: (id: string) =>
+    apiFetch<Event>(`/api/events/${id}/unschedule`, { method: 'POST' }),
 
   delete: (id: string) =>
     apiFetch<void>(`/api/events/${id}`, { method: 'DELETE' }),

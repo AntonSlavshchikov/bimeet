@@ -24,6 +24,7 @@ function event(
     confirmed_count: 1,
     organizer: { name: 'Organizer', email: 'organizer@example.com', is_me: false },
     invite_token: 'invite-token',
+    last_activity_at: '2026-07-01T00:00:00Z',
     created_at: '2026-07-01T00:00:00Z',
     my_status: '',
     participants: [],

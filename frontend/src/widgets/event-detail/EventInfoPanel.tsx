@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckCircle2,
   MapPin,
+  MessageCircle,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -59,8 +60,9 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
   const confirmedCount =
     event.confirmed_count ?? event.participants.filter(p => p.status === 'confirmed').length
 
-  const sameDay = formatDate(event.date_start) === formatDate(event.date_end)
-  const calendar = getCalendarParts(event.date_start, i18n.resolvedLanguage ?? i18n.language)
+  const isPermanent = event.date_start == null
+  const sameDay = !isPermanent && formatDate(event.date_start!) === formatDate(event.date_end!)
+  const calendar = isPermanent ? null : getCalendarParts(event.date_start!, i18n.resolvedLanguage ?? i18n.language)
   const attendance = event.max_guests != null
     ? t('eventInfo.attendanceCapacity', {
         confirmed: confirmedCount,
@@ -88,14 +90,20 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
           <div className="grid grid-cols-[62px_minmax(0,1fr)] items-start gap-3.5 min-[431px]:grid-cols-[76px_minmax(0,1fr)_40px] min-[431px]:gap-6">
             <div
               className="grid min-h-[70px] w-[62px] place-content-center rounded-[16px] border border-line bg-[color-mix(in_srgb,var(--color-brand-a)_5%,var(--color-surface))] text-center min-[431px]:min-h-[84px] min-[431px]:w-[76px] min-[431px]:rounded-[20px]"
-              aria-label={`${calendar.day} ${calendar.month}`}
+              aria-label={calendar ? `${calendar.day} ${calendar.month}` : t('events.permanentLabel', 'Постоянная')}
             >
-              <span className="text-[28px] font-extrabold leading-[0.95] tracking-[-0.05em] text-ink min-[431px]:text-[34px]">
-                {calendar.day}
-              </span>
-              <span className="mt-2 text-[10px] font-extrabold uppercase tracking-[0.11em] text-[var(--color-brand-a)]">
-                {calendar.month}
-              </span>
+              {calendar ? (
+                <>
+                  <span className="text-[28px] font-extrabold leading-[0.95] tracking-[-0.05em] text-ink min-[431px]:text-[34px]">
+                    {calendar.day}
+                  </span>
+                  <span className="mt-2 text-[10px] font-extrabold uppercase tracking-[0.11em] text-[var(--color-brand-a)]">
+                    {calendar.month}
+                  </span>
+                </>
+              ) : (
+                <MessageCircle size={22} className="mx-auto text-[var(--color-brand-a)]" />
+              )}
             </div>
 
             <div className="min-w-0">
@@ -184,13 +192,13 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
             )}
           </div>
 
-          {event.status === 'completed' && (
+          {event.status === 'completed' && !isPermanent && (
             <div className="mt-[18px] flex items-center gap-2.5 rounded-[14px] border border-warning/20 bg-warning/10 px-3.5 py-3 text-[12px] leading-[1.45] text-warning">
               <CheckCircle2 size={18} className="shrink-0" />
               <span>
                 {t('eventInfo.completedNote', {
-                  date: formatDate(event.date_end),
-                  time: formatTime(event.date_end),
+                  date: formatDate(event.date_end!),
+                  time: formatTime(event.date_end!),
                 })}
               </span>
             </div>
@@ -204,9 +212,11 @@ export default function EventInfoPanel({ event, isOrganizer }: EventInfoPanelPro
               <div className="min-w-0">
                 <div className="text-[9px] font-medium uppercase tracking-[0.08em] text-ink-3">{t('eventInfo.when')}</div>
                 <div className="mt-[3px] text-[12px] font-normal leading-[1.35] text-ink">
-                  {sameDay
-                    ? `${formatDate(event.date_start)} · ${formatTime(event.date_start)}–${formatTime(event.date_end)}`
-                    : `${formatDate(event.date_start)} — ${formatDate(event.date_end)}`}
+                  {isPermanent
+                    ? t('eventInfo.permanentDates', 'Постоянная встреча — без даты')
+                    : sameDay
+                      ? `${formatDate(event.date_start!)} · ${formatTime(event.date_start!)}–${formatTime(event.date_end!)}`
+                      : `${formatDate(event.date_start!)} — ${formatDate(event.date_end!)}`}
                 </div>
               </div>
             </div>

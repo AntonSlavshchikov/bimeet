@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -17,32 +18,45 @@ import (
 )
 
 const (
-	notifTypeChat = "chat_message"
-	maxMessageLen = 4000
-	defaultLimit  = 50
-	maxLimit      = 100
+	notifTypeChat    = "chat_message"
+	notifTypeMention = "chat_mention"
+	maxMessageLen    = 4000
+	defaultLimit     = 50
+	maxLimit         = 100
+	// maxEmojiRunes generously covers compound emoji (skin tone modifiers,
+	// ZWJ family sequences) while still rejecting arbitrary pasted text.
+	maxEmojiRunes = 8
 )
+
+// mentionPattern matches @name tokens. Names here are first-name-only (see
+// model.User.Name/LastName), so a run of letters/digits/underscore with no
+// spaces is enough — no need for the bracket-quoting some chat apps use for
+// multi-word names.
+var mentionPattern = regexp.MustCompile(`@([\p{L}\p{N}_'-]+)`)
 
 type Service struct {
 	repo      MessageRepo
 	eventRepo EventRepo
 	notifier  Notifier
 	uploader  Uploader
+	publisher Publisher
 }
 
-func New(repo MessageRepo, eventRepo EventRepo, notifier Notifier, uploader Uploader) *Service {
-	return &Service{repo: repo, eventRepo: eventRepo, notifier: notifier, uploader: uploader}
+func New(repo MessageRepo, eventRepo EventRepo, notifier Notifier, uploader Uploader, publisher Publisher) *Service {
+	return &Service{repo: repo, eventRepo: eventRepo, notifier: notifier, uploader: uploader, publisher: publisher}
 }
 
-// List returns the most recent messages of an event for a participant.
-func (s *Service) List(ctx context.Context, eventID, userID uuid.UUID, limit int) ([]model.Message, error) {
+// List returns a page of an event's messages, oldest-first within the page.
+// With before nil it returns the most recent page; passing the created_at of
+// the oldest message already loaded fetches the page before it.
+func (s *Service) List(ctx context.Context, eventID, userID uuid.UUID, before *time.Time, limit int) ([]model.Message, error) {
 	if err := s.assertParticipant(ctx, eventID, userID); err != nil {
 		return nil, err
 	}
 	if limit <= 0 || limit > maxLimit {
 		limit = defaultLimit
 	}
-	return s.repo.ListByEvent(ctx, eventID, userID, nil, limit)
+	return s.repo.ListByEvent(ctx, eventID, userID, before, limit)
 }
 
 // Post stores a message from a participant and fans out notifications.
@@ -75,8 +89,10 @@ func (s *Service) Post(ctx context.Context, eventID, userID uuid.UUID, req model
 	// Sender is implicitly caught up on their own message.
 	_ = s.repo.MarkRead(ctx, eventID, userID)
 
+	s.publisher.PublishMessage(eventID, msg)
+
 	// Notify the other members best-effort, off the request path.
-	go s.notifyMembers(eventID, userID)
+	go s.notifyMembers(eventID, userID, body)
 
 	return msg, nil
 }
@@ -130,7 +146,8 @@ func (s *Service) PostImage(ctx context.Context, eventID, userID uuid.UUID, capt
 	}
 
 	_ = s.repo.MarkRead(ctx, eventID, userID)
-	go s.notifyMembers(eventID, userID)
+	s.publisher.PublishMessage(eventID, msg)
+	go s.notifyMembers(eventID, userID, caption)
 
 	return msg, nil
 }
@@ -176,6 +193,41 @@ func (s *Service) UnreadCount(ctx context.Context, eventID, userID uuid.UUID) (i
 	return s.repo.CountUnread(ctx, eventID, userID)
 }
 
+// ToggleReaction adds the caller's reaction to a message if absent, removes
+// it if present, and pushes the updated message to every live subscriber of
+// the event so reaction counts stay in sync without a refetch.
+func (s *Service) ToggleReaction(ctx context.Context, eventID, messageID, userID uuid.UUID, emoji string) (model.Message, error) {
+	if err := s.assertParticipant(ctx, eventID, userID); err != nil {
+		return model.Message{}, err
+	}
+	emoji = strings.TrimSpace(emoji)
+	if emoji == "" {
+		return model.Message{}, fmt.Errorf("emoji is required")
+	}
+	if utf8.RuneCountInString(emoji) > maxEmojiRunes {
+		return model.Message{}, fmt.Errorf("not a single emoji")
+	}
+
+	msg, err := s.repo.GetByID(ctx, messageID, userID)
+	if err != nil {
+		return model.Message{}, fmt.Errorf("message not found")
+	}
+	if msg.EventID != eventID {
+		return model.Message{}, fmt.Errorf("message does not belong to this event")
+	}
+
+	if _, err := s.repo.ToggleReaction(ctx, messageID, userID, emoji); err != nil {
+		return model.Message{}, err
+	}
+
+	updated, err := s.repo.GetByID(ctx, messageID, userID)
+	if err != nil {
+		return model.Message{}, err
+	}
+	s.publisher.PublishMessage(eventID, updated)
+	return updated, nil
+}
+
 func (s *Service) assertParticipant(ctx context.Context, eventID, userID uuid.UUID) error {
 	ok, err := s.eventRepo.IsParticipant(ctx, eventID, userID)
 	if err != nil {
@@ -190,7 +242,7 @@ func (s *Service) assertParticipant(ctx context.Context, eventID, userID uuid.UU
 // notifyMembers creates a notification for every member (organizer + participants,
 // excluding declined and the sender), collapsing when an unread chat hint already
 // exists. Best-effort: runs in its own context/goroutine.
-func (s *Service) notifyMembers(eventID, senderID uuid.UUID) {
+func (s *Service) notifyMembers(eventID, senderID uuid.UUID, body string) {
 	ctx := context.Background()
 	event, err := s.eventRepo.GetByID(ctx, eventID)
 	if err != nil {
@@ -218,4 +270,29 @@ func (s *Service) notifyMembers(eventID, senderID uuid.UUID) {
 		// so a chatty event yields a single growing notification, not a flood.
 		_, _ = s.notifier.UpsertChatNotification(ctx, uid, eventID, notifTypeChat, message)
 	}
+
+	// Mentions get their own notification, never collapsed — losing a @mention
+	// in a counter that only shows "5 new messages" would defeat the point.
+	if names, err := s.eventRepo.ListMemberNames(ctx, eventID); err == nil {
+		mentioned := make(map[uuid.UUID]struct{})
+		for _, match := range mentionPattern.FindAllStringSubmatch(body, -1) {
+			if uid, ok := names[strings.ToLower(match[1])]; ok && uid != senderID {
+				mentioned[uid] = struct{}{}
+			}
+		}
+		mentionMsg := fmt.Sprintf("Вас упомянули в «%s»", event.Title)
+		for uid := range mentioned {
+			_, _ = s.notifier.Create(ctx, uid, &eventID, notifTypeMention, mentionMsg)
+		}
+	}
+
+	// The activity ping (unlike the notification above) also goes to the
+	// sender — their own /api/chats list needs to re-sort and clear its
+	// preview too, just without an unread badge.
+	activityRecipients := make([]uuid.UUID, 0, len(recipients)+1)
+	activityRecipients = append(activityRecipients, senderID)
+	for uid := range recipients {
+		activityRecipients = append(activityRecipients, uid)
+	}
+	s.publisher.PublishActivity(activityRecipients, eventID)
 }

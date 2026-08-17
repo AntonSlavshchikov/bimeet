@@ -1,28 +1,28 @@
 basePath: /api
 definitions:
-  bimeet_internal_model.AdminDistribution:
+  model.AdminDistribution:
     properties:
       by_category:
         items:
-          $ref: '#/definitions/bimeet_internal_model.AdminDistributionItem'
+          $ref: '#/definitions/model.AdminDistributionItem'
         type: array
       by_status:
         items:
-          $ref: '#/definitions/bimeet_internal_model.AdminDistributionItem'
+          $ref: '#/definitions/model.AdminDistributionItem'
         type: array
       by_visibility:
         items:
-          $ref: '#/definitions/bimeet_internal_model.AdminDistributionItem'
+          $ref: '#/definitions/model.AdminDistributionItem'
         type: array
     type: object
-  bimeet_internal_model.AdminDistributionItem:
+  model.AdminDistributionItem:
     properties:
       count:
         type: integer
       key:
         type: string
     type: object
-  bimeet_internal_model.AdminEventRow:
+  model.AdminEventRow:
     properties:
       category:
         type: string
@@ -43,7 +43,7 @@ definitions:
       title:
         type: string
     type: object
-  bimeet_internal_model.AdminOverview:
+  model.AdminOverview:
     properties:
       events_active:
         type: integer
@@ -62,14 +62,14 @@ definitions:
       users_active_30d:
         type: integer
     type: object
-  bimeet_internal_model.AdminTimeseries:
+  model.AdminTimeseries:
     properties:
       points:
         items:
-          $ref: '#/definitions/bimeet_internal_model.AdminTimeseriesPoint'
+          $ref: '#/definitions/model.AdminTimeseriesPoint'
         type: array
     type: object
-  bimeet_internal_model.AdminTimeseriesPoint:
+  model.AdminTimeseriesPoint:
     properties:
       date:
         description: YYYY-MM-DD
@@ -79,7 +79,7 @@ definitions:
       users:
         type: integer
     type: object
-  bimeet_internal_model.AdminUserRow:
+  model.AdminUserRow:
     properties:
       city:
         type: string
@@ -94,14 +94,14 @@ definitions:
       name:
         type: string
     type: object
-  bimeet_internal_model.AuthResponse:
+  model.AuthResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/bimeet_internal_model.User'
+        $ref: '#/definitions/model.User'
     type: object
-  bimeet_internal_model.AuthSession:
+  model.AuthSession:
     properties:
       created_at:
         type: string
@@ -116,7 +116,7 @@ definitions:
       user_agent:
         type: string
     type: object
-  bimeet_internal_model.Carpool:
+  model.Carpool:
     properties:
       departure_point:
         type: string
@@ -129,27 +129,27 @@ definitions:
       seats_available:
         type: integer
     type: object
-  bimeet_internal_model.CarpoolInfo:
+  model.CarpoolInfo:
     properties:
       departure_point:
         type: string
       driver:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
       id:
         type: string
       passengers:
         items:
-          $ref: '#/definitions/bimeet_internal_model.UserInfo'
+          $ref: '#/definitions/model.UserInfo'
         type: array
       seats_available:
         type: integer
     type: object
-  bimeet_internal_model.ChangeLogInfo:
+  model.ChangeLogInfo:
     properties:
       changed_at:
         type: string
       changed_by:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
       field_name:
         type: string
       id:
@@ -159,7 +159,37 @@ definitions:
       old_value:
         type: string
     type: object
-  bimeet_internal_model.City:
+  model.ChatLastMessage:
+    properties:
+      author_name:
+        type: string
+      body:
+        type: string
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      image_url:
+        type: string
+      is_mine:
+        type: boolean
+    type: object
+  model.ChatSummary:
+    properties:
+      event_id:
+        type: string
+      event_title:
+        type: string
+      is_permanent:
+        type: boolean
+      last_activity_at:
+        type: string
+      last_message:
+        $ref: '#/definitions/model.ChatLastMessage'
+      unread_count:
+        type: integer
+    type: object
+  model.City:
     properties:
       id:
         type: string
@@ -168,7 +198,7 @@ definitions:
       region:
         type: string
     type: object
-  bimeet_internal_model.Collection:
+  model.Collection:
     properties:
       created_at:
         type: string
@@ -183,7 +213,7 @@ definitions:
       title:
         type: string
     type: object
-  bimeet_internal_model.CollectionContribution:
+  model.CollectionContribution:
     properties:
       collection_id:
         type: string
@@ -201,11 +231,11 @@ definitions:
       user_id:
         type: string
     type: object
-  bimeet_internal_model.CollectionInfo:
+  model.CollectionInfo:
     properties:
       contributions:
         items:
-          $ref: '#/definitions/bimeet_internal_model.ContributionInfo'
+          $ref: '#/definitions/model.ContributionInfo'
         type: array
       created_at:
         type: string
@@ -218,7 +248,7 @@ definitions:
       title:
         type: string
     type: object
-  bimeet_internal_model.CollectionSummary:
+  model.CollectionSummary:
     properties:
       collection_id:
         type: string
@@ -237,7 +267,7 @@ definitions:
       total_paid:
         type: number
     type: object
-  bimeet_internal_model.ContributionInfo:
+  model.ContributionInfo:
     properties:
       id:
         description: nil when the member has no contribution row yet
@@ -251,23 +281,23 @@ definitions:
       status:
         type: string
       user:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
     type: object
-  bimeet_internal_model.CreateCarpoolRequest:
+  model.CreateCarpoolRequest:
     properties:
       departure_point:
         type: string
       seats_available:
         type: integer
     type: object
-  bimeet_internal_model.CreateCollectionRequest:
+  model.CreateCollectionRequest:
     properties:
       per_person_amount:
         type: number
       title:
         type: string
     type: object
-  bimeet_internal_model.CreateEventRequest:
+  model.CreateEventRequest:
     properties:
       category:
         description: ordinary | business; defaults to ordinary
@@ -295,12 +325,12 @@ definitions:
       title:
         type: string
     type: object
-  bimeet_internal_model.CreateItemRequest:
+  model.CreateItemRequest:
     properties:
       name:
         type: string
     type: object
-  bimeet_internal_model.CreatePollRequest:
+  model.CreatePollRequest:
     properties:
       options:
         items:
@@ -309,18 +339,19 @@ definitions:
       question:
         type: string
     type: object
-  bimeet_internal_model.Event:
+  model.Event:
     properties:
       category:
         description: ordinary | business
         type: string
       city:
-        $ref: '#/definitions/bimeet_internal_model.City'
+        $ref: '#/definitions/model.City'
       created_at:
         type: string
       date_end:
         type: string
       date_start:
+        description: nil = permanent event (no schedule)
         type: string
       description:
         type: string
@@ -332,6 +363,8 @@ definitions:
         type: string
       is_public:
         type: boolean
+      last_activity_at:
+        type: string
       location:
         type: string
       location_lat:
@@ -350,11 +383,11 @@ definitions:
       updated_at:
         type: string
     type: object
-  bimeet_internal_model.EventCollectionsSummaryResponse:
+  model.EventCollectionsSummaryResponse:
     properties:
       collections:
         items:
-          $ref: '#/definitions/bimeet_internal_model.CollectionSummary'
+          $ref: '#/definitions/model.CollectionSummary'
         type: array
       grand_total:
         type: number
@@ -363,23 +396,23 @@ definitions:
       total_paid:
         type: number
     type: object
-  bimeet_internal_model.EventDetail:
+  model.EventDetail:
     properties:
       carpools:
         items:
-          $ref: '#/definitions/bimeet_internal_model.CarpoolInfo'
+          $ref: '#/definitions/model.CarpoolInfo'
         type: array
       category:
         type: string
       change_log:
         items:
-          $ref: '#/definitions/bimeet_internal_model.ChangeLogInfo'
+          $ref: '#/definitions/model.ChangeLogInfo'
         type: array
       city:
-        $ref: '#/definitions/bimeet_internal_model.City'
+        $ref: '#/definitions/model.City'
       collections:
         items:
-          $ref: '#/definitions/bimeet_internal_model.CollectionInfo'
+          $ref: '#/definitions/model.CollectionInfo'
         type: array
       confirmed_count:
         type: integer
@@ -401,8 +434,10 @@ definitions:
         type: boolean
       items:
         items:
-          $ref: '#/definitions/bimeet_internal_model.ItemInfo'
+          $ref: '#/definitions/model.ItemInfo'
         type: array
+      last_activity_at:
+        type: string
       location:
         type: string
       location_lat:
@@ -412,14 +447,14 @@ definitions:
       max_guests:
         type: integer
       organizer:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
       participants:
         items:
-          $ref: '#/definitions/bimeet_internal_model.ParticipantInfo'
+          $ref: '#/definitions/model.ParticipantInfo'
         type: array
       polls:
         items:
-          $ref: '#/definitions/bimeet_internal_model.PollInfo'
+          $ref: '#/definitions/model.PollInfo'
         type: array
       status:
         type: string
@@ -428,12 +463,12 @@ definitions:
       updated_at:
         type: string
     type: object
-  bimeet_internal_model.EventListItem:
+  model.EventListItem:
     properties:
       category:
         type: string
       city:
-        $ref: '#/definitions/bimeet_internal_model.City'
+        $ref: '#/definitions/model.City'
       confirmed_count:
         type: integer
       created_at:
@@ -452,6 +487,8 @@ definitions:
         type: string
       is_public:
         type: boolean
+      last_activity_at:
+        type: string
       location:
         type: string
       max_guests:
@@ -459,17 +496,17 @@ definitions:
       my_status:
         type: string
       organizer:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
       participants:
         items:
-          $ref: '#/definitions/bimeet_internal_model.ParticipantInfo'
+          $ref: '#/definitions/model.ParticipantInfo'
         type: array
       status:
         type: string
       title:
         type: string
     type: object
-  bimeet_internal_model.EventParticipant:
+  model.EventParticipant:
     properties:
       event_id:
         type: string
@@ -481,12 +518,12 @@ definitions:
       user_id:
         type: string
     type: object
-  bimeet_internal_model.InviteEventInfo:
+  model.InviteEventInfo:
     properties:
       category:
         type: string
       city:
-        $ref: '#/definitions/bimeet_internal_model.City'
+        $ref: '#/definitions/model.City'
       confirmed_count:
         type: integer
       date_end:
@@ -504,16 +541,16 @@ definitions:
       location:
         type: string
       organizer:
-        $ref: '#/definitions/bimeet_internal_model.PublicUserInfo'
+        $ref: '#/definitions/model.PublicUserInfo'
       title:
         type: string
     type: object
-  bimeet_internal_model.InviteParticipantRequest:
+  model.InviteParticipantRequest:
     properties:
       email:
         type: string
     type: object
-  bimeet_internal_model.Item:
+  model.Item:
     properties:
       assigned_to:
         type: string
@@ -524,25 +561,25 @@ definitions:
       name:
         type: string
     type: object
-  bimeet_internal_model.ItemInfo:
+  model.ItemInfo:
     properties:
       assigned_to:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
       id:
         type: string
       name:
         type: string
     type: object
-  bimeet_internal_model.JoinByInviteTokenRequest:
+  model.JoinByInviteTokenRequest:
     properties:
       action:
         description: '"join" | "decline"; defaults to "join"'
         type: string
     type: object
-  bimeet_internal_model.Message:
+  model.Message:
     properties:
       author:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
       body:
         type: string
       created_at:
@@ -557,10 +594,14 @@ definitions:
         type: string
       is_mine:
         type: boolean
+      reactions:
+        items:
+          $ref: '#/definitions/model.ReactionSummary'
+        type: array
       reply_to:
-        $ref: '#/definitions/bimeet_internal_model.ReplyPreview'
+        $ref: '#/definitions/model.ReplyPreview'
     type: object
-  bimeet_internal_model.Notification:
+  model.Notification:
     properties:
       count:
         description: collapsed events of the same kind (e.g. chat messages)
@@ -580,7 +621,7 @@ definitions:
       user_id:
         type: string
     type: object
-  bimeet_internal_model.OrganizerStat:
+  model.OrganizerStat:
     properties:
       email:
         type: string
@@ -591,16 +632,16 @@ definitions:
       user_id:
         type: string
     type: object
-  bimeet_internal_model.ParticipantInfo:
+  model.ParticipantInfo:
     properties:
       is_organizer:
         type: boolean
       status:
         type: string
       user:
-        $ref: '#/definitions/bimeet_internal_model.UserInfo'
+        $ref: '#/definitions/model.UserInfo'
     type: object
-  bimeet_internal_model.Poll:
+  model.Poll:
     properties:
       created_at:
         type: string
@@ -612,12 +653,12 @@ definitions:
         type: string
       options:
         items:
-          $ref: '#/definitions/bimeet_internal_model.PollOption'
+          $ref: '#/definitions/model.PollOption'
         type: array
       question:
         type: string
     type: object
-  bimeet_internal_model.PollInfo:
+  model.PollInfo:
     properties:
       created_at:
         type: string
@@ -627,12 +668,12 @@ definitions:
         type: string
       options:
         items:
-          $ref: '#/definitions/bimeet_internal_model.PollOptionInfo'
+          $ref: '#/definitions/model.PollOptionInfo'
         type: array
       question:
         type: string
     type: object
-  bimeet_internal_model.PollOption:
+  model.PollOption:
     properties:
       id:
         type: string
@@ -643,7 +684,7 @@ definitions:
       votes:
         type: integer
     type: object
-  bimeet_internal_model.PollOptionInfo:
+  model.PollOptionInfo:
     properties:
       id:
         type: string
@@ -655,14 +696,14 @@ definitions:
         description: whether the caller voted for this option
         type: boolean
     type: object
-  bimeet_internal_model.PostMessageRequest:
+  model.PostMessageRequest:
     properties:
       body:
         type: string
       reply_to_id:
         type: string
     type: object
-  bimeet_internal_model.ProfileStats:
+  model.ProfileStats:
     properties:
       completed:
         type: integer
@@ -673,12 +714,12 @@ definitions:
       upcoming:
         type: integer
     type: object
-  bimeet_internal_model.PublicEventListItem:
+  model.PublicEventListItem:
     properties:
       category:
         type: string
       city:
-        $ref: '#/definitions/bimeet_internal_model.City'
+        $ref: '#/definitions/model.City'
       confirmed_count:
         type: integer
       created_at:
@@ -708,33 +749,33 @@ definitions:
       my_status:
         type: string
       organizer:
-        $ref: '#/definitions/bimeet_internal_model.PublicUserInfo'
+        $ref: '#/definitions/model.PublicUserInfo'
       participants:
         items:
-          $ref: '#/definitions/bimeet_internal_model.PublicParticipantInfo'
+          $ref: '#/definitions/model.PublicParticipantInfo'
         type: array
       status:
         type: string
       title:
         type: string
     type: object
-  bimeet_internal_model.PublicParticipantInfo:
+  model.PublicParticipantInfo:
     properties:
       is_organizer:
         type: boolean
       status:
         type: string
       user:
-        $ref: '#/definitions/bimeet_internal_model.PublicUserInfo'
+        $ref: '#/definitions/model.PublicUserInfo'
     type: object
-  bimeet_internal_model.PublicUserInfo:
+  model.PublicUserInfo:
     properties:
       is_me:
         type: boolean
       name:
         type: string
     type: object
-  bimeet_internal_model.PushSubscribeRequest:
+  model.PushSubscribeRequest:
     properties:
       endpoint:
         type: string
@@ -746,17 +787,28 @@ definitions:
             type: string
         type: object
     type: object
-  bimeet_internal_model.PushUnsubscribeRequest:
+  model.PushUnsubscribeRequest:
     properties:
       endpoint:
         type: string
     type: object
-  bimeet_internal_model.RefreshResponse:
+  model.ReactionSummary:
+    properties:
+      count:
+        type: integer
+      emoji:
+        type: string
+      reactors:
+        items:
+          type: string
+        type: array
+    type: object
+  model.RefreshResponse:
     properties:
       token:
         type: string
     type: object
-  bimeet_internal_model.ReplyPreview:
+  model.ReplyPreview:
     properties:
       author_name:
         type: string
@@ -767,25 +819,33 @@ definitions:
       id:
         type: string
     type: object
-  bimeet_internal_model.RequestCodeRequest:
+  model.RequestCodeRequest:
     properties:
       email:
         type: string
     type: object
-  bimeet_internal_model.UnreadCountResponse:
+  model.ScheduleEventRequest:
+    properties:
+      date_end:
+        type: string
+      date_start:
+        type: string
+    type: object
+  model.ToggleReactionRequest:
+    properties:
+      emoji:
+        type: string
+    type: object
+  model.UnreadCountResponse:
     properties:
       count:
         type: integer
     type: object
-  bimeet_internal_model.UpdateEventRequest:
+  model.UpdateEventRequest:
     properties:
       category:
         type: string
       city_id:
-        type: string
-      date_end:
-        type: string
-      date_start:
         type: string
       description:
         type: string
@@ -804,19 +864,19 @@ definitions:
       title:
         type: string
     type: object
-  bimeet_internal_model.UpdateItemRequest:
+  model.UpdateItemRequest:
     properties:
       assigned:
         description: true = take for self, false = unassign
         type: boolean
     type: object
-  bimeet_internal_model.UpdateParticipantStatusRequest:
+  model.UpdateParticipantStatusRequest:
     properties:
       status:
         description: confirmed | declined
         type: string
     type: object
-  bimeet_internal_model.UpdateProfileRequest:
+  model.UpdateProfileRequest:
     properties:
       birth_date:
         description: '"YYYY-MM-DD", empty = clear'
@@ -828,7 +888,7 @@ definitions:
       name:
         type: string
     type: object
-  bimeet_internal_model.User:
+  model.User:
     properties:
       avatar_url:
         type: string
@@ -847,7 +907,7 @@ definitions:
       name:
         type: string
     type: object
-  bimeet_internal_model.UserInfo:
+  model.UserInfo:
     properties:
       email:
         type: string
@@ -856,29 +916,29 @@ definitions:
       name:
         type: string
     type: object
-  bimeet_internal_model.VerifyCodeRequest:
+  model.VerifyCodeRequest:
     properties:
       code:
         type: string
       email:
         type: string
     type: object
-  bimeet_internal_model.VoteRequest:
+  model.VoteRequest:
     properties:
       option_id:
         type: string
     type: object
-  bimeet_internal_handler_response.ErrorResponse:
+  response.ErrorResponse:
     properties:
       error:
         type: string
     type: object
-  bimeet_internal_handler_response.StatusResponse:
+  response.StatusResponse:
     properties:
       status:
         type: string
     type: object
-  bimeet_internal_handler_response.VAPIDKeyResponse:
+  response.VAPIDKeyResponse:
     properties:
       key:
         type: string
@@ -898,11 +958,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.AdminDistribution'
+            $ref: '#/definitions/model.AdminDistribution'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get admin event distribution metrics
@@ -916,11 +976,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.AdminOverview'
+            $ref: '#/definitions/model.AdminOverview'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get admin overview metrics
@@ -940,12 +1000,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.AdminEventRow'
+              $ref: '#/definitions/model.AdminEventRow'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get recently created events
@@ -965,12 +1025,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.AdminUserRow'
+              $ref: '#/definitions/model.AdminUserRow'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get recently registered users
@@ -989,11 +1049,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.AdminTimeseries'
+            $ref: '#/definitions/model.AdminTimeseries'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get admin user and event timeseries
@@ -1013,12 +1073,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.OrganizerStat'
+              $ref: '#/definitions/model.OrganizerStat'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get top event organizers
@@ -1032,7 +1092,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Log out and revoke the current session
       tags:
       - auth
@@ -1044,15 +1104,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.User'
+            $ref: '#/definitions/model.User'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get current user profile
@@ -1067,26 +1127,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.UpdateProfileRequest'
+          $ref: '#/definitions/model.UpdateProfileRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.User'
+            $ref: '#/definitions/model.User'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update current user profile
@@ -1100,15 +1160,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.User'
+            $ref: '#/definitions/model.User'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete current user avatar
@@ -1129,27 +1189,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.User'
+            $ref: '#/definitions/model.User'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "413":
           description: Request Entity Too Large
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Upload current user avatar
@@ -1164,16 +1224,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.AuthSession'
+              $ref: '#/definitions/model.AuthSession'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List current user sessions
@@ -1193,19 +1253,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Revoke a current user session
@@ -1219,11 +1279,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Revoke all other current user sessions
@@ -1237,15 +1297,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.ProfileStats'
+            $ref: '#/definitions/model.ProfileStats'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get current user profile statistics
@@ -1259,15 +1319,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.RefreshResponse'
+            $ref: '#/definitions/model.RefreshResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Refresh an authenticated session
       tags:
       - auth
@@ -1281,26 +1341,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.RequestCodeRequest'
+          $ref: '#/definitions/model.RequestCodeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.StatusResponse'
+            $ref: '#/definitions/response.StatusResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Request a one-time login code
       tags:
       - auth
@@ -1314,25 +1374,67 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.VerifyCodeRequest'
+          $ref: '#/definitions/model.VerifyCodeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.AuthResponse'
+            $ref: '#/definitions/model.AuthResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Verify a one-time login code
       tags:
       - auth
+  /chats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ChatSummary'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all chats (events the caller organizes or participates in)
+      tags:
+      - chats
+  /chats/stream:
+    get:
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: text/event-stream
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Stream chat-list activity across all of the caller's events
+      tags:
+      - chats
   /cities:
     get:
       produces:
@@ -1342,16 +1444,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.City'
+              $ref: '#/definitions/model.City'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List active Russian cities
@@ -1366,16 +1468,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.EventListItem'
+              $ref: '#/definitions/model.EventListItem'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List events for the current user
@@ -1390,26 +1492,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.CreateEventRequest'
+          $ref: '#/definitions/model.CreateEventRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Event'
+            $ref: '#/definitions/model.Event'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create an event
@@ -1429,23 +1531,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete an event
@@ -1464,23 +1566,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.EventDetail'
+            $ref: '#/definitions/model.EventDetail'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get event details
@@ -1500,34 +1602,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.UpdateEventRequest'
+          $ref: '#/definitions/model.UpdateEventRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Event'
+            $ref: '#/definitions/model.Event'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update an event
@@ -1548,24 +1650,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.Carpool'
+              $ref: '#/definitions/model.Carpool'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List event carpools
@@ -1585,26 +1687,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.CreateCarpoolRequest'
+          $ref: '#/definitions/model.CreateCarpoolRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Carpool'
+            $ref: '#/definitions/model.Carpool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create an event carpool
@@ -1629,27 +1731,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Join an event carpool
@@ -1670,24 +1772,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.Collection'
+              $ref: '#/definitions/model.Collection'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List event collections
@@ -1707,30 +1809,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.CreateCollectionRequest'
+          $ref: '#/definitions/model.CreateCollectionRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Collection'
+            $ref: '#/definitions/model.Collection'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create an event collection
@@ -1755,23 +1857,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete an event collection
@@ -1803,31 +1905,31 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.CollectionContribution'
+            $ref: '#/definitions/model.CollectionContribution'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Submit a collection contribution receipt
@@ -1857,23 +1959,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.CollectionContribution'
+            $ref: '#/definitions/model.CollectionContribution'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Confirm a collection contribution
@@ -1903,23 +2005,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.CollectionContribution'
+            $ref: '#/definitions/model.CollectionContribution'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Reject a collection contribution
@@ -1944,23 +2046,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.CollectionContribution'
+            $ref: '#/definitions/model.CollectionContribution'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark the organizer's contribution as paid
@@ -1980,23 +2082,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.EventCollectionsSummaryResponse'
+            $ref: '#/definitions/model.EventCollectionsSummaryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get event collections summary
@@ -2016,23 +2118,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark an event as completed
@@ -2053,24 +2155,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.Item'
+              $ref: '#/definitions/model.Item'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List event items
@@ -2090,26 +2192,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.CreateItemRequest'
+          $ref: '#/definitions/model.CreateItemRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Item'
+            $ref: '#/definitions/model.Item'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create an event item
@@ -2135,34 +2237,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.UpdateItemRequest'
+          $ref: '#/definitions/model.UpdateItemRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Item'
+            $ref: '#/definitions/model.Item'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Assign or unassign an event item
@@ -2182,23 +2284,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.StatusResponse'
+            $ref: '#/definitions/response.StatusResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Join a public event
@@ -2223,28 +2325,28 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.Message'
+              $ref: '#/definitions/model.Message'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List event chat messages
@@ -2264,34 +2366,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.PostMessageRequest'
+          $ref: '#/definitions/model.PostMessageRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Message'
+            $ref: '#/definitions/model.Message'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Post an event chat message
@@ -2316,26 +2418,79 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete an event chat message
+      tags:
+      - messages
+  /events/{id}/messages/{messageId}/reactions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message ID
+        in: path
+        name: messageId
+        required: true
+        type: string
+      - description: Emoji
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ToggleReactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Toggle the caller's emoji reaction on a message
       tags:
       - messages
   /events/{id}/messages/image:
@@ -2363,27 +2518,27 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Message'
+            $ref: '#/definitions/model.Message'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Post an event chat photo
@@ -2403,23 +2558,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark event chat as read
@@ -2439,27 +2594,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.UnreadCountResponse'
+            $ref: '#/definitions/model.UnreadCountResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get event chat unread count
@@ -2480,30 +2635,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.UpdateParticipantStatusRequest'
+          $ref: '#/definitions/model.UpdateParticipantStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.EventParticipant'
+            $ref: '#/definitions/model.EventParticipant'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update the caller's participant status
@@ -2523,30 +2678,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.InviteParticipantRequest'
+          $ref: '#/definitions/model.InviteParticipantRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.EventParticipant'
+            $ref: '#/definitions/model.EventParticipant'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Invite a participant by email
@@ -2572,30 +2727,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.UpdateParticipantStatusRequest'
+          $ref: '#/definitions/model.UpdateParticipantStatusRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.EventParticipant'
+            $ref: '#/definitions/model.EventParticipant'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update the caller's participant status
@@ -2616,24 +2771,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.Poll'
+              $ref: '#/definitions/model.Poll'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List event polls
@@ -2653,30 +2808,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.CreatePollRequest'
+          $ref: '#/definitions/model.CreatePollRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Poll'
+            $ref: '#/definitions/model.Poll'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create an event poll
@@ -2702,31 +2857,141 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.VoteRequest'
+          $ref: '#/definitions/model.VoteRequest'
       responses:
         "204":
           description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Vote in an event poll
       tags:
       - polls
+  /events/{id}/schedule:
+    post:
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Date range
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.ScheduleEventRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Event'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Schedule a permanent event, or reschedule an existing one
+      tags:
+      - events
+  /events/{id}/stream:
+    get:
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: text/event-stream
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Stream live messages for one event
+      tags:
+      - chats
+  /events/{id}/unschedule:
+    post:
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Event'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Clear an event's dates, turning it into a permanent event
+      tags:
+      - events
   /events/invite/{token}:
     get:
       parameters:
@@ -2741,15 +3006,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.InviteEventInfo'
+            $ref: '#/definitions/model.InviteEventInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Get public invite event details
       tags:
       - events
@@ -2766,30 +3031,30 @@ paths:
         in: body
         name: request
         schema:
-          $ref: '#/definitions/bimeet_internal_model.JoinByInviteTokenRequest'
+          $ref: '#/definitions/model.JoinByInviteTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.EventParticipant'
+            $ref: '#/definitions/model.EventParticipant'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Join or decline an event by invite token
@@ -2810,20 +3075,20 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.PublicEventListItem'
+              $ref: '#/definitions/model.PublicEventListItem'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List public events
@@ -2837,11 +3102,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete all notifications
@@ -2855,16 +3120,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/bimeet_internal_model.Notification'
+              $ref: '#/definitions/model.Notification'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List notifications
@@ -2884,23 +3149,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a notification
@@ -2920,27 +3185,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_model.Notification'
+            $ref: '#/definitions/model.Notification'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark a notification as read
@@ -2954,11 +3219,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Mark all notifications as read
@@ -2974,22 +3239,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.PushSubscribeRequest'
+          $ref: '#/definitions/model.PushSubscribeRequest'
       responses:
         "204":
           description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Subscribe to web push notifications
@@ -3003,11 +3268,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "502":
           description: Bad Gateway
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Send a test push notification
@@ -3023,22 +3288,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/bimeet_internal_model.PushUnsubscribeRequest'
+          $ref: '#/definitions/model.PushUnsubscribeRequest'
       responses:
         "204":
           description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Unsubscribe from web push notifications
@@ -3052,7 +3317,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/bimeet_internal_handler_response.VAPIDKeyResponse'
+            $ref: '#/definitions/response.VAPIDKeyResponse'
       security:
       - BearerAuth: []
       summary: Get the public VAPID key
