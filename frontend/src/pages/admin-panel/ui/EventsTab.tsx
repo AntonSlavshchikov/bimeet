@@ -9,7 +9,7 @@ export default function EventsTab() {
   const recent = useAdminRecentEvents(20)
 
   return (
-    <div className="rounded-[14px] border border-line bg-surface p-5">
+    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
       <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">
         {t('admin.events.recent', 'Недавние встречи')}
       </h2>

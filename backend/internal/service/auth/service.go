@@ -3,6 +3,9 @@ package authsvc
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -22,6 +25,9 @@ const (
 	loginCodeTTL    = 10 * time.Minute
 	resendCooldown  = 60 * time.Second
 	maxCodeAttempts = 5
+	// RefreshSessionTTL is shared with the HttpOnly cookie. Access JWTs are
+	// shorter-lived and remain refreshable while this server session is active.
+	RefreshSessionTTL = 400 * 24 * time.Hour
 	// testLoginCode is used instead of a random code when AUTH_TEST is enabled,
 	// so the email provider's quota is not spent during development/tests.
 	testLoginCode = "120401"
@@ -29,27 +35,31 @@ const (
 
 // Sentinel errors so the HTTP layer can map them to the right status code.
 var (
-	ErrInvalidCode = errors.New("invalid or expired code")
-	ErrCooldown    = errors.New("please wait before requesting a new code")
+	ErrInvalidCode         = errors.New("invalid or expired code")
+	ErrInvalidRefreshToken = errors.New("invalid refresh token")
+	ErrSessionNotFound     = errors.New("session not found")
+	ErrCooldown            = errors.New("please wait before requesting a new code")
 )
 
 type Service struct {
-	userRepo  UserRepo
-	codeRepo  LoginCodeRepo
-	mailer    Mailer
-	jwtSecret string
-	jwtExpH   int
-	authTest  bool
+	userRepo    UserRepo
+	codeRepo    LoginCodeRepo
+	refreshRepo RefreshTokenRepo
+	mailer      Mailer
+	jwtSecret   string
+	jwtExpH     int
+	authTest    bool
 }
 
-func New(userRepo UserRepo, codeRepo LoginCodeRepo, mailer Mailer, jwtSecret string, jwtExpHours int, authTest bool) *Service {
+func New(userRepo UserRepo, codeRepo LoginCodeRepo, refreshRepo RefreshTokenRepo, mailer Mailer, jwtSecret string, jwtExpHours int, authTest bool) *Service {
 	return &Service{
-		userRepo:  userRepo,
-		codeRepo:  codeRepo,
-		mailer:    mailer,
-		jwtSecret: jwtSecret,
-		jwtExpH:   jwtExpHours,
-		authTest:  authTest,
+		userRepo:    userRepo,
+		codeRepo:    codeRepo,
+		refreshRepo: refreshRepo,
+		mailer:      mailer,
+		jwtSecret:   jwtSecret,
+		jwtExpH:     jwtExpHours,
+		authTest:    authTest,
 	}
 }
 
@@ -114,7 +124,7 @@ func (s *Service) RequestCode(ctx context.Context, req model.RequestCodeRequest)
 
 // VerifyCode checks a one-time code and, on success, returns a JWT for the
 // matching user — creating the account on the fly if the email is new.
-func (s *Service) VerifyCode(ctx context.Context, req model.VerifyCodeRequest) (model.AuthResponse, error) {
+func (s *Service) VerifyCode(ctx context.Context, req model.VerifyCodeRequest, userAgent string) (model.AuthResponse, error) {
 	email := normalizeEmail(req.Email)
 	code := strings.TrimSpace(req.Code)
 	if email == "" || code == "" {
@@ -155,16 +165,102 @@ func (s *Service) VerifyCode(ctx context.Context, req model.VerifyCodeRequest) (
 		}
 	}
 
-	token, err := s.generateToken(user.ID)
+	accessToken, refreshToken, err := s.issueSession(ctx, user.ID, userAgent)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
-	return model.AuthResponse{Token: token, User: user}, nil
+	return model.AuthResponse{Token: accessToken, RefreshToken: refreshToken, User: user}, nil
 }
 
-func (s *Service) generateToken(userID uuid.UUID) (string, error) {
+// Refresh consumes a refresh token and returns a fresh, independently rotated
+// access/refresh pair. A token can succeed exactly once.
+func (s *Service) Refresh(ctx context.Context, currentToken, userAgent string) (model.RefreshResponse, error) {
+	if strings.TrimSpace(currentToken) == "" {
+		return model.RefreshResponse{}, ErrInvalidRefreshToken
+	}
+
+	nextToken, err := generateRefreshToken()
+	if err != nil {
+		return model.RefreshResponse{}, fmt.Errorf("generate refresh token: %w", err)
+	}
+	session, ok, err := s.refreshRepo.Rotate(ctx, hashRefreshToken(currentToken), hashRefreshToken(nextToken), userAgent)
+	if err != nil {
+		return model.RefreshResponse{}, fmt.Errorf("rotate refresh token: %w", err)
+	}
+	if !ok {
+		return model.RefreshResponse{}, ErrInvalidRefreshToken
+	}
+
+	accessToken, err := s.generateToken(session.UserID, session.ID)
+	if err != nil {
+		return model.RefreshResponse{}, err
+	}
+	return model.RefreshResponse{Token: accessToken, RefreshToken: nextToken}, nil
+}
+
+func (s *Service) RevokeRefreshToken(ctx context.Context, token string) error {
+	if strings.TrimSpace(token) == "" {
+		return nil
+	}
+	return s.refreshRepo.Revoke(ctx, hashRefreshToken(token))
+}
+
+func (s *Service) ListSessions(ctx context.Context, userID, currentSessionID uuid.UUID) ([]model.AuthSession, error) {
+	sessions, err := s.refreshRepo.ListByUser(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list sessions: %w", err)
+	}
+	for i := range sessions {
+		sessions[i].Current = sessions[i].ID == currentSessionID
+	}
+	return sessions, nil
+}
+
+func (s *Service) RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error {
+	revoked, err := s.refreshRepo.RevokeByID(ctx, userID, sessionID)
+	if err != nil {
+		return fmt.Errorf("revoke session: %w", err)
+	}
+	if !revoked {
+		return ErrSessionNotFound
+	}
+	return nil
+}
+
+func (s *Service) RevokeOtherSessions(ctx context.Context, userID, currentSessionID uuid.UUID) error {
+	if err := s.refreshRepo.RevokeOthers(ctx, userID, currentSessionID); err != nil {
+		return fmt.Errorf("revoke other sessions: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) issueSession(ctx context.Context, userID uuid.UUID, userAgent string) (string, string, error) {
+	refreshToken, err := generateRefreshToken()
+	if err != nil {
+		return "", "", fmt.Errorf("generate refresh token: %w", err)
+	}
+	session, err := s.refreshRepo.Create(
+		ctx,
+		userID,
+		hashRefreshToken(refreshToken),
+		strings.TrimSpace(userAgent),
+		time.Now().Add(RefreshSessionTTL),
+	)
+	if err != nil {
+		return "", "", fmt.Errorf("store refresh token: %w", err)
+	}
+	accessToken, err := s.generateToken(userID, session.ID)
+	if err != nil {
+		_ = s.refreshRepo.Revoke(ctx, hashRefreshToken(refreshToken))
+		return "", "", err
+	}
+	return accessToken, refreshToken, nil
+}
+
+func (s *Service) generateToken(userID, sessionID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID.String(),
+		"sid": sessionID.String(),
 		"exp": time.Now().Add(time.Duration(s.jwtExpH) * time.Hour).Unix(),
 		"iat": time.Now().Unix(),
 	}
@@ -183,6 +279,19 @@ func generateCode() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%06d", n.Int64()), nil
+}
+
+func generateRefreshToken() (string, error) {
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(raw), nil
+}
+
+func hashRefreshToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }
 
 func normalizeEmail(email string) string {

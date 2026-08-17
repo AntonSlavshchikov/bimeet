@@ -3,7 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { Plus, ShoppingBag } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddItem, useAssignItem } from '@/features/items/model/hooks'
-import { Avatar, Button, Input, StatusPill, StatusPillButton } from '@/shared/ui'
+import {
+  Button,
+  EventSectionDataRow,
+  EventSectionEmpty,
+  EventSectionHeader,
+  EventSectionList,
+  EventSectionStat,
+  EventSectionStats,
+  Input,
+} from '@/shared/ui'
 
 export default function ItemsTab({ event }: { event: Event }) {
   const { t } = useTranslation()
@@ -13,6 +22,8 @@ export default function ItemsTab({ event }: { event: Event }) {
   const addItem = useAddItem(event.id)
   const assignItem = useAssignItem(event.id)
   const isCompleted = event.status === 'completed'
+  const assigned = event.items.filter(item => item.assigned_to).length
+  const remaining = event.items.length - assigned
 
   function handleAdd() {
     if (!name.trim()) return
@@ -22,95 +33,94 @@ export default function ItemsTab({ event }: { event: Event }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
-          {t('items.sectionTitle', 'Что брать')}
-        </div>
-        {!isCompleted && (
-          <Button variant="outline" size="sm" onClick={() => setOpen(v => !v)}>
-            <Plus size={13} /> {t('common.add', 'Добавить')}
+    <div>
+      <EventSectionHeader
+        kicker={t('items.kicker')}
+        title={t('items.sectionTitle')}
+        description={t('items.description')}
+        action={!isCompleted ? (
+          <Button size="md" onClick={() => setOpen(v => !v)}>
+            <Plus size={14} /> {t('items.addItem')}
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {open && (
-        <div className="rounded-[12px] border border-line bg-bg-2 p-3.5 flex flex-col gap-3">
+        <div className="mt-[18px] flex flex-col gap-3 rounded-[15px] border border-line bg-bg-2/55 p-3.5">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
-              {t('items.fieldName', 'Название')}
+            <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-ink-3">
+              {t('items.fieldName')}
             </div>
             <Input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder={t('items.fieldNamePlaceholder', 'Шашлык, плед, мангал...')}
+              placeholder={t('items.fieldNamePlaceholder')}
               onKeyDown={e => e.key === 'Enter' && handleAdd()}
               autoFocus
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => { setOpen(false); setName('') }}>
-              {t('common.cancel', 'Отмена')}
+              {t('common.cancel')}
             </Button>
             <Button size="sm" onClick={handleAdd} disabled={addItem.isPending}>
-              {t('common.add', 'Добавить')}
+              {t('common.add')}
             </Button>
           </div>
         </div>
       )}
 
+      <EventSectionStats>
+        <EventSectionStat label={t('items.statTotal')} value={t('items.itemsCount', { count: event.items.length })} />
+        <EventSectionStat label={t('items.statAssigned')} value={t('items.itemsCount', { count: assigned })} />
+        <EventSectionStat label={t('items.statRemaining')} value={t('items.itemsCount', { count: remaining })} />
+      </EventSectionStats>
+
       {event.items.length === 0 ? (
-        <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
-          <ShoppingBag size={26} className="text-ink-3" />
-          <p className="text-[13px] text-ink-3">{t('items.empty', 'Список пуст — добавьте, что нужно взять.')}</p>
-        </div>
+        <EventSectionEmpty icon={ShoppingBag}>{t('items.empty')}</EventSectionEmpty>
       ) : (
-        <div className="overflow-hidden rounded-[12px] border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
+        <EventSectionList>
           {event.items.map(item => {
             const isMine = item.assigned_to?.is_me ?? false
             const isTaken = Boolean(item.assigned_to)
             return (
-              <div key={item.id} className="flex items-center justify-between gap-3 p-3.5">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {item.assigned_to ? (
-                    <Avatar name={item.assigned_to.name} size="md" />
+              <EventSectionDataRow
+                key={item.id}
+                avatar={isTaken ? '✓' : '+'}
+                name={item.name}
+                note={item.assigned_to
+                  ? t('items.takenBy', { name: item.assigned_to.name })
+                  : t('items.unassigned')}
+                status={!isTaken ? (
+                  isCompleted ? (
+                    <span className="inline-flex rounded-full bg-warning/12 px-2.5 py-1 text-warning">
+                      {t('items.needsPerson')}
+                    </span>
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-bg-2 border border-line-soft shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="text-[14px] font-medium text-ink truncate">{item.name}</div>
-                    <div className="text-[12px] text-ink-3 truncate mt-0.5">
-                      {item.assigned_to ? item.assigned_to.name : t('items.unassigned', 'Не занято')}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {isCompleted ? (
-                    isTaken && !isMine && <StatusPill variant="going">{t('items.badgeTaken', 'Взято')}</StatusPill>
-                  ) : isMine ? (
-                    <StatusPillButton
-                      variant="completed"
-                      onClick={() => assignItem.mutate({ itemId: item.id, assigned: false })}
+                    <button
+                      type="button"
                       disabled={assignItem.isPending}
-                    >
-                      {t('items.buttonGiveUp', 'Отказаться')}
-                    </StatusPillButton>
-                  ) : !isTaken ? (
-                    <StatusPillButton
-                      variant="action"
                       onClick={() => assignItem.mutate({ itemId: item.id, assigned: true })}
-                      disabled={assignItem.isPending}
+                      className="inline-flex rounded-full bg-warning/12 px-2.5 py-1 font-bold text-warning transition hover:bg-warning/20 disabled:opacity-40"
                     >
-                      {t('items.buttonTake', 'Возьму')}
-                    </StatusPillButton>
-                  ) : (
-                    <StatusPill variant="going">{t('items.badgeTaken', 'Взято')}</StatusPill>
-                  )}
-                </div>
-              </div>
+                      {t('items.needsPerson')}
+                    </button>
+                  )
+                ) : isMine && !isCompleted ? (
+                  <button
+                    type="button"
+                    disabled={assignItem.isPending}
+                    onClick={() => assignItem.mutate({ itemId: item.id, assigned: false })}
+                    className="font-bold text-success transition hover:opacity-70 disabled:opacity-40"
+                  >
+                    {t('items.ready')}
+                  </button>
+                ) : t('items.ready')}
+                statusTone={isTaken ? 'success' : 'warning'}
+              />
             )
           })}
-        </div>
+        </EventSectionList>
       )}
     </div>
   )

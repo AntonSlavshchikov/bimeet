@@ -1,15 +1,40 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CalendarOff, Plus, SearchX, X } from 'lucide-react'
+import { Bell, CalendarOff, Plus, SearchX, X } from 'lucide-react'
 import { useEvents } from '@/entities/event/queries'
-import { useJoinPublicEvent, useConfirmAttendance } from '@/features/event-manage/model/hooks'
+import { useNotifications } from '@/entities/notification/queries'
+import {
+  useCompleteEvent,
+  useDeleteEvent,
+  useJoinPublicEvent,
+  useUpdateAttendance,
+} from '@/features/event-manage/model/hooks'
+import {
+  filterEventsByProfileStat,
+  profileStatBaseTab,
+  resolveProfileStat,
+  type ProfileStatKey,
+} from '@/features/profile-stats/model'
+import {
+  filterEventsByTab,
+  parseEventsListTab,
+  type EventsListTab,
+} from './model/tabs'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { EventListItem, PublicEventListItem } from '@/entities/event/model/types'
 import {
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  EmptyState,
   ListGroup,
   MiniCalendar,
+  PageHeader,
   RailCard,
   RailCardTitle,
   SearchInput,
@@ -17,21 +42,13 @@ import {
   StatCell,
   useToast,
 } from '@/shared/ui'
-type Tab = 'all' | 'attending' | 'organizing' | 'public' | 'permanent' | 'past'
 type EventAny = EventListItem | PublicEventListItem
 /** EventAny narrowed to events that do have a schedule — used by the day/month rail widgets. */
 type DatedEventAny = EventAny & { date_start: string; date_end: string }
 
-const VALID_TABS: Tab[] = ['all', 'attending', 'organizing', 'public', 'permanent', 'past']
-
 function isDated<T extends { date_start: string | null }>(e: T): e is T & { date_start: string; date_end: string } {
   return e.date_start != null
 }
-
-const MONTHS_LONG_RU = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-]
 
 function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -42,8 +59,10 @@ function isSameDay(a: Date, b: Date) {
 }
 
 interface Group {
-  /** Заголовок секции — «Сегодня · ср, 8 июня» или «Июнь · 5 встреч» */
+  /** Заголовок секции — «Сегодня · ср, 8 июня» или «Июнь». */
   title: string
+  /** Количество встреч выносится вправо, как в Warm Canvas. */
+  countLabel: string
   /** Подпись для дней внутри: 'weekday' для внутримесячных, 'month' иначе */
   dateCaption: 'weekday' | 'month'
   events: EventAny[]
@@ -61,7 +80,11 @@ function splitByPermanence(events: EventAny[]): { permanent: EventAny[]; dated: 
 }
 
 // events here are guaranteed dated — see buildGroups, the only caller.
-function groupEvents(events: EventAny[]): Group[] {
+function groupEvents(
+  events: EventAny[],
+  locale: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): Group[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const sorted = [...events].sort(
@@ -84,20 +107,23 @@ function groupEvents(events: EventAny[]): Group[] {
 
   const groups: Group[] = []
   if (todayList.length > 0) {
-    const wd = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'][today.getDay()]
+    const dateLabel = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long' }).format(today)
     groups.push({
-      title: `Сегодня · ${wd}, ${today.getDate()} ${MONTHS_LONG_RU[today.getMonth()].toLowerCase()}`,
-      dateCaption: 'weekday',
+      title: t('events.todayGroup', { date: dateLabel }),
+      countLabel: t('events.eventCount', { count: todayList.length }),
+      dateCaption: 'month',
       events: todayList,
     })
   }
   for (const [key, list] of byMonth) {
     const [y, m] = key.split('-').map(Number)
-    const monthName = MONTHS_LONG_RU[m]
+    const monthName = new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(y, m, 1))
+    const title = monthName.charAt(0).toUpperCase() + monthName.slice(1)
     const currentYear = new Date().getFullYear()
     const yearPart = y === currentYear ? '' : ` ${y}`
     groups.push({
-      title: `${monthName}${yearPart} · ${list.length} ${pluralEvents(list.length)}`,
+      title: `${title}${yearPart}`,
+      countLabel: t('events.eventCount', { count: list.length }),
       dateCaption: 'weekday',
       events: list,
     })
@@ -108,26 +134,22 @@ function groupEvents(events: EventAny[]): Group[] {
 // Permanent events get their own section, always first — sorted by nothing in
 // particular here (EventListRow doesn't show a date for them); the events
 // themselves come pre-sorted by last_activity_at from the API.
-function buildGroups(events: EventAny[]): Group[] {
+function buildGroups(
+  events: EventAny[],
+  locale: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): Group[] {
   const { permanent, dated } = splitByPermanence(events)
-  const groups = groupEvents(dated)
+  const groups = groupEvents(dated, locale, t)
   if (permanent.length > 0) {
     groups.unshift({
-      title: `Постоянные · ${permanent.length} ${pluralEvents(permanent.length)}`,
+      title: t('events.permanentGroup', 'Постоянные'),
+      countLabel: t('events.eventCount', { count: permanent.length }),
       dateCaption: 'weekday',
       events: permanent,
     })
   }
   return groups
-}
-
-function pluralEvents(n: number): string {
-  const m10 = n % 10
-  const m100 = n % 100
-  if (m100 >= 11 && m100 <= 14) return 'встреч'
-  if (m10 === 1) return 'встреча'
-  if (m10 >= 2 && m10 <= 4) return 'встречи'
-  return 'встреч'
 }
 
 function resolveCanAttend(
@@ -146,32 +168,11 @@ function resolveCanAttend(
   return undefined
 }
 
-function EmptyState({
-  icon: Icon,
-  title,
-  action,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  title: string
-  action?: { to: string; label: string }
-}) {
-  return (
-    <div className="rounded-[12px] border border-line bg-surface py-14 px-4 flex flex-col items-center gap-3">
-      <Icon size={28} className="text-ink-3" />
-      <div className="text-[13.5px] text-ink-3">{title}</div>
-      {action && (
-        <Button asChild size="sm" className="mt-1">
-          <Link to={action.to}><Plus size={14} /> {action.label}</Link>
-        </Button>
-      )}
-    </div>
-  )
-}
-
 function UpcomingRail({ events }: { events: DatedEventAny[] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const today = new Date()
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
 
   const selectedDate = useMemo(() => {
     const raw = searchParams.get('date')
@@ -203,14 +204,18 @@ function UpcomingRail({ events }: { events: DatedEventAny[] }) {
   )
 
   const upcoming = selectedDate ? dayEvents : (dayEvents.length > 0 ? dayEvents : nextFew)
-  const isToday = isSameDay(activeDay, today)
-
   return (
     <>
       <RailCard>
-        <div className="flex items-center justify-between">
-          <RailCardTitle>{isToday ? 'Сегодня' : (dayEvents.length > 0 ? 'Выбранный день' : 'Ближайшие')}</RailCardTitle>
-          {selectedDate && !isToday && (
+        <div className="flex items-center justify-between gap-2">
+          <RailCardTitle>
+            {selectedDate
+              ? t('events.railSelectedDay')
+              : dayEvents.length > 0
+                ? t('events.railToday')
+                : t('events.railUpcoming')}
+          </RailCardTitle>
+          {selectedDate && (
             <button
               type="button"
               onClick={() => {
@@ -218,9 +223,9 @@ function UpcomingRail({ events }: { events: DatedEventAny[] }) {
                 next.delete('date')
                 setSearchParams(next, { replace: true })
               }}
-              className="text-[12px] font-medium text-accent hover:opacity-80 transition"
+              className="text-[11px] font-semibold text-accent transition hover:opacity-75"
             >
-              Сегодня
+              {t('events.railBackToday')}
             </button>
           )}
         </div>
@@ -228,15 +233,15 @@ function UpcomingRail({ events }: { events: DatedEventAny[] }) {
           {activeDay.getDate()}
         </div>
         <div className="text-[13px] text-ink-3 mt-1 mb-3">
-          {activeDay.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {activeDay.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
         {upcoming.length === 0 ? (
           <div className="border-t border-line-soft pt-3 text-[13px] text-ink-3">
-            {t('events.emptyNoOrganized', 'Пока ничего не запланировано')}
+            {t('events.emptyNoPlanned', 'Пока ничего не запланировано')}
           </div>
         ) : (
           upcoming.map(e => {
-            const time = new Date(e.date_start).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+            const time = new Date(e.date_start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
             return (
               <Link
                 key={e.id}
@@ -263,9 +268,12 @@ function UpcomingRail({ events }: { events: DatedEventAny[] }) {
 
 function StatsRail({
   events,
+  unreadCount,
 }: {
   events: DatedEventAny[]
+  unreadCount: number
 }) {
+  const { t } = useTranslation()
   const today = new Date()
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
   const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
@@ -290,12 +298,12 @@ function StatsRail({
 
   return (
     <RailCard>
-      <RailCardTitle>Этот месяц</RailCardTitle>
+      <RailCardTitle>{t('events.railThisMonth')}</RailCardTitle>
       <div className="grid grid-cols-2 gap-3">
-        <StatCell value={upcoming} label="встреч впереди" />
-        <StatCell value={organizing} label="организуете" />
-        <StatCell value={people.size} label="человек рядом" />
-        <StatCell value="—" label="сборов" />
+        <StatCell value={upcoming} label={t('events.railEventsAhead')} />
+        <StatCell value={organizing} label={t('events.railOrganizing')} />
+        <StatCell value={people.size} label={t('events.railPeopleNearby')} />
+        <StatCell value={unreadCount} label={t('events.railNewReplies')} />
       </div>
     </RailCard>
   )
@@ -303,29 +311,27 @@ function StatsRail({
 
 function EventsListPage() {
   const events = useEvents()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // tab синхронизируется с ?tab=… в URL — кликабельно из Sidebar (фильтры)
-  const urlTab = searchParams.get('tab') as Tab | null
-  const [tab, setTabState] = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'all')
+  // URL — единый источник состояния вкладки и перехода из статистики профиля.
+  const profileStat = resolveProfileStat(searchParams.get('stat'))
+  const urlTab = parseEventsListTab(searchParams.get('tab'))
+  const tab: EventsListTab = urlTab ?? (profileStat ? profileStatBaseTab(profileStat) : 'all')
 
-  useEffect(() => {
-    if (urlTab && VALID_TABS.includes(urlTab) && urlTab !== tab) setTabState(urlTab)
-    if (!urlTab && tab !== 'all') setTabState('all')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlTab])
-
-  function setTab(next: Tab) {
-    setTabState(next)
+  function setTab(next: EventsListTab) {
     const params = new URLSearchParams(searchParams)
+    params.delete('stat')
     if (next === 'all') params.delete('tab')
     else params.set('tab', next)
     setSearchParams(params, { replace: true })
   }
 
   const [search, setSearch] = useState('')
+  const [eventToComplete, setEventToComplete] = useState<EventAny | null>(null)
+  const [eventToDelete, setEventToDelete] = useState<EventAny | null>(null)
+  const [openSwipeEventId, setOpenSwipeEventId] = useState<string | null>(null)
   const mobileSearchRef = useRef<HTMLInputElement>(null)
   const mobileSearchOpen = searchParams.get('search') === '1'
 
@@ -337,29 +343,46 @@ function EventsListPage() {
   }
 
   const joinPublicEvent = useJoinPublicEvent()
-  const confirmAttendance = useConfirmAttendance()
+  const updateAttendance = useUpdateAttendance()
+  const completeEvent = useCompleteEvent(eventToComplete?.id ?? '')
+  const deleteEvent = useDeleteEvent()
+
+  function handleComplete() {
+    if (!eventToComplete) return
+    completeEvent.mutate(undefined, {
+      onSuccess: () => {
+        setEventToComplete(null)
+        toast({ title: t('eventInfo.completeSuccess'), status: 'success' })
+      },
+      onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+    })
+  }
+
+  function handleDelete() {
+    if (!eventToDelete) return
+    deleteEvent.mutate(eventToDelete.id, {
+      onSuccess: () => {
+        setEventToDelete(null)
+        toast({ title: t('eventInfo.deleteSuccess'), status: 'success' })
+      },
+      onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+    })
+  }
 
   // «Встречи» — только мои: организатор, приглашён или участвую. Публичные чужие
   // встречи живут в отдельной вкладке «Найти публичные».
-  const allUpcoming = useMemo<EventAny[]>(
-    () => events.filter(e => e.status !== 'completed'),
+  const allActive = useMemo(
+    () => filterEventsByTab(events, 'all'),
     [events],
   )
-
-  const attendingEvents = events.filter(e => !e.organizer.is_me && e.status !== 'completed')
-  const organizingEvents = events.filter(e => e.organizer.is_me && e.status !== 'completed')
-  // «Публичные» внутри моих встреч = мои публичные (например, которые я организовал).
-  const myPublicEvents = events.filter(e => e.is_public && e.status !== 'completed')
-  const permanentEvents = events.filter(e => e.date_start == null && e.status !== 'completed')
-  const pastEvents = events.filter(e => e.status === 'completed')
 
   function handleAttend(event: EventAny) {
     const myParticipant = event.participants.find(p => p.user.is_me)
     const myStatus = myParticipant?.status ?? event.my_status
 
     if (myStatus === 'invited') {
-      confirmAttendance.mutate(
-        { eventId: event.id },
+      updateAttendance.mutate(
+        { eventId: event.id, status: 'confirmed' },
         {
           onSuccess: () => toast({ title: t('eventCard.statusConfirmed', 'Подтверждено'), status: 'success' }),
           onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
@@ -373,6 +396,21 @@ function EventsListPage() {
     }
   }
 
+  function handleAttendance(event: EventAny, status: 'confirmed' | 'declined') {
+    updateAttendance.mutate(
+      { eventId: event.id, status },
+      {
+        onSuccess: () => toast({
+          title: status === 'confirmed'
+            ? t('eventCard.swipeParticipating')
+            : t('eventCard.swipeNotParticipating'),
+          status: 'success',
+        }),
+        onError: err => toast({ title: t('common.error'), description: err.message, status: 'error' }),
+      },
+    )
+  }
+
   function filterBySearch(list: EventAny[]): EventAny[] {
     if (!search.trim()) return list
     const q = search.toLowerCase()
@@ -382,52 +420,51 @@ function EventsListPage() {
     )
   }
 
-  const sourceForTab: Record<Tab, EventAny[]> = {
-    all: allUpcoming,
-    attending: attendingEvents,
-    organizing: organizingEvents,
-    public: myPublicEvents,
-    permanent: permanentEvents,
-    past: pastEvents,
-  }
+  const profileStatEvents = useMemo(
+    () => profileStat ? filterEventsByProfileStat(events, profileStat) : null,
+    [events, profileStat],
+  )
+  const tabEvents = useMemo(() => filterEventsByTab(events, tab), [events, tab])
+  const sourceEvents: EventAny[] = profileStatEvents ?? tabEvents
 
   const selectedDate = searchParams.get('date')
-  function filterByDate(list: EventAny[]): EventAny[] {
-    if (!selectedDate) return list
-    // A date filter (from the mini calendar) is meaningless for permanent
-    // events — they have no day to match, so they drop out entirely.
-    return list.filter(isDated).filter(e => isoDay(new Date(e.date_start)) === selectedDate)
-  }
-
-  function clearDateFilter() {
-    const next = new URLSearchParams(searchParams)
-    next.delete('date')
-    setSearchParams(next, { replace: true })
-  }
-
-  const visible: EventAny[] = filterByDate(filterBySearch(sourceForTab[tab]))
-  const groups = buildGroups(visible)
+  // A date filter (from the mini calendar) is meaningless for permanent
+  // events — they have no day to match, so they drop out entirely.
+  const visible: EventAny[] = filterBySearch(sourceEvents).filter(event =>
+    !selectedDate || (isDated(event) && isoDay(new Date(event.date_start)) === selectedDate),
+  )
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
+  const groups = buildGroups(visible, locale, t)
   const hasSearch = search.trim().length > 0
   const isEmpty = visible.length === 0
+  const profileStatLabel = profileStat ? getProfileStatLabel(profileStat, t) : ''
+  const emptyTitle = getTabEmptyTitle(tab, t)
+  const showCreateAction = tab === 'all' || tab === 'organizing'
 
   const todayLine = (() => {
-    const todayCount = allUpcoming.filter(isDated).filter(e => isSameDay(new Date(e.date_start), new Date())).length
-    if (todayCount === 0) return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди`
-    return `${allUpcoming.length} ${pluralEvents(allUpcoming.length)} впереди · ${todayCount} ${pluralEvents(todayCount)} сегодня`
+    const todayCount = allActive.filter(isDated).filter(e => isSameDay(new Date(e.date_start), new Date())).length
+    const upcomingLabel = t('events.upcomingCount', { count: allActive.length })
+    if (todayCount === 0) return upcomingLabel
+    return `${upcomingLabel} · ${t('events.todayCount', { count: todayCount })}`
   })()
 
   return (
     <div className="flex flex-col gap-6">
       {/* Toolbar — DESKTOP only. На mobile «+» переехал в navbar, поиск — компактный icon-toggle ниже. */}
-      <div className="hidden lg:grid gap-4 items-center grid-cols-[minmax(0,1fr)_auto]">
+      <div className="hidden min-[761px]:flex items-center gap-2.5">
         <SearchInput
-          className="max-w-[420px]"
+          className="min-w-0 flex-1"
           kbdHint="⌘K"
           placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <div className="flex items-center gap-2 justify-self-end">
+        <div className="flex items-center gap-2">
+          <Button variant="icon" size="icon" asChild>
+            <Link to="/notifications" aria-label={t('nav.notifications')}>
+              <Bell size={15} />
+            </Link>
+          </Button>
           <Button asChild>
             <Link to="/events/new">
               <Plus size={14} strokeWidth={2.4} />
@@ -439,7 +476,7 @@ function EventsListPage() {
 
       {/* Mobile search bar — collapsible */}
       {mobileSearchOpen && (
-        <div className="lg:hidden flex items-center gap-2">
+        <div className="min-[761px]:hidden flex items-center gap-2">
           <SearchInput
             ref={mobileSearchRef}
             className="flex-1"
@@ -459,39 +496,42 @@ function EventsListPage() {
         </div>
       )}
 
-      {/* Page head — крупнее на mobile (iOS large title 34px) */}
-      <div>
-        <h1 className="text-[34px] lg:text-[28px] font-bold tracking-[-0.022em] leading-[1.05] lg:leading-[1.15]">
-          {t('events.title', 'Встречи')}
-        </h1>
-        <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">{todayLine}</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <SegmentedControl
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'all',        label: t('events.tabAll', 'Все'),             count: allUpcoming.length },
-            { value: 'attending',  label: t('events.tabAttending', 'Участвую'),   count: attendingEvents.length },
-            { value: 'organizing', label: t('events.tabOrganizing', 'Организую'), count: organizingEvents.length },
-            { value: 'public',     label: t('events.tabPublic', 'Публичные'),     count: myPublicEvents.length },
-            { value: 'permanent',  label: t('events.tabPermanent', 'Постоянные'), count: permanentEvents.length },
-            { value: 'past',       label: t('events.tabPast', 'Прошедшие'),       count: pastEvents.length },
-          ]}
-        />
-      </div>
+      {/* Заголовок и фильтры образуют один блок, как в макете Warm Canvas. */}
+      <PageHeader
+        title={t('nav.events')}
+        subtitle={todayLine}
+        filters={(
+          <div className="w-full min-[761px]:w-auto">
+          <SegmentedControl
+            value={tab}
+            onChange={setTab}
+            fullWidth
+            className="min-[761px]:w-auto"
+            options={[
+              { value: 'all',          label: t('events.tabAll') },
+              { value: 'invited',      label: t('events.tabInvited') },
+              { value: 'attending',    label: t('events.tabAttending') },
+              { value: 'organizing',   label: t('events.tabOrganizing') },
+              { value: 'participated', label: t('events.tabParticipated') },
+            ]}
+          />
+          </div>
+        )}
+      />
 
       {selectedDate && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-[12.5px] font-medium text-accent">
-            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
             <button
               type="button"
-              onClick={clearDateFilter}
-              aria-label="Сбросить фильтр по дате"
-              className="hover:opacity-70 transition"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams)
+                next.delete('date')
+                setSearchParams(next, { replace: true })
+              }}
+              aria-label={t('events.dateFilterClear')}
+              className="transition hover:opacity-70"
             >
               <X size={13} />
             </button>
@@ -506,21 +546,31 @@ function EventsListPage() {
             icon={SearchX}
             title={t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })}
           />
+        ) : profileStat ? (
+          <EmptyState
+            icon={CalendarOff}
+            title={t('events.emptyProfileStat', { label: profileStatLabel })}
+          />
         ) : (
           <EmptyState
             icon={CalendarOff}
-            title={t('events.emptyNoOrganized', 'Пока ничего не запланировано')}
-            action={{ to: '/events/new', label: t('events.emptyCreateButton', 'Создать встречу') }}
+            title={emptyTitle}
+            action={showCreateAction
+              ? <Button asChild size="sm"><Link to="/events/new"><Plus size={14} />{t('events.emptyCreateButton', 'Создать встречу')}</Link></Button>
+              : undefined}
           />
         )
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-[22px]">
           {groups.map(g => {
             return (
-              <section key={g.title} className="flex flex-col gap-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-3">
+              <section key={g.title} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-[3px]">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
                     {g.title}
+                  </div>
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                    {g.countLabel}
                   </div>
                 </div>
                 <ListGroup>
@@ -540,6 +590,28 @@ function EventsListPage() {
                         canJoin={canAttend}
                         onJoin={canAttend ? () => handleAttend(event) : undefined}
                         dateCaption={g.dateCaption}
+                        onComplete={event.organizer.is_me && event.status === 'active'
+                          ? () => setEventToComplete(event)
+                          : undefined}
+                        onDelete={event.organizer.is_me
+                          ? () => setEventToDelete(event)
+                          : undefined}
+                        onAttend={!event.organizer.is_me && event.status === 'active'
+                          ? () => handleAttendance(event, 'confirmed')
+                          : undefined}
+                        onDecline={!event.organizer.is_me && event.status === 'active'
+                          ? () => handleAttendance(event, 'declined')
+                          : undefined}
+                        swipeOpen={openSwipeEventId === event.id}
+                        onSwipeOpenChange={open => {
+                          setOpenSwipeEventId(currentId => {
+                            if (open) return event.id
+                            return currentId === event.id ? null : currentId
+                          })
+                        }}
+                        onInteractionStart={() => {
+                          setOpenSwipeEventId(currentId => currentId === event.id ? currentId : null)
+                        }}
                       />
                     )
                   })}
@@ -549,8 +621,68 @@ function EventsListPage() {
           })}
         </div>
       )}
+      <Dialog open={eventToComplete != null} onOpenChange={open => { if (!open) setEventToComplete(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('eventInfo.completeDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('eventInfo.completeDialogBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEventToComplete(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleComplete} disabled={completeEvent.isPending}>
+              {t('eventInfo.completeDialogConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={eventToDelete != null} onOpenChange={open => { if (!open) setEventToDelete(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('eventInfo.deleteDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('eventInfo.deleteDialogBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEventToDelete(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" onClick={handleDelete} disabled={deleteEvent.isPending}>
+              {t('eventInfo.deleteDialogConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
+}
+
+function getTabEmptyTitle(
+  tab: EventsListTab,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  const keys: Record<EventsListTab, string> = {
+    all: 'events.emptyNoPlanned',
+    invited: 'events.emptyNoInvited',
+    attending: 'events.emptyNoAttending',
+    organizing: 'events.emptyNoOrganized',
+    participated: 'events.emptyNoParticipated',
+  }
+  return t(keys[tab])
+}
+
+function getProfileStatLabel(
+  stat: ProfileStatKey,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  const keys: Record<ProfileStatKey, string> = {
+    organized: 'profile.statsOrganized',
+    participated: 'profile.statsParticipated',
+    completed: 'profile.statsCompleted',
+    upcoming: 'profile.statsUpcoming',
+  }
+  return t(keys[stat])
 }
 
 EventsListPage.displayName = 'EventsListPage'
@@ -560,6 +692,7 @@ export default EventsListPage
 // Reusable Rail composition for this page — exposed for Router
 export function EventsListRail() {
   const events = useEvents()
+  const { data: notifications = [] } = useNotifications()
 
   // Рейл «Сегодня/Ближайшие» и мини-календарь — по моим встречам. Постоянные
   // (dateless) события не участвуют в дне/месяце — им тут нечего показывать.
@@ -568,7 +701,7 @@ export function EventsListRail() {
   return (
     <>
       <UpcomingRail events={allEvents} />
-      <StatsRail events={allEvents} />
+      <StatsRail events={allEvents} unreadCount={notifications.filter(notification => !notification.is_read).length} />
     </>
   )
 }

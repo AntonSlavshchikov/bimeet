@@ -15,6 +15,13 @@
       "runtimeArgs": ["run", "preview", "--", "--port", "4173"],
       "cwd": "frontend",
       "port": 4173
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "landing",
+      "port": 3000
     }
   ]
 }

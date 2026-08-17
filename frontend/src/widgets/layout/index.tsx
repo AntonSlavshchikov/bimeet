@@ -9,6 +9,13 @@ import { useNotifications } from '@/entities/notification/queries'
 import { Toaster } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 import { cn } from '@/shared/lib/cn'
+import { useDesign } from '@/shared/design'
+import { usePrimarySwipeNavigation } from './model/primary-navigation'
+
+const DASHBOARD_BACKGROUND =
+  'radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%), ' +
+  'radial-gradient(900px 500px at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%), ' +
+  'var(--color-bg-2)'
 
 interface LayoutProps {
   children: ReactNode
@@ -20,6 +27,7 @@ interface LayoutProps {
 
 function useMobileTitle(t: ReturnType<typeof useTranslation>['t']): string {
   const { pathname } = useLocation()
+  if (pathname === '/discover') return t('nav.publicEvents', 'Все встречи')
   if (pathname === '/events') return t('nav.events', 'Мои встречи')
   if (pathname === '/events/new') return t('eventForm.titleCreate', 'Новая встреча')
   if (pathname.startsWith('/events/') && pathname.endsWith('/edit')) return t('eventForm.titleEdit', 'Редактирование')
@@ -80,42 +88,42 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
   const autoMobileActions = useMobileNavbarActions(t)
   const { data: notifications = [] } = useNotifications()
   const unreadNotifications = notifications.filter(n => !n.is_read).length
+  const primarySwipeNavigation = usePrimarySwipeNavigation()
+  const [design] = useDesign()
+  const isDashboard = design === 'dashboard'
 
   return (
     <TooltipProvider delayDuration={250}>
       <div
-        className="h-[100dvh] text-ink p-3 flex items-stretch justify-center lg:p-5"
-        style={{
-          background:
-            'radial-gradient(1100px 700px at 12% -12%, color-mix(in srgb, var(--color-accent) 30%, transparent), transparent 58%), ' +
-            'radial-gradient(900px 650px at 88% -6%, color-mix(in srgb, var(--color-indigo) 24%, transparent), transparent 55%), ' +
-            'radial-gradient(1000px 700px at 100% 108%, color-mix(in srgb, var(--color-purple) 26%, transparent), transparent 58%), ' +
-            'radial-gradient(800px 600px at 0% 100%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 55%), ' +
-            'var(--color-bg-2)',
-        }}
+        className={cn(
+          'flex h-[100dvh] items-stretch text-ink',
+          isDashboard && 'justify-center p-3 lg:p-5',
+        )}
+        style={isDashboard ? { background: DASHBOARD_BACKGROUND } : undefined}
       >
-        {/* Единая карточка приложения — сайдбар + контент + рейл + bottom-nav как секции.
-            Плавает поверх градиента на всех размерах экрана. */}
+        {/* Общая оболочка приложения: полноэкранная или плавающий dashboard. */}
         <div
           className={cn(
             'w-full h-full min-h-0 flex flex-col',
-            'rounded-[20px] border border-line bg-bg overflow-hidden',
-            'shadow-[0_2px_4px_rgba(0,0,0,0.04),0_16px_40px_rgba(0,0,0,0.08)]',
-            'lg:flex-row',
+            'bg-bg overflow-hidden',
+            isDashboard && [
+              'app-shell-shadow rounded-[20px] border border-line',
+            ],
+            'min-[761px]:flex-row',
           )}
         >
           {/* Sidebar — секция карточки на десктопе */}
-          <aside className="hidden lg:flex lg:w-[260px] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-line">
+          <aside className="hidden min-[761px]:flex min-[761px]:min-h-0 min-[761px]:w-[200px] min-[761px]:shrink-0 min-[761px]:flex-col min-[761px]:overflow-y-auto min-[761px]:border-r min-[761px]:border-line min-[1081px]:w-[220px]">
             <Sidebar />
           </aside>
 
           {/* Правая часть карточки: mobile navbar + main/rail + bottom-nav (mobile) */}
-          <div className="flex-1 min-w-0 min-h-0 flex flex-col lg:overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col min-[761px]:overflow-hidden">
             {/* Mobile navbar — bell (notifications) left, title center, action-icons right */}
             <header
               className={cn(
-                'lg:hidden shrink-0 h-11 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 px-3',
-                'bg-bg border-b border-line',
+                'grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-1.5 border-b border-line px-3 min-[761px]:hidden',
+                'bg-surface/90 backdrop-blur-md',
               )}
             >
               <div className="flex items-center justify-self-start">
@@ -144,19 +152,22 @@ export default function Layout({ children, rail, mobileActions }: LayoutProps) {
             </header>
 
             {/* Main + rail */}
-            <div className="flex-1 min-w-0 min-h-0 flex flex-col lg:flex-row lg:overflow-hidden">
-              <main className="flex-1 min-w-0 min-h-0 overflow-y-auto px-4 py-6 lg:px-8 lg:py-7">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <main
+                {...primarySwipeNavigation.handlers}
+                className="min-h-0 min-w-0 flex-1 overflow-y-auto px-[14px] pb-[calc(94px+env(safe-area-inset-bottom,0px))] pt-5 max-[420px]:px-[10px] min-[761px]:px-[26px] min-[761px]:pb-9 min-[761px]:pt-[25px]"
+              >
                 {children}
               </main>
-              {hasRail && (
-                <aside className="hidden xl:flex xl:w-[340px] xl:shrink-0 xl:flex-col xl:overflow-y-auto xl:border-l xl:border-line gap-6 px-6 py-7">
-                  {rail}
-                </aside>
-              )}
             </div>
 
             <BottomNav />
           </div>
+          {hasRail && (
+            <aside className="hidden min-[1081px]:flex min-[1081px]:min-h-0 min-[1081px]:w-[276px] min-[1081px]:shrink-0 min-[1081px]:flex-col min-[1081px]:gap-5 min-[1081px]:overflow-y-auto min-[1081px]:border-l min-[1081px]:border-line min-[1081px]:px-5 min-[1081px]:py-[25px]">
+              {rail}
+            </aside>
+          )}
         </div>
       </div>
 

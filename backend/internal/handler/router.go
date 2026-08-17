@@ -14,6 +14,7 @@ import (
 	authhandler "bimeet/internal/handler/auth"
 	carpoolhandler "bimeet/internal/handler/carpool"
 	chatlisthandler "bimeet/internal/handler/chatlist"
+	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
@@ -29,6 +30,7 @@ import (
 func NewRouter(
 	auth *authhandler.Handler,
 	event *eventhandler.Handler,
+	city *cityhandler.Handler,
 	collection *collectionhandler.Handler,
 	poll *pollhandler.Handler,
 	item *itemhandler.Handler,
@@ -41,6 +43,7 @@ func NewRouter(
 	admin *adminhandler.Handler,
 	push *pushhandler.Handler,
 	userLookup middleware.UserLookup,
+	sessionValidator middleware.SessionValidator,
 	adminEmails []string,
 	jwtSecret string,
 	corsOrigins []string,
@@ -80,6 +83,8 @@ func NewRouter(
 		r.Use(middleware.RateLimitAuth())
 		r.Post("/request-code", auth.RequestCode)
 		r.Post("/verify-code", auth.VerifyCode)
+		r.Post("/refresh", auth.Refresh)
+		r.Post("/logout", auth.Logout)
 	})
 
 	// Public invite link (GET only)
@@ -87,13 +92,14 @@ func NewRouter(
 
 	// Protected routes
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.Auth(jwtSecret))
+		r.Use(middleware.Auth(jwtSecret, sessionValidator))
 
 		// Join by invite token (POST requires auth)
 		r.Post("/api/events/invite/{token}", event.JoinByInviteToken)
 
 		// Public events list (must be before /{id} to avoid conflict)
 		r.Get("/api/events/public", event.ListPublic)
+		r.Get("/api/cities", city.List)
 
 		// Events
 		r.Route("/api/events", func(r chi.Router) {
@@ -175,6 +181,9 @@ func NewRouter(
 		r.Get("/api/auth/me/stats", profile.GetStats)
 		r.Post("/api/auth/me/avatar", profile.UploadAvatar)
 		r.Delete("/api/auth/me/avatar", profile.DeleteAvatar)
+		r.Get("/api/auth/me/sessions", auth.ListSessions)
+		r.Delete("/api/auth/me/sessions/others", auth.RevokeOtherSessions)
+		r.Delete("/api/auth/me/sessions/{id}", auth.RevokeSession)
 
 		// Admin (whitelisted by email)
 		r.Route("/api/admin", func(r chi.Router) {

@@ -16,6 +16,7 @@ import (
 	authhandler "bimeet/internal/handler/auth"
 	carpoolhandler "bimeet/internal/handler/carpool"
 	chatlisthandler "bimeet/internal/handler/chatlist"
+	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
 	itemhandler "bimeet/internal/handler/item"
@@ -32,6 +33,7 @@ import (
 	adminrepo "bimeet/internal/repository/admin"
 	carpoolrepo "bimeet/internal/repository/carpool"
 	chatlistrepo "bimeet/internal/repository/chatlist"
+	cityrepo "bimeet/internal/repository/city"
 	collectionrepo "bimeet/internal/repository/collection"
 	eventrepo "bimeet/internal/repository/event"
 	itemrepo "bimeet/internal/repository/item"
@@ -40,12 +42,14 @@ import (
 	notificationrepo "bimeet/internal/repository/notification"
 	pollrepo "bimeet/internal/repository/poll"
 	pushsubrepo "bimeet/internal/repository/pushsub"
+	refreshrepo "bimeet/internal/repository/refreshrepo"
 	userrepo "bimeet/internal/repository/user"
 	"bimeet/internal/secret"
 	adminsvc "bimeet/internal/service/admin"
 	authsvc "bimeet/internal/service/auth"
 	carpoolsvc "bimeet/internal/service/carpool"
 	chatlistsvc "bimeet/internal/service/chatlist"
+	citysvc "bimeet/internal/service/city"
 	collectionsvc "bimeet/internal/service/collection"
 	eventsvc "bimeet/internal/service/event"
 	itemsvc "bimeet/internal/service/item"
@@ -120,6 +124,7 @@ func main() {
 	// Repositories
 	userRepo := userrepo.New(pool)
 	eventRepo := eventrepo.New(pool)
+	cityRepo := cityrepo.New(pool)
 	collectionRepo := collectionrepo.New(pool)
 	pollRepo := pollrepo.New(pool)
 	itemRepo := itemrepo.New(pool)
@@ -137,6 +142,7 @@ func main() {
 	chatListRepo := chatlistrepo.New(pool, chatCipher)
 	notificationRepo := notificationrepo.New(pool)
 	loginCodeRepo := loginrepo.New(pool)
+	refreshTokenRepo := refreshrepo.New(pool)
 	pushSubRepo := pushsubrepo.New(pool)
 	adminRepo := adminrepo.New(pool)
 
@@ -165,8 +171,9 @@ func main() {
 		SMTPFrom:     cfg.SMTPFrom,
 		FrontendURL:  cfg.FrontendURL,
 	})
-	authSvc := authsvc.New(userRepo, loginCodeRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
-	eventSvc := eventsvc.New(eventRepo, userRepo, notifyingRepo, m)
+	authSvc := authsvc.New(userRepo, loginCodeRepo, refreshTokenRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
+	citySvc := citysvc.New(cityRepo)
+	eventSvc := eventsvc.New(eventRepo, cityRepo, userRepo, notifyingRepo, m)
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
 	itemSvc := itemsvc.New(itemRepo, eventRepo)
 	carpoolSvc := carpoolsvc.New(carpoolRepo, eventRepo)
@@ -209,8 +216,9 @@ func main() {
 	chatListSvc := chatlistsvc.New(chatListRepo)
 
 	// Handlers
-	authH := authhandler.New(authSvc)
+	authH := authhandler.New(authSvc, cfg.IsProduction())
 	eventH := eventhandler.New(eventSvc)
+	cityH := cityhandler.New(citySvc)
 	collectionH := collectionhandler.New(collectionSvc)
 	pollH := pollhandler.New(pollSvc)
 	itemH := itemhandler.New(itemSvc)
@@ -231,6 +239,7 @@ func main() {
 	router := handler.NewRouter(
 		authH,
 		eventH,
+		cityH,
 		collectionH,
 		pollH,
 		itemH,
@@ -243,6 +252,7 @@ func main() {
 		adminH,
 		pushH,
 		userRepo,
+		refreshTokenRepo,
 		cfg.AdminEmails,
 		cfg.JWTSecret,
 		cfg.CORSAllowedOrigins,

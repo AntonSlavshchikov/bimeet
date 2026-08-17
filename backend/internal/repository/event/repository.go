@@ -23,78 +23,107 @@ func New(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error) {
 	var e model.Event
+	var cityName, cityRegion string
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO events (title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, organizer_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, last_activity_at, created_at, updated_at`,
-		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.LocationLat, req.LocationLng, req.Category, req.DressCode, req.IsPublic, req.MaxGuests, organizerID,
+		`WITH inserted AS (
+		   INSERT INTO events (title, description, date_start, date_end, location, location_lat, location_lng, city_id, category, dress_code, is_public, max_guests, organizer_id)
+		   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		   RETURNING *
+		 )
+		 SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
+		        e.city_id, c.name, c.region, e.category, e.dress_code, e.is_public, e.max_guests, e.status,
+		        e.organizer_id, e.invite_token, e.last_activity_at, e.created_at, e.updated_at
+		 FROM inserted e
+		 JOIN cities c ON c.id = e.city_id`,
+		req.Title, req.Description, req.DateStart, req.DateEnd, req.Location, req.LocationLat, req.LocationLng, req.CityID, req.Category, req.DressCode, req.IsPublic, req.MaxGuests, organizerID,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
+		&e.CityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("create event: %w", err)
 	}
+	e.City = &model.City{ID: *e.CityID, Name: cityName, Region: cityRegion}
 	return e, nil
 }
 
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
+	var cityName, cityRegion *string
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, last_activity_at, created_at, updated_at
-		 FROM events WHERE id=$1`,
+		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
+		        e.city_id, c.name, c.region, e.category, e.dress_code, e.is_public, e.max_guests, e.status,
+		        e.organizer_id, e.invite_token, e.last_activity_at, e.created_at, e.updated_at
+		 FROM events e
+		 LEFT JOIN cities c ON c.id = e.city_id
+		 WHERE e.id=$1`,
 		id,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
+		&e.CityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("get event by id: %w", err)
 	}
+	e.City = cityFromNullable(e.CityID, cityName, cityRegion)
 	return e, nil
 }
 
 func (r *Repository) GetByInviteToken(ctx context.Context, token uuid.UUID) (model.InviteEventInfo, error) {
 	var e model.InviteEventInfo
+	var cityID *uuid.UUID
+	var cityName, cityRegion *string
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code, e.is_public,
+		        c.id, c.name, c.region, e.category, e.dress_code, e.is_public,
 		        u.name,
 		        COUNT(ep.id) FILTER (WHERE ep.status = 'confirmed') AS confirmed_count
 		 FROM events e
 		 JOIN users u ON u.id = e.organizer_id
+		 LEFT JOIN cities c ON c.id = e.city_id
 		 LEFT JOIN event_participants ep ON ep.event_id = e.id
 		 WHERE e.invite_token = $1
-		 GROUP BY e.id, u.id`,
+		 GROUP BY e.id, u.id, c.id`,
 		token,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-		&e.Category, &e.DressCode, &e.IsPublic,
+		&cityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.IsPublic,
 		&e.Organizer.Name,
 		&e.ConfirmedCount)
 	if err != nil {
 		return model.InviteEventInfo{}, fmt.Errorf("get event by invite token: %w", err)
 	}
+	e.City = cityFromNullable(cityID, cityName, cityRegion)
 	return e, nil
 }
 
 func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateEventRequest) (model.Event, error) {
 	var e model.Event
+	var cityName, cityRegion string
 	err := r.pool.QueryRow(ctx,
-		`UPDATE events SET
+		`WITH updated AS (
+		 UPDATE events SET
 		   title        = COALESCE($2, title),
 		   description  = COALESCE($3, description),
 		   location     = COALESCE($4, location),
 		   location_lat = COALESCE($5, location_lat),
 		   location_lng = COALESCE($6, location_lng),
-		   category     = COALESCE($7, category),
-		   dress_code   = COALESCE($8, dress_code),
-		   is_public    = COALESCE($9, is_public),
-		   max_guests   = COALESCE($10, max_guests),
+		   city_id      = COALESCE($7, city_id),
+		   category     = COALESCE($8, category),
+		   dress_code   = COALESCE($9, dress_code),
+		   is_public    = COALESCE($10, is_public),
+		   max_guests   = COALESCE($11, max_guests),
 		   updated_at   = NOW()
 		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, last_activity_at, created_at, updated_at`,
-		id, req.Title, req.Description, req.Location, req.LocationLat, req.LocationLng, req.Category, req.DressCode, req.IsPublic, req.MaxGuests,
+		 RETURNING *
+		 )
+		 SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
+		        e.city_id, c.name, c.region, e.category, e.dress_code, e.is_public, e.max_guests, e.status,
+		        e.organizer_id, e.invite_token, e.last_activity_at, e.created_at, e.updated_at
+		 FROM updated e
+		 JOIN cities c ON c.id = e.city_id`,
+		id, req.Title, req.Description, req.Location, req.LocationLat, req.LocationLng, req.CityID, req.Category, req.DressCode, req.IsPublic, req.MaxGuests,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
+		&e.CityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("update event: %w", err)
 	}
+	e.City = &model.City{ID: *e.CityID, Name: cityName, Region: cityRegion}
 	return e, nil
 }
 
@@ -102,33 +131,56 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, req model.UpdateE
 // already-scheduled one.
 func (r *Repository) Schedule(ctx context.Context, id uuid.UUID, dateStart, dateEnd time.Time) (model.Event, error) {
 	var e model.Event
+	var cityName, cityRegion *string
 	err := r.pool.QueryRow(ctx,
-		`UPDATE events SET date_start = $2, date_end = $3, updated_at = NOW()
-		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, last_activity_at, created_at, updated_at`,
+		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
+		        e.city_id, c.name, c.region, e.category, e.dress_code, e.is_public, e.max_guests, e.status,
+		        e.organizer_id, e.invite_token, e.last_activity_at, e.created_at, e.updated_at
+		 FROM (
+		   UPDATE events SET date_start = $2, date_end = $3, updated_at = NOW()
+		   WHERE id=$1
+		   RETURNING *
+		 ) e
+		 LEFT JOIN cities c ON c.id = e.city_id`,
 		id, dateStart, dateEnd,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
+		&e.CityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("schedule event: %w", err)
 	}
+	e.City = cityFromNullable(e.CityID, cityName, cityRegion)
 	return e, nil
 }
 
 // Unschedule clears an event's date range, turning it into a permanent event.
 func (r *Repository) Unschedule(ctx context.Context, id uuid.UUID) (model.Event, error) {
 	var e model.Event
+	var cityName, cityRegion *string
 	err := r.pool.QueryRow(ctx,
-		`UPDATE events SET date_start = NULL, date_end = NULL, updated_at = NOW()
-		 WHERE id=$1
-		 RETURNING id, title, description, date_start, date_end, location, location_lat, location_lng, category, dress_code, is_public, max_guests, status, organizer_id, invite_token, last_activity_at, created_at, updated_at`,
+		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
+		        e.city_id, c.name, c.region, e.category, e.dress_code, e.is_public, e.max_guests, e.status,
+		        e.organizer_id, e.invite_token, e.last_activity_at, e.created_at, e.updated_at
+		 FROM (
+		   UPDATE events SET date_start = NULL, date_end = NULL, updated_at = NOW()
+		   WHERE id=$1
+		   RETURNING *
+		 ) e
+		 LEFT JOIN cities c ON c.id = e.city_id`,
 		id,
 	).Scan(&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location, &e.LocationLat, &e.LocationLng,
-		&e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
+		&e.CityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.IsPublic, &e.MaxGuests, &e.Status, &e.OrganizerID, &e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		return model.Event{}, fmt.Errorf("unschedule event: %w", err)
 	}
+	e.City = cityFromNullable(e.CityID, cityName, cityRegion)
 	return e, nil
+}
+
+func cityFromNullable(id *uuid.UUID, name, region *string) *model.City {
+	if id == nil || name == nil || region == nil {
+		return nil
+	}
+	return &model.City{ID: *id, Name: *name, Region: *region}
 }
 
 func (r *Repository) Complete(ctx context.Context, id uuid.UUID) error {
@@ -304,24 +356,28 @@ func (r *Repository) ListChangeLogs(ctx context.Context, eventID uuid.UUID) ([]m
 func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (model.EventDetail, error) {
 	var detail model.EventDetail
 	var orgID uuid.UUID
+	var cityID *uuid.UUID
+	var cityName, cityRegion *string
 	err := r.pool.QueryRow(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location, e.location_lat, e.location_lng,
-		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
+		        c.id, c.name, c.region, e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, u.name, u.email,
 		        e.invite_token, e.last_activity_at, e.created_at, e.updated_at
 		 FROM events e
 		 JOIN users u ON u.id = e.organizer_id
+		 LEFT JOIN cities c ON c.id = e.city_id
 		 WHERE e.id = $1`,
 		eventID,
 	).Scan(
 		&detail.ID, &detail.Title, &detail.Description, &detail.DateStart, &detail.DateEnd, &detail.Location, &detail.LocationLat, &detail.LocationLng,
-		&detail.Category, &detail.DressCode, &detail.Status, &detail.IsPublic, &detail.MaxGuests,
+		&cityID, &cityName, &cityRegion, &detail.Category, &detail.DressCode, &detail.Status, &detail.IsPublic, &detail.MaxGuests,
 		&orgID, &detail.Organizer.Name, &detail.Organizer.Email,
 		&detail.InviteToken, &detail.LastActivityAt, &detail.CreatedAt, &detail.UpdatedAt,
 	)
 	if err != nil {
 		return model.EventDetail{}, fmt.Errorf("get event detail: %w", err)
 	}
+	detail.City = cityFromNullable(cityID, cityName, cityRegion)
 	detail.Organizer.IsMe = orgID == userID
 
 	detail.Participants = []model.ParticipantInfo{}
@@ -622,12 +678,13 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
+		        c.id, c.name, c.region, e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, ou.email,
 		        e.invite_token, e.last_activity_at, e.created_at,
 		        COALESCE(ep2.status, '') AS my_status
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
+		 LEFT JOIN cities c ON c.id = e.city_id
 		 LEFT JOIN event_participants ep ON ep.event_id = e.id AND ep.user_id = $1
 		 LEFT JOIN event_participants ep2 ON ep2.event_id = e.id AND ep2.user_id = $1
 		 WHERE e.organizer_id = $1 OR ep.user_id = $1
@@ -644,14 +701,17 @@ func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) 
 	for rows.Next() {
 		var e model.EventListItem
 		var orgID uuid.UUID
+		var cityID *uuid.UUID
+		var cityName, cityRegion *string
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
+			&cityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
 			&orgID, &e.Organizer.Name, &e.Organizer.Email,
 			&e.InviteToken, &e.LastActivityAt, &e.CreatedAt, &e.MyStatus,
 		); err != nil {
 			return nil, fmt.Errorf("scan event list item: %w", err)
 		}
+		e.City = cityFromNullable(cityID, cityName, cityRegion)
 		e.Organizer.IsMe = orgID == userID
 		events = append(events, e)
 		orgIDs = append(orgIDs, orgID)
@@ -798,19 +858,22 @@ func (r *Repository) MarkReminder1dSent(ctx context.Context, id uuid.UUID) error
 }
 
 // ListPublic returns all active public events with confirmed_count and current-user state.
-func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
+func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID, cityID *uuid.UUID) ([]model.PublicEventListItem, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
-		        e.category, e.dress_code, e.status, e.is_public, e.max_guests,
+		        e.location_lat, e.location_lng,
+		        c.id, c.name, c.region, e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, e.created_at,
 		        COALESCE(me.status, '') AS my_status,
 		        me.user_id IS NOT NULL AS is_participant
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
+		 LEFT JOIN cities c ON c.id = e.city_id
 		 LEFT JOIN event_participants me ON me.event_id = e.id AND me.user_id = $1
 		 WHERE e.is_public = TRUE AND e.status = 'active' AND e.date_start IS NOT NULL
+		   AND ($2::uuid IS NULL OR e.city_id = $2)
 		 ORDER BY e.date_start`,
-		userID,
+		userID, cityID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("list public events: %w", err)
@@ -822,14 +885,18 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 	for rows.Next() {
 		var e model.PublicEventListItem
 		var orgID uuid.UUID
+		var eventCityID *uuid.UUID
+		var cityName, cityRegion *string
 		if err := rows.Scan(
 			&e.ID, &e.Title, &e.Description, &e.DateStart, &e.DateEnd, &e.Location,
-			&e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
+			&e.LocationLat, &e.LocationLng,
+			&eventCityID, &cityName, &cityRegion, &e.Category, &e.DressCode, &e.Status, &e.IsPublic, &e.MaxGuests,
 			&orgID, &e.Organizer.Name, &e.CreatedAt,
 			&e.MyStatus, &e.IsParticipant,
 		); err != nil {
 			return nil, fmt.Errorf("scan public event list item: %w", err)
 		}
+		e.City = cityFromNullable(eventCityID, cityName, cityRegion)
 		e.Organizer.IsMe = orgID == userID
 		events = append(events, e)
 		orgIDs = append(orgIDs, orgID)
@@ -855,7 +922,9 @@ func (r *Repository) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.
 			 WHERE ep.event_id IN (
 			     SELECT e.id FROM events e
 			     WHERE e.is_public = TRUE AND e.status = 'active'
+			       AND ($1::uuid IS NULL OR e.city_id = $1)
 			 )`,
+			cityID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("list participants for public event: %w", err)

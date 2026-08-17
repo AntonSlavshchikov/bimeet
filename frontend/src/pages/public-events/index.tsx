@@ -3,31 +3,58 @@ import { useTranslation } from 'react-i18next'
 import { Compass, SearchX } from 'lucide-react'
 import { usePublicEvents } from '@/entities/event/queries'
 import { useJoinPublicEvent } from '@/features/event-manage/model/hooks'
+import {
+  buildPublicEventList,
+  type RankedPublicEvent,
+} from '@/features/user-location/model/rankPublicEvents'
+import { useUserLocation } from '@/features/user-location/model/useUserLocation'
+import CitySelect from '@/features/city-select/ui/CitySelect'
+import { useCities } from '@/entities/city/queries'
 import EventListRow from '@/widgets/event-card/EventListRow'
 import type { PublicEventListItem } from '@/entities/event/model/types'
-import { ListGroup, SearchInput, useToast } from '@/shared/ui'
+import { Button, EmptyState, ListGroup, PageHeader, SearchInput, useToast } from '@/shared/ui'
 
 // PublicEventsPage — самостоятельный экран «Найти публичные»: каталог
 // будущих публичных встреч для всех авторизованных пользователей.
 export default function PublicEventsPage() {
-  const publicEvents = usePublicEvents()
+  const [cityId, setCityId] = useState('')
+  const publicEventsQuery = usePublicEvents(cityId || undefined)
+  const citiesQuery = useCities()
+  const cities = citiesQuery.data ?? []
   const { t } = useTranslation()
   const toast = useToast()
   const joinPublicEvent = useJoinPublicEvent()
+  const { position } = useUserLocation()
   const [search, setSearch] = useState('')
 
-  const upcoming = useMemo<PublicEventListItem[]>(() => {
-    const now = new Date().getTime()
-    return publicEvents
-      .filter(e => e.status !== 'completed' && new Date(e.date_end).getTime() >= now)
-      .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
-  }, [publicEvents])
+  const selectedCity = cities.find(city => city.id === cityId)
 
-  const visible = useMemo(() => {
+  const eventList = useMemo(
+    () => buildPublicEventList(publicEventsQuery.data ?? [], position),
+    [position, publicEventsQuery.data],
+  )
+
+  const visibleList = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return upcoming
-    return upcoming.filter(e => e.title.toLowerCase().includes(q) || e.location.toLowerCase().includes(q))
-  }, [upcoming, search])
+    if (!q) return eventList
+    const matches = ({ event }: RankedPublicEvent) =>
+      event.title.toLowerCase().includes(q) || event.location.toLowerCase().includes(q)
+    if (eventList.mode === 'fallback') {
+      return { ...eventList, all: eventList.all.filter(matches) }
+    }
+    return {
+      ...eventList,
+      nearby: eventList.nearby.filter(matches),
+      other: eventList.other.filter(matches),
+    }
+  }, [eventList, search])
+
+  const totalCount = eventList.mode === 'fallback'
+    ? eventList.all.length
+    : eventList.nearby.length + eventList.other.length
+  const visibleCount = visibleList.mode === 'fallback'
+    ? visibleList.all.length
+    : visibleList.nearby.length + visibleList.other.length
 
   function handleJoin(event: PublicEventListItem) {
     joinPublicEvent.mutate(event.id, {
@@ -36,65 +63,124 @@ export default function PublicEventsPage() {
     })
   }
 
+  function renderEvent({ event, distanceKm }: RankedPublicEvent) {
+    const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
+    const canRequestJoin =
+      !event.organizer.is_me &&
+      !event.is_participant &&
+      event.status === 'active'
+    const canJoin = canRequestJoin ? spotsLeft == null || spotsLeft > 0 : undefined
+    return (
+      <EventListRow
+        key={event.id}
+        event={event}
+        myStatus={event.my_status}
+        canJoin={canJoin}
+        onJoin={canJoin ? () => handleJoin(event) : undefined}
+        dateCaption="month"
+        distanceKm={distanceKm}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Head */}
-      <div>
-        <h1 className="text-[34px] lg:text-[28px] font-bold tracking-[-0.022em] leading-[1.05] lg:leading-[1.15]">
-          {t('nav.publicEvents')}
-        </h1>
-        <p className="mt-1.5 text-[13.5px] text-ink-3 font-medium">
-          {t('publicEvents.subtitle', { count: upcoming.length })}
-        </p>
+      <PageHeader title={t('nav.publicEvents')} subtitle={t('publicEvents.subtitle', { count: totalCount })} />
+
+      <div className="flex w-full max-w-[760px] flex-col gap-2 sm:flex-row">
+        <SearchInput
+          className="min-w-0 flex-1"
+          placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <CitySelect
+          value={cityId}
+          onValueChange={setCityId}
+          allowAll
+          className="sm:w-[300px]"
+        />
       </div>
 
-      <SearchInput
-        className="max-w-[420px]"
-        placeholder={t('events.searchPlaceholder', 'Найти встречу, место...')}
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-      />
-
-      {visible.length === 0 ? (
-        <div className="rounded-[12px] border border-line bg-surface py-14 px-4 flex flex-col items-center gap-3">
-          {search.trim() ? (
-            <>
-              <SearchX size={28} className="text-ink-3" />
-              <div className="text-[13.5px] text-ink-3">
-                {t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })}
-              </div>
-            </>
-          ) : (
-            <>
-              <Compass size={28} className="text-ink-3" />
-              <div className="text-[13.5px] text-ink-3">
-                {t('publicEvents.empty')}
-              </div>
-            </>
+      {publicEventsQuery.isPending ? (
+        <EmptyState
+          icon={Compass}
+          title={t('publicEvents.loading', 'Загрузка публичных встреч...')}
+        />
+      ) : publicEventsQuery.isError ? (
+        <EmptyState
+          icon={SearchX}
+          title={t('publicEvents.loadError', 'Не удалось загрузить публичные встречи')}
+          action={(
+            <Button type="button" variant="soft" onClick={() => publicEventsQuery.refetch()}>
+              {t('common.retry', 'Повторить')}
+            </Button>
           )}
-        </div>
+        />
+      ) : visibleCount === 0 ? (
+        <EmptyState
+          icon={search.trim() ? SearchX : Compass}
+          title={search.trim()
+            ? t('events.emptySearchResult', { query: search, defaultValue: `Ничего не найдено по запросу «${search}»` })
+            : selectedCity
+              ? t('publicEvents.emptyCity', {
+                  city: selectedCity.name,
+                  defaultValue: `В городе ${selectedCity.name} пока нет публичных встреч`,
+                })
+              : t('publicEvents.empty')}
+        />
       ) : (
-        <ListGroup>
-          {visible.map(event => {
-            const spotsLeft = event.max_guests != null ? event.max_guests - event.confirmed_count : null
-            const canRequestJoin =
-              !event.organizer.is_me &&
-              !event.is_participant &&
-              event.status === 'active'
-            const canJoin = canRequestJoin ? spotsLeft == null || spotsLeft > 0 : undefined
-            return (
-              <EventListRow
-                key={event.id}
-                event={event}
-                myStatus={event.my_status}
-                canJoin={canJoin}
-                onJoin={canJoin ? () => handleJoin(event) : undefined}
-                dateCaption="month"
-              />
-            )
-          })}
-        </ListGroup>
+        visibleList.mode === 'fallback' ? (
+          <ListGroup>{visibleList.all.map(renderEvent)}</ListGroup>
+        ) : (
+          <div className="flex flex-col gap-[22px]">
+            {visibleList.nearby.length > 0 && (
+              <PublicEventSection
+                title={t('publicEvents.nearbyTitle')}
+                meta={t('publicEvents.nearbyMeta', {
+                  count: visibleList.nearby.length,
+                  radius: visibleList.radiusKm,
+                })}
+              >
+                {visibleList.nearby.map(renderEvent)}
+              </PublicEventSection>
+            )}
+            {visibleList.other.length > 0 && (
+              <PublicEventSection
+                title={t('publicEvents.otherTitle')}
+                meta={t('publicEvents.sectionCount', { count: visibleList.other.length })}
+              >
+                {visibleList.other.map(renderEvent)}
+              </PublicEventSection>
+            )}
+          </div>
+        )
       )}
     </div>
+  )
+}
+
+function PublicEventSection({
+  title,
+  meta,
+  children,
+}: {
+  title: string
+  meta: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex items-center justify-between px-[3px]">
+        <div className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
+          {title}
+        </div>
+        <div className="text-[9.5px] font-bold uppercase tracking-[0.08em] text-ink-3">
+          {meta}
+        </div>
+      </div>
+      <ListGroup>{children}</ListGroup>
+    </section>
   )
 }

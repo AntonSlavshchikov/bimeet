@@ -1,9 +1,10 @@
 import { Link, useMatch } from 'react-router-dom'
-import { Calendar, Search, User, BarChart3, MessageCircle } from 'lucide-react'
+import { BarChart3, Calendar, MessageCircle, Search, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { isAdmin } from '@/features/auth/lib/isAdmin'
 import { cn } from '@/shared/lib/cn'
+import { primaryNavRoutes } from './model/primary-navigation'
 
 interface TabProps {
   to: string
@@ -44,19 +45,18 @@ export default function BottomNav() {
   return (
     <nav
       className={cn(
-        'lg:hidden shrink-0',
-        'border-t border-line bg-bg',
-        'grid pt-2',
+        'fixed inset-x-3 z-40 grid rounded-full border border-line bg-surface/90 px-2 pt-2 shadow-[0_8px_28px_rgba(36,30,20,0.10)] backdrop-blur-md min-[761px]:hidden',
       )}
       style={{
-        paddingBottom: `calc(8px + env(safe-area-inset-bottom))`,
+        bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+        paddingBottom: '8px',
         gridTemplateColumns: `repeat(${showAdmin ? 5 : 4}, 1fr)`,
       }}
     >
-      <TabLink to="/discover" icon={Search} label={t('nav.publicEventsShort', 'Все')} />
-      <TabLink to="/events" icon={Calendar} label={t('nav.events')} />
-      <TabLink to="/chats" icon={MessageCircle} label={t('nav.chatsShort', 'Чаты')} />
-      <TabLink to="/profile" icon={User} label={t('nav.profile')} />
+      <TabLink to={primaryNavRoutes.discover} icon={Search} label={t('nav.publicEventsShort', 'Все')} />
+      <TabLink to={primaryNavRoutes.events} icon={Calendar} label={t('nav.events')} />
+      <TabLink to={primaryNavRoutes.chats} icon={MessageCircle} label={t('nav.chatsShort', 'Чаты')} />
+      <TabLink to={primaryNavRoutes.profile} icon={User} label={t('nav.profile')} />
       {showAdmin && <TabLink to="/admin" icon={BarChart3} label={t('nav.admin')} />}
     </nav>
   )

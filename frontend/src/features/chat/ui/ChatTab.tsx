@@ -29,11 +29,11 @@ interface FeedEntry {
 
 // Groups consecutive messages from the same author within a 5-minute window (no
 // avatar/name repeated), and inserts a date divider whenever the calendar day changes.
-function buildFeed(messages: Message[]): FeedEntry[] {
+function buildFeed(messages: Message[], locale: string): FeedEntry[] {
   return messages.map((m, i) => {
     const prev = messages[i - 1]
-    const dateDivider = !prev || dateGroupLabel(m.created_at) !== dateGroupLabel(prev.created_at)
-      ? dateGroupLabel(m.created_at)
+    const dateDivider = !prev || dateGroupLabel(m.created_at, locale) !== dateGroupLabel(prev.created_at, locale)
+      ? dateGroupLabel(m.created_at, locale)
       : null
     const sameAuthor = !!prev && prev.author.email === m.author.email && prev.is_mine === m.is_mine
     const withinWindow = !!prev && new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < GROUP_WINDOW_MS
@@ -58,7 +58,8 @@ function renderWithMentions(body: string, mine: boolean): React.ReactNode {
 
 export default function ChatTab({ event }: { event: Event }) {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
   const me = user ? { name: user.name, email: user.email, is_me: true } : undefined
 
   const { data: messages, isLoading } = useMessages(event.id, user?.email)
@@ -115,7 +116,7 @@ export default function ChatTab({ event }: { event: Event }) {
     if (!searchQuery) return messages ?? []
     return (messages ?? []).filter(m => !m.deleted && m.body.toLowerCase().includes(searchQuery))
   }, [messages, searchQuery])
-  const feed = useMemo(() => buildFeed(visibleMessages), [visibleMessages])
+  const feed = useMemo(() => buildFeed(visibleMessages, locale), [visibleMessages, locale])
 
   useEffect(() => {
     if (!imageFile) {
@@ -243,7 +244,7 @@ export default function ChatTab({ event }: { event: Event }) {
             <p className="text-[13px] text-ink-3">{t('chat.searchEmpty', 'Ничего не найдено')}</p>
           </div>
         ) : !messages || messages.length === 0 ? (
-          <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
+          <div className="rounded-[var(--radius-card)] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
             <MessageCircle size={26} className="text-ink-3" />
             <p className="text-[13px] text-ink-3">{t('chat.empty', 'Сообщений пока нет. Начните общение!')}</p>
           </div>
@@ -266,7 +267,7 @@ export default function ChatTab({ event }: { event: Event }) {
                     {showHeader && (
                       <div className={cn('flex items-center gap-2', mine && 'flex-row-reverse')}>
                         <span className="text-[12.5px] font-semibold text-ink">{mine ? t('chat.you', 'Вы') : m.author.name}</span>
-                        <span className="text-[11px] text-ink-3 tnum">{formatTime(m.created_at)}</span>
+                        <span className="text-[11px] text-ink-3 tnum">{formatTime(m.created_at, locale)}</span>
                       </div>
                     )}
                     <div

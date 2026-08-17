@@ -3156,3 +3156,66 @@ MapLibre-совместимы). Путь к решению: Яндекс отк�
 - [ ] Верхние табы списка встреч («Все Иду Организую Публичные Прошедшие») на референсе — 4 таба без «Публичные»; текущая реализация сохраняет 5 табов (публичные — отдельная функциональность). Решить, убирать ли вкладку «Публичные» из «Мои встречи» или оставить как есть.
 - [ ] Тестовые инфраструктурные изменения (роль/БД `meetup` в чужом Postgres-контейнере `sbp-postgres`, локально запущенный `go run ./cmd/server` в фоне) — временные, для локальной проверки. Нужно решить: снести (`DROP ROLE`/`DROP DATABASE meetup`, остановить процесс) или оставить для дальнейшей разработки.
 - [ ] i18n-ключи `participantsSummary.*` (title/going/waiting/declined) остались в `ru.json`/`en.json` неиспользуемыми после удаления `ParticipantsSummaryPanel` — стоит подчистить при следующем проходе по i18n.
+
+---
+
+## Этап 44 — «Запомнить меня» при авторизации
+
+### Контекст
+
+Сейчас passwordless-авторизация всегда кладёт JWT и пользователя в
+`localStorage`, то есть любой вход автоматически переживает закрытие
+браузера. Нужно сделать это явным выбором: на шаге ввода email
+добавить выключенную по умолчанию галочку «Запомнить меня». Без неё
+сессия живёт в `sessionStorage` до закрытия вкладки; с ней — в
+`localStorage` между запусками приложения.
+
+Запомненная сессия также получает более долгий JWT — **30 дней**
+(`720` часов). Обычная сессия сохраняет текущий TTL `JWT_EXP_HOURS=72`.
+Существующие сессии в `localStorage` считаем запомненными и не
+разлогиниваем при деплое.
+
+### Дизайн-решения
+
+| Вопрос | Решение |
+|---|---|
+| Что запоминаем | Всю сессию (`token` + `user`), а не только email |
+| Состояние по умолчанию | Галочка выключена |
+| Обычный вход | `sessionStorage`, JWT TTL из `JWT_EXP_HOURS` (72 часа) |
+| Запомненный вход | `localStorage`, JWT TTL из `JWT_REMEMBER_EXP_HOURS` (720 часов) |
+| Обратная совместимость | Отсутствующий `remember_me` = `false`; старую полную сессию из `localStorage` продолжаем читать |
+| Выход / истёкший JWT | Очищать оба хранилища, чтобы не осталось запасной сессии |
+
+### Backend
+
+| Файл | Изменение |
+|---|---|
+| `backend/internal/model/model.go` | Добавить `RememberMe bool \`json:"remember_me"\`` в `VerifyCodeRequest`; `AuthResponse` не менять |
+| `backend/internal/config/config.go`, `backend/.env.example` | `JWTRememberExpHours` + env `JWT_REMEMBER_EXP_HOURS=720` с безопасным default 720 |
+| `backend/internal/service/auth/service.go` | При `VerifyCode` выбирать TTL по `req.RememberMe`; передавать выбранную длительность в `generateToken` |
+| `backend/cmd/server/main.go` | Пробросить оба TTL в `authsvc.New` |
+| `backend/internal/{service,handler}/auth/*_test.go` | Проверить forwarding `remember_me` и `exp` обычного/запомненного JWT |
+| `backend/docs/docs.go` | Перегенерировать Swagger после изменения DTO |
+
+### Frontend
+
+| Файл | Изменение |
+|---|---|
+| `frontend/src/shared/auth/session.ts` (новый) | Единая FSD-безопасная утилита без импорта из `entities`: прочитать token/user, записать их в выбранное хранилище, очистить оба; приоритет полной session-паре, затем local-паре |
+| `frontend/src/features/auth/model/AuthContext.tsx` | Добавить `rememberMe` в persist-state; `verifyCode(email, code, rememberMe)` атомарно сохраняет token/user в нужное хранилище; `logout` чистит оба |
+| `frontend/src/shared/api/client.ts`, `frontend/src/features/auth/api/index.ts` | Брать token через общую утилиту в `apiFetch` и upload avatar; на `401` чистить оба хранилища; `verifyCode` отправляет `remember_me` |
+| `frontend/src/pages/login/index.tsx` | На email-шаге нативный checkbox с кликабельным label; состояние сохраняется на шаге кода и передаётся в `verifyCode` |
+| `frontend/src/shared/i18n/locales/{ru,en}.json` | `auth.rememberMe`: «Запомнить меня» / `Remember me`; структура локалей остаётся идентичной |
+| `frontend/src/{shared/api,shared/auth,features/auth}/**/*.test.ts` | Тесты гидратации, выбора/очистки storage, legacy-сессии, Authorization и `401` |
+
+### Чеклист
+
+- [ ] backend DTO: `remember_me` в `VerifyCodeRequest`, без изменения `AuthResponse`
+- [ ] backend config: `JWT_REMEMBER_EXP_HOURS=720`; проброс в auth service
+- [ ] auth service: JWT на 72 часа без галочки и на 30 дней с ней; service/handler tests
+- [ ] общая frontend-утилита сессии: `sessionStorage`/`localStorage`, очистка обоих, legacy-совместимость
+- [ ] `AuthContext`, `apiFetch` и upload avatar переведены на общую утилиту; logout/401 чистят оба storage
+- [ ] `/login`: галочка по умолчанию выключена, доживает до OTP-шага, `remember_me` уходит в verify request
+- [ ] i18n RU/EN синхронно; Swagger перегенерирован
+- [ ] `go test ./...` + `go build ./cmd/server` + `go vet ./...`; `npm test` + `npm run build` + `npm run lint`
+- [ ] live-smoke: без галочки закрытие вкладки завершает сессию; с галочкой вход переживает перезапуск; logout чистит оба варианта

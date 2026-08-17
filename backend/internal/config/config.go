@@ -40,8 +40,8 @@ type Config struct {
 	// AppEnv — "development" (default) or "production". In production CORS is
 	// restricted to CORSAllowedOrigins and HSTS is enabled.
 	AppEnv string
-	// CORSAllowedOrigins — explicit list of allowed origins. Empty falls back to
-	// a permissive "*" (development only).
+	// CORSAllowedOrigins — explicit list of origins allowed to send credentialed
+	// requests. Empty falls back to FrontendURL.
 	CORSAllowedOrigins []string
 	// Web Push (VAPID). If VAPIDPublicKey/PrivateKey are empty, push is disabled.
 	VAPIDPublicKey  string
@@ -65,7 +65,7 @@ func Load() Config {
 	// Load .env file if it exists; ignore error if not found
 	_ = godotenv.Load()
 
-	expHours := 72
+	expHours := 24
 	if v := os.Getenv("JWT_EXP_HOURS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			expHours = n
@@ -84,6 +84,10 @@ func Load() Config {
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:5173"
+	}
+	corsAllowedOrigins := parseCSV(os.Getenv("CORS_ALLOWED_ORIGINS"))
+	if len(corsAllowedOrigins) == 0 {
+		corsAllowedOrigins = []string{frontendURL}
 	}
 
 	mailFrom := os.Getenv("MAIL_FROM")
@@ -143,7 +147,7 @@ func Load() Config {
 		S3Endpoint:         os.Getenv("S3_ENDPOINT"),
 		AdminEmails:        parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
 		AppEnv:             appEnv,
-		CORSAllowedOrigins: parseCSV(os.Getenv("CORS_ALLOWED_ORIGINS")),
+		CORSAllowedOrigins: corsAllowedOrigins,
 		VAPIDPublicKey:     os.Getenv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey:    os.Getenv("VAPID_PRIVATE_KEY"),
 		ChatEncryptionKey:  os.Getenv("CHAT_ENCRYPTION_KEY"),

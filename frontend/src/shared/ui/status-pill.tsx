@@ -7,11 +7,12 @@ const pillStyles = cva(
   {
     variants: {
       variant: {
-        action:    'bg-accent text-white hover:opacity-92',
-        invited:   'bg-warning text-white hover:opacity-92',
-        going:     'bg-transparent text-success border border-[color-mix(in_srgb,var(--color-success)_35%,transparent)]',
-        host:      'bg-transparent text-ink-3 border border-line font-medium',
-        completed: 'bg-transparent text-ink-3 border border-line font-medium',
+        action:    'bg-[color-mix(in_srgb,var(--color-success)_12%,transparent)] text-success hover:bg-[color-mix(in_srgb,var(--color-success)_18%,transparent)]',
+        invited:   'bg-[color-mix(in_srgb,var(--color-warning)_11%,transparent)] text-warning hover:bg-[color-mix(in_srgb,var(--color-warning)_17%,transparent)]',
+        going:     'bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] text-success',
+        declined:  'bg-[color-mix(in_srgb,var(--color-danger)_10%,transparent)] text-danger',
+        host:      'bg-[color-mix(in_srgb,var(--color-purple)_10%,transparent)] text-purple',
+        completed: 'bg-line-soft text-ink-3 font-medium',
         neutral:   'bg-line-soft text-ink-2 font-medium',
       },
       size: {
@@ -49,7 +50,6 @@ export function StatusPill({
 }: StatusPillProps & HTMLAttributes<HTMLSpanElement>) {
   return (
     <span className={cn(pillStyles({ variant, size }), className)} {...props}>
-      {variant === 'going' && <span aria-hidden>✓</span>}
       {children}
     </span>
   )

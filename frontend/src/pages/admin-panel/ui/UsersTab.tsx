@@ -13,7 +13,7 @@ export default function UsersTab() {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-5 items-start">
       {/* Recent users */}
-      <div className="rounded-[14px] border border-line bg-surface p-5">
+      <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
         <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">
           {t('admin.users.recent', 'Недавние пользователи')}
         </h2>
@@ -52,7 +52,7 @@ export default function UsersTab() {
       </div>
 
       {/* Top organizers */}
-      <div className="rounded-[14px] border border-line bg-surface p-5">
+      <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5">
         <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-ink mb-4">
           {t('admin.users.topOrganizers', 'Топ организаторов')}
         </h2>

@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Quicksand } from "next/font/google";
 import { LanguageProvider } from "@/lib/language-context";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-inter",
+});
+
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-quicksand",
 });
 
 export const metadata: Metadata = {
@@ -18,8 +24,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={inter.variable}>
-      <body className="flex min-h-screen flex-col bg-paper font-sans text-ink antialiased">
+    <html lang="ru" className={`${inter.variable} ${quicksand.variable}`}>
+      <body className="flex min-h-screen flex-col overflow-x-hidden bg-paper font-sans text-ink antialiased">
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>

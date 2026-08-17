@@ -89,15 +89,18 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	router, svc := newRouter(t)
 
 	userID := uuid.New()
+	lat, lng := 55.751244, 37.618423
 	items := []model.PublicEventListItem{{
-		ID:        uuid.New(),
-		Title:     "Gala",
-		Organizer: model.PublicUserInfo{Name: "Alice"},
+		ID:          uuid.New(),
+		Title:       "Gala",
+		LocationLat: &lat,
+		LocationLng: &lng,
+		Organizer:   model.PublicUserInfo{Name: "Alice"},
 		Participants: []model.PublicParticipantInfo{
 			{User: model.PublicUserInfo{Name: "Bob"}, Status: "confirmed"},
 		},
 	}}
-	svc.EXPECT().ListPublic(gomock.Any(), userID).Return(items, nil)
+	svc.EXPECT().ListPublic(gomock.Any(), userID, nil).Return(items, nil)
 
 	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public", nil), userID)
 	w := httptest.NewRecorder()
@@ -107,6 +110,8 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	var got []map[string]any
 	require.NoError(t, json.NewDecoder(w.Body).Decode(&got))
 	require.Len(t, got, 1)
+	assert.InDelta(t, lat, got[0]["location_lat"], 1e-9)
+	assert.InDelta(t, lng, got[0]["location_lng"], 1e-9)
 	assert.NotContains(t, got[0], "invite_token")
 	organizer, ok := got[0]["organizer"].(map[string]any)
 	require.True(t, ok)
@@ -121,6 +126,28 @@ func TestListPublic_OmitsPrivateFields(t *testing.T) {
 	require.True(t, ok)
 	assert.NotContains(t, user, "email")
 	assert.NotContains(t, user, "id")
+}
+
+func TestListPublic_PassesCityFilter(t *testing.T) {
+	router, svc := newRouter(t)
+	userID := uuid.New()
+	cityID := uuid.New()
+	svc.EXPECT().ListPublic(gomock.Any(), userID, gomock.Eq(&cityID)).Return([]model.PublicEventListItem{}, nil)
+
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public?city_id="+cityID.String(), nil), userID)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestListPublic_RejectsInvalidCityFilter(t *testing.T) {
+	router, _ := newRouter(t)
+	req := withAuth(httptest.NewRequest(http.MethodGet, "/events/public?city_id=bad", nil), uuid.New())
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // ─── GetByID ───────────────────────────────────────────────────────────────

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Проверка готовности к деплою"
+  short_description: "Линтеры, тесты, сборка и production smoke-check"
+  default_prompt: "Используй $check-deploy-readiness, чтобы проверить готовность текущих изменений к production-деплою."

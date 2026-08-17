@@ -11,7 +11,7 @@
 | PostgreSQL | `postgres:16-alpine` | внутренний |
 | MinIO (S3-совместимое хранилище) | `minio/minio` | `s3.bimeet.pro` |
 
-Образы хранятся в GitHub Container Registry (GHCR). Деплой запускается автоматически при пуше в `master` через GitHub Actions.
+Образы хранятся в GitHub Container Registry (GHCR). Полный pipeline запускается автоматически при публикации Git-тега. Каждый образ получает неизменяемый тег с SHA коммита, и в production разворачиваются ровно те образы, которые прошли проверки.
 
 ---
 
@@ -93,6 +93,8 @@ FRONTEND_URL=https://app.bimeet.pro
 GITHUB_REPOSITORY_OWNER=<ваш github username>
 ```
 
+`IMAGE_TAG` хранить в `.env.prod` не требуется: GitHub Actions передаёт SHA проверенного коммита непосредственно при деплое.
+
 Для S3 выбрать один из двух вариантов:
 
 **Вариант A — MinIO (встроенный, рекомендуется):**
@@ -144,12 +146,14 @@ cat ~/.ssh/id_ed25519.pub
 
 ## Автоматический деплой (CI/CD)
 
-После настройки секретов — деплой происходит автоматически при каждом `git push` в `master`:
+После настройки секретов pipeline запускается при публикации любого Git-тега:
 
-1. GitHub Actions собирает три Docker-образа
-2. Пушит в GHCR (`ghcr.io/<owner>/bimeet-*:latest`)
-3. По SSH заходит на VPS
-4. Выполняет `docker compose pull && docker compose up -d`
+1. Проверяет линтерами backend и frontend
+2. Собирает три Docker-образа и публикует их в GHCR с тегом `<commit-sha>`
+3. Запускает unit-тесты backend/frontend и smoke-тесты собранных контейнеров
+4. По SSH разворачивает на VPS те же образы с тегом `<commit-sha>`
+
+Каждый этап зависит от предыдущего: deploy не запустится, если lint, build или test завершились с ошибкой.
 
 Статус деплоя: вкладка **Actions** в репозитории GitHub.
 
@@ -157,45 +161,41 @@ cat ~/.ssh/id_ed25519.pub
 
 ## Ручной деплой
 
-Если нужно задеплоить без пуша в `master`:
+Если нужно вручную повторно развернуть уже собранный и проверенный commit SHA:
 
 ```bash
 # На VPS
 cd ~/bimeet
 echo "<GITHUB_TOKEN>" | docker login ghcr.io -u <username> --password-stdin
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+export GITHUB_REPOSITORY_OWNER=<username-в-нижнем-регистре>
+export IMAGE_TAG=<commit-sha>
+docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 ```
-
-Или запустить GitHub Actions вручную: **Actions → Deploy → Run workflow**.
 
 ---
 
 ## Обновление приложения
 
-Просто пушим изменения в `master` — CI/CD сделает остальное:
+Создаём и отправляем Git-тег — CI/CD сделает остальное:
 
 ```bash
-git push origin master
+git tag v1.2.3
+git push origin v1.2.3
 ```
 
 ---
 
 ## Откат
 
-На VPS сохраняются только образы с тегом `:latest`. Для отката вернуть нужный коммит и запустить деплой:
+Для отката укажите SHA ранее проверенного образа и повторно поднимите сервисы:
 
 ```bash
-git revert HEAD
-git push origin master
-```
-
-Или откатить образ вручную, указав конкретный SHA:
-
-```bash
-docker pull ghcr.io/<owner>/bimeet-backend:<sha>
-docker tag ghcr.io/<owner>/bimeet-backend:<sha> ghcr.io/<owner>/bimeet-backend:latest
-docker compose -f docker-compose.prod.yml up -d backend
+cd ~/bimeet
+export GITHUB_REPOSITORY_OWNER=<username-в-нижнем-регистре>
+export IMAGE_TAG=<предыдущий-commit-sha>
+docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 ```
 
 ---

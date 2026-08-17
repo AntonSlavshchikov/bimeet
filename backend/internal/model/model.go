@@ -52,6 +52,8 @@ type Event struct {
 	Location       string     `json:"location"`
 	LocationLat    *float64   `json:"location_lat,omitempty"`
 	LocationLng    *float64   `json:"location_lng,omitempty"`
+	CityID         *uuid.UUID `json:"-"`
+	City           *City      `json:"city"`
 	Category       string     `json:"category"` // ordinary | business
 	DressCode      *string    `json:"dress_code,omitempty"`
 	Status         string     `json:"status"` // active | completed
@@ -236,6 +238,18 @@ type LoginCode struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+// AuthSession is one signed-in browser/device. The raw refresh token is never
+// persisted or returned; Current is derived from the access token's sid claim.
+type AuthSession struct {
+	ID         uuid.UUID `json:"id"`
+	UserID     uuid.UUID `json:"-"`
+	UserAgent  string    `json:"user_agent"`
+	CreatedAt  time.Time `json:"created_at"`
+	LastSeenAt time.Time `json:"last_seen_at"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	Current    bool      `json:"current"`
+}
+
 type PushSubscription struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
@@ -273,8 +287,14 @@ type VerifyCodeRequest struct {
 }
 
 type AuthResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"-"`
+	User         User   `json:"user"`
+}
+
+type RefreshResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"-"`
 }
 
 // CreateEventRequest.DateStart/DateEnd are both omitted to create a permanent
@@ -287,6 +307,7 @@ type CreateEventRequest struct {
 	Location    string     `json:"location"`
 	LocationLat *float64   `json:"location_lat,omitempty"`
 	LocationLng *float64   `json:"location_lng,omitempty"`
+	CityID      uuid.UUID  `json:"city_id"`
 	Category    string     `json:"category"` // ordinary | business; defaults to ordinary
 	DressCode   *string    `json:"dress_code,omitempty"`
 	IsPublic    bool       `json:"is_public"`
@@ -298,15 +319,16 @@ type CreateEventRequest struct {
 // changes go through the dedicated /schedule and /unschedule endpoints
 // instead (see ScheduleEventRequest).
 type UpdateEventRequest struct {
-	Title       *string  `json:"title,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	Location    *string  `json:"location,omitempty"`
-	LocationLat *float64 `json:"location_lat,omitempty"`
-	LocationLng *float64 `json:"location_lng,omitempty"`
-	Category    *string  `json:"category,omitempty"`
-	DressCode   *string  `json:"dress_code,omitempty"`
-	IsPublic    *bool    `json:"is_public,omitempty"`
-	MaxGuests   *int     `json:"max_guests,omitempty"`
+	Title       *string    `json:"title,omitempty"`
+	Description *string    `json:"description,omitempty"`
+	Location    *string    `json:"location,omitempty"`
+	LocationLat *float64   `json:"location_lat,omitempty"`
+	LocationLng *float64   `json:"location_lng,omitempty"`
+	CityID      *uuid.UUID `json:"city_id,omitempty"`
+	Category    *string    `json:"category,omitempty"`
+	DressCode   *string    `json:"dress_code,omitempty"`
+	IsPublic    *bool      `json:"is_public,omitempty"`
+	MaxGuests   *int       `json:"max_guests,omitempty"`
 }
 
 // ScheduleEventRequest gives a permanent event a date range (or changes the
@@ -377,6 +399,13 @@ type CreateCarpoolRequest struct {
 
 // ─── Enriched API response types ───────────────────────────────────────────
 
+// City is a normalized Russian city from the locally seeded FIAS catalog.
+type City struct {
+	ID     uuid.UUID `json:"id"`
+	Name   string    `json:"name"`
+	Region string    `json:"region"`
+}
+
 type InviteEventInfo struct {
 	ID             uuid.UUID      `json:"id"`
 	Title          string         `json:"title"`
@@ -384,6 +413,7 @@ type InviteEventInfo struct {
 	DateStart      *time.Time     `json:"date_start"`
 	DateEnd        *time.Time     `json:"date_end"`
 	Location       string         `json:"location"`
+	City           *City          `json:"city"`
 	Category       string         `json:"category"`
 	DressCode      *string        `json:"dress_code,omitempty"`
 	IsPublic       bool           `json:"is_public"`
@@ -471,6 +501,7 @@ type EventDetail struct {
 	Location       string            `json:"location"`
 	LocationLat    *float64          `json:"location_lat,omitempty"`
 	LocationLng    *float64          `json:"location_lng,omitempty"`
+	City           *City             `json:"city"`
 	Category       string            `json:"category"`
 	DressCode      *string           `json:"dress_code,omitempty"`
 	Status         string            `json:"status"`
@@ -497,6 +528,7 @@ type EventListItem struct {
 	DateStart      *time.Time        `json:"date_start"`
 	DateEnd        *time.Time        `json:"date_end"`
 	Location       string            `json:"location"`
+	City           *City             `json:"city"`
 	Category       string            `json:"category"`
 	DressCode      *string           `json:"dress_code,omitempty"`
 	Status         string            `json:"status"`
@@ -529,6 +561,9 @@ type PublicEventListItem struct {
 	DateStart      time.Time               `json:"date_start"`
 	DateEnd        time.Time               `json:"date_end"`
 	Location       string                  `json:"location"`
+	LocationLat    *float64                `json:"location_lat,omitempty"`
+	LocationLng    *float64                `json:"location_lng,omitempty"`
+	City           *City                   `json:"city"`
 	Category       string                  `json:"category"`
 	DressCode      *string                 `json:"dress_code,omitempty"`
 	Status         string                  `json:"status"`

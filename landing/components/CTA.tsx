@@ -7,29 +7,25 @@ export default function CTA() {
   const { t } = useLanguage();
   const c = t.cta;
   return (
-    <section className="mx-auto max-w-[1180px] px-6 pb-2 sm:px-8">
-      <div className="relative overflow-hidden rounded-[28px] bg-ink px-6 py-14 text-center sm:px-12 sm:py-16">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 80% 0%, rgba(212,255,63,0.14), transparent 45%), radial-gradient(circle at 10% 100%, rgba(167,139,250,0.16), transparent 45%)",
-          }}
-        />
-        <div className="relative">
-          <h2 className="mx-auto max-w-[620px] text-[clamp(2rem,4.5vw,2.75rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white">
-            {c.title}
-          </h2>
-          <p className="mx-auto mt-[18px] max-w-[460px] text-[17px] leading-relaxed text-white/70">
-            {c.subtitle}
-          </p>
-          <a
-            href={APP_URL}
-            className="mt-[30px] inline-flex items-center gap-2 rounded-[14px] bg-white px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-soft"
-          >
-            {c.button}
-          </a>
-        </div>
+    <section className="relative mx-auto max-w-[1180px] px-4 pb-2 sm:px-8">
+      {/* colour lives behind the card, on the page itself — the glass reveals it, doesn't contain it */}
+      <div className="liquid-glass-blob liquid-glass-blob-a" aria-hidden="true" />
+      <div className="liquid-glass-blob liquid-glass-blob-b" aria-hidden="true" />
+      <div className="liquid-glass-blob liquid-glass-blob-c" aria-hidden="true" />
+
+      <div className="liquid-glass-pane relative overflow-hidden rounded-[22px] px-5 py-12 text-center sm:rounded-[28px] sm:px-12 sm:py-16">
+        <h2 className="mx-auto max-w-[620px] text-[clamp(1.75rem,8vw,2.75rem)] font-bold leading-[1.08] tracking-[-0.03em] text-ink [text-shadow:0_2px_20px_rgba(255,255,255,0.4)] sm:leading-[1.05]">
+          {c.title}
+        </h2>
+        <p className="mx-auto mt-[18px] max-w-[460px] text-[15px] leading-relaxed text-ink-2 sm:text-[17px]">
+          {c.subtitle}
+        </p>
+        <a
+          href={`${APP_URL}/login`}
+          className="liquid-glass-btn mt-[30px] inline-flex items-center gap-2 rounded-[14px] px-6 py-3.5 text-[15px] font-semibold text-ink transition-all hover:-translate-y-0.5"
+        >
+          {c.button}
+        </a>
       </div>
     </section>
   );

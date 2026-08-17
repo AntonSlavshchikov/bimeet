@@ -7,7 +7,10 @@ export function useCreateEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: eventMutationsApi.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
+    },
   })
 }
 
@@ -18,6 +21,7 @@ export function useUpdateEvent(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
       qc.invalidateQueries({ queryKey: eventKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
     },
   })
 }
@@ -48,7 +52,10 @@ export function useDeleteEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: eventMutationsApi.delete,
-    onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
+    },
   })
 }
 
@@ -59,6 +66,7 @@ export function useCompleteEvent(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
       qc.invalidateQueries({ queryKey: eventKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
     },
   })
 }
@@ -74,13 +82,15 @@ export function useJoinPublicEvent() {
   })
 }
 
-export function useConfirmAttendance() {
+export function useUpdateAttendance() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ eventId }: { eventId: string }) =>
-      eventMutationsApi.updateParticipantStatus(eventId, 'confirmed'),
-    onSuccess: () => {
+    mutationFn: ({ eventId, status }: { eventId: string; status: 'confirmed' | 'declined' }) =>
+      eventMutationsApi.updateParticipantStatus(eventId, status),
+    onSuccess: (_data, { eventId }) => {
       qc.invalidateQueries({ queryKey: eventKeys.all })
+      qc.invalidateQueries({ queryKey: eventKeys.detail(eventId) })
+      qc.invalidateQueries({ queryKey: publicEventKeys.all })
     },
   })
 }

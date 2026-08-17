@@ -12,7 +12,7 @@ import (
 
 type EventService interface {
 	List(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error)
-	ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error)
+	ListPublic(ctx context.Context, userID uuid.UUID, cityID *uuid.UUID) ([]model.PublicEventListItem, error)
 	Create(ctx context.Context, req model.CreateEventRequest, organizerID uuid.UUID) (model.Event, error)
 	GetByID(ctx context.Context, id, userID uuid.UUID) (model.EventDetail, error)
 	GetByInviteToken(ctx context.Context, token uuid.UUID) (model.InviteEventInfo, error)

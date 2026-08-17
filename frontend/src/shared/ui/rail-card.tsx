@@ -6,7 +6,10 @@ export const RailCard = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-[12px] bg-bg-2 p-4', className)}
+      className={cn(
+        'rounded-[var(--radius-card)] border border-line bg-surface p-4',
+        className,
+      )}
       {...props}
     >
       {children}

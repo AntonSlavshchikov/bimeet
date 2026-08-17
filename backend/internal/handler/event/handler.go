@@ -536,7 +536,9 @@ func (h *Handler) UpdateParticipantStatus(w http.ResponseWriter, r *http.Request
 // @Tags events
 // @Produce json
 // @Security BearerAuth
+// @Param city_id query string false "Filter by FIAS city UUID" format(uuid)
 // @Success 200 {array} model.PublicEventListItem
+// @Failure 400 {object} response.ErrorResponse
 // @Failure 401 {object} response.ErrorResponse
 // @Failure 500 {object} response.ErrorResponse
 // @Router /events/public [get]
@@ -547,7 +549,17 @@ func (h *Handler) ListPublic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := h.svc.ListPublic(r.Context(), userID)
+	var cityID *uuid.UUID
+	if rawCityID := r.URL.Query().Get("city_id"); rawCityID != "" {
+		parsedCityID, err := uuid.Parse(rawCityID)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, "invalid city_id")
+			return
+		}
+		cityID = &parsedCityID
+	}
+
+	events, err := h.svc.ListPublic(r.Context(), userID, cityID)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "failed to list public events")
 		return

@@ -22,7 +22,7 @@ interface AdminLineChartProps {
   height?: number
 }
 
-const DEFAULT_COLORS = ['#007AFF', '#5856D6', '#34C759', '#FF9500', '#AF52DE']
+const DEFAULT_COLORS = ['var(--color-brand-b)', 'var(--color-brand-c)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-brand-a)']
 
 export default function AdminLineChart({
   data,
@@ -30,11 +30,11 @@ export default function AdminLineChart({
   series,
   height = 280,
 }: AdminLineChartProps) {
-  const gridColor = 'rgba(60,60,67,0.10)'
-  const axisColor = 'rgba(60,60,67,0.60)'
-  const tooltipBg = '#FFFFFF'
-  const tooltipBorder = 'rgba(60,60,67,0.14)'
-  const tooltipText = '#000000'
+  const gridColor = 'var(--color-line)'
+  const axisColor = 'var(--color-ink-3)'
+  const tooltipBg = 'var(--color-surface)'
+  const tooltipBorder = 'var(--color-line)'
+  const tooltipText = 'var(--color-ink)'
 
   return (
     <div style={{ width: '100%', height }}>

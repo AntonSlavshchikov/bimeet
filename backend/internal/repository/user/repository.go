@@ -117,11 +117,16 @@ func (r *Repository) GetStats(ctx context.Context, id uuid.UUID) (model.ProfileS
 	var stats model.ProfileStats
 	err := r.pool.QueryRow(ctx, `
 		SELECT
-			(SELECT COUNT(*) FROM events WHERE organizer_id = $1)                                                           AS organized,
-			(SELECT COUNT(*) FROM event_participants WHERE user_id = $1 AND status = 'confirmed')                           AS participated,
-			(SELECT COUNT(*) FROM events WHERE organizer_id = $1 AND status = 'completed')                                  AS completed,
+			(SELECT COUNT(*) FROM events WHERE organizer_id = $1)                                                          AS organized,
+			(SELECT COUNT(*) FROM events e
+			 WHERE e.status = 'completed'
+			   AND (e.organizer_id = $1 OR EXISTS (
+			       SELECT 1 FROM event_participants ep
+			       WHERE ep.event_id = e.id AND ep.user_id = $1 AND ep.status = 'confirmed'
+			   )))                                                                                                         AS participated,
+			(SELECT COUNT(*) FROM events WHERE organizer_id = $1 AND status = 'completed')                                 AS completed,
 			(SELECT COUNT(*) FROM event_participants ep JOIN events e ON e.id = ep.event_id
-			 WHERE ep.user_id = $1 AND ep.status = 'confirmed' AND e.date_start > NOW())                                    AS upcoming
+			 WHERE ep.user_id = $1 AND ep.status = 'confirmed' AND e.status = 'active' AND e.organizer_id <> $1)            AS upcoming
 	`, id).Scan(&stats.Organized, &stats.Participated, &stats.Completed, &stats.Upcoming)
 	if err != nil {
 		return model.ProfileStats{}, fmt.Errorf("get stats: %w", err)

@@ -21,6 +21,7 @@ var (
 
 type Service struct {
 	eventRepo        EventRepo
+	cityRepo         CityRepo
 	userRepo         UserRepo
 	notificationRepo NotificationRepo
 	mailer           Mailer
@@ -28,12 +29,14 @@ type Service struct {
 
 func New(
 	eventRepo EventRepo,
+	cityRepo CityRepo,
 	userRepo UserRepo,
 	notificationRepo NotificationRepo,
 	mailer Mailer,
 ) *Service {
 	return &Service{
 		eventRepo:        eventRepo,
+		cityRepo:         cityRepo,
 		userRepo:         userRepo,
 		notificationRepo: notificationRepo,
 		mailer:           mailer,
@@ -49,6 +52,9 @@ func (s *Service) Create(ctx context.Context, req model.CreateEventRequest, orga
 	defer span.End()
 
 	if err := validateCreateEvent(req); err != nil {
+		return model.Event{}, err
+	}
+	if err := s.validateActiveCity(ctx, req.CityID); err != nil {
 		return model.Event{}, err
 	}
 	// Bimeet for People знает только обычные встречи — деловой тип убран
@@ -79,8 +85,8 @@ func (s *Service) GetByID(ctx context.Context, id, userID uuid.UUID) (model.Even
 	return detail, nil
 }
 
-func (s *Service) ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error) {
-	return s.eventRepo.ListPublic(ctx, userID)
+func (s *Service) ListPublic(ctx context.Context, userID uuid.UUID, cityID *uuid.UUID) ([]model.PublicEventListItem, error) {
+	return s.eventRepo.ListPublic(ctx, userID, cityID)
 }
 
 func (s *Service) JoinPublic(ctx context.Context, eventID, userID uuid.UUID) error {
@@ -182,6 +188,20 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 	if err := validateUpdateEvent(event, req); err != nil {
 		return model.Event{}, err
 	}
+	effectiveCityID := event.CityID
+	if req.CityID != nil {
+		effectiveCityID = req.CityID
+	}
+	if effectiveCityID == nil || *effectiveCityID == uuid.Nil {
+		return model.Event{}, fmt.Errorf("city is required")
+	}
+	// An existing event keeps its city even if that catalog entry is later
+	// deactivated. Only an explicitly selected city must currently be active.
+	if req.CityID != nil {
+		if err := s.validateActiveCity(ctx, *req.CityID); err != nil {
+			return model.Event{}, err
+		}
+	}
 
 	type fieldChange struct {
 		name    string
@@ -209,6 +229,12 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, req model.Up
 			}
 			return event.Location
 		}(), changed: req.Location != nil && *req.Location != event.Location},
+		{name: "city_id", oldVal: func() string {
+			if event.CityID != nil {
+				return event.CityID.String()
+			}
+			return ""
+		}(), newVal: effectiveCityID.String(), changed: req.CityID != nil && (event.CityID == nil || *req.CityID != *event.CityID)},
 	}
 
 	updated, err := s.eventRepo.Update(ctx, id, req)
@@ -428,8 +454,22 @@ func validateCreateEvent(req model.CreateEventRequest) error {
 	if req.DateStart != nil && req.DateEnd.Before(*req.DateStart) {
 		return fmt.Errorf("date_end must be after date_start")
 	}
+	if req.CityID == uuid.Nil {
+		return fmt.Errorf("city is required")
+	}
 	if req.MaxGuests != nil && *req.MaxGuests <= 0 {
 		return fmt.Errorf("max_guests must be positive")
+	}
+	return nil
+}
+
+func (s *Service) validateActiveCity(ctx context.Context, cityID uuid.UUID) error {
+	exists, err := s.cityRepo.ExistsActive(ctx, cityID)
+	if err != nil {
+		return fmt.Errorf("validate city: %w", err)
+	}
+	if !exists {
+		return fmt.Errorf("city must be an active catalog city")
 	}
 	return nil
 }

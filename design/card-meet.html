@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bimeet · Карточка встречи · Warm Canvas</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f7f3eb;
+      --canvas-deep: #eee8dc;
+      --surface: #fff;
+      --surface-soft: #f5f2ec;
+      --surface-warm: #fff8f2;
+      --ink: #171619;
+      --ink-2: #5e5a5b;
+      --ink-3: #918b89;
+      --line: #e8e3da;
+      --coral: #e77883;
+      --violet: #9a7ce0;
+      --blue: #55aee8;
+      --green: #2e9467;
+      --amber: #c77b2b;
+      --gradient: linear-gradient(110deg, #e87883 0%, #aa7fe0 52%, #55afea 100%);
+      --gradient-soft: linear-gradient(120deg, rgba(232, 120, 131, .14), rgba(170, 127, 224, .11) 52%, rgba(85, 175, 234, .14));
+      --shadow: 0 22px 60px rgba(54, 42, 34, .08), 0 3px 10px rgba(54, 42, 34, .04);
+      --radius-sm: 12px;
+      --radius: 18px;
+      --radius-lg: 28px;
+      --font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--canvas); }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 4% 8%, rgba(232, 120, 131, .13), transparent 25rem),
+        radial-gradient(circle at 96% 6%, rgba(85, 175, 234, .13), transparent 28rem),
+        var(--canvas);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; }
+
+    button:focus-visible {
+      outline: 3px solid rgba(154, 124, 224, .28);
+      outline-offset: 2px;
+    }
+
+    svg { display: block; }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 56px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 790;
+      letter-spacing: -.03em;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 42px;
+      height: 25px;
+    }
+
+    .brand-ring {
+      position: absolute;
+      top: 3px;
+      width: 25px;
+      height: 19px;
+      border: 6px solid;
+      border-radius: 999px;
+      transform: rotate(-6deg);
+    }
+
+    .brand-ring:first-child { left: 0; border-color: #45434a; }
+    .brand-ring:last-child { right: 0; border-color: transparent; background: var(--gradient); mask: radial-gradient(transparent 45%, #000 47%); }
+
+    .top-actions,
+    .state-switch,
+    .hero-actions,
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      color: var(--ink-3);
+      font-size: 10px;
+      font-weight: 780;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .control-label { margin-right: 4px; }
+
+    .state-switch {
+      padding: 4px;
+      border: 1px solid rgba(220, 214, 204, .9);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 8px 24px rgba(58, 47, 39, .04);
+    }
+
+    .state-button,
+    .tab-button,
+    .icon-button,
+    .button {
+      border: 0;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+    }
+
+    .state-button:hover,
+    .tab-button:hover,
+    .icon-button:hover,
+    .button:hover { transform: translateY(-1px); }
+
+    .state-button {
+      min-height: 34px;
+      padding: 0 13px;
+      border-radius: 10px;
+      color: var(--ink-2);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 690;
+    }
+
+    .state-button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--gradient);
+      box-shadow: 0 8px 20px rgba(164, 113, 191, .22);
+    }
+
+    .breadcrumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 3px 0 15px;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .breadcrumb svg { width: 15px; height: 15px; }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      padding: 34px;
+      border: 1px solid rgba(231, 225, 216, .9);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::before {
+      position: absolute;
+      z-index: -1;
+      inset: 0 0 auto;
+      height: 9px;
+      background: var(--gradient);
+      content: "";
+    }
+
+    .hero::after {
+      position: absolute;
+      z-index: -1;
+      top: -120px;
+      right: -110px;
+      width: 430px;
+      height: 330px;
+      border-radius: 50%;
+      background: var(--gradient-soft);
+      filter: blur(1px);
+      content: "";
+    }
+
+    .hero-top {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 24px;
+    }
+
+    .date-block {
+      display: grid;
+      width: 76px;
+      min-height: 84px;
+      place-content: center;
+      border: 1px solid #eee7dd;
+      border-radius: 20px;
+      background: var(--surface-warm);
+      text-align: center;
+    }
+
+    .date-day {
+      font-size: 34px;
+      font-weight: 790;
+      letter-spacing: -.05em;
+      line-height: .95;
+    }
+
+    .date-month {
+      margin-top: 8px;
+      color: var(--coral);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .badge-row { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 25px;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: var(--ink-2);
+      background: var(--surface-soft);
+      font-size: 10px;
+      font-weight: 720;
+    }
+
+    .badge.status {
+      color: var(--green);
+      background: #ebf7f0;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 13px 0 0;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 780;
+      letter-spacing: -.045em;
+      line-height: 1.05;
+    }
+
+    .description {
+      max-width: 720px;
+      margin: 13px 0 0;
+      color: var(--ink-2);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .icon-button {
+      display: inline-grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink-2);
+      background: rgba(255, 255, 255, .82);
+    }
+
+    .icon-button svg { width: 18px; height: 18px; }
+
+    .completion {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 12px 14px;
+      border: 1px solid #eadfc9;
+      border-radius: 14px;
+      color: #7f602c;
+      background: #fff8e9;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .completion[hidden], [hidden] { display: none !important; }
+    .completion svg { width: 18px; height: 18px; flex: 0 0 auto; }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr .8fr;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .meta-card {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      min-height: 68px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(250, 248, 243, .8);
+    }
+
+    .meta-icon {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--violet);
+      background: #f0ebfb;
+    }
+
+    .meta-icon svg { width: 17px; height: 17px; }
+    .meta-label { color: var(--ink-3); font-size: 9px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+    .meta-value { margin-top: 3px; overflow-wrap: anywhere; font-size: 12px; font-weight: 720; line-height: 1.35; }
+
+    .hero-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .organizer {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .avatar {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--gradient);
+      box-shadow: 0 0 0 1px var(--line);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .organizer-name { font-size: 12px; font-weight: 740; }
+    .organizer-role { margin-top: 3px; color: var(--ink-3); font-size: 10px; }
+
+    .button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .button svg { width: 16px; height: 16px; }
+
+    .button.primary {
+      border-color: transparent;
+      color: #fff;
+      background: var(--gradient);
+      box-shadow: 0 12px 26px rgba(157, 106, 188, .23);
+    }
+
+    .button.soft { background: var(--surface-soft); }
+
+    .workspace {
+      margin-top: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(231, 225, 216, .9);
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .workspace-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 24px 16px;
+    }
+
+    .workspace-title { font-size: 17px; font-weight: 770; letter-spacing: -.025em; }
+    .workspace-copy { margin-top: 4px; color: var(--ink-3); font-size: 11px; }
+
+    .tabs-wrap {
+      position: relative;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding-bottom: 14px;
+      scrollbar-width: none;
+    }
+
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-button {
+      display: inline-flex;
+      min-height: 38px;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 7px;
+      padding: 0 12px;
+      border-radius: 12px;
+      color: var(--ink-3);
+      background: transparent;
+      font-size: 11px;
+      font-weight: 690;
+    }
+
+    .tab-button svg { width: 15px; height: 15px; }
+
+    .tab-button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--gradient);
+      box-shadow: 0 8px 20px rgba(157, 106, 188, .18);
+    }
+
+    .tab-count {
+      display: inline-grid;
+      min-width: 18px;
+      height: 18px;
+      place-items: center;
+      padding: 0 5px;
+      border-radius: 999px;
+      color: currentColor;
+      background: rgba(135, 128, 124, .12);
+      font-size: 9px;
+    }
+
+    .tab-button[aria-pressed="true"] .tab-count { background: rgba(255, 255, 255, .22); }
+
+    .panel { padding: 25px 24px 28px; }
+
+    .panel-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .panel-kicker { color: var(--ink-3); font-size: 9px; font-weight: 760; letter-spacing: .1em; text-transform: uppercase; }
+    .panel-title { margin: 5px 0 0; font-size: 22px; font-weight: 770; letter-spacing: -.035em; }
+    .panel-description { margin: 7px 0 0; color: var(--ink-2); font-size: 12px; line-height: 1.55; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fbfaf7;
+    }
+
+    .stat-label { color: var(--ink-3); font-size: 9px; font-weight: 730; letter-spacing: .07em; text-transform: uppercase; }
+    .stat-value { margin-top: 6px; font-size: 16px; font-weight: 770; letter-spacing: -.02em; }
+
+    .progress {
+      height: 7px;
+      margin-top: 16px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #ebe7e0;
+    }
+
+    .progress-fill { width: 75%; height: 100%; border-radius: inherit; background: var(--gradient); }
+    .progress-copy { margin-top: 8px; color: var(--ink-3); font-size: 10px; }
+
+    .people-list { margin-top: 19px; border-top: 1px solid var(--line); }
+
+    .person-row {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 11px;
+      padding: 13px 2px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .person-avatar {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 50%;
+      color: #655a7a;
+      background: #eee8f7;
+      font-size: 10px;
+      font-weight: 760;
+    }
+
+    .person-name { font-size: 11px; font-weight: 730; }
+    .person-note { margin-top: 3px; color: var(--ink-3); font-size: 9px; }
+    .person-status { color: var(--green); font-size: 10px; font-weight: 700; white-space: nowrap; }
+
+    .mobile-note { display: none; }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 20px, 620px); padding-top: 12px; }
+      .topbar { align-items: flex-start; flex-direction: column; margin-bottom: 16px; }
+      .top-actions { width: 100%; align-items: flex-start; flex-direction: column; }
+      .control-label { display: none; }
+      .state-switch { width: 100%; }
+      .state-button { flex: 1; padding-inline: 8px; }
+      .hero { padding: 26px 18px 22px; border-radius: 22px; }
+      .hero-top { grid-template-columns: 62px minmax(0, 1fr); gap: 14px; }
+      .hero-top > .icon-button { position: absolute; top: 20px; right: 16px; }
+      .date-block { width: 62px; min-height: 70px; border-radius: 16px; }
+      .date-day { font-size: 28px; }
+      h1 { padding-right: 32px; font-size: 27px; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .hero-footer { align-items: stretch; flex-direction: column; }
+      .hero-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .hero-actions .button:only-child { grid-column: 1 / -1; }
+      .workspace-head, .panel-head { align-items: stretch; flex-direction: column; }
+      .workspace-head { padding: 20px 18px 14px; }
+      .tabs-wrap { padding: 0 18px; }
+      .panel { padding: 22px 18px; }
+      .panel-actions { display: grid; grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      .person-row { grid-template-columns: 34px minmax(0, 1fr); }
+      .person-status { grid-column: 2; }
+    }
+
+    @media (max-width: 430px) {
+      .brand { font-size: 15px; }
+      .breadcrumb { margin-left: 2px; }
+      .hero-top { display: block; }
+      .date-block { margin-bottom: 16px; }
+      h1 { padding-right: 0; }
+      .description { font-size: 13px; }
+      .hero-actions { grid-template-columns: 1fr; }
+      .hero-actions .button { width: 100%; }
+      .mobile-note { display: inline; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true">
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6M9 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="19" cy="12" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v4m8-4v4M3 10h18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87m0-11.99a4 4 0 0 1 0 7.75" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11-3v6m3-3h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v10a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V6m14 7h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m5 7H2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 7h12l1 14H5L6 7Zm3 0V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="m5 17-2-2 2-7h14l2 7-2 2M5 17v3m14-3v3M7 13h.01M17 13h.01M6 8l2-4h8l2 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5m4-1v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <main class="page" id="meeting-card" data-state="participant">
+    <header class="topbar">
+      <div class="brand" aria-label="Bimeet">
+        <span class="brand-mark" aria-hidden="true"><span class="brand-ring"></span><span class="brand-ring"></span></span>
+        <span>bimeet</span>
+      </div>
+
+      <div class="top-actions" aria-label="Предпросмотр состояния">
+        <span class="eyebrow control-label">Состояние</span>
+        <div class="state-switch" role="group" aria-label="Роль на встрече">
+          <button class="state-button" type="button" data-state-button="participant" aria-pressed="true">Участник</button>
+          <button class="state-button" type="button" data-state-button="organizer" aria-pressed="false">Организатор</button>
+          <button class="state-button" type="button" data-state-button="completed" aria-pressed="false">Завершена</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><svg><use href="#i-arrow-left"/></svg><span>Все встречи</span><span aria-hidden="true">·</span><span>17 июля</span></div>
+
+    <article class="hero" aria-labelledby="meeting-title">
+      <div class="hero-top">
+        <div class="date-block" aria-label="17 июля"><span class="date-day">17</span><span class="date-month">июля</span></div>
+        <div>
+          <div class="badge-row">
+            <span class="badge status" id="meeting-status"><span class="badge-dot"></span>Вы идёте</span>
+            <span class="badge">Публичная</span>
+            <span class="badge">Пикник</span>
+          </div>
+          <h1 id="meeting-title">Загородный пикник у воды</h1>
+          <p class="description">Собираемся в Серебряном бору: еда, игры и вечерний костёр. Берите пледы, удобную обувь и хорошее настроение.</p>
+        </div>
+        <button class="icon-button" type="button" aria-label="Другие действия"><svg><use href="#i-more"/></svg></button>
+      </div>
+
+      <div class="completion" id="completion-note" hidden><svg><use href="#i-check"/></svg><span>Встреча завершилась 17 июля в 22:00. Материалы и история остаются доступны.</span></div>
+
+      <div class="meta-grid" aria-label="Основная информация">
+        <div class="meta-card"><span class="meta-icon"><svg><use href="#i-calendar"/></svg></span><div><div class="meta-label">Когда</div><div class="meta-value">17 июля · 16:00–22:00</div></div></div>
+        <div class="meta-card"><span class="meta-icon"><svg><use href="#i-pin"/></svg></span><div><div class="meta-label">Где</div><div class="meta-value">Серебряный бор · пляж №3</div></div></div>
+        <div class="meta-card"><span class="meta-icon"><svg><use href="#i-users"/></svg></span><div><div class="meta-label">Участники</div><div class="meta-value">8 из 12 мест</div></div></div>
+      </div>
+
+      <footer class="hero-footer">
+        <div class="organizer"><span class="avatar">АС</span><div><div class="organizer-name" id="organizer-name">Алексей Славщиков</div><div class="organizer-role" id="organizer-role">Организатор встречи</div></div></div>
+        <div class="hero-actions" data-actions="participant">
+          <button class="button primary" type="button"><svg><use href="#i-check"/></svg>Я иду</button>
+          <button class="button soft" type="button"><svg><use href="#i-x"/></svg>Не смогу</button>
+        </div>
+        <div class="hero-actions" data-actions="organizer" hidden>
+          <button class="button soft" type="button"><svg><use href="#i-edit"/></svg>Редактировать</button>
+          <button class="button primary" type="button"><svg><use href="#i-user-plus"/></svg>Пригласить</button>
+        </div>
+        <div class="hero-actions" data-actions="completed" hidden>
+          <button class="button soft" type="button"><svg><use href="#i-history"/></svg>Открыть историю</button>
+        </div>
+      </footer>
+    </article>
+
+    <section class="workspace" aria-labelledby="sections-title">
+      <header class="workspace-head">
+        <div><div class="workspace-title" id="sections-title">Разделы встречи</div><div class="workspace-copy">Всё, что нужно участникам, в одном месте.</div></div>
+        <button class="button soft" type="button" id="finish-button" hidden><svg><use href="#i-check"/></svg>Завершить</button>
+      </header>
+
+      <div class="tabs-wrap">
+        <nav class="tabs" aria-label="Разделы встречи">
+          <button class="tab-button" type="button" data-tab="participants" aria-pressed="false"><svg><use href="#i-users"/></svg>Люди<span class="tab-count">8</span></button>
+          <button class="tab-button" type="button" data-tab="collections" aria-pressed="true"><svg><use href="#i-wallet"/></svg>Сборы<span class="tab-count">1</span></button>
+          <button class="tab-button" type="button" data-tab="polls" aria-pressed="false"><svg><use href="#i-chart"/></svg>Опросы<span class="tab-count">2</span></button>
+          <button class="tab-button" type="button" data-tab="items" aria-pressed="false"><svg><use href="#i-bag"/></svg>Вещи<span class="tab-count">6</span></button>
+          <button class="tab-button" type="button" data-tab="carpools" aria-pressed="false"><svg><use href="#i-car"/></svg>Попутчики<span class="tab-count">3</span></button>
+          <button class="tab-button" type="button" data-tab="chat" aria-pressed="false"><svg><use href="#i-chat"/></svg>Чат<span class="tab-count">3</span></button>
+          <button class="tab-button" type="button" data-tab="history" aria-pressed="false"><svg><use href="#i-history"/></svg>История</button>
+        </nav>
+      </div>
+
+      <div class="panel" aria-live="polite">
+        <div class="panel-head">
+          <div><div class="panel-kicker" id="panel-kicker">Общие расходы</div><h2 class="panel-title" id="panel-title">Сборы</h2><p class="panel-description" id="panel-description">Следите за общей суммой и статусами переводов.</p></div>
+          <div class="panel-actions"><button class="button primary" type="button" id="panel-action"><svg><use href="#i-plus"/></svg><span>Новый сбор</span></button></div>
+        </div>
+
+        <div class="stats" id="panel-stats">
+          <div class="stat"><div class="stat-label">Цель</div><div class="stat-value">12 000 ₽</div></div>
+          <div class="stat"><div class="stat-label">Собрано</div><div class="stat-value">9 000 ₽ · 75%</div></div>
+          <div class="stat"><div class="stat-label">С человека</div><div class="stat-value">1 500 ₽</div></div>
+        </div>
+        <div class="progress" id="panel-progress"><div class="progress-fill"></div></div>
+        <div class="progress-copy" id="progress-copy">Еда, аренда мангала и уголь · осталось 3 000 ₽</div>
+        <div class="people-list" id="panel-list">
+          <div class="person-row"><span class="person-avatar">А</span><div><div class="person-name">Анна Петрова</div><div class="person-note">Перевод подтверждён</div></div><span class="person-status">Оплачено · 1 500 ₽</span></div>
+          <div class="person-row"><span class="person-avatar">М</span><div><div class="person-name">Максим Орлов</div><div class="person-note">Чек ожидает проверки</div></div><span class="person-status" style="color:var(--amber)">На проверке</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const root = document.getElementById('meeting-card');
+      const status = document.getElementById('meeting-status');
+      const completion = document.getElementById('completion-note');
+      const organizerRole = document.getElementById('organizer-role');
+      const finishButton = document.getElementById('finish-button');
+
+      root.querySelectorAll('[data-state-button]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const state = button.dataset.stateButton;
+          root.dataset.state = state;
+          root.querySelectorAll('[data-state-button]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+          root.querySelectorAll('[data-actions]').forEach((group) => { group.hidden = group.dataset.actions !== state; });
+          completion.hidden = state !== 'completed';
+          finishButton.hidden = state !== 'organizer';
+          status.innerHTML = state === 'participant'
+            ? '<span class="badge-dot"></span>Вы идёте'
+            : state === 'organizer'
+              ? '<span class="badge-dot"></span>Вы организатор'
+              : '<span class="badge-dot"></span>Завершена';
+          organizerRole.textContent = state === 'organizer' ? 'Это вы · организатор встречи' : 'Организатор встречи';
+        });
+      });
+
+      const panels = {
+        participants: { kicker: 'Команда встречи', title: 'Люди', description: '8 участников подтвердили участие, ещё 4 места свободны.', action: 'Пригласить', stats: [['Идут', '8 человек'], ['Приглашены', '3 человека'], ['Свободно', '4 места']], progress: false, rows: [['АС', 'Алексей Славщиков', 'Организатор', 'Организатор'], ['А', 'Анна Петрова', 'Подтвердила участие', 'Идёт']] },
+        collections: { kicker: 'Общие расходы', title: 'Сборы', description: 'Следите за общей суммой и статусами переводов.', action: 'Новый сбор', stats: [['Цель', '12 000 ₽'], ['Собрано', '9 000 ₽ · 75%'], ['С человека', '1 500 ₽']], progress: true, rows: [['А', 'Анна Петрова', 'Перевод подтверждён', 'Оплачено · 1 500 ₽'], ['М', 'Максим Орлов', 'Чек ожидает проверки', 'На проверке']] },
+        polls: { kicker: 'Решаем вместе', title: 'Опросы', description: 'Два активных вопроса, которые помогут завершить подготовку.', action: 'Новый опрос', stats: [['Активные', '2 опроса'], ['Ответили', '7 из 8'], ['До закрытия', '1 день']], progress: false, rows: [['🍉', 'Что берём из еды?', '7 ответов', 'Открыт'], ['🎵', 'Музыка для вечера', '5 ответов', 'Открыт']] },
+        items: { kicker: 'Чек-лист', title: 'Вещи', description: 'Распределите нужные вещи, чтобы ничего не забыть.', action: 'Добавить вещь', stats: [['Всего', '6 вещей'], ['Распределено', '4 вещи'], ['Осталось', '2 вещи']], progress: false, rows: [['✓', 'Пледы', 'Берёт Анна', 'Готово'], ['+', 'Уголь для мангала', 'Пока никто', 'Нужен человек']] },
+        carpools: { kicker: 'Дорога', title: 'Попутчики', description: 'Три машины и свободные места для совместной поездки.', action: 'Предложить поездку', stats: [['Машины', '3'], ['Места', '5 свободно'], ['Выезд', '14:30–15:00']], progress: false, rows: [['М', 'Максим · Kia Rio', 'Выезд от м. Сокол в 14:30', '2 места'], ['АС', 'Алексей · Skoda', 'Выезд от м. Полежаевская', '1 место']] },
+        chat: { kicker: 'Обсуждение', title: 'Чат', description: 'Последние сообщения и важные договорённости встречи.', action: 'Написать', stats: [['Сообщения', '24'], ['Новые', '3'], ['Участники', '8']], progress: false, rows: [['А', 'Анна Петрова', 'Я возьму два больших пледа 👋', '12:42'], ['М', 'Максим Орлов', 'В машине осталось ещё два места', '12:38']] },
+        history: { kicker: 'Изменения', title: 'История', description: 'Хронология важных обновлений и решений по встрече.', action: 'Экспорт', stats: [['События', '18'], ['Сегодня', '3'], ['Создана', '2 июля']], progress: false, rows: [['АС', 'Алексей', 'Изменил место встречи', 'Сегодня, 11:20'], ['А', 'Анна', 'Взяла на себя пледы', 'Сегодня, 10:05']] },
+      };
+
+      const kicker = document.getElementById('panel-kicker');
+      const title = document.getElementById('panel-title');
+      const description = document.getElementById('panel-description');
+      const action = document.querySelector('#panel-action span');
+      const stats = document.getElementById('panel-stats');
+      const progress = document.getElementById('panel-progress');
+      const progressCopy = document.getElementById('progress-copy');
+      const list = document.getElementById('panel-list');
+
+      root.querySelectorAll('[data-tab]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const data = panels[button.dataset.tab];
+          if (!data) return;
+          root.querySelectorAll('[data-tab]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+          kicker.textContent = data.kicker;
+          title.textContent = data.title;
+          description.textContent = data.description;
+          action.textContent = data.action;
+          stats.innerHTML = data.stats.map(([label, value]) => `<div class="stat"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`).join('');
+          progress.hidden = !data.progress;
+          progressCopy.hidden = !data.progress;
+          list.innerHTML = data.rows.map(([avatar, name, note, rowStatus]) => `<div class="person-row"><span class="person-avatar">${avatar}</span><div><div class="person-name">${name}</div><div class="person-note">${note}</div></div><span class="person-status">${rowStatus}</span></div>`).join('');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

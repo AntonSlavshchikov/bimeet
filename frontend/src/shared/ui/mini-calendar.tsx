@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib/cn'
 
 interface MiniCalendarProps {
@@ -12,12 +13,6 @@ interface MiniCalendarProps {
   onSelect?: (date: Date) => void
   className?: string
 }
-
-const WEEKDAYS = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
-const MONTHS = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-]
 
 function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -34,6 +29,8 @@ export function MiniCalendar({
   onSelect,
   className,
 }: MiniCalendarProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU'
   const today = useMemo(() => new Date(), [])
   const [cursor, setCursor] = useState(() => initialMonth ?? today)
 
@@ -52,43 +49,56 @@ export function MiniCalendar({
     for (let i = 1; i <= lastDay; i++) {
       cells.push({ date: new Date(cursor.getFullYear(), cursor.getMonth(), i), outOfMonth: false })
     }
-    // следующий — добиваем до 42 (6 строк)
-    while (cells.length < 42) {
+    // Следующий месяц — добиваем только до полной недели (минимум 5 строк).
+    while (cells.length < 35 || cells.length % 7 !== 0) {
       const last = cells[cells.length - 1].date
       cells.push({ date: new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1), outOfMonth: true })
     }
     return cells
   }, [cursor])
+  const weekdays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(locale, { weekday: 'short' })
+      .format(new Date(2024, 0, index + 1))
+      .replace('.', '')),
+    [locale],
+  )
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(cursor)
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
-      <div className="flex items-center justify-between">
-        <div className="text-[13.5px] font-semibold tracking-[-0.01em]">
-          {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
+    <div className={cn('flex flex-col', className)}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-[12.5px] font-bold tracking-[-0.01em]">
+          {monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
-            aria-label="Предыдущий месяц"
+            className="flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
+            aria-label={t('calendar.previousMonth')}
           >
             <ChevronLeft size={14} />
           </button>
           <button
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
-            aria-label="Следующий месяц"
+            className="flex h-6 w-6 items-center justify-center rounded-[6px] text-ink-3 hover:bg-hover hover:text-ink transition focus-ring"
+            aria-label={t('calendar.nextMonth')}
           >
             <ChevronRight size={14} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-[2px]">
-        {WEEKDAYS.map(wd => (
-          <div key={wd} className="py-1 text-center text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-3">
+      <div className="grid grid-cols-7 gap-[3px] text-center">
+        {weekdays.map((wd, index) => (
+          <div
+            key={wd}
+            className={cn(
+              'py-1.5 text-[9px] font-bold uppercase text-ink-3',
+              index >= 5 && 'text-danger',
+            )}
+          >
             {wd}
           </div>
         ))}
@@ -96,16 +106,19 @@ export function MiniCalendar({
           const isToday = sameDay(date, today)
           const isSelected = selected && sameDay(date, selected)
           const hasEvent = eventDates?.has(isoDay(date))
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6
           return (
             <button
               key={isoDay(date)}
               type="button"
               onClick={() => onSelect?.(date)}
               className={cn(
-                'relative aspect-square flex items-center justify-center rounded-[7px] text-[12px] font-medium tnum cursor-pointer transition',
-                outOfMonth ? 'text-ink-4' : 'text-ink',
+                'relative flex min-h-7 items-center justify-center rounded-[8px] py-1.5 text-[10.5px] font-medium tnum cursor-pointer transition',
+                outOfMonth
+                  ? isWeekend ? 'text-danger opacity-40' : 'text-ink-3 opacity-50'
+                  : isWeekend ? 'text-danger' : 'text-ink-2',
                 'hover:bg-hover focus-ring',
-                isToday && 'bg-accent text-white font-bold hover:bg-accent hover:opacity-92',
+                isToday && 'bg-[linear-gradient(135deg,var(--color-brand-b),var(--color-brand-c))] text-white font-bold hover:opacity-92',
                 !isToday && isSelected && 'border border-accent text-accent font-bold',
               )}
             >
@@ -113,7 +126,7 @@ export function MiniCalendar({
               {hasEvent && (
                 <span
                   className={cn(
-                    'absolute bottom-[3px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full',
+                    'absolute bottom-[2px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full',
                     isToday ? 'bg-white' : 'bg-accent',
                   )}
                   aria-hidden

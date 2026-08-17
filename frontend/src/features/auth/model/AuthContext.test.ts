@@ -4,7 +4,7 @@ import type { User } from '@/entities/user/model/types'
 // Стор импортирует push/badge/api — на уровне теста они побочные, мокаем.
 vi.mock('@/shared/push', () => ({ syncPushSubscription: vi.fn() }))
 vi.mock('@/shared/badge', () => ({ clearBadge: vi.fn() }))
-vi.mock('@/features/auth/api', () => ({ authApi: { verifyCode: vi.fn() } }))
+vi.mock('@/features/auth/api', () => ({ authApi: { verifyCode: vi.fn(), logout: vi.fn().mockResolvedValue(undefined) } }))
 
 const USER: User = { id: 'u1', name: 'Test', email: 'a@b.c' }
 
@@ -53,6 +53,8 @@ describe('auth store (Zustand + persist)', () => {
     expect(useAuthStore.getState().token).toBeNull()
     expect(localStorage.getItem('token')).toBeNull()
     expect(localStorage.getItem('user')).toBeNull()
+    const { authApi } = await import('@/features/auth/api')
+    expect(authApi.logout).toHaveBeenCalledOnce()
   })
 
   it('verifyCode сохраняет token/user в стор и в localStorage', async () => {
@@ -92,5 +94,17 @@ describe('auth store (Zustand + persist)', () => {
 
     expect(useAuthStore.getState().user).toBeNull()
     expect(useAuthStore.getState().token).toBeNull()
+  })
+
+  it('событие auth:refreshed синхронизирует новый access-токен', async () => {
+    localStorage.setItem('token', 'jwt-old')
+    localStorage.setItem('user', JSON.stringify(USER))
+
+    const useAuthStore = await freshStore()
+    window.dispatchEvent(new CustomEvent('auth:refreshed', { detail: { token: 'jwt-new' } }))
+
+    expect(useAuthStore.getState().token).toBe('jwt-new')
+    expect(localStorage.getItem('token')).toBe('jwt-new')
+    expect(useAuthStore.getState().user).toEqual(USER)
   })
 })

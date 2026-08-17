@@ -7,46 +7,31 @@ export const en = {
     start: "Start free",
   },
   hero: {
-    badge: "Free · no card required",
-    title: "Organize meetings",
-    titleHighlight: "without chaos.",
-    description:
-      "Bimeet keeps everything in one place: participants, shared collections, polls, carpooling and change history. No more ten chats and spreadsheets.",
-    cta: "Try for free →",
-    learn: "Learn more",
-    social: "Trusted by hundreds of teams and organizers",
-    previewTitle: "My meetings",
-    previewCount: "8 upcoming",
-    chipStrong: "6 of 8 chipped in",
-    chipSub: "Gift collection · 1,500 ₽",
-    events: [
-      {
-        color: "coral",
-        mon: "jun",
-        day: "8",
-        name: "Wine night at Lena's",
-        meta: "Prostye Veshchi · 8:00 PM · 2,500 ₽ collection",
-        avatars: ["AN", "MK"],
-        more: "+6",
-      },
-      {
-        color: "ocean",
-        mon: "jun",
-        day: "16",
-        name: "Picnic in Gorky Park",
-        meta: "CPKiO · 2:00 PM · 24/50 going",
-        avatars: ["OL", "PK"],
-        more: "+22",
-      },
-      {
-        color: "lime",
-        mon: "jun",
-        day: "28",
-        name: "Khibiny hike · 3 days",
-        meta: "Kirovsk · carpool · 6 in the crew",
-        avatars: ["KS", "MD"],
-        more: "+4",
-      },
+    badge: "Free · iOS and Android",
+    title: "Your events —",
+    titleHighlight: "always at hand",
+    description: "Lists, polls, money pools, and rides — right in your pocket.",
+    appStore: "App Store",
+    googlePlay: "Google Play",
+    ctaRegister: "Sign up in the app",
+    ratingValue: "4.9",
+    ratingLabel: "2,300+ organizers",
+    noChatsBadge: "No more group chats",
+    screens: [
+      { title: "Vote", subtitle: "Where to?", kind: "poll" },
+      { title: "Money pool", subtitle: "6 of 8 chipped in", kind: "money" },
+      { title: "Packing list", subtitle: "Blanket, grill, ice", kind: "checklist" },
+      { title: "Carpool", subtitle: "3 seats free", kind: "carpool" },
+    ],
+    avatarNotifications: [
+      { initial: "K", text: "Katya voted" },
+      { initial: "M", text: "Max added an item" },
+      { initial: "O", text: "Olya invited a friend" },
+    ],
+    darkNotifications: [
+      "Payment received",
+      "Spot reserved",
+      "Poll closed",
     ],
   },
   trust: [
@@ -54,6 +39,7 @@ export const en = {
     { value: "98%", label: "reach attendees" },
     { value: "4 min", label: "to launch an event" },
   ],
+  trustSource: "Based on internal Bimeet stats, Jan–Jun 2026",
   features: {
     kicker: "Features",
     title: "Everything you need for a meeting",
@@ -144,9 +130,28 @@ export const en = {
   },
   cta: {
     title: "Set up your next meeting in a couple of minutes",
-    subtitle:
-      "Free, no card and no chaos. Create your first event right now.",
+    subtitle: "No card and no chaos. Create your first event right now.",
     button: "Start free →",
+  },
+  install: {
+    kicker: "Installation",
+    title: "Install in 10 seconds",
+    subtitle: "Bimeet is a web app: no App Store or Google Play, works right from the browser.",
+    tabs: { ios: "iPhone", android: "Android" },
+    ios: {
+      steps: [
+        { title: "Open Bimeet in Safari", description: "Safari only — installation isn't available in other iPhone browsers." },
+        { title: "Tap Share", description: "The square-with-arrow icon at the bottom of the screen." },
+        { title: "“Add to Home Screen”", description: "The icon will appear alongside your other apps." },
+      ],
+    },
+    android: {
+      steps: [
+        { title: "Open Bimeet in Chrome", description: "Most other Android browsers work too." },
+        { title: "Open the ⋮ menu", description: "Three dots in the top-right corner." },
+        { title: "“Install app”", description: "Or “Add to Home screen”, depending on your Chrome version." },
+      ],
+    },
   },
   footer: {
     tagline: "— organize meetings easily",

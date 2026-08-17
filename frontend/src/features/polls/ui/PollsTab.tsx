@@ -1,10 +1,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BarChart3, Plus, Trash2 } from 'lucide-react'
+import { BarChart3, Check, ChevronDown, Plus, Trash2 } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
 import { useAddPoll, useVote } from '@/features/polls/model/hooks'
 import { useAuth } from '@/features/auth/model/AuthContext'
-import { Button, Input } from '@/shared/ui'
+import {
+  Button,
+  EventSectionDataRow,
+  EventSectionEmpty,
+  EventSectionHeader,
+  EventSectionList,
+  EventSectionStat,
+  EventSectionStats,
+  Input,
+} from '@/shared/ui'
 import { cn } from '@/shared/lib/cn'
 
 export default function PollsTab({ event }: { event: Event }) {
@@ -13,6 +22,8 @@ export default function PollsTab({ event }: { event: Event }) {
   const [open, setOpen] = useState(false)
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
+  const [expandedPollId, setExpandedPollId] = useState<string | null>(null)
+  const [renderedAt] = useState(() => Date.now())
   const isOrganizer = event.organizer.is_me
 
   const addPoll = useAddPoll(event.id)
@@ -34,36 +45,42 @@ export default function PollsTab({ event }: { event: Event }) {
   }
 
   const isCompleted = event.status === 'completed'
+  const pollVoteTotals = event.polls.map(poll => poll.options.reduce((sum, option) => sum + option.vote_count, 0))
+  const answeredParticipants = pollVoteTotals.length > 0 ? Math.max(...pollVoteTotals) : 0
+  const participantCount = Math.max(event.participants.length, event.confirmed_count)
+  const daysUntilEvent = event.date_start == null
+    ? 0
+    : Math.max(0, Math.ceil((new Date(event.date_start).getTime() - renderedAt) / 86_400_000))
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
-          {t('polls.sectionTitle', 'Опросы')}
-        </div>
-        {isOrganizer && !isCompleted && (
-          <Button variant="outline" size="sm" onClick={() => setOpen(v => !v)}>
-            <Plus size={13} /> {t('polls.newPoll', 'Новый опрос')}
+    <div>
+      <EventSectionHeader
+        kicker={t('polls.kicker')}
+        title={t('polls.sectionTitle')}
+        description={t('polls.description', { count: event.polls.length })}
+        action={isOrganizer && !isCompleted ? (
+          <Button size="md" onClick={() => setOpen(v => !v)}>
+            <Plus size={14} /> {t('polls.newPoll')}
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {open && (
-        <div className="rounded-[12px] border border-line bg-bg-2 p-3.5 flex flex-col gap-3">
+        <div className="mt-[18px] flex flex-col gap-3 rounded-[15px] border border-line bg-bg-2/55 p-3.5">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
-              {t('polls.fieldQuestion', 'Вопрос')}
+            <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-ink-3">
+              {t('polls.fieldQuestion')}
             </div>
             <Input
               value={question}
               onChange={e => setQuestion(e.target.value)}
-              placeholder={t('polls.fieldQuestionPlaceholder', 'Где встречаемся?')}
+              placeholder={t('polls.fieldQuestionPlaceholder')}
               autoFocus
             />
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3 mb-1.5">
-              {t('polls.fieldOptions', 'Варианты')}
+            <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-ink-3">
+              {t('polls.fieldOptions')}
             </div>
             <div className="flex flex-col gap-2">
               {options.map((opt, i) => (
@@ -71,12 +88,12 @@ export default function PollsTab({ event }: { event: Event }) {
                   <Input
                     value={opt}
                     onChange={e => setOptions(o => o.map((v, idx) => (idx === i ? e.target.value : v)))}
-                    placeholder={t('polls.optionPlaceholder', { number: i + 1, defaultValue: `Вариант ${i + 1}` })}
+                    placeholder={t('polls.optionPlaceholder', { number: i + 1 })}
                   />
                   {options.length > 2 && (
                     <button
                       type="button"
-                      aria-label={t('polls.deleteOption', 'Удалить вариант')}
+                      aria-label={t('polls.deleteOption')}
                       onClick={() => setOptions(o => o.filter((_, idx) => idx !== i))}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-[9px] text-ink-3 hover:bg-danger/10 hover:text-danger transition shrink-0"
                     >
@@ -90,76 +107,91 @@ export default function PollsTab({ event }: { event: Event }) {
                 onClick={() => setOptions(o => [...o, ''])}
                 className="self-start text-[13px] font-semibold text-accent hover:opacity-80 transition"
               >
-                + {t('polls.addOption', 'Добавить вариант')}
+                {t('polls.addOption')}
               </button>
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              {t('common.cancel', 'Отмена')}
+              {t('common.cancel')}
             </Button>
             <Button size="sm" onClick={handleCreate} disabled={addPoll.isPending}>
-              {t('common.create', 'Создать')}
+              {t('common.create')}
             </Button>
           </div>
         </div>
       )}
 
-      {event.polls.length === 0 && (
-        <div className="rounded-[12px] border border-line bg-surface py-12 px-4 flex flex-col items-center gap-2">
-          <BarChart3 size={26} className="text-ink-3" />
-          <p className="text-[13px] text-ink-3">{t('polls.empty', 'Опросов пока нет.')}</p>
-        </div>
-      )}
+      <EventSectionStats>
+        <EventSectionStat label={t('polls.statActive')} value={t('polls.pollsCount', { count: event.polls.length })} />
+        <EventSectionStat
+          label={t('polls.statAnswered')}
+          value={t('polls.answeredCount', { answered: answeredParticipants, total: participantCount })}
+        />
+        <EventSectionStat label={t('polls.statUntilClose')} value={t('polls.daysCount', { count: daysUntilEvent })} />
+      </EventSectionStats>
 
-      {event.polls.map(poll => {
-        const totalVotes = poll.options.reduce((s, o) => s + o.vote_count, 0)
-        return (
-          <div key={poll.id} className="rounded-[12px] border border-line bg-surface p-4 flex flex-col gap-2.5">
-            <div className="text-[14px] font-medium text-ink">{poll.question}</div>
-            <div className="flex flex-col gap-2">
-              {poll.options.map(option => {
-                const pct = totalVotes > 0 ? Math.round((option.vote_count / totalVotes) * 100) : 0
-                const isMy = option.voted
-                return (
-                  <button
-                    type="button"
-                    key={option.id}
-                    disabled={isCompleted}
-                    onClick={() => !isCompleted && user && castVote.mutate({ pollId: poll.id, optionId: option.id })}
-                    className={cn(
-                      'relative w-full rounded-[10px] border p-3 text-left transition focus-ring',
-                      isMy
-                        ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]'
-                        : 'border-line-soft bg-bg-2 hover:border-line',
-                      isCompleted && 'cursor-default',
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className={cn('text-[13.5px] flex-1 line-clamp-2', isMy ? 'font-semibold text-accent' : 'text-ink')}>
-                        {option.label}
-                      </span>
-                      <span className="text-[12px] text-ink-3 tnum shrink-0">
-                        {option.vote_count} · {pct}%
-                      </span>
-                    </div>
-                    {/* Progress */}
-                    <div className="h-1 w-full rounded-full bg-line-soft overflow-hidden">
-                      <div
-                        className={cn('h-full rounded-full transition-[width]', isMy ? 'bg-accent' : 'bg-ink-3')}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-            <div className="text-[12px] text-ink-3">
-              {t('polls.totalVotes', { count: totalVotes, defaultValue: `${totalVotes} голосов` })}
-            </div>
-          </div>
-        )
-      })}
+      {event.polls.length === 0 ? (
+        <EventSectionEmpty icon={BarChart3}>{t('polls.empty')}</EventSectionEmpty>
+      ) : (
+        <EventSectionList>
+          {event.polls.map((poll, pollIndex) => {
+            const pollVotes = poll.options.reduce((sum, option) => sum + option.vote_count, 0)
+            const isExpanded = expandedPollId === poll.id
+            return (
+              <EventSectionDataRow
+                key={poll.id}
+                avatar={['🍉', '🎵', '📍', '🗳️'][pollIndex % 4]}
+                name={poll.question}
+                note={t('polls.answersCount', { count: pollVotes })}
+                status={<ChevronDown size={18} className={cn('transition-transform', isExpanded && 'rotate-180')} />}
+                statusTone="neutral"
+                onClick={() => setExpandedPollId(current => current === poll.id ? null : poll.id)}
+                expanded={isExpanded}
+                ariaLabel={poll.question}
+                details={isExpanded ? (
+                  <div className="flex flex-col gap-1.5">
+                    {poll.options.map(option => {
+                      const pct = pollVotes > 0 ? Math.round((option.vote_count / pollVotes) * 100) : 0
+                      const isMy = option.voted
+                      return (
+                        <button
+                          type="button"
+                          key={option.id}
+                          aria-pressed={isMy}
+                          disabled={isCompleted}
+                          onClick={() => !isCompleted && user && castVote.mutate({ pollId: poll.id, optionId: option.id })}
+                          className={cn(
+                            'focus-ring w-full rounded-[11px] border p-2.5 text-left transition',
+                            isMy
+                              ? 'border-accent/25 bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]'
+                              : 'border-line bg-bg-2/35 hover:bg-hover',
+                            isCompleted ? 'cursor-default' : 'cursor-pointer',
+                          )}
+                        >
+                          <div className="mb-1.5 flex items-center justify-between gap-3 text-[10px] text-ink-2">
+                            <span className={cn('flex min-w-0 items-center gap-1.5 truncate font-semibold', isMy ? 'text-accent' : 'text-ink')}>
+                              {isMy && <Check size={11} strokeWidth={3} className="shrink-0" />}
+                              {option.label}
+                            </span>
+                            <span className="shrink-0 tnum">{option.vote_count} · {pct}%</span>
+                          </div>
+                          <div className="h-[7px] w-full overflow-hidden rounded-full bg-line-soft">
+                            <div
+                              className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-brand-a),var(--color-brand-b),var(--color-brand-c))] transition-[width]"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : undefined}
+              />
+            )
+          })}
+        </EventSectionList>
+      )}
     </div>
   )
 }

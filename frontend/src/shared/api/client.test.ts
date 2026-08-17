@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { apiFetch } from './client'
 
 // apiFetch — единственная точка всех запросов к бэку. Критично: токен в заголовке,
-// корректная обработка 401 (истёкшая сессия) и проброс ошибок.
+// прозрачная ротация сессии на 401 и проброс ошибок.
 
 interface FetchResult {
   ok?: boolean
@@ -41,6 +41,7 @@ describe('apiFetch', () => {
     await apiFetch('/api/x')
 
     expect(sentHeaders(f).Authorization).toBe('Bearer jwt-1')
+    expect((f.mock.calls[0][1] as RequestInit).credentials).toBe('include')
   })
 
   it('без токена не отправляет Authorization', async () => {
@@ -67,7 +68,50 @@ describe('apiFetch', () => {
     expect(sentHeaders(f)['Content-Type']).toBeUndefined()
   })
 
-  it('на 401 с токеном чистит сессию и шлёт auth:unauthorized', async () => {
+  it('на 401 обновляет access-токен и повторяет исходный запрос', async () => {
+    localStorage.setItem('token', 'jwt-old')
+    localStorage.setItem('user', '{"id":"u1"}')
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ error: 'expired' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ token: 'jwt-new' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true }) })
+    vi.stubGlobal('fetch', f)
+    const onRefreshed = vi.fn()
+    window.addEventListener('auth:refreshed', onRefreshed)
+
+    await expect(apiFetch('/api/x')).resolves.toEqual({ ok: true })
+
+    expect(f).toHaveBeenCalledTimes(3)
+    expect(f.mock.calls[1][0]).toContain('/api/auth/refresh')
+    expect((f.mock.calls[2][1] as RequestInit).headers).toMatchObject({ Authorization: 'Bearer jwt-new' })
+    expect(localStorage.getItem('token')).toBe('jwt-new')
+    expect(onRefreshed).toHaveBeenCalledOnce()
+    window.removeEventListener('auth:refreshed', onRefreshed)
+  })
+
+  it('для параллельных 401 выполняет только один refresh-запрос', async () => {
+    localStorage.setItem('token', 'jwt-old')
+    localStorage.setItem('user', '{"id":"u1"}')
+    let refreshCalls = 0
+    const f = vi.fn(async (url: string, init: RequestInit) => {
+      if (url.endsWith('/api/auth/refresh')) {
+        refreshCalls += 1
+        return { ok: true, status: 200, json: async () => ({ token: 'jwt-new' }) }
+      }
+      const auth = (init.headers as Record<string, string>).Authorization
+      if (auth === 'Bearer jwt-old') {
+        return { ok: false, status: 401, json: async () => ({ error: 'expired' }) }
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) }
+    })
+    vi.stubGlobal('fetch', f)
+
+    await Promise.all([apiFetch('/api/a'), apiFetch('/api/b')])
+
+    expect(refreshCalls).toBe(1)
+  })
+
+  it('если refresh отклонён, чистит сессию и шлёт auth:unauthorized', async () => {
     localStorage.setItem('token', 'jwt-1')
     localStorage.setItem('user', '{"id":"u1"}')
     mockFetch({ ok: false, status: 401, jsonData: { error: 'expired' } })

@@ -1,6 +1,6 @@
 package eventsvc
 
-//go:generate mockgen -destination=mock/mock.go -package=mock . EventRepo,UserRepo,NotificationRepo,Mailer
+//go:generate mockgen -destination=mock/mock.go -package=mock . EventRepo,CityRepo,UserRepo,NotificationRepo,Mailer
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type EventRepo interface {
 	GetByInviteToken(ctx context.Context, token uuid.UUID) (model.InviteEventInfo, error)
 	GetDetail(ctx context.Context, eventID, userID uuid.UUID) (model.EventDetail, error)
 	ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error)
-	ListPublic(ctx context.Context, userID uuid.UUID) ([]model.PublicEventListItem, error)
+	ListPublic(ctx context.Context, userID uuid.UUID, cityID *uuid.UUID) ([]model.PublicEventListItem, error)
 	JoinPublic(ctx context.Context, eventID, userID uuid.UUID) (model.EventParticipant, error)
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateEventRequest) (model.Event, error)
 	Schedule(ctx context.Context, id uuid.UUID, dateStart, dateEnd time.Time) (model.Event, error)
@@ -28,6 +28,10 @@ type EventRepo interface {
 	UpdateParticipantStatus(ctx context.Context, eventID, userID uuid.UUID, status string) (model.EventParticipant, error)
 	ListParticipants(ctx context.Context, eventID uuid.UUID) ([]model.EventParticipant, error)
 	AddChangeLog(ctx context.Context, eventID, changedBy uuid.UUID, field, oldVal, newVal string) error
+}
+
+type CityRepo interface {
+	ExistsActive(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
 type UserRepo interface {

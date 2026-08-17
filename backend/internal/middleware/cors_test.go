@@ -20,10 +20,14 @@ func corsResponse(t *testing.T, origins []string, reqOrigin string) string {
 	return rec.Header().Get("Access-Control-Allow-Origin")
 }
 
-func TestCORS_DevFallbackAllowsAny(t *testing.T) {
-	// Empty allow-list → permissive "*".
+func TestCORS_DevFallbackAllowsLocalFrontend(t *testing.T) {
+	got := corsResponse(t, nil, "http://localhost:5173")
+	assert.Equal(t, "http://localhost:5173", got)
+}
+
+func TestCORS_DevFallbackBlocksOtherOrigins(t *testing.T) {
 	got := corsResponse(t, nil, "http://evil.example")
-	assert.Equal(t, "*", got)
+	assert.Empty(t, got)
 }
 
 func TestCORS_RestrictedAllowsListedOrigin(t *testing.T) {

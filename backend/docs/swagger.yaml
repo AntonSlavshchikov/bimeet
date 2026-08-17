@@ -101,6 +101,21 @@ definitions:
       user:
         $ref: '#/definitions/model.User'
     type: object
+  model.AuthSession:
+    properties:
+      created_at:
+        type: string
+      current:
+        type: boolean
+      expires_at:
+        type: string
+      id:
+        type: string
+      last_seen_at:
+        type: string
+      user_agent:
+        type: string
+    type: object
   model.Carpool:
     properties:
       departure_point:
@@ -173,6 +188,15 @@ definitions:
         $ref: '#/definitions/model.ChatLastMessage'
       unread_count:
         type: integer
+    type: object
+  model.City:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      region:
+        type: string
     type: object
   model.Collection:
     properties:
@@ -278,6 +302,8 @@ definitions:
       category:
         description: ordinary | business; defaults to ordinary
         type: string
+      city_id:
+        type: string
       date_end:
         type: string
       date_start:
@@ -318,6 +344,8 @@ definitions:
       category:
         description: ordinary | business
         type: string
+      city:
+        $ref: '#/definitions/model.City'
       created_at:
         type: string
       date_end:
@@ -380,6 +408,8 @@ definitions:
         items:
           $ref: '#/definitions/model.ChangeLogInfo'
         type: array
+      city:
+        $ref: '#/definitions/model.City'
       collections:
         items:
           $ref: '#/definitions/model.CollectionInfo'
@@ -437,6 +467,8 @@ definitions:
     properties:
       category:
         type: string
+      city:
+        $ref: '#/definitions/model.City'
       confirmed_count:
         type: integer
       created_at:
@@ -490,6 +522,8 @@ definitions:
     properties:
       category:
         type: string
+      city:
+        $ref: '#/definitions/model.City'
       confirmed_count:
         type: integer
       date_end:
@@ -684,6 +718,8 @@ definitions:
     properties:
       category:
         type: string
+      city:
+        $ref: '#/definitions/model.City'
       confirmed_count:
         type: integer
       created_at:
@@ -704,6 +740,10 @@ definitions:
         type: boolean
       location:
         type: string
+      location_lat:
+        type: number
+      location_lng:
+        type: number
       max_guests:
         type: integer
       my_status:
@@ -763,6 +803,11 @@ definitions:
           type: string
         type: array
     type: object
+  model.RefreshResponse:
+    properties:
+      token:
+        type: string
+    type: object
   model.ReplyPreview:
     properties:
       author_name:
@@ -799,6 +844,8 @@ definitions:
   model.UpdateEventRequest:
     properties:
       category:
+        type: string
+      city_id:
         type: string
       description:
         type: string
@@ -1037,6 +1084,18 @@ paths:
       summary: Get top event organizers
       tags:
       - admin
+  /auth/logout:
+    post:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Log out and revoke the current session
+      tags:
+      - auth
   /auth/me:
     get:
       produces:
@@ -1139,6 +1198,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -1152,6 +1215,80 @@ paths:
       summary: Upload current user avatar
       tags:
       - profile
+  /auth/me/sessions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.AuthSession'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List current user sessions
+      tags:
+      - auth
+  /auth/me/sessions/{id}:
+    delete:
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke a current user session
+      tags:
+      - auth
+  /auth/me/sessions/others:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Revoke all other current user sessions
+      tags:
+      - auth
   /auth/me/stats:
     get:
       produces:
@@ -1174,6 +1311,26 @@ paths:
       summary: Get current user profile statistics
       tags:
       - profile
+  /auth/refresh:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RefreshResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Refresh an authenticated session
+      tags:
+      - auth
   /auth/request-code:
     post:
       consumes:
@@ -1278,6 +1435,30 @@ paths:
       summary: Stream chat-list activity across all of the caller's events
       tags:
       - chats
+  /cities:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.City'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List active Russian cities
+      tags:
+      - cities
   /events/:
     get:
       produces:
@@ -2881,6 +3062,12 @@ paths:
       - events
   /events/public:
     get:
+      parameters:
+      - description: Filter by FIAS city UUID
+        format: uuid
+        in: query
+        name: city_id
+        type: string
       produces:
       - application/json
       responses:
@@ -2890,6 +3077,10 @@ paths:
             items:
               $ref: '#/definitions/model.PublicEventListItem'
             type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:

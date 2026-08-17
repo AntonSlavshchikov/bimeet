@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  AlertTriangle,
   BarChart3,
   CheckCircle2,
-  Clock,
+  ChevronLeft,
+  Download,
   History,
   MessageCircle,
   ShoppingBag,
@@ -23,10 +23,10 @@ import CarpoolTab from '@/features/carpools/ui/CarpoolTab'
 import ChatTab from '@/features/chat/ui/ChatTab'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
-import { formatDateTime } from '@/shared/lib/formatDate'
+import { formatDate, formatDateTime } from '@/shared/lib/formatDate'
 import { cn } from '@/shared/lib/cn'
+import { resolveEventTab, withEventTab, type EventTabKey } from './tab-url'
 import {
-  Avatar,
   Button,
   Dialog,
   DialogContent,
@@ -34,13 +34,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  GooeyTabs,
+  EventSectionDataRow,
+  EventSectionHeader,
+  EventSectionList,
+  EventSectionNav,
+  EventSectionStat,
+  EventSectionStats,
 } from '@/shared/ui'
 
-type TabKey = 'participants' | 'collections' | 'polls' | 'items' | 'carpools' | 'chat' | 'changelog'
-
 interface TabDef {
-  key: TabKey
+  key: EventTabKey
   tKey: string
   fallback: string
   icon: React.ComponentType<{ size?: number; className?: string }>
@@ -58,12 +61,15 @@ const CHAT_TAB: TabDef = { key: 'chat', tKey: 'tabs.chat', fallback: 'Чат', i
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const event = useEvent(id!)
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [completeOpen, setCompleteOpen] = useState(false)
-  const tabParam = searchParams.get('tab') as TabKey | null
-  const [tab, setTab] = useState<TabKey>(tabParam ?? 'participants')
+  const tabParam = searchParams.get('tab')
+
+  function selectTab(next: EventTabKey) {
+    setSearchParams(withEventTab(searchParams, next), { replace: true })
+  }
 
   // A permanent (dateless) event opens on Chat by default — it's the whole
   // point of the event. Runs once, and only when the URL didn't already say
@@ -72,7 +78,9 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (appliedPermanentDefault.current || !event) return
     appliedPermanentDefault.current = true
-    if (!tabParam && event.date_start == null) setTab('chat')
+    if (!tabParam && event.date_start == null) selectTab('chat')
+    // selectTab is stable; depend on the event and URL tab param only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event, tabParam])
 
   const completeEvent = useCompleteEvent(id ?? '')
@@ -106,59 +114,85 @@ export default function EventDetailPage() {
       : baseTabs
 
   // Фолбэк: если активный таб не входит в набор, переключаемся на первый
-  const activeTab: TabKey = allTabs.some(td => td.key === tab) ? tab : allTabs[0].key
+  const activeTab = resolveEventTab(tabParam, allTabs.map(td => td.key))
+  const todayKey = new Date().toDateString()
+  const changesToday = event.change_log.filter(log => new Date(log.changed_at).toDateString() === todayKey).length
+  const peopleCount = event.participants.some(participant => participant.is_organizer)
+    ? event.participants.length
+    : event.participants.length + 1
+  const eventForExport = event
+
+  function exportHistory() {
+    const rows = eventForExport.change_log.map(log => ({
+      changedAt: log.changed_at,
+      changedBy: log.changed_by.name,
+      field: log.field_name,
+      oldValue: log.old_value,
+      newValue: log.new_value,
+    }))
+    const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `event-${eventForExport.id}-history.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function formatHistoryDate(value: string) {
+    const date = new Date(value)
+    if (date.toDateString() !== todayKey) return formatDateTime(value)
+    const time = new Intl.DateTimeFormat(i18n.language, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date)
+    return `${t('eventInfo.historyToday')}, ${time}`
+  }
 
   return (
     <>
       <div className={cn('flex flex-col gap-5', activeTab === 'chat' && 'h-full min-h-0')}>
 
+        <div className="flex items-center gap-1 text-[12px] font-semibold text-ink-2">
+          <Button asChild variant="ghost" size="sm" className="-ml-2">
+            <Link to="/events"><ChevronLeft size={14} />{t('eventInfo.backAllEvents', 'Ко всем встречам')}</Link>
+          </Button>
+          <span aria-hidden>·</span>
+          <span>{event.date_start ? formatDate(event.date_start) : t('events.permanentLabel', 'Постоянная')}</span>
+        </div>
+
         {activeTab !== 'chat' && (
           <EventInfoPanel event={event} isOrganizer={isOrganizer} />
         )}
 
-        <div className={cn(
-          'rounded-[14px] border border-line bg-surface overflow-hidden',
-          activeTab === 'chat' && 'flex-1 min-h-0 flex flex-col',
-        )}>
-          {event.status === 'completed' && (
-            <div className="flex items-center gap-2 bg-warning/10 text-warning border-b border-warning/20 px-4 py-2.5 text-[13px] font-medium">
-              <AlertTriangle size={14} />
-              <span>{t('events.completedAlert', 'Эта встреча завершена')}</span>
-            </div>
-          )}
-
-          {/* Tab bar + organizer complete action */}
-          <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 pt-3 pb-3 flex-wrap">
-            <div className="overflow-x-auto -m-1 p-1">
-              <GooeyTabs
-                value={activeTab}
-                onChange={(v: TabKey) => setTab(v)}
-                options={allTabs.map(td => ({
-                  value: td.key,
-                  label: (
-                    <span className="inline-flex items-center gap-1.5">
-                      <td.icon size={13} className="shrink-0" />
-                      {t(td.tKey, td.fallback)}
-                      {td.key === 'chat' && chatUnread > 0 && (
-                        <span className="ml-0.5 inline-flex min-w-[16px] h-[16px] px-1 items-center justify-center rounded-full bg-danger text-white text-[10px] font-semibold tnum">
-                          {chatUnread}
-                        </span>
-                      )}
-                    </span>
-                  ),
-                }))}
-              />
-            </div>
-            {isOrganizer && event.status === 'active' && (
+        <EventSectionNav
+          value={activeTab}
+          onChange={selectTab}
+          label={t('eventInfo.sections', 'Разделы встречи')}
+          description={t('eventInfo.sectionsDescription')}
+          className={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}
+          contentClassName={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}
+          options={allTabs.map(td => ({
+            key: td.key,
+            label: td.key === 'participants' ? t('eventInfo.peopleTab') : t(td.tKey, td.fallback),
+            icon: td.icon,
+            badge: td.key === 'chat' ? chatUnread : undefined,
+            count:
+              td.key === 'participants' ? peopleCount
+              : td.key === 'collections' ? event.collections.length
+              : td.key === 'polls' ? event.polls.length
+              : td.key === 'items' ? event.items.length
+              : td.key === 'carpools' ? event.carpools.length
+              : undefined,
+          }))}
+          action={isOrganizer && event.status === 'active' ? (
               <Button variant="outline" size="sm" onClick={() => setCompleteOpen(true)}>
                 <CheckCircle2 size={13} />
                 {t('eventInfo.menuComplete', 'Завершить')}
               </Button>
-            )}
-          </div>
-
-          {/* Tab content — feature-tabs пока на Chakra (24.5) */}
-          <div className={cn('p-4 sm:p-6', activeTab === 'chat' && 'flex-1 min-h-0 flex flex-col')}>
+          ) : undefined}
+        >
+          <div className={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}>
             {activeTab === 'participants' && <ParticipantsTab event={event} />}
             {activeTab === 'collections' && <CollectionsTab event={event} />}
             {activeTab === 'polls' && <PollsTab event={event} />}
@@ -166,41 +200,43 @@ export default function EventDetailPage() {
             {activeTab === 'carpools' && <CarpoolTab event={event} />}
             {activeTab === 'chat' && <ChatTab event={event} />}
             {activeTab === 'changelog' && (
-              <div className="flex flex-col gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
-                  {t('events.changeHistory', 'История изменений')}
-                </div>
-                {[...event.change_log].reverse().map(log => (
-                  <div
-                    key={log.id}
-                    className="rounded-[12px] border border-line bg-bg-2 p-3.5"
-                  >
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <Avatar name={log.changed_by.name} size="xs" />
-                      <span className="text-[13px] font-medium text-ink">{log.changed_by.name}</span>
-                      <span className="text-[12px] text-ink-3">
-                        {t('events.changed', { field: log.field_name, defaultValue: `изменил «${log.field_name}»` })}
-                      </span>
-                      <span className="ml-auto inline-flex items-center gap-1 text-[12px] text-ink-3">
-                        <Clock size={12} />
-                        {formatDateTime(log.changed_at)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11px] font-medium bg-danger/10 text-danger">
-                        {log.old_value || '—'}
-                      </span>
-                      <span className="text-ink-3 text-[13px]">→</span>
-                      <span className="inline-flex items-center rounded-[4px] px-2 py-[2px] text-[11px] font-medium bg-success/10 text-success">
-                        {log.new_value || '—'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <EventSectionHeader
+                  kicker={t('eventInfo.historyKicker')}
+                  title={t('tabs.history')}
+                  description={t('eventInfo.historyDescription')}
+                  action={(
+                    <Button size="md" onClick={exportHistory}>
+                      <Download size={14} /> {t('eventInfo.historyExport')}
+                    </Button>
+                  )}
+                />
+                <EventSectionStats>
+                  <EventSectionStat label={t('eventInfo.historyEvents')} value={event.change_log.length} />
+                  <EventSectionStat label={t('eventInfo.historyToday')} value={changesToday} />
+                  <EventSectionStat label={t('eventInfo.historyCreated')} value={formatDate(event.created_at)} />
+                </EventSectionStats>
+                <EventSectionList>
+                  {[...event.change_log].reverse().map(log => (
+                    <EventSectionDataRow
+                      key={log.id}
+                      avatar={log.changed_by.name
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map(part => part[0])
+                        .join('')
+                        .toUpperCase()}
+                      name={log.changed_by.name}
+                      note={t('eventInfo.historyChanged', { field: log.field_name })}
+                      status={formatHistoryDate(log.changed_at)}
+                    />
+                  ))}
+                </EventSectionList>
               </div>
             )}
           </div>
-        </div>
+        </EventSectionNav>
       </div>
 
       {/* Complete dialog */}

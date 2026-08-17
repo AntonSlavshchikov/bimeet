@@ -80,26 +80,32 @@ services:
         condition: service_healthy
     networks:
       - app-net
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-avatars}
     entrypoint: >
       /bin/sh -c "
-        mc alias set local http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin} &&
-        mc mb --ignore-existing local/avatars &&
-        mc anonymous set public local/avatars
+        mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+        mc mb --ignore-existing local/$${S3_BUCKET} &&
+        mc anonymous set public local/$${S3_BUCKET}
       "
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-backend:${IMAGE_TAG:-latest}
     env_file: .env.prod
     depends_on:
       postgres:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     networks:
       - app-net
     restart: unless-stopped
     logging: *default-logging
 
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-frontend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-frontend:${IMAGE_TAG:-latest}
     depends_on:
       - backend
     networks:
@@ -114,7 +120,7 @@ services:
       - traefik.http.services.frontend.loadbalancer.server.port=80
 
   landing:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-landing:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-landing:${IMAGE_TAG:-latest}
     networks:
       - app-net
     restart: unless-stopped

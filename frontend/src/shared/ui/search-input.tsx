@@ -18,7 +18,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         type="search"
         placeholder={placeholder}
         className={cn(
-          'h-9 w-full rounded-[9px] bg-bg-2 pl-9 pr-12 text-[13.5px] text-ink placeholder:text-ink-3',
+          'h-9 w-full rounded-[var(--radius-control)] bg-bg-2 pl-9 pr-12 text-[13.5px] text-ink placeholder:text-ink-3',
           'border border-transparent transition outline-none',
           'focus:bg-surface focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_14%,transparent)]',
         )}
