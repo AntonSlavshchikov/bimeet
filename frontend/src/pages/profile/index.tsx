@@ -12,9 +12,10 @@ import { useTheme, type Theme } from '@/shared/theme'
 import { Avatar, Button, Input, SegmentedControl, useToast } from '@/shared/ui'
 import PushSettings from '@/features/push/ui/PushSettings'
 import SessionsPanel from '@/features/sessions/ui/SessionsPanel'
+import PasskeysPanel from '@/features/passkeys/ui/PasskeysPanel'
 import { cn } from '@/shared/lib/cn'
 
-type Tab = 'edit' | 'stats' | 'sessions'
+type Tab = 'edit' | 'stats' | 'security'
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -31,7 +32,11 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
-  const tab: Tab = tabParam === 'stats' || tabParam === 'sessions' ? tabParam : 'edit'
+  const tab: Tab = tabParam === 'stats'
+    ? 'stats'
+    : tabParam === 'security' || tabParam === 'sessions'
+      ? 'security'
+      : 'edit'
 
   const { data: stats } = useQuery({
     queryKey: ['profile', 'stats'],
@@ -195,7 +200,7 @@ export default function ProfilePage() {
             options={[
               { value: 'edit', label: t('profile.editTab', 'Редактировать') },
               { value: 'stats', label: t('profile.statsTab', 'Статистика') },
-              { value: 'sessions', label: t('profile.sessionsTab') },
+              { value: 'security', label: t('profile.securityTab') },
             ]}
           />
         </div>
@@ -286,7 +291,14 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {tab === 'sessions' && <SessionsPanel />}
+          {tab === 'security' && (
+            <div className="flex flex-col gap-7">
+              <PasskeysPanel />
+              <div className="border-t border-line-soft pt-7">
+                <SessionsPanel />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

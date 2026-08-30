@@ -22,6 +22,7 @@ import (
 	itemhandler "bimeet/internal/handler/item"
 	messagehandler "bimeet/internal/handler/message"
 	notificationhandler "bimeet/internal/handler/notification"
+	passkeyhandler "bimeet/internal/handler/passkey"
 	pollhandler "bimeet/internal/handler/poll"
 	profilehandler "bimeet/internal/handler/profile"
 	pushhandler "bimeet/internal/handler/push"
@@ -40,6 +41,7 @@ import (
 	loginrepo "bimeet/internal/repository/loginrepo"
 	messagerepo "bimeet/internal/repository/message"
 	notificationrepo "bimeet/internal/repository/notification"
+	passkeyrepo "bimeet/internal/repository/passkey"
 	pollrepo "bimeet/internal/repository/poll"
 	pushsubrepo "bimeet/internal/repository/pushsub"
 	refreshrepo "bimeet/internal/repository/refreshrepo"
@@ -56,6 +58,7 @@ import (
 	"bimeet/internal/service/mailer"
 	messagesvc "bimeet/internal/service/message"
 	notificationsvc "bimeet/internal/service/notification"
+	passkeysvc "bimeet/internal/service/passkey"
 	pollsvc "bimeet/internal/service/poll"
 	profilesvc "bimeet/internal/service/profile"
 	pushsvc "bimeet/internal/service/push"
@@ -85,6 +88,9 @@ func main() {
 	}
 	if cfg.JWTSecret == "" {
 		fatal("JWT_SECRET environment variable is required")
+	}
+	if err := cfg.ValidatePasskeys(); err != nil {
+		fatal("invalid passkey configuration", "error", err)
 	}
 
 	ctx, stop := context.WithCancel(context.Background())
@@ -143,6 +149,14 @@ func main() {
 	notificationRepo := notificationrepo.New(pool)
 	loginCodeRepo := loginrepo.New(pool)
 	refreshTokenRepo := refreshrepo.New(pool)
+	var passkeyRepo *passkeyrepo.Repository
+	if cfg.PasskeyEnabled {
+		passkeyCipher, err := secret.NewPasskeyCipher(cfg.PasskeyCredentialCipherKey)
+		if err != nil {
+			fatal("init passkey credential cipher", "error", err)
+		}
+		passkeyRepo = passkeyrepo.New(pool, passkeyCipher)
+	}
 	pushSubRepo := pushsubrepo.New(pool)
 	adminRepo := adminrepo.New(pool)
 
@@ -172,6 +186,19 @@ func main() {
 		FrontendURL:  cfg.FrontendURL,
 	})
 	authSvc := authsvc.New(userRepo, loginCodeRepo, refreshTokenRepo, m, cfg.JWTSecret, cfg.JWTExpHours, cfg.AuthTest)
+	passkeySvc, err := passkeysvc.New(
+		cfg.PasskeyEnabled,
+		cfg.WebAuthnRPID,
+		cfg.WebAuthnRPDisplayName,
+		cfg.WebAuthnRPOrigins,
+		passkeyRepo,
+		userRepo,
+		authSvc,
+	)
+	if err != nil {
+		fatal("init passkey service", "error", err)
+	}
+	authSvc.SetPasskeyStatus(passkeySvc)
 	citySvc := citysvc.New(cityRepo)
 	eventSvc := eventsvc.New(eventRepo, cityRepo, userRepo, notifyingRepo, m)
 	pollSvc := pollsvc.New(pollRepo, eventRepo)
@@ -217,6 +244,7 @@ func main() {
 
 	// Handlers
 	authH := authhandler.New(authSvc, cfg.IsProduction())
+	passkeyH := passkeyhandler.New(passkeySvc, cfg.IsProduction())
 	eventH := eventhandler.New(eventSvc)
 	cityH := cityhandler.New(citySvc)
 	collectionH := collectionhandler.New(collectionSvc)
@@ -238,6 +266,7 @@ func main() {
 	// Router
 	router := handler.NewRouter(
 		authH,
+		passkeyH,
 		eventH,
 		cityH,
 		collectionH,

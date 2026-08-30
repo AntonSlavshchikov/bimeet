@@ -4,6 +4,7 @@ import type { User, ProfileStats } from '@/entities/user/model/types'
 export interface AuthResponse {
   token: string
   user: User
+  has_passkeys: boolean
 }
 
 export interface UpdateProfileData {

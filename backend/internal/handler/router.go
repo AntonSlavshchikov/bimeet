@@ -20,6 +20,7 @@ import (
 	itemhandler "bimeet/internal/handler/item"
 	messagehandler "bimeet/internal/handler/message"
 	notificationhandler "bimeet/internal/handler/notification"
+	passkeyhandler "bimeet/internal/handler/passkey"
 	pollhandler "bimeet/internal/handler/poll"
 	profilehandler "bimeet/internal/handler/profile"
 	pushhandler "bimeet/internal/handler/push"
@@ -29,6 +30,7 @@ import (
 
 func NewRouter(
 	auth *authhandler.Handler,
+	passkey *passkeyhandler.Handler,
 	event *eventhandler.Handler,
 	city *cityhandler.Handler,
 	collection *collectionhandler.Handler,
@@ -74,6 +76,10 @@ func NewRouter(
 	r.Use(middleware.CORS(corsOrigins))
 	r.Use(middleware.RateLimitGlobal())
 
+	// Capability discovery is harmless and should not spend the strict auth
+	// endpoint budget every time the login page is opened.
+	r.Get("/api/auth/passkeys/config", passkey.Config)
+
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
@@ -85,6 +91,8 @@ func NewRouter(
 		r.Post("/verify-code", auth.VerifyCode)
 		r.Post("/refresh", auth.Refresh)
 		r.Post("/logout", auth.Logout)
+		r.Post("/passkeys/login/options", passkey.BeginLogin)
+		r.Post("/passkeys/login/verify", passkey.FinishLogin)
 	})
 
 	// Public invite link (GET only)
@@ -184,6 +192,14 @@ func NewRouter(
 		r.Get("/api/auth/me/sessions", auth.ListSessions)
 		r.Delete("/api/auth/me/sessions/others", auth.RevokeOtherSessions)
 		r.Delete("/api/auth/me/sessions/{id}", auth.RevokeSession)
+		// Listing and CRUD are ordinary authenticated profile operations. Only
+		// ceremony begin/finish use the strict auth limiter; applying it to GET
+		// caused TanStack Query retries to exhaust the budget.
+		r.Get("/api/auth/me/passkeys", passkey.List)
+		r.With(middleware.RateLimitAuth()).Post("/api/auth/me/passkeys/registration/options", passkey.BeginRegistration)
+		r.With(middleware.RateLimitAuth()).Post("/api/auth/me/passkeys/registration/verify", passkey.FinishRegistration)
+		r.Patch("/api/auth/me/passkeys/{id}", passkey.Rename)
+		r.Delete("/api/auth/me/passkeys/{id}", passkey.Delete)
 
 		// Admin (whitelisted by email)
 		r.Route("/api/admin", func(r chi.Router) {

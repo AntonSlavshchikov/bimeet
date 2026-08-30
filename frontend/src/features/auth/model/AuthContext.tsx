@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
 import type { User } from '@/entities/user/model/types'
-import { authApi } from '@/features/auth/api'
+import { authApi, type AuthResponse } from '@/features/auth/api'
 import { syncPushSubscription } from '@/shared/push'
 import { clearBadge } from '@/shared/badge'
 
@@ -13,8 +13,10 @@ interface AuthState {
   user: User | null
   token: string | null
   loading: boolean
-  /** Verifies a one-time login code; on success stores token+user and returns true. */
-  verifyCode: (email: string, code: string) => Promise<boolean>
+  /** Persists any successful auth response and synchronizes device state. */
+  completeAuth: (response: AuthResponse) => void
+  /** Verifies a one-time login code; returns the response on success. */
+  verifyCode: (email: string, code: string) => Promise<AuthResponse | null>
   logout: () => void
   clearLocalSession: () => void
   updateUser: (user: User) => void
@@ -50,22 +52,24 @@ const authStorage: StateStorage = {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       // Хранилище синхронное (localStorage), persist гидратирует token/user уже
       // при создании стора — отдельная фаза загрузки не нужна.
       loading: false,
+      completeAuth(response) {
+        set({ token: response.token, user: response.user })
+        // Одинаковый post-login путь для email-кода и passkey.
+        void syncPushSubscription()
+      },
       async verifyCode(email, code) {
         try {
           const res = await authApi.verifyCode(email, code)
-          set({ token: res.token, user: res.user })
-          // Если устройство уже было подписано на пуши — тихо перепривязываем
-          // подписку к этому аккаунту (без повторного запроса разрешения).
-          void syncPushSubscription()
-          return true
+          get().completeAuth(res)
+          return res
         } catch {
-          return false
+          return null
         }
       },
       logout() {

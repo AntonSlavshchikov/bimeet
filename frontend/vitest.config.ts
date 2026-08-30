@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     // Фиксируем таймзону, чтобы тесты форматирования дат были детерминированы
     // независимо от машины/CI.
     env: { TZ: 'UTC' },

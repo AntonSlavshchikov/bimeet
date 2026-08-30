@@ -49,6 +49,15 @@ type Service struct {
 	jwtSecret   string
 	jwtExpH     int
 	authTest    bool
+	passkeys    PasskeyStatus
+}
+
+type PasskeyStatus interface {
+	HasPasskeys(ctx context.Context, userID uuid.UUID) (bool, error)
+}
+
+func (s *Service) SetPasskeyStatus(status PasskeyStatus) {
+	s.passkeys = status
 }
 
 func New(userRepo UserRepo, codeRepo LoginCodeRepo, refreshRepo RefreshTokenRepo, mailer Mailer, jwtSecret string, jwtExpHours int, authTest bool) *Service {
@@ -165,11 +174,18 @@ func (s *Service) VerifyCode(ctx context.Context, req model.VerifyCodeRequest, u
 		}
 	}
 
-	accessToken, refreshToken, err := s.issueSession(ctx, user.ID, userAgent)
+	accessToken, refreshToken, err := s.IssueSession(ctx, user.ID, userAgent)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
-	return model.AuthResponse{Token: accessToken, RefreshToken: refreshToken, User: user}, nil
+	hasPasskeys := false
+	if s.passkeys != nil {
+		if hasPasskeys, err = s.passkeys.HasPasskeys(ctx, user.ID); err != nil {
+			observability.FromContext(ctx).Warn("check passkey status after email login", "error", err)
+			hasPasskeys = false
+		}
+	}
+	return model.AuthResponse{Token: accessToken, RefreshToken: refreshToken, User: user, HasPasskeys: hasPasskeys}, nil
 }
 
 // Refresh consumes a refresh token and returns a fresh, independently rotated
@@ -234,7 +250,9 @@ func (s *Service) RevokeOtherSessions(ctx context.Context, userID, currentSessio
 	return nil
 }
 
-func (s *Service) issueSession(ctx context.Context, userID uuid.UUID, userAgent string) (string, string, error) {
+// IssueSession creates the same stable refresh session for every primary
+// authentication mechanism (email code and passkey).
+func (s *Service) IssueSession(ctx context.Context, userID uuid.UUID, userAgent string) (string, string, error) {
 	refreshToken, err := generateRefreshToken()
 	if err != nil {
 		return "", "", fmt.Errorf("generate refresh token: %w", err)

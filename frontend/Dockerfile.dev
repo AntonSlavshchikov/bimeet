@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# /app/node_modules is a named volume in docker-compose. Re-sync it on startup
+# so an existing dev volume picks up newly added package.json dependencies.
+CMD ["sh", "-c", "npm ci && exec npm run dev -- --host 0.0.0.0"]

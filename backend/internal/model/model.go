@@ -1,8 +1,10 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 )
 
@@ -250,6 +252,71 @@ type AuthSession struct {
 	Current    bool      `json:"current"`
 }
 
+// Passkey is the user-facing metadata for one WebAuthn credential. Cryptographic
+// material is intentionally never exposed through the API.
+type Passkey struct {
+	ID         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	CreatedAt  time.Time  `json:"created_at"`
+	LastUsedAt *time.Time `json:"last_used_at"`
+}
+
+// PasskeyCredential is the repository representation used to reconstruct a
+// WebAuthn user. CredentialData contains an authenticated encrypted JSON record.
+type PasskeyCredential struct {
+	Passkey
+	UserID         uuid.UUID
+	RPID           string
+	CredentialID   []byte
+	CredentialData []byte
+	SignCount      uint32
+	CloneWarning   bool
+}
+
+// PasskeyCeremony is one short-lived, single-use WebAuthn begin/finish session.
+type PasskeyCeremony struct {
+	ID          uuid.UUID
+	Kind        string
+	UserID      *uuid.UUID
+	SessionData []byte
+	ExpiresAt   time.Time
+}
+
+// PasskeyUser adapts the application's User to go-webauthn's User interface.
+type PasskeyUser struct {
+	User        User
+	Handle      []byte
+	Credentials []webauthn.Credential
+}
+
+func (u PasskeyUser) WebAuthnID() []byte                         { return u.Handle }
+func (u PasskeyUser) WebAuthnName() string                       { return u.User.Email }
+func (u PasskeyUser) WebAuthnDisplayName() string                { return u.User.Name }
+func (u PasskeyUser) WebAuthnCredentials() []webauthn.Credential { return u.Credentials }
+
+type PasskeyConfigResponse struct {
+	Enabled bool `json:"enabled"`
+}
+
+type PasskeyLoginOptionsRequest struct {
+	Mediation string `json:"mediation"`
+}
+
+type PasskeyOptionsResponse struct {
+	CeremonyID uuid.UUID `json:"ceremony_id"`
+	Options    any       `json:"options"`
+}
+
+type PasskeyVerifyRequest struct {
+	CeremonyID uuid.UUID       `json:"ceremony_id"`
+	Credential json.RawMessage `json:"credential"`
+	Name       string          `json:"name,omitempty"`
+}
+
+type RenamePasskeyRequest struct {
+	Name string `json:"name"`
+}
+
 type PushSubscription struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
@@ -290,6 +357,7 @@ type AuthResponse struct {
 	Token        string `json:"token"`
 	RefreshToken string `json:"-"`
 	User         User   `json:"user"`
+	HasPasskeys  bool   `json:"has_passkeys"`
 }
 
 type RefreshResponse struct {

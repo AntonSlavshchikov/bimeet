@@ -60,25 +60,25 @@ describe('auth store (Zustand + persist)', () => {
   it('verifyCode сохраняет token/user в стор и в localStorage', async () => {
     const useAuthStore = await freshStore()
     const { authApi } = await import('@/features/auth/api')
-    vi.mocked(authApi.verifyCode).mockResolvedValue({ token: 'jwt-new', user: USER })
+    vi.mocked(authApi.verifyCode).mockResolvedValue({ token: 'jwt-new', user: USER, has_passkeys: false })
 
-    const ok = await useAuthStore.getState().verifyCode('a@b.c', '0000')
+    const response = await useAuthStore.getState().verifyCode('a@b.c', '0000')
 
-    expect(ok).toBe(true)
+    expect(response?.has_passkeys).toBe(false)
     expect(useAuthStore.getState().token).toBe('jwt-new')
     expect(useAuthStore.getState().user).toEqual(USER)
     expect(localStorage.getItem('token')).toBe('jwt-new')
     expect(JSON.parse(localStorage.getItem('user')!)).toEqual(USER)
   })
 
-  it('verifyCode при ошибке API возвращает false и не трогает сессию', async () => {
+  it('verifyCode при ошибке API возвращает null и не трогает сессию', async () => {
     const useAuthStore = await freshStore()
     const { authApi } = await import('@/features/auth/api')
     vi.mocked(authApi.verifyCode).mockRejectedValue(new Error('bad code'))
 
-    const ok = await useAuthStore.getState().verifyCode('a@b.c', 'wrong')
+    const response = await useAuthStore.getState().verifyCode('a@b.c', 'wrong')
 
-    expect(ok).toBe(false)
+    expect(response).toBeNull()
     expect(useAuthStore.getState().user).toBeNull()
     expect(localStorage.getItem('token')).toBeNull()
   })

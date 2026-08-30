@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/base64"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -16,6 +18,12 @@ type Config struct {
 	// AuthTest — when true, login codes are not emailed; a fixed code is used
 	// instead (see authsvc). Keeps email quotas intact during dev/tests.
 	AuthTest bool
+	// Passkey / WebAuthn. Disabled by default for a migration-first rollout.
+	PasskeyEnabled             bool
+	WebAuthnRPID               string
+	WebAuthnRPOrigins          []string
+	WebAuthnRPDisplayName      string
+	PasskeyCredentialCipherKey string
 	// Mail provider:
 	//   1. If ResendAPIKey set → Resend HTTP API (port 443, works on any network)
 	//   2. Else if SMTPHost set → SMTP (mailhog locally / SendGrid etc.)
@@ -126,38 +134,70 @@ func Load() Config {
 	}
 
 	return Config{
-		Port:               port,
-		DSN:                os.Getenv("DSN"),
-		JWTSecret:          os.Getenv("JWT_SECRET"),
-		JWTExpHours:        expHours,
-		AuthTest:           parseBool(os.Getenv("AUTH_TEST")),
-		ResendAPIKey:       os.Getenv("RESEND_API_KEY"),
-		MailFrom:           mailFrom,
-		SMTPHost:           os.Getenv("SMTP_HOST"),
-		SMTPPort:           smtpPort,
-		SMTPUser:           os.Getenv("SMTP_USER"),
-		SMTPPass:           os.Getenv("SMTP_PASS"),
-		SMTPFrom:           os.Getenv("SMTP_FROM"),
-		FrontendURL:        frontendURL,
-		AWSRegion:          os.Getenv("AWS_REGION"),
-		AWSAccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
-		AWSSecretKey:       os.Getenv("AWS_SECRET_ACCESS_KEY"),
-		S3Bucket:           os.Getenv("S3_BUCKET"),
-		S3PublicBaseURL:    os.Getenv("S3_PUBLIC_BASE_URL"),
-		S3Endpoint:         os.Getenv("S3_ENDPOINT"),
-		AdminEmails:        parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
-		AppEnv:             appEnv,
-		CORSAllowedOrigins: corsAllowedOrigins,
-		VAPIDPublicKey:     os.Getenv("VAPID_PUBLIC_KEY"),
-		VAPIDPrivateKey:    os.Getenv("VAPID_PRIVATE_KEY"),
-		ChatEncryptionKey:  os.Getenv("CHAT_ENCRYPTION_KEY"),
-		VAPIDSubject:       vapidSubject,
-		LogLevel:           logLevel,
-		LogFormat:          logFormat,
-		OTelEnabled:        parseBool(os.Getenv("OTEL_ENABLED")),
-		OTelEndpoint:       os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-		OTelServiceName:    otelServiceName,
+		Port:              port,
+		DSN:               os.Getenv("DSN"),
+		JWTSecret:         os.Getenv("JWT_SECRET"),
+		JWTExpHours:       expHours,
+		AuthTest:          parseBool(os.Getenv("AUTH_TEST")),
+		PasskeyEnabled:    parseBool(os.Getenv("PASSKEY_ENABLED")),
+		WebAuthnRPID:      strings.TrimSpace(os.Getenv("WEBAUTHN_RP_ID")),
+		WebAuthnRPOrigins: parseCSV(os.Getenv("WEBAUTHN_RP_ORIGINS")),
+		WebAuthnRPDisplayName: func() string {
+			if value := strings.TrimSpace(os.Getenv("WEBAUTHN_RP_DISPLAY_NAME")); value != "" {
+				return value
+			}
+			return "Bimeet"
+		}(),
+		PasskeyCredentialCipherKey: os.Getenv("PASSKEY_CREDENTIAL_ENCRYPTION_KEY"),
+		ResendAPIKey:               os.Getenv("RESEND_API_KEY"),
+		MailFrom:                   mailFrom,
+		SMTPHost:                   os.Getenv("SMTP_HOST"),
+		SMTPPort:                   smtpPort,
+		SMTPUser:                   os.Getenv("SMTP_USER"),
+		SMTPPass:                   os.Getenv("SMTP_PASS"),
+		SMTPFrom:                   os.Getenv("SMTP_FROM"),
+		FrontendURL:                frontendURL,
+		AWSRegion:                  os.Getenv("AWS_REGION"),
+		AWSAccessKeyID:             os.Getenv("AWS_ACCESS_KEY_ID"),
+		AWSSecretKey:               os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		S3Bucket:                   os.Getenv("S3_BUCKET"),
+		S3PublicBaseURL:            os.Getenv("S3_PUBLIC_BASE_URL"),
+		S3Endpoint:                 os.Getenv("S3_ENDPOINT"),
+		AdminEmails:                parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
+		AppEnv:                     appEnv,
+		CORSAllowedOrigins:         corsAllowedOrigins,
+		VAPIDPublicKey:             os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey:            os.Getenv("VAPID_PRIVATE_KEY"),
+		ChatEncryptionKey:          os.Getenv("CHAT_ENCRYPTION_KEY"),
+		VAPIDSubject:               vapidSubject,
+		LogLevel:                   logLevel,
+		LogFormat:                  logFormat,
+		OTelEnabled:                parseBool(os.Getenv("OTEL_ENABLED")),
+		OTelEndpoint:               os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		OTelServiceName:            otelServiceName,
 	}
+}
+
+// ValidatePasskeys fails closed when passkeys are enabled without every value
+// required to bind ceremonies and protect credential records.
+func (c Config) ValidatePasskeys() error {
+	if !c.PasskeyEnabled {
+		return nil
+	}
+	if c.WebAuthnRPID == "" {
+		return fmt.Errorf("WEBAUTHN_RP_ID is required when PASSKEY_ENABLED=true")
+	}
+	if len(c.WebAuthnRPOrigins) == 0 {
+		return fmt.Errorf("WEBAUTHN_RP_ORIGINS is required when PASSKEY_ENABLED=true")
+	}
+	if strings.TrimSpace(c.PasskeyCredentialCipherKey) == "" {
+		return fmt.Errorf("PASSKEY_CREDENTIAL_ENCRYPTION_KEY is required when PASSKEY_ENABLED=true")
+	}
+	key, err := base64.StdEncoding.DecodeString(c.PasskeyCredentialCipherKey)
+	if err != nil || len(key) != 32 {
+		return fmt.Errorf("PASSKEY_CREDENTIAL_ENCRYPTION_KEY must be a base64-encoded 32-byte key")
+	}
+	return nil
 }
 
 // parseBool reports whether raw is a truthy flag (1/true/yes/on, case-insensitive).

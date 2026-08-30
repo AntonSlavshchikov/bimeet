@@ -1,17 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { KeyRound } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { authApi } from '@/features/auth/api'
+import { usePasskeyConfig } from '@/features/passkeys/model/hooks'
+import {
+  authenticateWithPasskey,
+  cancelPasskeyCeremony,
+  isPasskeyCancellation,
+  supportsConditionalPasskeys,
+  supportsPasskeys,
+} from '@/features/passkeys/lib/webauthn'
+import { claimPasskeyEnrollmentHint } from '@/features/passkeys/lib/enrollmentPrompt'
 import { apiFetch } from '@/shared/api/client'
 import AuthShell, { AuthField } from '@/features/auth/ui/AuthShell'
-import { Button, Input, OtpInput, useToast } from '@/shared/ui'
+import { Button, Input, OtpInput, toast as notify, useToast } from '@/shared/ui'
 
 const RESEND_SECONDS = 60
 const CODE_LENGTH = 6
 
 export default function LoginPage() {
-  const { verifyCode } = useAuth()
+  const { completeAuth, verifyCode } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
   const { t } = useTranslation()
@@ -24,6 +34,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [codeError, setCodeError] = useState(false)
   const [resendIn, setResendIn] = useState(0)
+  const [passkeySupported, setPasskeySupported] = useState(false)
+  const [passkeyLoading, setPasskeyLoading] = useState(false)
+  const { data: passkeyConfig } = usePasskeyConfig()
+  const passkeyEnabled = passkeyConfig?.enabled === true && passkeySupported
 
   // Resend cooldown countdown.
   useEffect(() => {
@@ -32,7 +46,7 @@ export default function LoginPage() {
     return () => clearInterval(id)
   }, [resendIn])
 
-  async function continueAfterLogin() {
+  const continueAfterLogin = useCallback(async () => {
     if (inviteToken) {
       try {
         const participant = await apiFetch<{ event_id: string }>(`/api/events/invite/${inviteToken}`, {
@@ -47,9 +61,57 @@ export default function LoginPage() {
       }
     }
     navigate('/events')
+  }, [inviteToken, navigate])
+
+  useEffect(() => {
+    setPasskeySupported(supportsPasskeys())
+    return cancelPasskeyCeremony
+  }, [])
+
+  // Conditional UI attaches the passkey picker to the username field. It is
+  // intentionally quiet when dismissed so the email flow remains unchanged.
+  useEffect(() => {
+    if (!passkeyEnabled || step !== 'email') return
+    let active = true
+    void (async () => {
+      if (!await supportsConditionalPasskeys() || !active) return
+      try {
+        const response = await authenticateWithPasskey('conditional')
+        if (!active) return
+        completeAuth(response)
+        await continueAfterLogin()
+      } catch {
+        // Autofill is opportunistic. Dismissals and failures must leave the
+        // explicit passkey button and email flow untouched.
+      }
+    })()
+    return () => {
+      active = false
+      cancelPasskeyCeremony()
+    }
+  }, [completeAuth, continueAfterLogin, passkeyEnabled, step])
+
+  async function loginWithPasskey() {
+    setPasskeyLoading(true)
+    try {
+      const response = await authenticateWithPasskey('default')
+      completeAuth(response)
+      await continueAfterLogin()
+    } catch (error) {
+      if (!isPasskeyCancellation(error)) {
+        toast({
+          title: t('auth.passkeyLoginError'),
+          description: error instanceof Error ? error.message : undefined,
+          status: 'error',
+        })
+      }
+    } finally {
+      setPasskeyLoading(false)
+    }
   }
 
   async function sendCode() {
+    cancelPasskeyCeremony()
     setLoading(true)
     try {
       await authApi.requestCode(email)
@@ -71,12 +133,22 @@ export default function LoginPage() {
   async function submitCode(value: string) {
     if (loading) return
     setLoading(true)
-    const ok = await verifyCode(email, value)
-    if (!ok) {
+    const response = await verifyCode(email, value)
+    if (!response) {
       setLoading(false)
       setCode('')
       setCodeError(true)
       return
+    }
+    if (!response.has_passkeys && passkeyEnabled) {
+      if (claimPasskeyEnrollmentHint(response.user.id)) {
+        notify(t('auth.passkeyEnrollHint'), {
+          action: {
+            label: t('auth.passkeyEnrollAction'),
+            onClick: () => navigate('/profile?tab=security'),
+          },
+        })
+      }
     }
     await continueAfterLogin()
     setLoading(false)
@@ -108,11 +180,31 @@ export default function LoginPage() {
               placeholder={t('auth.emailPlaceholder', 'you@example.com')}
               required
               autoFocus
+              autoComplete="username webauthn"
             />
           </AuthField>
           <Button type="submit" className="w-full mt-1" disabled={loading}>
             {loading ? '…' : t('auth.getCode', 'Получить код')}
           </Button>
+          {passkeyEnabled && (
+            <>
+              <div className="flex items-center gap-3 text-[11px] text-ink-4" aria-hidden="true">
+                <span className="h-px flex-1 bg-line-soft" />
+                {t('auth.or')}
+                <span className="h-px flex-1 bg-line-soft" />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={passkeyLoading || loading}
+                onClick={() => void loginWithPasskey()}
+              >
+                <KeyRound size={16} />
+                {passkeyLoading ? t('auth.passkeyWaiting') : t('auth.signInWithPasskey')}
+              </Button>
+            </>
+          )}
         </form>
       </AuthShell>
     )
