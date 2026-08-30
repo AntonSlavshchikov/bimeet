@@ -1,7 +1,7 @@
 # Graph Report - /Users/adslavschikov/my/ai-app  (2026-08-30)
 
 ## Corpus Check
-- 437 files · ~938,607 words
+- 437 files · ~938,952 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -1602,11 +1602,11 @@ Nodes (0):
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `New()` connect `Community 0` to `Community 1`, `Community 33`, `Community 3`, `Community 6`, `Community 7`, `Community 40`, `Community 8`, `Community 10`, `Community 9`, `Community 12`, `Community 14`, `Community 18`, `Community 24`, `Community 27`?**
-  _High betweenness centrality (0.170) - this node is a cross-community bridge._
+  _High betweenness centrality (0.141) - this node is a cross-community bridge._
 - **Why does `scan()` connect `Community 2` to `Community 0`, `Community 3`, `Community 14`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+  _High betweenness centrality (0.099) - this node is a cross-community bridge._
 - **Why does `newRouter()` connect `Community 8` to `Community 0`, `Community 10`, `Community 12`, `Community 15`, `Community 19`, `Community 25`, `Community 28`, `Community 29`, `Community 30`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
 - **Are the 158 inferred relationships involving `New()` (e.g. with `main()` and `newRouter()`) actually correct?**
   _`New()` has 158 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 16 inferred relationships involving `newService()` (e.g. with `NewMockCarpoolRepo()` and `NewMockEventRepo()`) actually correct?**

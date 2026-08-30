@@ -116,10 +116,14 @@ func serve(w http.ResponseWriter, r *http.Request, ch <-chan realtime.Envelope) 
 			if !open {
 				return
 			}
-			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", env.Type, env.Data)
+			if _, err := fmt.Fprintf(w, "event: %s\ndata: %s\n\n", env.Type, env.Data); err != nil {
+				return
+			}
 			flusher.Flush()
 		case <-ticker.C:
-			fmt.Fprint(w, ": keepalive\n\n")
+			if _, err := fmt.Fprint(w, ": keepalive\n\n"); err != nil {
+				return
+			}
 			flusher.Flush()
 		case <-r.Context().Done():
 			return
