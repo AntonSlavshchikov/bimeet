@@ -45,8 +45,21 @@ resource "openstack_compute_instance_v2" "bimeet" {
     uuid = openstack_networking_network_v2.bimeet.id
   }
 
+  # Only takes effect on first boot of a NEW instance — user_data is
+  # ForceNew on this resource, and prevent_destroy above blocks exactly
+  # that, so a later edit here is refused at apply time rather than
+  # silently recreating prod. See README "Changing cloud-init".
   user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
     admin_ssh_public_key = var.admin_ssh_public_key
+    pg_backup_script     = file("${path.module}/../backup/pg_backup.sh")
+    pg_restore_script    = file("${path.module}/../backup/pg_restore.sh")
+    backup_service_unit  = file("${path.module}/../backup/bimeet-backup.service")
+    backup_timer_unit    = file("${path.module}/../backup/bimeet-backup.timer")
+    backup_s3_bucket     = aws_s3_bucket.backups.bucket
+    backup_s3_endpoint   = "https://s3.${var.region}.storage.selcloud.ru"
+    backup_s3_access_key = selectel_iam_s3_credentials_v1.backup.access_key
+    backup_s3_secret_key = selectel_iam_s3_credentials_v1.backup.secret_key
+    backup_s3_region     = var.region
   })
 
   lifecycle {

@@ -236,11 +236,11 @@ once CI has pushed to CRaaS successfully a few times:
 
 ### Postgres backups
 
-- Add a cron job on the VM (or a scheduled container) running `pg_dump`
-  against the `postgres` service, uploading the dump to
-  `bimeet-prod-backups` using `backup_s3_access_key` /
-  `backup_s3_secret_key`. The bucket's 14-day lifecycle rule (`storage.tf`)
-  is already in place and will expire old dumps automatically.
-- Periodically verify restore: spin up a throwaway Postgres container,
-  `pg_restore` the latest dump into it, and sanity-check row counts — a
-  backup that was never restore-tested is not a backup.
+**Done** (branch `infra/selectel-migration`): `infra/backup/pg_backup.sh` +
+a daily systemd timer dump `bimeet` and upload it to `bimeet-prod-backups`
+using `backup_s3_access_key`/`backup_s3_secret_key`; `infra/backup/
+pg_restore.sh` restores into a throwaway database and sanity-checks row
+counts, never touching the real database without an explicit flag. Wired
+into `cloud-init.yaml.tftpl` for a freshly created VM; for an already-
+running one, install by hand — see `docs/runbooks/backup-restore.md`,
+which also has the proof-of-restore run against dev-compose MinIO.

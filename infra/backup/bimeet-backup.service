@@ -1,0 +1,13 @@
+[Unit]
+Description=Bimeet Postgres backup to Selectel Object Storage
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/bimeet
+EnvironmentFile=/opt/bimeet/backup/backup.env
+ExecStart=/opt/bimeet/backup/pg_backup.sh
+# Failures are visible via `systemctl status bimeet-backup` and
+# `journalctl -u bimeet-backup` — see docs/runbooks/backup-restore.md
+# "How to check backups are running".
