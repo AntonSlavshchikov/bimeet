@@ -190,24 +190,19 @@ application code or existing CI/compose changes.
 **Done on the app side** (branch `infra/selectel-migration`): the backend
 now stores object keys, not URLs, and serves files through a
 `GET /api/files/{key}` redirect to a short-lived presigned URL instead of a
-permanently public one — see that branch's own README/runbook notes for
-what changed and why. The uploads bucket here (`storage.tf`) has no
-public-read policy for exactly that reason. What's left for the actual
-cutover:
+permanently public one. The uploads bucket here (`storage.tf`) has no
+public-read policy for exactly that reason.
 
-- `docker-compose.prod.yml`: remove the `minio` and `minio-init` services
-  and the `minio_data` volume, and the `s3.bimeet.pro` Traefik router.
-- `.env.prod` (on the VM, not in this repo): set
-  `AWS_REGION=ru-9`, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` from
-  `app_s3_access_key`/`app_s3_secret_key`, `S3_BUCKET=bimeet-prod-uploads`,
-  `S3_ENDPOINT=https://s3.ru-9.storage.selcloud.ru`, and optionally
-  `S3_PRESIGN_TTL` (default `5m`, Go duration syntax). `S3_PUBLIC_BASE_URL`
-  is no longer read for anything the frontend sees (kept only as the
-  Uploader interface's unused return value) and can be left unset.
-- One-time data migration: copy existing objects from the MinIO `avatars`
-  bucket to `bimeet-prod-uploads` (e.g. `mc mirror` or `rclone`) before
-  cutting the backend over, so existing avatar/receipt/chat-image keys
-  still resolve to a real object.
+The actual cutover — in order, with its own rollback — is
+`docs/runbooks/s3-cutover.md`. In short: the env vars that change are
+`AWS_REGION=ru-9`, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` from
+`app_s3_access_key`/`app_s3_secret_key`, `S3_BUCKET=bimeet-prod-uploads`,
+`S3_ENDPOINT=https://s3.ru-9.storage.selcloud.ru` (optionally
+`S3_PRESIGN_TTL`, default `5m`); `S3_PUBLIC_BASE_URL` is no longer read
+for anything user-facing and can be left unset. `docker-compose.prod.yml`
+loses the `minio`/`minio-init` services, the `minio_data` volume, and the
+`s3.bimeet.pro` Traefik router — but only as the runbook's last step,
+after a day of the new setup running cleanly.
 
 ### GHCR → Selectel Container Registry (CRaaS)
 
