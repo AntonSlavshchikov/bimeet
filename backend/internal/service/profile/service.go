@@ -89,14 +89,16 @@ func (s *Service) UploadAvatar(ctx context.Context, userID uuid.UUID, file multi
 
 	key := "avatars/" + userID.String() + ext
 
-	url, err := s.storage.Upload(ctx, key, contentType, file)
-	if err != nil {
+	// Upload returns a URL (kept for the Uploader interface shared with
+	// collection/message, which still want one) — the DB stores the key we
+	// already know, not that return value.
+	if _, err := s.storage.Upload(ctx, key, contentType, file); err != nil {
 		return model.User{}, fmt.Errorf("upload avatar: %w", err)
 	}
 
-	user, err := s.userRepo.UpdateAvatar(ctx, userID, url)
+	user, err := s.userRepo.UpdateAvatar(ctx, userID, key)
 	if err != nil {
-		return model.User{}, fmt.Errorf("save avatar url: %w", err)
+		return model.User{}, fmt.Errorf("save avatar key: %w", err)
 	}
 	return user, nil
 }

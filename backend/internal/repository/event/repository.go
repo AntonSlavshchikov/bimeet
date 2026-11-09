@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
+	"bimeet/internal/storage"
 )
 
 type Repository struct {
@@ -455,7 +456,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 		ctRows, err := r.pool.Query(ctx,
 			`SELECT c.id, mem.user_id, u.name, u.email,
 			        cc.id, COALESCE(cc.paid, false), cc.paid_at,
-			        COALESCE(cc.status, 'not_paid'), cc.receipt_url
+			        COALESCE(cc.status, 'not_paid'), cc.receipt_key
 			 FROM collections c
 			 CROSS JOIN (
 			     SELECT organizer_id AS user_id FROM events WHERE id = $1
@@ -478,6 +479,7 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 				ctRows.Close()
 				return model.EventDetail{}, fmt.Errorf("scan contribution detail: %w", err)
 			}
+			ct.ReceiptURL = storage.FileURL(ct.ReceiptURL)
 			ct.User.IsMe = ctuID == userID
 			if idx, ok := colIdx[colID]; ok {
 				detail.Collections[idx].Contributions = append(detail.Collections[idx].Contributions, ct)

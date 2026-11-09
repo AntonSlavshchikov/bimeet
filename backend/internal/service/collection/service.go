@@ -7,7 +7,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -128,13 +127,12 @@ func (s *Service) SubmitContribution(ctx context.Context, eventID, collectionID,
 		return model.CollectionContribution{}, fmt.Errorf("unsupported file type: must be image or PDF")
 	}
 
-	key := fmt.Sprintf("receipts/%s/%s/%d", collectionID, userID, time.Now().UnixMilli())
-	receiptURL, err := s.uploader.Upload(ctx, key, contentType, uploadBody)
-	if err != nil {
+	key := fmt.Sprintf("receipts/%s/%s/%s", collectionID, userID, uuid.New())
+	if _, err := s.uploader.Upload(ctx, key, contentType, uploadBody); err != nil {
 		return model.CollectionContribution{}, fmt.Errorf("upload receipt: %w", err)
 	}
 
-	contrib, err := s.collectionRepo.SubmitContribution(ctx, collectionID, userID, receiptURL)
+	contrib, err := s.collectionRepo.SubmitContribution(ctx, collectionID, userID, key)
 	if err != nil {
 		return model.CollectionContribution{}, err
 	}

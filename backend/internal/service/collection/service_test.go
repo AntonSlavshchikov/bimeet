@@ -186,8 +186,10 @@ func TestSubmitContribution_UploadsSniffedPNG(t *testing.T) {
 	er.EXPECT().IsConfirmedParticipant(gomock.Any(), eventID, userID).Return(true, nil)
 	cr.EXPECT().GetByID(gomock.Any(), collectionID).Return(model.Collection{ID: collectionID, EventID: eventID, Title: "Cake"}, nil)
 	cr.EXPECT().GetContribution(gomock.Any(), collectionID, userID).Return(model.CollectionContribution{}, errors.New("not found"))
-	cr.EXPECT().SubmitContribution(gomock.Any(), collectionID, userID, "https://cdn.example/receipt").
-		Return(model.CollectionContribution{CollectionID: collectionID, UserID: userID, ReceiptURL: ptr("https://cdn.example/receipt")}, nil)
+	// The receipt key now embeds a random UUID (not a fixed value), so match
+	// any key — the generated-key format itself isn't this test's concern.
+	cr.EXPECT().SubmitContribution(gomock.Any(), collectionID, userID, gomock.Any()).
+		Return(model.CollectionContribution{CollectionID: collectionID, UserID: userID, ReceiptURL: ptr("/api/files/receipts/x")}, nil)
 	nr.EXPECT().Create(gomock.Any(), organizerID, &eventID, "collection_contribution_pending", gomock.Any()).AnyTimes()
 
 	png := []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 0, 'I', 'E', 'N', 'D'}

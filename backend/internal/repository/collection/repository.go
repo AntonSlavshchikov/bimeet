@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
+	"bimeet/internal/storage"
 )
 
 type Repository struct {
@@ -79,12 +80,13 @@ func scanContribution(row interface {
 }) (model.CollectionContribution, error) {
 	var cc model.CollectionContribution
 	err := row.Scan(&cc.ID, &cc.CollectionID, &cc.UserID, &cc.Paid, &cc.PaidAt, &cc.Status, &cc.ReceiptURL)
+	cc.ReceiptURL = storage.FileURL(cc.ReceiptURL)
 	return cc, err
 }
 
 func (r *Repository) GetContribution(ctx context.Context, collectionID, userID uuid.UUID) (model.CollectionContribution, error) {
 	row := r.pool.QueryRow(ctx,
-		`SELECT id, collection_id, user_id, paid, paid_at, status, receipt_url
+		`SELECT id, collection_id, user_id, paid, paid_at, status, receipt_key
 		 FROM collection_contributions
 		 WHERE collection_id=$1 AND user_id=$2`,
 		collectionID, userID,
@@ -98,7 +100,7 @@ func (r *Repository) GetContribution(ctx context.Context, collectionID, userID u
 
 func (r *Repository) GetContributionByID(ctx context.Context, id uuid.UUID) (model.CollectionContribution, error) {
 	row := r.pool.QueryRow(ctx,
-		`SELECT id, collection_id, user_id, paid, paid_at, status, receipt_url
+		`SELECT id, collection_id, user_id, paid, paid_at, status, receipt_key
 		 FROM collection_contributions WHERE id=$1`,
 		id,
 	)
@@ -109,19 +111,19 @@ func (r *Repository) GetContributionByID(ctx context.Context, id uuid.UUID) (mod
 	return cc, nil
 }
 
-// SubmitContribution sets status=pending and saves receipt URL.
+// SubmitContribution sets status=pending and saves the receipt's object key.
 // Only allowed when current status is not_paid.
-func (r *Repository) SubmitContribution(ctx context.Context, collectionID, userID uuid.UUID, receiptURL string) (model.CollectionContribution, error) {
+func (r *Repository) SubmitContribution(ctx context.Context, collectionID, userID uuid.UUID, receiptKey string) (model.CollectionContribution, error) {
 	row := r.pool.QueryRow(ctx,
-		`INSERT INTO collection_contributions (collection_id, user_id, paid, status, receipt_url)
+		`INSERT INTO collection_contributions (collection_id, user_id, paid, status, receipt_key)
 		 VALUES ($1, $2, FALSE, 'pending', $3)
 		 ON CONFLICT (collection_id, user_id) DO UPDATE
 		   SET status = 'pending',
-		       receipt_url = EXCLUDED.receipt_url,
+		       receipt_key = EXCLUDED.receipt_key,
 		       paid = FALSE,
 		       paid_at = NULL
-		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_url`,
-		collectionID, userID, receiptURL,
+		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_key`,
+		collectionID, userID, receiptKey,
 	)
 	cc, err := scanContribution(row)
 	if err != nil {
@@ -136,7 +138,7 @@ func (r *Repository) ConfirmContribution(ctx context.Context, id uuid.UUID) (mod
 		`UPDATE collection_contributions
 		 SET status = 'paid', paid = TRUE, paid_at = NOW()
 		 WHERE id = $1
-		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_url`,
+		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_key`,
 		id,
 	)
 	cc, err := scanContribution(row)
@@ -150,9 +152,9 @@ func (r *Repository) ConfirmContribution(ctx context.Context, id uuid.UUID) (mod
 func (r *Repository) RejectContribution(ctx context.Context, id uuid.UUID) (model.CollectionContribution, error) {
 	row := r.pool.QueryRow(ctx,
 		`UPDATE collection_contributions
-		 SET status = 'not_paid', paid = FALSE, paid_at = NULL, receipt_url = NULL
+		 SET status = 'not_paid', paid = FALSE, paid_at = NULL, receipt_key = NULL
 		 WHERE id = $1
-		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_url`,
+		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_key`,
 		id,
 	)
 	cc, err := scanContribution(row)
@@ -168,8 +170,8 @@ func (r *Repository) MarkPaid(ctx context.Context, collectionID, userID uuid.UUI
 		`INSERT INTO collection_contributions (collection_id, user_id, paid, paid_at, status)
 		 VALUES ($1, $2, TRUE, NOW(), 'paid')
 		 ON CONFLICT (collection_id, user_id) DO UPDATE
-		   SET status = 'paid', paid = TRUE, paid_at = NOW(), receipt_url = collection_contributions.receipt_url
-		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_url`,
+		   SET status = 'paid', paid = TRUE, paid_at = NOW(), receipt_key = collection_contributions.receipt_key
+		 RETURNING id, collection_id, user_id, paid, paid_at, status, receipt_key`,
 		collectionID, userID,
 	)
 	cc, err := scanContribution(row)
@@ -181,7 +183,7 @@ func (r *Repository) MarkPaid(ctx context.Context, collectionID, userID uuid.UUI
 
 func (r *Repository) ListContributions(ctx context.Context, collectionID uuid.UUID) ([]model.CollectionContribution, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, collection_id, user_id, paid, paid_at, status, receipt_url
+		`SELECT id, collection_id, user_id, paid, paid_at, status, receipt_key
 		 FROM collection_contributions WHERE collection_id=$1`,
 		collectionID,
 	)
