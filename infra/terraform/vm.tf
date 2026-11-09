@@ -64,7 +64,10 @@ resource "openstack_compute_instance_v2" "bimeet" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [block_device] # Replacing the volume must be a deliberate, separate step, not a side effect of an unrelated apply.
+    ignore_changes = [
+      block_device, # Replacing the volume must be a deliberate, separate step, not a side effect of an unrelated apply.
+      user_data,    # user_data is ForceNew on this resource — a plan that picks up a cloud-init.yaml.tftpl edit would try to replace the instance, which prevent_destroy then blocks outright (plan fails instead of applying). Ignoring it keeps routine applies working; rolling out a real cloud-init change stays the deliberate, documented exception in README "Changing cloud-init".
+    ]
   }
 
   depends_on = [openstack_networking_router_interface_v2.bimeet]
