@@ -45,11 +45,11 @@ resource "selectel_iam_s3_credentials_v1" "backup" {
 }
 
 # --- Uploads bucket -----------------------------------------------------
-# Mirrors the current MinIO setup: the backend does a server-side
-# PutObject and hands back a public URL (backend/internal/storage/s3.go) —
-# there is no presigned-upload flow and no browser-side PUT, so no CORS
-# config is needed here. Because the app returns bare public URLs, object
-# GET has to stay publicly readable; nothing else (listing, writes) is public.
+# Private — no public-read policy. As of the backend's GET /api/files/{key}
+# redirect (handler/files), the app itself mints a short-lived presigned
+# GET on every request instead of exposing a permanently public object URL.
+# No CORS config: uploads are still a server-side PutObject
+# (backend/internal/storage/s3.go), never a browser-side PUT.
 resource "aws_s3_bucket" "uploads" {
   bucket = "bimeet-${var.environment}-uploads"
 }
@@ -59,20 +59,6 @@ resource "aws_s3_bucket_versioning" "uploads" {
   versioning_configuration {
     status = "Disabled"
   }
-}
-
-resource "aws_s3_bucket_policy" "uploads_public_read" {
-  bucket = aws_s3_bucket.uploads.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "PublicReadGetObject"
-      Effect    = "Allow"
-      Principal = "*"
-      Action    = "s3:GetObject"
-      Resource  = "${aws_s3_bucket.uploads.arn}/*"
-    }]
-  })
 }
 
 # --- Backups bucket -------------------------------------------------------

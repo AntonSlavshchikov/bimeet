@@ -187,25 +187,27 @@ application code or existing CI/compose changes.
 
 ### MinIO → Selectel Object Storage
 
+**Done on the app side** (branch `infra/selectel-migration`): the backend
+now stores object keys, not URLs, and serves files through a
+`GET /api/files/{key}` redirect to a short-lived presigned URL instead of a
+permanently public one — see that branch's own README/runbook notes for
+what changed and why. The uploads bucket here (`storage.tf`) has no
+public-read policy for exactly that reason. What's left for the actual
+cutover:
+
 - `docker-compose.prod.yml`: remove the `minio` and `minio-init` services
   and the `minio_data` volume, and the `s3.bimeet.pro` Traefik router.
 - `.env.prod` (on the VM, not in this repo): set
-  `S3_BUCKET=bimeet-prod-uploads`,
-  `S3_PUBLIC_BASE_URL=https://<uploads-bucket-public-url>`, and
-  `S3_ENDPOINT=https://s3.ru-9.storage.selcloud.ru` (confirm exact public
-  URL format for Selectel path-style buckets once the bucket exists).
-  `UsePathStyle = true` is already hardcoded in
-  `backend/cmd/server/main.go:203`, so no backend code change needed.
-- Set `AWS_ACCESS_KEY_ID` / `AWS_ACCESS_KEY_SECRET` env vars on the backend
-  container from `app_s3_access_key` / `app_s3_secret_key` (the AWS SDK v2
-  client in `backend/internal/storage/s3.go` reads the standard AWS env
-  vars / credential chain — confirm exact var names against
-  `backend/internal/config/config.go` since reading `.env.example` directly
-  was blocked in this session's sandbox).
+  `AWS_REGION=ru-9`, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` from
+  `app_s3_access_key`/`app_s3_secret_key`, `S3_BUCKET=bimeet-prod-uploads`,
+  `S3_ENDPOINT=https://s3.ru-9.storage.selcloud.ru`, and optionally
+  `S3_PRESIGN_TTL` (default `5m`, Go duration syntax). `S3_PUBLIC_BASE_URL`
+  is no longer read for anything the frontend sees (kept only as the
+  Uploader interface's unused return value) and can be left unset.
 - One-time data migration: copy existing objects from the MinIO `avatars`
   bucket to `bimeet-prod-uploads` (e.g. `mc mirror` or `rclone`) before
-  cutting the backend over, so existing avatar/receipt/chat-image URLs
-  don't break.
+  cutting the backend over, so existing avatar/receipt/chat-image keys
+  still resolve to a real object.
 
 ### GHCR → Selectel Container Registry (CRaaS)
 
