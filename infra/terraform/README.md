@@ -211,15 +211,24 @@ cutover:
 
 ### GHCR → Selectel Container Registry (CRaaS)
 
-- `.github/workflows/deploy.yml`: change `REGISTRY: ghcr.io` to
-  `REGISTRY: <terraform output registry_endpoint, without the image path>`
-  (e.g. `cr.selcloud.ru`), and the `docker/login-action` step's
-  `registry`/`username`/`password` to the CRaaS endpoint and
-  `CRAAS_USERNAME`/`CRAAS_PASSWORD` secrets instead of
-  `github.actor`/`secrets.GITHUB_TOKEN`.
-- On the VM side (`deploy` job's SSH script): same registry swap for the
-  `docker login` line and the image references in `docker-compose.prod.yml`
-  (`ghcr.io/${GITHUB_REPOSITORY_OWNER}/bimeet-*` → the CRaaS endpoint).
+**Done** (branch `infra/selectel-migration`): `deploy.yml`'s `build` job now
+also pushes every image to CRaaS, right after the existing GHCR push —
+guarded so it no-ops until the secrets below exist, and
+`docker-compose.prod.yml` reads the image prefix from `$IMAGE_REGISTRY`
+instead of a hardcoded `ghcr.io/...`. What's left is the actual cutover,
+once CI has pushed to CRaaS successfully a few times:
+
+- Add GitHub Secrets: `CRAAS_REGISTRY` (`terraform output registry_endpoint`,
+  e.g. `cr.selcloud.ru/bimeet-prod`), `CRAAS_USERNAME` (`terraform output
+  ci_serviceuser_name`), `CRAAS_PASSWORD` (`terraform output -raw
+  ci_serviceuser_password`).
+- In `deploy.yml`'s `deploy` job, change the one line
+  `export IMAGE_REGISTRY="ghcr.io/${{ steps.owner.outputs.name }}"` to
+  `export IMAGE_REGISTRY="${{ secrets.CRAAS_REGISTRY }}"`, and swap the
+  `docker login ghcr.io ...` line above it for a CRaaS login using
+  `CRAAS_USERNAME`/`CRAAS_PASSWORD`.
+- Once that's live and confirmed, the GHCR push steps in `build` can be
+  removed (or left as a second mirror — your call, nothing forces it).
 - Tag retention: no Terraform-manageable cleanup policy exists for
   `selectel_craas_registry_v1` (see `registry.tf`) — set this up through
   the Container Registry UI/API, or add a scheduled CI job that prunes old
