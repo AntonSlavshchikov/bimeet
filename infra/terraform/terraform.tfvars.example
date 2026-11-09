@@ -1,0 +1,21 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values.
+# Never commit terraform.tfvars.
+
+selectel_domain   = "123456"
+selectel_username = "bootstrap-admin"
+selectel_password = "CHANGE-ME"
+
+project_name = "bimeet"
+environment  = "prod"
+region       = "ru-9"
+availability_zone = "ru-9a"
+
+domain = "bimeet.pro"
+
+admin_cidrs           = ["203.0.113.4/32"]
+admin_ssh_public_key  = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@host"
+
+terraform_serviceuser_password = "CHANGE-ME"
+ci_serviceuser_password        = "CHANGE-ME"
+app_serviceuser_password       = "CHANGE-ME"
+backup_serviceuser_password    = "CHANGE-ME"
