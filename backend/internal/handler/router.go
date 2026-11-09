@@ -17,6 +17,7 @@ import (
 	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
+	fileshandler "bimeet/internal/handler/files"
 	itemhandler "bimeet/internal/handler/item"
 	messagehandler "bimeet/internal/handler/message"
 	notificationhandler "bimeet/internal/handler/notification"
@@ -42,6 +43,7 @@ func NewRouter(
 	profile *profilehandler.Handler,
 	admin *adminhandler.Handler,
 	push *pushhandler.Handler,
+	files *fileshandler.Handler,
 	userLookup middleware.UserLookup,
 	sessionValidator middleware.SessionValidator,
 	adminEmails []string,
@@ -89,6 +91,10 @@ func NewRouter(
 
 	// Public invite link (GET only)
 	r.Get("/api/events/invite/{token}", event.GetByInviteToken)
+
+	// Public redirect to a presigned file URL — see handler/files for why
+	// this has no auth check.
+	r.Get("/api/files/*", files.Get)
 
 	// Protected routes
 	r.Group(func(r chi.Router) {
