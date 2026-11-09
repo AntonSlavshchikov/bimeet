@@ -32,6 +32,14 @@ func FileURL(key *string) *string {
 // S3Storage uploads files to, and presigns GETs against, an S3-compatible
 // bucket (AWS S3, MinIO, or Selectel Object Storage — path-style for the
 // latter two, see cmd/server/main.go).
+//
+// client and presign are deliberately built from two different endpoints:
+// client talks to wherever the backend itself can reach the bucket (which,
+// behind a reverse proxy / on a private network, may be an address only
+// reachable from inside that network, e.g. "http://minio:9000"), while
+// presign has to produce a URL the end user's browser can actually load —
+// see cmd/server/main.go for how S3_PRESIGN_ENDPOINT picks that apart from
+// S3_ENDPOINT.
 type S3Storage struct {
 	client     *s3.Client
 	presign    *s3.PresignClient
@@ -40,10 +48,10 @@ type S3Storage struct {
 	presignTTL time.Duration
 }
 
-func NewS3(client *s3.Client, bucket, publicURL string, presignTTL time.Duration) *S3Storage {
+func NewS3(client, presignClient *s3.Client, bucket, publicURL string, presignTTL time.Duration) *S3Storage {
 	return &S3Storage{
 		client:     client,
-		presign:    s3.NewPresignClient(client),
+		presign:    s3.NewPresignClient(presignClient),
 		bucket:     bucket,
 		publicURL:  publicURL,
 		presignTTL: presignTTL,

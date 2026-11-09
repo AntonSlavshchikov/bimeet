@@ -38,20 +38,38 @@ func TestFileURL(t *testing.T) {
 // PresignGetObject only signs a URL locally against the given credentials —
 // it makes no network call — so this exercises the real AWS SDK presigner
 // with fake static credentials, no S3/MinIO server needed.
-func TestS3Storage_PresignGet(t *testing.T) {
-	client := s3.New(s3.Options{
+func newFakeClient(endpoint string) *s3.Client {
+	return s3.New(s3.Options{
 		Region:       "us-east-1",
 		Credentials:  credentials.NewStaticCredentialsProvider("fake-key", "fake-secret", ""),
-		BaseEndpoint: aws.String("http://127.0.0.1:0"),
+		BaseEndpoint: aws.String(endpoint),
 		UsePathStyle: true,
 	})
-	store := NewS3(client, "bimeet-uploads", "http://127.0.0.1:0/bimeet-uploads", 5*time.Minute)
+}
+
+func TestS3Storage_PresignGet(t *testing.T) {
+	client := newFakeClient("http://internal-only:9000")
+	store := NewS3(client, client, "bimeet-uploads", "http://internal-only:9000/bimeet-uploads", 5*time.Minute)
 
 	url, err := store.PresignGet(context.Background(), "avatars/u1.jpg")
 	require.NoError(t, err)
 	assert.Contains(t, url, "avatars/u1.jpg")
 	assert.Contains(t, url, "X-Amz-Signature=")
 	assert.Contains(t, url, "X-Amz-Expires=300") // 5 minutes
+}
+
+// A regression test for exactly the bug this split is meant to prevent:
+// presigning must use the endpoint passed as presignClient, never the one
+// the regular client (for PutObject etc.) was built with.
+func TestS3Storage_PresignGet_UsesPresignEndpoint(t *testing.T) {
+	internal := newFakeClient("http://minio:9000")   // only reachable inside the backend's network
+	public := newFakeClient("https://s3.bimeet.pro") // what the browser needs
+	store := NewS3(internal, public, "bimeet-uploads", "https://s3.bimeet.pro/bimeet-uploads", 5*time.Minute)
+
+	url, err := store.PresignGet(context.Background(), "avatars/u1.jpg")
+	require.NoError(t, err)
+	assert.Contains(t, url, "s3.bimeet.pro")
+	assert.NotContains(t, url, "minio")
 }
 
 func TestNoopStorage_PresignGet(t *testing.T) {
