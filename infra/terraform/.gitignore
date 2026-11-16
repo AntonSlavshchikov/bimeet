@@ -1,12 +1,12 @@
-# Local Terraform state and cache — remote state lives in Selectel Object Storage.
+# Provider cache and local state. The state holds IDs and the server's root
+# password, so it never goes to git; keep a private copy of it instead.
 .terraform/
 *.tfstate
 *.tfstate.*
 crash.log
 crash.*.log
 
-# Real variable values and backend credentials never get committed.
+# Real variable values (API token) never get committed.
 terraform.tfvars
 *.auto.tfvars
 *.auto.tfvars.json
-backend.tfvars

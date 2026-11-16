@@ -1,44 +1,11 @@
-variable "selectel_domain" {
-  description = "Selectel account number (domain_name), shown in the top-right corner of my.selectel.ru."
-  type        = string
-}
-
-variable "selectel_username" {
-  description = "Bootstrap service user name with account-scoped `member` + `iam.admin` roles, created by hand before running Terraform (see README Prerequisites). Used only to create the project and the project-scoped service users below."
-  type        = string
-}
-
-variable "selectel_password" {
-  description = "Password for selectel_username."
+variable "timeweb_token" {
+  description = "Timeweb Cloud API token (panel: API и Terraform). Put it in terraform.tfvars, never in git."
   type        = string
   sensitive   = true
 }
 
-variable "project_name" {
-  description = "Name of the Selectel Cloud Platform project Terraform creates for Bimeet."
-  type        = string
-  default     = "bimeet"
-}
-
-variable "region" {
-  description = "Selectel pool/region, e.g. ru-9. Must be in the `ru-9` format, not `SPB-2`."
-  type        = string
-  default     = "ru-9"
-
-  validation {
-    condition     = can(regex("^ru-[0-9]+$", var.region))
-    error_message = "region must look like \"ru-9\", not a datacenter code like \"SPB-2\"."
-  }
-}
-
-variable "availability_zone" {
-  description = "Availability zone within region, e.g. ru-9a."
-  type        = string
-  default     = "ru-9a"
-}
-
 variable "environment" {
-  description = "Deployment environment name, used in resource names and tags."
+  description = "Deployment environment name, used in resource names."
   type        = string
   default     = "prod"
 
@@ -48,20 +15,34 @@ variable "environment" {
   }
 }
 
-variable "terraform_serviceuser_password" {
-  description = "Password to set on the project-scoped \"terraform\" service user that Terraform creates for itself (used by the openstack provider and for S3 bucket management). Generate it once and keep it in backend.tfvars-style secret storage, not in version control."
+variable "location" {
+  description = "Timeweb location code used to pick the server configurator. ru-3 is Moscow."
   type        = string
-  sensitive   = true
+  default     = "ru-3"
 }
 
-variable "ci_serviceuser_password" {
-  description = "Password to set on the project-scoped \"ci\" service user used by GitHub Actions to push/pull images to the Container Registry."
+variable "availability_zone" {
+  description = "Availability zone for the server and its floating IP; must belong to `location`."
   type        = string
-  sensitive   = true
+  default     = "msk-1"
+}
+
+variable "server" {
+  description = "Server size for a custom (configurator-based) premium NVMe server."
+  type = object({
+    cpu  = number
+    ram  = number # MB
+    disk = number # MB
+  })
+  default = {
+    cpu  = 1
+    ram  = 2048
+    disk = 15360
+  }
 }
 
 variable "admin_cidrs" {
-  description = "CIDR blocks allowed to reach the VM over SSH (port 22). Keep this to your own admin IP(s), never 0.0.0.0/0."
+  description = "CIDR blocks allowed to reach SSH (port 22). Keep this to your own IP(s), never 0.0.0.0/0."
   type        = list(string)
 
   validation {
@@ -71,38 +52,6 @@ variable "admin_cidrs" {
 }
 
 variable "admin_ssh_public_key" {
-  description = "Public SSH key (e.g. contents of ~/.ssh/id_ed25519.pub) installed for the \"deploy\" user via cloud-init."
+  description = "Public SSH key (contents of ~/.ssh/id_ed25519.pub). Installed for the \"deploy\" user."
   type        = string
-}
-
-variable "vm_flavor" {
-  description = "VM size."
-  type = object({
-    vcpus = number
-    ram   = number # MB
-    disk  = number # GB, boot volume size
-  })
-  default = {
-    vcpus = 2
-    ram   = 4096
-    disk  = 40
-  }
-}
-
-variable "app_serviceuser_password" {
-  description = "Password to set on the project-scoped service user whose S3 credentials the backend uses to reach the uploads bucket."
-  type        = string
-  sensitive   = true
-}
-
-variable "backup_serviceuser_password" {
-  description = "Password to set on the project-scoped service user whose S3 credentials the backup script uses to reach the backups bucket."
-  type        = string
-  sensitive   = true
-}
-
-variable "domain" {
-  description = "Primary domain name for the DNS zone and A records, e.g. bimeet.pro."
-  type        = string
-  default     = "bimeet.pro"
 }

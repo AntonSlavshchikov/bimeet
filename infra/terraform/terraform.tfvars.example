@@ -1,21 +1,14 @@
-# Copy to terraform.tfvars (gitignored) and fill in real values.
-# Never commit terraform.tfvars.
+# Copy to terraform.tfvars (git-ignored) and fill in. Fake values below.
 
-selectel_domain   = "123456"
-selectel_username = "bootstrap-admin"
-selectel_password = "CHANGE-ME"
+timeweb_token = "eyJ...your-api-token..."
 
-project_name = "bimeet"
-environment  = "prod"
-region       = "ru-9"
-availability_zone = "ru-9a"
+# Your current public IP: curl -s https://ifconfig.me
+admin_cidrs = ["203.0.113.10/32"]
 
-domain = "bimeet.pro"
+# Contents of ~/.ssh/id_ed25519.pub
+admin_ssh_public_key = "ssh-ed25519 AAAA...example... you@laptop"
 
-admin_cidrs           = ["203.0.113.4/32"]
-admin_ssh_public_key  = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@host"
-
-terraform_serviceuser_password = "CHANGE-ME"
-ci_serviceuser_password        = "CHANGE-ME"
-app_serviceuser_password       = "CHANGE-ME"
-backup_serviceuser_password    = "CHANGE-ME"
+# Defaults: Moscow, 1 CPU / 2 GB RAM / 15 GB NVMe.
+# location          = "ru-3"
+# availability_zone = "msk-1"
+# server = { cpu = 1, ram = 2048, disk = 15360 }

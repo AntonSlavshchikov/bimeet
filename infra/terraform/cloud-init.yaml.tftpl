@@ -1,7 +1,7 @@
 #cloud-config
 # Hardening + Docker setup for the Bimeet prod VM. Idempotent on reboot;
-# re-running Terraform does NOT re-run this (user_data only applies on
-# first boot) — changes here need a new VM, see README "Changing cloud-init".
+# re-running Terraform does NOT re-run this (cloud-init only runs on first
+# boot) — changes here only reach a new server.
 
 users:
   - name: deploy
@@ -28,36 +28,6 @@ write_files:
           "max-file": "5"
         }
       }
-
-  # Postgres backup — script, systemd units, and its credentials. See
-  # docs/runbooks/backup-restore.md for how to re-install this by hand on a
-  # VM that already existed before this cloud-init change.
-  - path: /opt/bimeet/backup/pg_backup.sh
-    permissions: "0755"
-    content: |
-      ${indent(6, pg_backup_script)}
-
-  - path: /opt/bimeet/backup/pg_restore.sh
-    permissions: "0755"
-    content: |
-      ${indent(6, pg_restore_script)}
-
-  - path: /opt/bimeet/backup/backup.env
-    permissions: "0600"
-    content: |
-      BACKUP_S3_BUCKET=${backup_s3_bucket}
-      S3_ENDPOINT=${backup_s3_endpoint}
-      AWS_ACCESS_KEY_ID=${backup_s3_access_key}
-      AWS_SECRET_ACCESS_KEY=${backup_s3_secret_key}
-      AWS_DEFAULT_REGION=${backup_s3_region}
-
-  - path: /etc/systemd/system/bimeet-backup.service
-    content: |
-      ${indent(6, backup_service_unit)}
-
-  - path: /etc/systemd/system/bimeet-backup.timer
-    content: |
-      ${indent(6, backup_timer_unit)}
 
 package_update: true
 package_upgrade: true
@@ -89,7 +59,7 @@ runcmd:
 
   # ufw: default deny, only the ports a human or Traefik needs directly.
   # Published container ports bypass ufw by talking to iptables/nftables
-  # directly — the security group (security_group.tf) is the real perimeter;
+  # directly — the cloud firewall (firewall.tf) is the real perimeter;
   # ufw is defense in depth for anything accidentally bound on the host itself.
   - ufw default deny incoming
   - ufw default allow outgoing
@@ -118,8 +88,5 @@ runcmd:
 
   - mkdir -p /opt/bimeet
   - chown deploy:deploy /opt/bimeet
-  - chown -R root:root /opt/bimeet/backup
-  - systemctl daemon-reload
-  - systemctl enable --now bimeet-backup.timer
 
   - systemctl restart sshd
