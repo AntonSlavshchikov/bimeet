@@ -1,5 +1,9 @@
 # MinIO → Selectel S3 cutover
 
+> This is the **in-place** variant: same server, only storage changes.
+> Moving prod to the new Selectel VM (the actual plan) is
+> `selectel-rollout.md`, which reuses parts of this file.
+
 The backend already speaks the private-bucket + presigned-redirect protocol
 (`infra/selectel-migration` branch) — this is the runbook for actually
 switching prod from MinIO to Selectel Object Storage without downtime or
