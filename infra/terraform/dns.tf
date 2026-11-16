@@ -6,12 +6,13 @@ resource "selectel_domains_zone_v2" "bimeet" {
 }
 
 locals {
-  # @, www, api, staging — all point at the one VM for now. "api" and
-  # "staging" are not used by anything deployed today (the backend is only
-  # reachable through the frontend's nginx /api/ proxy, see
-  # frontend/nginx.conf; there is no separate staging environment) but are
-  # provisioned ahead of time as requested.
-  a_record_hosts = ["@", "www", "api", "staging"]
+  # All point at the one VM. "@", "www" (landing) and "app" (frontend) must
+  # match the Traefik Host() rules in docker-compose.prod.yml, otherwise the
+  # site goes dark right after the NS switch. "api" and "staging" are not
+  # used by anything deployed today (the backend is only reachable through
+  # the frontend's nginx /api/ proxy, see frontend/nginx.conf; there is no
+  # separate staging environment) but are provisioned ahead of time.
+  a_record_hosts = ["@", "www", "app", "api", "staging"]
 }
 
 resource "selectel_domains_rrset_v2" "a" {

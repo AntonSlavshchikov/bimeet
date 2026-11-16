@@ -98,9 +98,9 @@ GitHub Secrets (Settings → Secrets and variables → Actions):
 | Terraform output | GitHub secret | Used by |
 |---|---|---|
 | `floating_ip` | `SSH_HOST` | `deploy.yml` (existing) |
-| `app_s3_access_key` / `app_s3_secret_key` | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | backend `.env.prod`, see "Next steps" |
-| `backup_s3_access_key` / `backup_s3_secret_key` | (backup script's own env) | backup cron, once added |
-| `registry_endpoint` | `REGISTRY` | `deploy.yml`, once migrated to CRaaS |
+| `app_s3_access_key` / `app_s3_secret_key` | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | backend `.env.prod` on the VM (not a GitHub Secret) |
+| `backup_s3_access_key` / `backup_s3_secret_key` | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | `/opt/bimeet/backup/backup.env` on the VM |
+| `registry_endpoint` | `CRAAS_REGISTRY` | `deploy.yml` |
 | `ci_serviceuser_name` / `ci_serviceuser_password` | `CRAAS_USERNAME` / `CRAAS_PASSWORD` | `deploy.yml`, once migrated to CRaaS |
 
 ```bash
@@ -114,8 +114,8 @@ If the floating IP is ever released and reallocated (it shouldn't be —
 `openstack_networking_floatingip_v2` is a stable resource, not something
 that gets recreated by normal applies), update the DNS A records: they
 reference `openstack_networking_floatingip_v2.bimeet.address` directly, so
-a `terraform apply` after a genuine IP change updates all four records
-(`@`, `www`, `api`, `staging`) automatically. No manual DNS edit needed —
+a `terraform apply` after a genuine IP change updates all A records
+(`@`, `www`, `app`, `api`, `staging`) automatically. No manual DNS edit needed —
 only the registrar NS delegation (see below) is a one-time manual step.
 
 ## DNS cutover
@@ -123,10 +123,14 @@ only the registrar NS delegation (see below) is a one-time manual step.
 `selectel_domains_zone_v2` does not export its NS server list as a
 Terraform attribute. After the first `apply`:
 
-1. Open the control panel → Domains → `bimeet.pro`, or call the Domains API
+1. **Before touching the registrar**, list every record the current DNS
+   hosting serves for `bimeet.pro` (MX, TXT/SPF/DKIM, site verifications).
+   This zone only creates A and CAA records; anything not recreated here
+   disappears the moment NS switches over.
+2. Open the control panel → Domains → `bimeet.pro`, or call the Domains API
    with `terraform output dns_zone_id`, and copy the assigned NS servers.
-2. Set those as the NS records for `bimeet.pro` at the domain registrar.
-3. **Until that NS delegation propagates, ACME HTTP-01 validation (Traefik)
+3. Set those as the NS records for `bimeet.pro` at the domain registrar.
+4. **Until that NS delegation propagates, ACME HTTP-01 validation (Traefik)
    will fail** — Let's Encrypt can't reach a zone that isn't delegated to
    Selectel yet. Expect a gap between `apply` and working HTTPS.
 
@@ -136,8 +140,9 @@ The VM and its boot volume have `lifecycle { prevent_destroy = true }` on
 purpose — this is the one thing in the stack holding actual user data
 (Postgres) outside of Object Storage. To tear the environment down anyway:
 
-1. Back up Postgres first (there is no automated backup yet — see "Next
-   steps"). `pg_dump` to somewhere outside the VM before doing anything else.
+1. Back up Postgres first: run `infra/backup/pg_backup.sh` by hand and
+   confirm the dump is in `bimeet-prod-backups` before doing anything else.
+   Note that destroying the stack also destroys that bucket.
 2. Remove the two `prevent_destroy` lines (`vm.tf`) in a throwaway local
    edit — don't commit that removal.
 3. `terraform destroy`.
