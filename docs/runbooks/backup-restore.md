@@ -1,5 +1,13 @@
 # Postgres backup & restore
 
+> **Status: not enabled on the Timeweb server.** The scripts need an S3
+> bucket that lives outside the server, and the current minimal setup has
+> none (uploads stay in MinIO on the server's own disk). To turn backups on:
+> create a private bucket in Timeweb Cloud (`twc_s3_bucket`), put its keys
+> and endpoint into `/opt/bimeet/backup/backup.env`, and install the units
+> by hand as described in "Installing it" below. Mentions of Selectel and
+> `storage.tf` further down describe the earlier Selectel design.
+
 ## How it works
 
 `infra/backup/pg_backup.sh` runs `pg_dump -Fc` inside the running `postgres`

@@ -1,5 +1,5 @@
 [Unit]
-Description=Bimeet Postgres backup to Selectel Object Storage
+Description=Bimeet Postgres backup to an S3 bucket
 After=docker.service
 Requires=docker.service
 

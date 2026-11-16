@@ -104,7 +104,10 @@ AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=<надёжный пароль>
 S3_BUCKET=avatars
 S3_ENDPOINT=http://minio:9000
-S3_PUBLIC_BASE_URL=https://s3.bimeet.pro/avatars
+# Бакет приватный по смыслу: браузер получает файлы через
+# GET /api/files/<key> → 302 на presigned URL. Ссылку нужно подписывать
+# адресом, который виден из браузера, а не внутренним minio:9000.
+S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=<тот же пароль>
 ```
