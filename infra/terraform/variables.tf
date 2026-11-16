@@ -106,12 +106,3 @@ variable "domain" {
   type        = string
   default     = "bimeet.pro"
 }
-
-# Common tags/metadata applied to every resource that supports them.
-locals {
-  common_tags = {
-    project    = "bimeet"
-    env        = var.environment
-    managed-by = "terraform"
-  }
-}
