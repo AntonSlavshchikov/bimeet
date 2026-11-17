@@ -1,53 +1,53 @@
-# ADR 0004: CI/CD — GitHub Actions + GHCR, деплой по тегу через SSH
+# ADR 0004: CI/CD — GitHub Actions + GHCR, tag-triggered deploy over SSH
 
-- Статус: принято
-- Дата: 2026-11-16
-- Связано: [0001](0001-hosting-provider.md)
+- Status: accepted
+- Date: 2026-11-16
+- Related: [0001](0001-hosting-provider.md)
 
 ## Context
 
-Код в GitHub (`AntonSlavshchikov/bimeet`), CI уже на GitHub Actions, образы в GitHub Container Registry. При переезде на Selectel был добавлен второй пуш образов в Selectel Container Registry (CRaaS), но после выбора Timeweb ([0001](0001-hosting-provider.md)) он потерял смысл.
+The code is on GitHub (`AntonSlavshchikov/bimeet`), CI already runs on GitHub Actions, and images live in GitHub Container Registry. During the Selectel migration a second image push to Selectel Container Registry (CRaaS) was added, but after choosing Timeweb ([0001](0001-hosting-provider.md)) it lost its purpose.
 
 ## Decision drivers
 
-- Не ломать работающий пайплайн перед защитой.
-- Минимум новых сервисов и секретов.
-- Понимать риск зависимости от зарубежных сервисов и иметь путь отхода.
+- Don't break a working pipeline right before the defense.
+- As few new services and secrets as possible.
+- Understand the risk of depending on foreign services and have a way out.
 
 ## Considered options
 
-1. **GitHub Actions + GHCR (как есть).**
-2. **GitHub Actions + Selectel CRaaS.** Реестр в РФ, но провайдер уже не используется.
-3. **GitHub Actions + реестр Timeweb Cloud.** TODO: наличие и цена не изучались.
-4. **Перенос репозитория и CI в российский сервис (например, GitVerse).**
+1. **GitHub Actions + GHCR (as is).**
+2. **GitHub Actions + Selectel CRaaS.** A registry in Russia, but the provider is no longer used.
+3. **GitHub Actions + the Timeweb Cloud registry.** TODO: availability and price not investigated.
+4. **Moving the repository and CI to a Russian service (e.g. GitVerse).**
 
 ## Decision
 
-Вариант 1. Пайплайн `.github/workflows/deploy.yml` запускается **на push тега**:
+Option 1. The pipeline `.github/workflows/deploy.yml` runs **on a tag push**:
 
-1. `lint`: `make lint vet` (Go), `npm run lint` (фронт);
-2. `build`: сборка трёх образов (backend, frontend, landing) и пуш в GHCR с тегом = SHA коммита;
-3. `test`: юнит-тесты Go и фронта, затем smoke-проверка собранных образов (`deploy/ci/smoke-images.sh`);
-4. `deploy` (environment `production`): `scp` `docker-compose.prod.yml` и `deploy/` на сервер, по SSH `docker compose pull && up -d` с `IMAGE_TAG` проверенного коммита.
+1. `lint`: `make lint vet` (Go), `npm run lint` (frontend);
+2. `build`: builds three images (backend, frontend, landing) and pushes them to GHCR tagged with the commit SHA;
+3. `test`: Go and frontend unit tests, then a smoke check of the built images (`deploy/ci/smoke-images.sh`);
+4. `deploy` (environment `production`): `scp` of `docker-compose.prod.yml` and `deploy/` to the server, then over SSH `docker compose pull && up -d` with the `IMAGE_TAG` of the tested commit.
 
-Шаги пуша в CRaaS удалены (коммит `5d1d5d1`). Кроме ненужности, они использовали контекст `secrets` в `if:` шага, что GitHub Actions не допускает, и первый тег уронил бы workflow.
+The CRaaS push steps were removed (commit `5d1d5d1`). Besides being unneeded, they used the `secrets` context in a step-level `if:`, which GitHub Actions doesn't allow, so the first tag would have failed the workflow.
 
-Отдельно `.github/workflows/infra.yml` на PR с изменениями `infra/**` выполняет `terraform fmt`, `validate` и tflint, без кредов и без `plan`/`apply`.
+Separately, `.github/workflows/infra.yml` runs `terraform fmt`, `validate` and tflint on PRs that touch `infra/**`, with no credentials and no `plan`/`apply`.
 
 ## Consequences
 
-**Положительные**
-- Ничего не нужно переносить и настраивать заново; пайплайн уже работал.
-- Выкатывается ровно тот образ, который прошёл тесты (тег = SHA).
-- Ручное подтверждение деплоя возможно через required reviewers в environment `production`.
+**Positive**
+- Nothing to migrate or set up again; the pipeline already worked.
+- Exactly the image that passed the tests is deployed (tag = SHA).
+- Manual deploy approval is possible through required reviewers on the `production` environment.
 
-**Отрицательные / риски**
-- **Зависимость от зарубежных сервисов.** Runners GitHub и образы в GHCR находятся вне РФ. Это не данные пользователей (они в РФ, см. 0001), но доступность деплоя от этого зависит. Прецедент: в 2024 году Docker Hub ограничивал доступ пользователям из России. TODO: точная дата и масштаб в репозитории не задокументированы.
-- **Порядок «build → test»:** образ попадает в GHCR до тестов. На сервер он уходит только после зелёных тестов, но в реестре могут оставаться непроверенные теги.
-- Деплой по SSH с ключом в секретах GitHub: компрометация репозитория даёт доступ к серверу. Смягчение: отдельный CI-ключ и пользователь `deploy` (runbook `timeweb-launch.md`).
+**Negative / risks**
+- **Dependence on foreign services.** GitHub runners and GHCR images are outside Russia. This is not user data (that stays in Russia, see 0001), but deploy availability depends on it. Precedent: in 2024 Docker Hub restricted access for users from Russia. TODO: exact dates and scope are not documented in the repo.
+- **"build → test" order:** an image reaches GHCR before the tests. It goes to the server only after green tests, but untested tags may remain in the registry.
+- SSH deploy with the key in GitHub secrets: compromising the repository gives access to the server. Mitigation: a separate CI key and the `deploy` user (runbook `timeweb-launch.md`).
 
-### Путь отхода
+### Way out
 
-- Образы: собирать и пушить в российский реестр (реестр Timeweb или любой S3/registry в РФ) — замена `REGISTRY` и логина в `deploy.yml`, compose уже читает префикс из `IMAGE_REGISTRY`.
-- CI: GitVerse заявляет совместимость с синтаксисом GitHub Actions, workflow можно перенести почти без изменений. TODO: совместимость не проверялась.
-- Крайний вариант: собрать образы локально и выкатить по SSH вручную (`docs/deploy.md`, «Ручной деплой»).
+- Images: build and push to a Russian registry (Timeweb's or any registry in Russia) by changing `REGISTRY` and the login in `deploy.yml`; compose already reads the prefix from `IMAGE_REGISTRY`.
+- CI: GitVerse claims compatibility with GitHub Actions syntax, so the workflow could move almost unchanged. TODO: compatibility not verified.
+- Last resort: build images locally and roll them out over SSH by hand (the manual deploy section of `docs/deploy.md`).

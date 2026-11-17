@@ -1,54 +1,54 @@
-# ADR 0002: Файлы — ключи в БД и выдача через presigned-редирект
+# ADR 0002: Files — keys in the database, served via a presigned redirect
 
-- Статус: принято
-- Дата: 2026-11-16
-- Связано: [0003](0003-minio-on-server.md)
+- Status: accepted
+- Date: 2026-11-16
+- Related: [0003](0003-minio-on-server.md)
 
 ## Context
 
-Пользователи загружают аватары, картинки в чат и чеки к сборам. Раньше:
+Users upload avatars, chat images and receipts for collections. Before:
 
-- backend клал объект в бакет и сохранял в БД **полный публичный URL** (`S3_PUBLIC_BASE_URL + "/" + key`, например `https://s3.bimeet.pro/avatars/avatars/<id>.png`);
-- бакет был публичным (`minio-init` делает `mc anonymous set public`);
-- любой, кто знает URL, видит файл навсегда, а смена хранилища или домена ломает все ссылки в БД.
+- the backend put the object into the bucket and stored the **full public URL** in the database (`S3_PUBLIC_BASE_URL + "/" + key`, e.g. `https://s3.bimeet.pro/avatars/avatars/<id>.png`);
+- the bucket was public (`minio-init` runs `mc anonymous set public`);
+- anyone with the URL could see the file forever, and changing the storage or the domain broke every link in the database.
 
 ## Decision drivers
 
-- Файл не должен быть доступен по вечной публичной ссылке.
-- Смена хранилища (MinIO ↔ S3 провайдера) или домена не должна требовать переписывать данные.
-- Фронтенд трогать нельзя: он уже показывает `avatar_url`, `image_url`, `receipt_url`.
-- Открытая вкладка не должна ломаться, когда истекает срок подписанной ссылки.
+- A file must not be reachable through a permanent public link.
+- Changing storage (MinIO ↔ provider S3) or domain must not require rewriting data.
+- The frontend must not change: it already renders `avatar_url`, `image_url`, `receipt_url`.
+- A tab left open must not break when a signed link expires.
 
 ## Considered options
 
-1. **Оставить полные URL и публичный бакет.** Ничего не делать; проблемы выше остаются.
-2. **Отдавать фронту presigned URL прямо в JSON.** Ссылка истекает через несколько минут, и аватар в долго открытой вкладке или старая картинка в чате перестают открываться.
-3. **Ключ в БД + стабильный путь `/api/files/{key}`, который на каждый запрос выдаёт 302 на свежий presigned URL.**
+1. **Keep full URLs and a public bucket.** Do nothing; the problems above remain.
+2. **Return a presigned URL directly in the JSON.** The link expires within minutes, so an avatar in a long-open tab or an old chat image stops loading.
+3. **Key in the database + a stable path `/api/files/{key}` that answers every request with a 302 to a fresh presigned URL.**
 
 ## Decision
 
-Вариант 3.
+Option 3.
 
-- Миграция `026_file_keys` переименовывает колонки (`avatar_url → avatar_key`, `image_url → image_key`, `receipt_url → receipt_key`) и переводит старые URL в ключи.
-- `storage.FileURL()` превращает ключ в `/api/files/<key>` в пяти местах чтения в репозиториях. JSON-поля и фронтенд не меняются.
-- Публичный роут `GET /api/files/*` (`backend/internal/handler/files`) отвечает `302` на presigned GET со сроком `S3_PRESIGN_TTL` (по умолчанию 5 минут).
-- Новые ключи: `chat/<eventID>/<uuid>`, `receipts/<collectionID>/<userID>/<uuid>`. Аватар остаётся `avatars/<userID><ext>`: это один объект на пользователя с перезаписью, непредсказуемость имени тут ничего не защищает.
+- Migration `026_file_keys` renames the columns (`avatar_url → avatar_key`, `image_url → image_key`, `receipt_url → receipt_key`) and turns existing URLs into keys.
+- `storage.FileURL()` turns a key into `/api/files/<key>` at the five read sites in the repositories. JSON fields and the frontend are unchanged.
+- The public route `GET /api/files/*` (`backend/internal/handler/files`) answers `302` to a presigned GET valid for `S3_PRESIGN_TTL` (5 minutes by default).
+- New keys: `chat/<eventID>/<uuid>`, `receipts/<collectionID>/<userID>/<uuid>`. The avatar stays `avatars/<userID><ext>`: one object per user, overwritten on re-upload, where an unpredictable name protects nothing.
 
-### Найденные и исправленные баги
+### Bugs found and fixed
 
-- **Presign подписывал внутренним адресом** (коммит `17ce954`). Presigned URL строился тем же клиентом, что и загрузка, поэтому получал хост из `S3_ENDPOINT`. Для MinIO это внутренний `http://minio:9000`, недоступный из браузера. Добавлен отдельный клиент на `S3_PRESIGN_ENDPOINT` (fallback на `S3_ENDPOINT`) и regression-тест.
-- **В ключ попадало имя бакета** (коммит `9f7e6e5`). Первая версия миграции срезала только `https://host/`, и из `https://s3.bimeet.pro/avatars/avatars/<id>.png` получался ключ `avatars/avatars/<id>.png`, которого в хранилище нет. Теперь регэксп `^https?://.*/((avatars|chat|receipts)/)` оставляет ключ начиная с известного префикса. Проверено Go-тестом и запуском в Postgres 16.
+- **Presigning used the internal address** (commit `17ce954`). The presigned URL was built with the same client as uploads and inherited the host from `S3_ENDPOINT`. For MinIO that is the internal `http://minio:9000`, unreachable from the browser. Added a separate client on `S3_PRESIGN_ENDPOINT` (falls back to `S3_ENDPOINT`) and a regression test.
+- **The bucket name leaked into the key** (commit `9f7e6e5`). The first version of the migration stripped only `https://host/`, so `https://s3.bimeet.pro/avatars/avatars/<id>.png` became the key `avatars/avatars/<id>.png`, which doesn't exist in storage. The regex `^https?://.*/((avatars|chat|receipts)/)` now keeps the key from a known prefix onward. Verified with a Go test and a run in Postgres 16.
 
 ## Consequences
 
-**Положительные**
-- В БД лежит то, что называется ключом; хранилище и домен меняются через `.env.prod`, без миграции данных.
-- Ссылки на фронте стабильны, а прямой доступ к объекту живёт минуты.
-- Фронтенд не менялся.
+**Positive**
+- The database holds what is actually a key; storage and domain change through `.env.prod`, with no data migration.
+- Frontend links are stable, while direct access to an object lives for minutes.
+- No frontend changes.
 
-**Отрицательные**
-- Каждый показ картинки — лишний запрос к backend и редирект.
-- `/api/files/*` без авторизации: кто знает ключ, получит файл. Уровень доступа не хуже прежнего, но и не лучше. Проверка участия во встрече — отдельная задача.
-- `026.down.sql` возвращает имена колонок, но не полные URL: откат возможен только восстановлением дампа.
-- **Известный долг:** `minio-init` в `docker-compose.prod.yml` по-прежнему выполняет `mc anonymous set public`, то есть бакет MinIO на сервере остаётся публичным и файлы доступны и в обход presign. TODO: убрать эту строку (правка кода, в рамках документации не делалась).
-- Интеграционных тестов с БД в проекте нет; миграция проверена юнит-тестом регэкспа и ручным запуском.
+**Negative**
+- Every image view costs an extra backend request and a redirect.
+- `/api/files/*` has no authorization: whoever knows the key gets the file. Access is no worse than before, but no better either. Checking event membership is a separate task.
+- `026.down.sql` restores the column names but not the full URLs: rollback is only possible by restoring a dump.
+- **Known debt:** `minio-init` in `docker-compose.prod.yml` still runs `mc anonymous set public`, so the MinIO bucket on the server stays public and files are reachable bypassing presign. TODO: remove that line (a code change, not done as part of the documentation).
+- The project has no database integration tests; the migration is covered by a regex unit test and a manual run.

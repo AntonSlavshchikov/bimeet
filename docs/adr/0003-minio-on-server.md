@@ -1,38 +1,38 @@
-# ADR 0003: MinIO на той же ВМ вместо S3 провайдера
+# ADR 0003: MinIO on the same VM instead of provider S3
 
-- Статус: принято (осознанный компромисс)
-- Дата: 2026-11-16
-- Связано: [0001](0001-hosting-provider.md), [0002](0002-file-storage-private-presigned.md)
+- Status: accepted (deliberate trade-off)
+- Date: 2026-11-16
+- Related: [0001](0001-hosting-provider.md), [0002](0002-file-storage-private-presigned.md)
 
 ## Context
 
-Загруженным файлам нужно S3-совместимое хранилище. MinIO уже есть в `docker-compose.prod.yml`, а у Timeweb Cloud есть платный S3 (`twc_s3_bucket`). Цель ближайшего этапа — показать работающий продукт на защите при минимальной цене.
+Uploaded files need S3-compatible storage. MinIO is already part of `docker-compose.prod.yml`, and Timeweb Cloud offers paid S3 (`twc_s3_bucket`). The goal of this stage is to show a working product at the defense at the lowest cost.
 
 ## Decision drivers
 
-- Цена: не платить за ещё один сервис.
-- Scope: «базовый минимум», чтобы показать сайт; меньше ресурсов и ключей — меньше рисков перед защитой.
-- Простая обратимость: код не должен зависеть от выбора.
+- Price: don't pay for one more service.
+- Scope: the bare minimum needed to show the site; fewer resources and keys mean fewer risks before the defense.
+- Easy reversal: the code must not depend on this choice.
 
 ## Considered options
 
-1. **MinIO на той же ВМ** (как в compose сейчас).
-2. **S3-бакет Timeweb Cloud.** Отдельная плата (TODO: цена минимального тарифа не зафиксирована), отдельные ключи, ещё один ресурс в Terraform.
+1. **MinIO on the same VM** (as in compose today).
+2. **A Timeweb Cloud S3 bucket.** Separate charge (TODO: price of the smallest plan not recorded), separate keys, one more Terraform resource.
 
 ## Decision
 
-Вариант 1. MinIO работает на сервере, Traefik публикует его как `s3.bimeet.pro`. Backend ходит в MinIO по `http://minio:9000`, а presigned-ссылки подписывает публичным адресом через `S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro`.
+Option 1. MinIO runs on the server and Traefik exposes it as `s3.bimeet.pro`. The backend talks to MinIO at `http://minio:9000` and signs presigned links with the public address via `S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro`.
 
-Переход на S3 провайдера — замена S3-переменных в `.env.prod` и копирование объектов. Код это уже поддерживает (ADR 0002).
+Moving to provider S3 means replacing the S3 variables in `.env.prod` and copying the objects. The code already supports it (ADR 0002).
 
 ## Consequences
 
-**Положительные**
-- Ноль дополнительных затрат и ресурсов в Terraform.
-- Тот же стек, что в локальной разработке (`docker-compose.yml`).
+**Positive**
+- Zero extra cost and no extra Terraform resources.
+- Same stack as local development (`docker-compose.yml`).
 
-**Отрицательные**
-- **Нет бэкапа вне сервера.** Файлы и Postgres лежат на одном диске одной ВМ. Скрипты бэкапа (`infra/backup/`) готовы, но им нужен бакет вне сервера, поэтому они не включены. Потеря ВМ — потеря данных. Перед защитой дамп снимается руками (runbook `timeweb-launch.md`).
-- **Общий диск и RAM.** MinIO делит 15 ГБ диска и 2 ГБ RAM с Postgres и приложением. Для демо хватает (два статических nginx, один Go-бинарник), для реальной нагрузки — нет.
-- Бакет MinIO сейчас публичный из-за `minio-init` (см. долг в ADR 0002).
-- TODO: мониторинга заполнения диска нет.
+**Negative**
+- **No backup off the server.** Files and Postgres live on one disk of one VM. The backup scripts (`infra/backup/`) are ready but need a bucket off the server, so they are not enabled. Losing the VM means losing the data. Before the defense a dump is taken by hand (runbook `timeweb-launch.md`).
+- **Shared disk and RAM.** MinIO shares 15 GB of disk and 2 GB of RAM with Postgres and the app. Enough for a demo (two static nginx images, one Go binary), not for real load.
+- The MinIO bucket is currently public because of `minio-init` (see the debt in ADR 0002).
+- TODO: there is no disk usage monitoring.

@@ -1,55 +1,55 @@
-# ADR 0001: Хостинг-провайдер — Timeweb Cloud
+# ADR 0001: Hosting provider — Timeweb Cloud
 
-- Статус: принято
-- Дата: 2026-11-16
-- Связано: [0003](0003-minio-on-server.md), `infra/terraform/README.md`
+- Status: accepted
+- Date: 2026-11-16
+- Related: [0003](0003-minio-on-server.md), `infra/terraform/README.md`
 
 ## Context
 
-Bimeet — один `docker-compose.prod.yml` (Traefik, Postgres, MinIO, backend, frontend, landing), которому нужна одна ВМ с публичным IP. Старый прод-сервер не работает, переносить данные не нужно. Инфраструктуру нужно описать кодом и показать на защите Capstone, при этом не платить за ресурсы, которые проекту не нужны.
+Bimeet is a single `docker-compose.prod.yml` (Traefik, Postgres, MinIO, backend, frontend, landing) that needs one VM with a public IP. The old production server is down, so there is no data to migrate. The infrastructure has to be described as code and shown at the Capstone defense, without paying for resources the project doesn't need.
 
-Путь выбора: Yandex Cloud → Selectel → Timeweb Cloud.
+The selection went Yandex Cloud → Selectel → Timeweb Cloud.
 
 ## Decision drivers
 
-- **Данные пользователей в РФ.** 242-ФЗ требует хранить персональные данные граждан РФ на серверах в России. База и загруженные файлы должны лежать в российском дата-центре.
-- **Terraform.** У провайдера должен быть рабочий Terraform-провайдер: инфраструктура как код — часть защиты.
-- **Цена.** Учебный проект, платит автор. Нужна минимальная конфигурация, достаточная для стека (оценка: 1 CPU / 2 ГБ RAM / 15 ГБ диска плюс swap).
-- **Регион Москва.** Ближе к пользователям, и ни у одного провайдера не должно быть очереди на ресурсы.
+- **User data stays in Russia.** Federal Law 242-FZ requires personal data of Russian citizens to be stored on servers in Russia. The database and uploaded files must live in a Russian data center.
+- **Terraform.** The provider must have a working Terraform provider: infrastructure as code is part of the defense.
+- **Price.** A student project paid for by the author. The smallest size that fits the stack is enough (estimate: 1 CPU / 2 GB RAM / 15 GB disk plus swap).
+- **Moscow region.** Closer to users, and no waiting queue for resources.
 
 ## Considered options
 
-| Вариант | Цена/мес (минимальная подходящая конфигурация + IP) | Регион | Terraform | Трудоёмкость миграции |
+| Option | Price/month (smallest fitting size + IP) | Region | Terraform | Migration effort |
 |---|---|---|---|---|
-| Yandex Cloud | TODO: цена не зафиксирована в репозитории | TODO | TODO | TODO: почему отказались, в репозитории не записано |
-| Selectel | TODO: цена ВМ не зафиксирована. Отдельно: публичный IP 189,57 ₽ + роутер 200 ₽ | Москва (`ru-6`, `ru-7`) или Санкт-Петербург (`ru-9`) | Есть (`selectel/selectel` + OpenStack + AWS для бакетов) | Была написана полностью (история ветки до `9eea517`): ~12 файлов, три провайдера |
-| **Timeweb Cloud** | **1780 ₽** (1 CPU 3.3 ГГц / 2 ГБ / 15 ГБ NVMe — 1580 ₽, IP — 200 ₽), почасовая оплата | Москва (`ru-3`, зона `msk-1`) | Есть (`timeweb-cloud/timeweb-cloud` 1.8.4) | Переписать `infra/terraform/` (~1 день); код приложения, compose, деплой и бэкапы не меняются |
+| Yandex Cloud | TODO: price not recorded in the repo | TODO | TODO | TODO: why it was dropped is not recorded in the repo |
+| Selectel | TODO: VM price not recorded. Billed separately: public IP 189.57 ₽ + router 200 ₽ | Moscow (`ru-6`, `ru-7`) or Saint Petersburg (`ru-9`) | Yes (`selectel/selectel` + OpenStack + AWS for buckets) | Fully written (branch history up to `9eea517`): ~12 files, three providers |
+| **Timeweb Cloud** | **1780 ₽** (1 CPU 3.3 GHz / 2 GB / 15 GB NVMe — 1580 ₽, IP — 200 ₽), hourly billing | Moscow (`ru-3`, zone `msk-1`) | Yes (`timeweb-cloud/timeweb-cloud` 1.8.4) | Rewrite `infra/terraform/` (~1 day); app code, compose, deploy and backups unchanged |
 
-Цены — из панелей провайдеров на 2026-11-16, без скидок за годовую оплату.
+Prices are from the providers' control panels on 2026-11-16, without yearly-billing discounts.
 
-### Почему ушли с Selectel (конкретно)
+### Why Selectel was dropped (specifically)
 
-- **Регионы и цена.** Заложенный по умолчанию `ru-9` оказался Санкт-Петербургом и примерно в 2 раза дороже московского `ru-6`. Дешёвые Shared-конфигурации (доля ядра 10/20/50%) в `ru-6` недоступны, в Москве они есть только в `ru-2c` и `ru-7a`, а `ru-2` помечен «Ёмкость ограничена».
-- **Отдельная оплата роутера и IP.** Публичный IP (189,57 ₽/мес) и роутер (200 ₽/мес) тарифицируются отдельно от ВМ, плюс сетевой диск отдельно.
-- **S3 по умолчанию в `kz-1`.** Форма создания бакета по умолчанию предлагает Алматы (Казахстан), что противоречит драйверу «данные в РФ». Создать бакет без пополнения баланса нельзя, поэтому эндпоинт российского пула так и не удалось проверить.
-- **Сложность.** Три провайдера Terraform (selectel, openstack, aws), сервис-пользователи, сеть, роутер, отдельные S3-ключи — много движущихся частей для одной ВМ.
+- **Regions and price.** The default `ru-9` turned out to be Saint Petersburg and about twice as expensive as Moscow's `ru-6`. Cheap Shared configurations (10/20/50% of a core) are not available in `ru-6`; in Moscow they exist only in `ru-2c` and `ru-7a`, and `ru-2` is marked "capacity limited".
+- **Router and IP billed separately.** The public IP (189.57 ₽/month) and the router (200 ₽/month) are charged on top of the VM, and the network disk is separate too.
+- **S3 defaults to `kz-1`.** The bucket creation form defaults to Almaty (Kazakhstan), which contradicts the "data in Russia" driver. A bucket can't be created without topping up the balance, so the endpoint of a Russian pool was never verified.
+- **Complexity.** Three Terraform providers (selectel, openstack, aws), service users, network, router and separate S3 keys: many moving parts for a single VM.
 
 ## Decision
 
-**Timeweb Cloud, Москва (`ru-3` / `msk-1`), одна ВМ 1 CPU / 2 ГБ / 15 ГБ NVMe**, описанная в `infra/terraform/` одним провайдером `twc`: проект, SSH-ключ, floating IP, сервер, облачный файрвол. State хранится локально, DNS остаётся на reg.ru.
+**Timeweb Cloud, Moscow (`ru-3` / `msk-1`), one VM with 1 CPU / 2 GB / 15 GB NVMe**, described in `infra/terraform/` with a single `twc` provider: project, SSH key, floating IP, server, cloud firewall. State is local, DNS stays at reg.ru.
 
-`terraform plan` против реального API прошёл: 12 ресурсов на создание. Через API подтверждено, что `ru-3` — это Москва, а конфигуратор 31 — NVMe 3.3 ГГц.
+`terraform plan` against the real API succeeded: 12 resources to create. The API confirmed that `ru-3` is Moscow and configurator 31 is NVMe at 3.3 GHz.
 
 ## Consequences
 
-**Положительные**
-- Дешевле Selectel при сопоставимой конфигурации; один счёт без отдельных платежей за роутер.
-- Terraform проще: один провайдер, 12 ресурсов, нет сетей, роутеров и сервис-пользователей.
-- Данные (Postgres и файлы MinIO) физически в Москве.
-- Почасовая оплата: сервер можно поднять ближе к защите.
+**Positive**
+- Cheaper than Selectel for a comparable size; one bill with no separate router charge.
+- Simpler Terraform: one provider, 12 resources, no networks, routers or service users.
+- Data (Postgres and MinIO files) physically in Moscow.
+- Hourly billing: the server can be brought up shortly before the defense.
 
-**Отрицательные**
-- Работа над Selectel-версией Terraform выброшена (она осталась в истории ветки).
-- В момент выбора в части регионов Timeweb была очередь («Предзаказ»); в Москве её не было.
-- TODO: не выяснено, тарифицируется ли выключенный сервер Timeweb (у Selectel для этого есть «заморозка»).
-- CI/CD (GitHub Actions, GHCR) и выпуск сертификатов (Let's Encrypt) работают вне РФ. Это инфраструктурный трафик, а не данные пользователей, см. [0004](0004-ci-cd-and-registry.md).
+**Negative**
+- The Selectel Terraform work was thrown away (it remains in the branch history).
+- At the time of the choice some Timeweb regions had a queue ("pre-order"); Moscow did not.
+- TODO: not verified whether a stopped Timeweb server is still billed (Selectel has "shelving" for this).
+- CI/CD (GitHub Actions, GHCR) and certificate issuance (Let's Encrypt) run outside Russia. This is infrastructure traffic, not user data; see [0004](0004-ci-cd-and-registry.md).
