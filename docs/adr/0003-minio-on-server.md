@@ -34,5 +34,4 @@ Moving to provider S3 means replacing the S3 variables in `.env.prod` and copyin
 **Negative**
 - **No backup off the server.** Files and Postgres live on one disk of one VM. The backup scripts (`infra/backup/`) are ready but need a bucket off the server, so they are not enabled. Losing the VM means losing the data. Before the defense a dump is taken by hand (runbook `timeweb-launch.md`).
 - **Shared disk and RAM.** MinIO shares 15 GB of disk and 2 GB of RAM with Postgres and the app. Enough for a demo (two static nginx images, one Go binary), not for real load.
-- The MinIO bucket is currently public because of `minio-init` (see the debt in ADR 0002).
 - TODO: there is no disk usage monitoring.

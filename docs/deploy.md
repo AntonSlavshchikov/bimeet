@@ -156,7 +156,7 @@ Once the secrets are set, the pipeline runs on every pushed Git tag:
 1. Lints the backend and frontend.
 2. Builds three Docker images and pushes them to GHCR tagged `<commit-sha>`.
 3. Runs backend/frontend unit tests and smoke tests of the built containers.
-4. Deploys the same `<commit-sha>` images to the server over SSH (environment `production`).
+4. Deploys the same `<commit-sha>` images to the server over SSH (environment `prod`).
 
 Each stage depends on the previous one: deploy doesn't start if lint, build or test failed.
 

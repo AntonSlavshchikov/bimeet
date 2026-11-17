@@ -9,7 +9,7 @@
 Users upload avatars, chat images and receipts for collections. Before:
 
 - the backend put the object into the bucket and stored the **full public URL** in the database (`S3_PUBLIC_BASE_URL + "/" + key`, e.g. `https://s3.bimeet.pro/avatars/avatars/<id>.png`);
-- the bucket was public (`minio-init` runs `mc anonymous set public`);
+- the bucket was public (`minio-init` ran `mc anonymous set public`);
 - anyone with the URL could see the file forever, and changing the storage or the domain broke every link in the database.
 
 ## Decision drivers
@@ -50,5 +50,5 @@ Option 3.
 - Every image view costs an extra backend request and a redirect.
 - `/api/files/*` has no authorization: whoever knows the key gets the file. Access is no worse than before, but no better either. Checking event membership is a separate task.
 - `026.down.sql` restores the column names but not the full URLs: rollback is only possible by restoring a dump.
-- **Known debt:** `minio-init` in `docker-compose.prod.yml` still runs `mc anonymous set public`, so the MinIO bucket on the server stays public and files are reachable bypassing presign. TODO: remove that line (a code change, not done as part of the documentation).
+- The MinIO bucket was still public (`minio-init` ran `mc anonymous set public`), so files were reachable bypassing presign. Fixed: `minio-init` in `docker-compose.prod.yml` now runs `mc anonymous set none`, which also revokes access on a bucket created public earlier. Checked against a real MinIO: anonymous GET 403, presigned GET 200. The dev compose files keep the public bucket for local convenience.
 - The project has no database integration tests; the migration is covered by a regex unit test and a manual run.

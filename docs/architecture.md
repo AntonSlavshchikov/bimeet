@@ -39,7 +39,7 @@ flowchart LR
         lint["lint<br/>make lint vet · npm run lint"]
         build["build<br/>3 images, tag = SHA"]
         test["test<br/>unit tests · image smoke check"]
-        deploy["deploy<br/>environment: production"]
+        deploy["deploy<br/>environment: prod"]
         lint --> build --> test --> deploy
     end
     build -- push --> ghcr[("GHCR<br/>ghcr.io/&lt;owner&gt;/bimeet-*")]

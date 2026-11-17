@@ -28,7 +28,7 @@ Option 1. The pipeline `.github/workflows/deploy.yml` runs **on a tag push**:
 1. `lint`: `make lint vet` (Go), `npm run lint` (frontend);
 2. `build`: builds three images (backend, frontend, landing) and pushes them to GHCR tagged with the commit SHA;
 3. `test`: Go and frontend unit tests, then a smoke check of the built images (`deploy/ci/smoke-images.sh`);
-4. `deploy` (environment `production`): `scp` of `docker-compose.prod.yml` and `deploy/` to the server, then over SSH `docker compose pull && up -d` with the `IMAGE_TAG` of the tested commit.
+4. `deploy` (environment `prod`): `scp` of `docker-compose.prod.yml` and `deploy/` to the server, then over SSH `docker compose pull && up -d` with the `IMAGE_TAG` of the tested commit.
 
 The CRaaS push steps were removed (commit `5d1d5d1`). Besides being unneeded, they used the `secrets` context in a step-level `if:`, which GitHub Actions doesn't allow, so the first tag would have failed the workflow.
 
@@ -39,7 +39,7 @@ Separately, `.github/workflows/infra.yml` runs `terraform fmt`, `validate` and t
 **Positive**
 - Nothing to migrate or set up again; the pipeline already worked.
 - Exactly the image that passed the tests is deployed (tag = SHA).
-- Manual deploy approval is possible through required reviewers on the `production` environment.
+- Manual deploy approval is possible through required reviewers on the `prod` environment.
 
 **Negative / risks**
 - **Dependence on foreign services.** GitHub runners and GHCR images are outside Russia. This is not user data (that stays in Russia, see 0001), but deploy availability depends on it. Precedent: in 2024 Docker Hub restricted access for users from Russia. TODO: exact dates and scope are not documented in the repo.
