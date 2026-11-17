@@ -21,11 +21,19 @@ The selection went Yandex Cloud → Selectel → Timeweb Cloud.
 
 | Option | Price/month (smallest fitting size + IP) | Region | Terraform | Migration effort |
 |---|---|---|---|---|
-| Yandex Cloud | TODO: price not recorded in the repo | TODO | TODO | TODO: why it was dropped is not recorded in the repo |
+| Yandex Cloud | From 1659 ₽ for the "starter" package: 2 vCPU at 50% share / 2 GB, one dynamic IP included; boot disk extra (TODO: exact total for a 15 GB disk in the calculator) | `ru-central1` (zones `ru-central1-a`, `-b`, `-d`) | Yes (official `yandex-cloud/yandex`) | Not started: would be a rewrite of `infra/terraform/` comparable to Timeweb's |
 | Selectel | TODO: VM price not recorded. Billed separately: public IP 189.57 ₽ + router 200 ₽ | Moscow (`ru-6`, `ru-7`) or Saint Petersburg (`ru-9`) | Yes (`selectel/selectel` + OpenStack + AWS for buckets) | Fully written (branch history up to `9eea517`): ~12 files, three providers |
 | **Timeweb Cloud** | **1780 ₽** (1 CPU 3.3 GHz / 2 GB / 15 GB NVMe — 1580 ₽, IP — 200 ₽), hourly billing | Moscow (`ru-3`, zone `msk-1`) | Yes (`timeweb-cloud/timeweb-cloud` 1.8.4) | Rewrite `infra/terraform/` (~1 day); app code, compose, deploy and backups unchanged |
 
-Prices are from the providers' control panels on 2026-11-16, without yearly-billing discounts.
+Selectel and Timeweb prices are from the providers' control panels on 2026-11-16; the Yandex Cloud price is the package price on its public Compute Cloud page (checked 2026-11-17). No yearly-billing discounts.
+
+### Why Yandex Cloud was dropped
+
+The author's reasons, recorded as stated:
+
+- **Trust.** The author does not trust Yandex as a provider for this project. This is a subjective driver, not a technical one.
+- **Physical risk to data centers.** The author considers the risk of drone attacks on the regions hosting the provider's data centers too high for a project with a single VM and no off-site backup ([0003](0003-minio-on-server.md)). TODO: no verified incident is cited here; the assessment is the author's.
+- **Price.** In the author's comparison Yandex Cloud came out more expensive than Timeweb. On the public package prices the two are close (1659 ₽ without a disk vs 1780 ₽ with 15 GB NVMe), and Yandex's package gives only a 50% CPU share. TODO: confirm the full Yandex total, disk included, in the calculator.
 
 ### Why Selectel was dropped (specifically)
 
