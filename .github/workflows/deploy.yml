@@ -151,7 +151,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    environment: production
+    environment: prod
     permissions:
       contents: read
       packages: read
