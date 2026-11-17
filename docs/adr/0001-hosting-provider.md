@@ -21,19 +21,17 @@ The selection went Yandex Cloud → Selectel → Timeweb Cloud.
 
 | Option | Price/month (smallest fitting size + IP) | Region | Terraform | Migration effort |
 |---|---|---|---|---|
-| Yandex Cloud | From 1659 ₽ for the "starter" package: 2 vCPU at 50% share / 2 GB, one dynamic IP included; boot disk extra (TODO: exact total for a 15 GB disk in the calculator) | `ru-central1` (zones `ru-central1-a`, `-b`, `-d`) | Yes (official `yandex-cloud/yandex`) | Not started: would be a rewrite of `infra/terraform/` comparable to Timeweb's |
+| Yandex Cloud | **~1860 ₽** estimate: "starter" package 1659 ₽ (2 vCPU at 50% share / 2 GB, dynamic IP included) + 15 GB network SSD at ~13–14 ₽/GB | `ru-central1` (zones `ru-central1-a`, `-b`, `-d`) | Yes (official `yandex-cloud/yandex`) | Not started: would be a rewrite of `infra/terraform/` comparable to Timeweb's |
 | Selectel | TODO: VM price not recorded. Billed separately: public IP 189.57 ₽ + router 200 ₽ | Moscow (`ru-6`, `ru-7`) or Saint Petersburg (`ru-9`) | Yes (`selectel/selectel` + OpenStack + AWS for buckets) | Fully written (branch history up to `9eea517`): ~12 files, three providers |
 | **Timeweb Cloud** | **1780 ₽** (1 CPU 3.3 GHz / 2 GB / 15 GB NVMe — 1580 ₽, IP — 200 ₽), hourly billing | Moscow (`ru-3`, zone `msk-1`) | Yes (`timeweb-cloud/timeweb-cloud` 1.8.4) | Rewrite `infra/terraform/` (~1 day); app code, compose, deploy and backups unchanged |
 
-Selectel and Timeweb prices are from the providers' control panels on 2026-11-16; the Yandex Cloud price is the package price on its public Compute Cloud page (checked 2026-11-17). No yearly-billing discounts.
+Selectel and Timeweb prices are from the providers' control panels on 2026-11-16. The Yandex Cloud figure is an estimate from public pages checked on 2026-11-17: the package price on the Compute Cloud page plus the network SSD rate published for Yandex managed services (13.01–14.05 ₽/GB/month); the calculator itself was not used. No yearly-billing discounts.
 
 ### Why Yandex Cloud was dropped
 
-The author's reasons, recorded as stated:
-
-- **Trust.** The author does not trust Yandex as a provider for this project. This is a subjective driver, not a technical one.
-- **Physical risk to data centers.** The author considers the risk of drone attacks on the regions hosting the provider's data centers too high for a project with a single VM and no off-site backup ([0003](0003-minio-on-server.md)). TODO: no verified incident is cited here; the assessment is the author's.
-- **Price.** In the author's comparison Yandex Cloud came out more expensive than Timeweb. On the public package prices the two are close (1659 ₽ without a disk vs 1780 ₽ with 15 GB NVMe), and Yandex's package gives only a 50% CPU share. TODO: confirm the full Yandex total, disk included, in the calculator.
+- **Physical risk to data centers (realised in October 2026).** Within four days drones put three Yandex data centers out of action: Sasovo, Ryazan region (7–8 October, fully stopped; zone `ru-central1-b`), Kaluga (9 October, partly disabled) and Vladimir (10–11 October, fully stopped; zone `ru-central1-a`) [1][2]. Yandex Cloud stated in its alerts channel: "Оставшуюся конфигурацию ресурсов считаем неустойчивой. Режим работы платформы является аварийным" ("we consider the remaining resource configuration unstable; the platform is in emergency mode") and advised customers to use their own disaster recovery plans [3]. Customer services such as Dodo Pizza, Lamoda and the state system VetIS were disrupted [3]. Quota management for compute and disks was switched to manual mode with limits on expansion [1]; reports that capacity for new customers was paused came from an unnamed source and were denied by Yandex [2]. Yandex Cloud also agreed with Selectel, K2Cloud and VK Cloud to speed up moving customers [2]. For a project with a single VM and no off-site backup ([0003](0003-minio-on-server.md)), the zone a startup would pick by default (`ru-central1-a`) was exactly the one that went down.
+- **Price.** About 1860 ₽/month for a 50% CPU share against 1780 ₽ at Timeweb for a full core (see the table).
+- **Trust.** The author does not trust Yandex as a provider for this project. This is a subjective driver, recorded as stated.
 
 ### Why Selectel was dropped (specifically)
 
@@ -47,6 +45,12 @@ The author's reasons, recorded as stated:
 **Timeweb Cloud, Moscow (`ru-3` / `msk-1`), one VM with 1 CPU / 2 GB / 15 GB NVMe**, described in `infra/terraform/` with a single `twc` provider: project, SSH key, floating IP, server, cloud firewall. State is local, DNS stays at reg.ru.
 
 `terraform plan` against the real API succeeded: 12 resources to create. The API confirmed that `ru-3` is Moscow and configurator 31 is NVMe at 3.3 GHz.
+
+## References
+
+1. SecurityLab, 2026-10-11: <https://www.securitylab.ru/news/578584.php>
+2. Kommersant, 2026-10-11: <https://kommersant.ru/doc/9024163>
+3. Expert, 2026-10-11: <https://expert.ru/news/rabota-data-tsentra-yandeksa-vo-vladimire-ostanovlena-posle-ataki-bpla>
 
 ## Consequences
 
