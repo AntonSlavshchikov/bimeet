@@ -22,10 +22,18 @@ The selection went Yandex Cloud → Selectel → Timeweb Cloud.
 | Option | Price/month (smallest fitting size + IP) | Region | Terraform | Migration effort |
 |---|---|---|---|---|
 | Yandex Cloud | **~1860 ₽** estimate: "starter" package 1659 ₽ (2 vCPU at 50% share / 2 GB, dynamic IP included) + 15 GB network SSD at ~13–14 ₽/GB | `ru-central1` (zones `ru-central1-a`, `-b`, `-d`) | Yes (official `yandex-cloud/yandex`) | Not started: would be a rewrite of `infra/terraform/` comparable to Timeweb's |
-| Selectel | TODO: VM price not recorded. Billed separately: public IP 189.57 ₽ + router 200 ₽ | Moscow (`ru-6`, `ru-7`) or Saint Petersburg (`ru-9`) | Yes (`selectel/selectel` + OpenStack + AWS for buckets) | Fully written (branch history up to `9eea517`): ~12 files, three providers |
+| Selectel | **~6000 ₽** for the configuration originally planned (2 vCPU / 4 GB, network SSD, public IP 189.57 ₽ and router 200 ₽ billed separately), read by the author in the control panel on 2026-11-16. TODO: the smaller Shared Line option (`ru-7a`, 1 vCPU / 2 GB, 15–20 GB disk) was not priced. Pre-July-2026 price lists don't apply: prices changed on 2026-07-01 | Moscow (`ru-6`, `ru-7`) or Saint Petersburg (`ru-9`) | Yes (`selectel/selectel` + OpenStack + AWS for buckets) | Fully written (branch history up to `9eea517`): ~12 files, three providers |
 | **Timeweb Cloud** | **1780 ₽** (1 CPU 3.3 GHz / 2 GB / 15 GB NVMe — 1580 ₽, IP — 200 ₽), hourly billing | Moscow (`ru-3`, zone `msk-1`) | Yes (`timeweb-cloud/timeweb-cloud` 1.8.4) | Rewrite `infra/terraform/` (~1 day); app code, compose, deploy and backups unchanged |
 
 Selectel and Timeweb prices are from the providers' control panels on 2026-11-16. The Yandex Cloud figure is an estimate from public pages checked on 2026-11-17: the package price on the Compute Cloud page plus the network SSD rate published for Yandex managed services (13.01–14.05 ₽/GB/month); the calculator itself was not used. No yearly-billing discounts.
+
+**Same-configuration comparison (secondary source).** Tproger compared the providers on an identical server: 2 vCPU, 4 GB RAM, 40 GB NVMe, Ubuntu 24.04, one public IPv4, Moscow [4]. The order matches the table above:
+
+| Provider | Price/month (VAT included) | Traffic |
+|---|---|---|
+| Timeweb Cloud | 3000 ₽ (Premium, with IPv4) | free and unlimited |
+| Selectel | 3230.91 ₽ (Standard line, `ru-7a`) | 3 TB/month free, then 0.8962 ₽/GB |
+| Yandex Cloud | ~3449.89 ₽ for 720 h (Ice Lake, network SSD, OS image fee excluded) | not compared here |
 
 ### Why Yandex Cloud was dropped
 
@@ -51,6 +59,7 @@ Selectel and Timeweb prices are from the providers' control panels on 2026-11-16
 1. SecurityLab, 2026-10-11: <https://www.securitylab.ru/news/578584.php>
 2. Kommersant, 2026-10-11: <https://kommersant.ru/doc/9024163>
 3. Expert, 2026-10-11: <https://expert.ru/news/rabota-data-tsentra-yandeksa-vo-vladimire-ostanovlena-posle-ataki-bpla>
+4. V. Turchak, "Облачные серверы в России: сравниваем провайдеров на одинаковой конфигурации", Tproger, 2026-10-30: <https://tproger.ru/articles/oblachnye-servery-v-rossii-sravnivaem-provajderov-na-odinakovoj>
 
 ## Consequences
 
@@ -63,5 +72,5 @@ Selectel and Timeweb prices are from the providers' control panels on 2026-11-16
 **Negative**
 - The Selectel Terraform work was thrown away (it remains in the branch history).
 - At the time of the choice some Timeweb regions had a queue ("pre-order"); Moscow did not.
-- TODO: not verified whether a stopped Timeweb server is still billed (Selectel has "shelving" for this).
+- TODO: not verified whether a stopped Timeweb server is still billed: tariff pages describe hourly billing only. To close: ask Timeweb Cloud support in the panel chat "Is a stopped cloud server billed: in full, disk and IP only, or not at all?" and cite the answer as "Timeweb Cloud support, <date>". Selectel has "shelving" for this case.
 - CI/CD (GitHub Actions, GHCR) and certificate issuance (Let's Encrypt) run outside Russia. This is infrastructure traffic, not user data; see [0004](0004-ci-cd-and-registry.md).
