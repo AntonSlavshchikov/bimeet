@@ -1,68 +1,72 @@
-# Первый запуск на Timeweb Cloud
+# First launch on Timeweb Cloud
 
-Минимальный прод: одна VM в Москве, всё приложение в `docker-compose.prod.yml`
-(Traefik, Postgres, MinIO, backend, frontend, landing). База пустая, переносить
-нечего. Порядок важен: DNS меняется в самом конце, когда сервер уже отвечает.
+Minimal production: one VM in Moscow, the whole app in `docker-compose.prod.yml`
+(Traefik, Postgres, MinIO, backend, frontend, landing). The database starts
+empty, nothing to migrate. Order matters: DNS changes last, once the server
+already responds.
 
-## 0. Что нужно заранее
+## 0. Prerequisites
 
-- Аккаунт Timeweb Cloud с деньгами на балансе (~1800 ₽/мес за 1 CPU / 2 ГБ /
-  15 ГБ и публичный IP, оплата почасовая).
-- API-токен: панель → «API и Terraform» → создать токен.
-- Доступ к reg.ru, где лежит DNS `bimeet.pro` (`ns1/ns2.reg.ru`). Если домен
-  не твой, нужен владелец аккаунта: он поменяет четыре A-записи в шаге 4.
-- Права в GitHub-репозитории на секреты и теги.
+- A Timeweb Cloud account with a positive balance (~1780 ₽/month for
+  1 CPU / 2 GB / 15 GB plus a public IP, billed hourly).
+- An API token: panel → "API и Terraform" → create a token.
+- Access to reg.ru, which hosts DNS for `bimeet.pro` (`ns1/ns2.reg.ru`). If the
+  domain isn't yours, you need its owner: they change four A records in step 4.
+- Permissions in the GitHub repository for secrets and tags.
 
 ## 1. Terraform
 
 ```bash
 cd infra/terraform
-cp terraform.tfvars.example terraform.tfvars   # токен, свой IP, свой ssh-ключ
+cp terraform.tfvars.example terraform.tfvars   # token, your IP, your SSH key
 terraform init
-terraform plan        # читать: только создание, без удалений
+terraform plan        # read it: creates only, no destroys
 terraform apply
 terraform output
 ```
 
-Создаётся: проект, SSH-ключ, публичный IP, сервер, файрвол (22 только со
-своего IP, 80/443 всем).
+Creates: project, SSH key, public IP, server, firewall (22 only from your IP,
+80/443 from anywhere).
 
-После `apply` скопируй `terraform.tfstate` в надёжное место (не в git): без
-него Terraform больше не знает, что создал.
+After `apply`, copy `terraform.tfstate` somewhere safe (not git): without it
+Terraform no longer knows what it created.
 
-Если на `plan` ошибка про конфигуратор или ОС, значит в Москве другой код
-локации: поправь `location` в `terraform.tfvars` и повтори.
+Use your IPv4 for `admin_cidrs` (`curl -4 -s https://ifconfig.me`): the server
+has no IPv6, and without `-4` the service may return an IPv6 address.
 
-Если API ругается, что такой SSH-ключ уже есть, удали ключ, добавленный
-руками в панели («SSH-ключи»), и повтори `apply`.
+If `plan` fails on the configurator or OS, the Moscow location code differs:
+fix `location` in `terraform.tfvars` and retry.
 
-## 2. Сервер готов
+If the API complains that this SSH key already exists, delete the key added
+by hand in the panel ("SSH keys") and run `apply` again.
 
-Cloud-init ставит Docker, ufw, fail2ban и swap 2 ГБ, это занимает 3–5 минут.
+## 2. Server is ready
+
+cloud-init installs Docker, ufw, fail2ban and 2 GB of swap; this takes 3–5 minutes.
 
 ```bash
 ssh deploy@<server_ip>
 docker version && sudo ufw status && swapon --show
 ```
 
-## 3. Приложение
+## 3. Application
 
-На сервере:
+On the server:
 
 ```bash
 mkdir -p ~/bimeet && cd ~/bimeet
 ```
 
-1. Скопировать с ноутбука `docker-compose.prod.yml` и папку `deploy/` (дальше
-   их копирует CI сам):
+1. Copy `docker-compose.prod.yml` and the `deploy/` directory from your laptop
+   (CI copies them itself afterwards):
    ```bash
    scp -r docker-compose.prod.yml deploy deploy@<server_ip>:~/bimeet/
    ```
-2. Создать `~/bimeet/.env.prod` по `docs/deploy.md`, раздел «Создать
-   `.env.prod`», вариант A (MinIO). Обязательно:
-   - `S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro`: без этого ссылки на файлы
-     будут вести на внутренний `minio:9000`;
-   - сгенерировать секреты, а не оставлять примеры:
+2. Create `~/bimeet/.env.prod` following `docs/deploy.md`, "Create `.env.prod`",
+   option A (MinIO). Make sure to:
+   - set `S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro`: without it file links
+     point to the internal `minio:9000`;
+   - generate secrets instead of keeping the examples:
      ```bash
      openssl rand -base64 32   # JWT_SECRET, POSTGRES_PASSWORD, MINIO_ROOT_PASSWORD
      ```
@@ -70,21 +74,21 @@ mkdir -p ~/bimeet && cd ~/bimeet
 
 ## 4. DNS (reg.ru)
 
-В DNS-зоне `bimeet.pro` на reg.ru поставить A-записи на `server_ip`:
+In the `bimeet.pro` DNS zone on reg.ru, point A records to `server_ip`:
 
-| Имя | Зачем |
+| Name | Purpose |
 |---|---|
-| `@` | лендинг |
-| `www` | лендинг |
-| `app` | приложение |
-| `s3` | MinIO, через него браузер получает файлы |
+| `@` | landing |
+| `www` | landing |
+| `app` | application |
+| `s3` | MinIO; the browser fetches files through it |
 
-TTL 300. Проверка: `dig +short app.bimeet.pro` возвращает `server_ip`. Пока
-DNS не обновился, Let's Encrypt не выдаст сертификаты.
+TTL 300. Check: `dig +short app.bimeet.pro` returns `server_ip`. Let's Encrypt
+won't issue certificates until DNS has updated.
 
-## 5. Деплой
+## 5. Deploy
 
-Для CI отдельный ключ, чтобы личный ключ не лежал в GitHub:
+A separate key for CI, so your personal key doesn't live in GitHub:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/bimeet-ci -N "" -C bimeet-ci
@@ -93,31 +97,33 @@ ssh-copy-id -i ~/.ssh/bimeet-ci.pub deploy@<server_ip>
 
 GitHub → Settings → Secrets → Actions:
 
-| Секрет | Значение |
+| Secret | Value |
 |---|---|
 | `SSH_HOST` | `server_ip` |
 | `SSH_USER` | `deploy` |
-| `SSH_KEY` | содержимое `~/.ssh/bimeet-ci` (приватный) |
+| `SSH_KEY` | contents of `~/.ssh/bimeet-ci` (private) |
 | `VITE_API_URL`, `NEXT_PUBLIC_APP_URL` | `https://app.bimeet.pro` |
 
-Остальные (`GHCR_TOKEN`, `VITE_ADMIN_EMAILS`) уже есть. Потом смержить PR и
-поставить тег: `deploy.yml` соберёт образы и выкатит их на сервер.
+The others (`GHCR_TOKEN`, `VITE_ADMIN_EMAILS`) already exist. Then merge the PR
+and push a tag: `deploy.yml` builds the images and rolls them out to the server.
 
-## 6. Проверка
+## 6. Verification
 
-- `https://bimeet.pro` открывает лендинг, `https://app.bimeet.pro` — приложение,
-  сертификат валидный.
-- Регистрация, создание встречи.
-- Загрузка аватара: в DevTools → Network запрос `/api/files/...` отвечает 302
-  на `s3.bimeet.pro`, картинка показывается.
+- `https://bimeet.pro` opens the landing page, `https://app.bimeet.pro` the app,
+  with a valid certificate.
+- Sign up, create an event.
+- Upload an avatar: in DevTools → Network, `/api/files/...` answers 302 to
+  `s3.bimeet.pro`, and the image shows up.
 
-Логи: `docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend traefik`.
+Logs: `docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend traefik`.
 
-## Чего здесь нет (сознательно)
+## Deliberately not here
 
-- **Бэкапы БД**: скрипты готовы (`infra/backup/`), но им нужен бакет вне
-  сервера, см. `backup-restore.md`. Перед защитой хотя бы раз снять дамп
-  руками: `docker compose ... exec -T postgres pg_dump -Fc -U bimeet bimeet > bimeet.dump`
-  и забрать его на ноутбук через `scp`.
-- **Файлы вне сервера**: MinIO лежит на диске VM. Переезд в S3-бакет Timeweb —
-  поменять пять переменных S3 в `.env.prod`, код уже это умеет.
+- **Database backups**: the scripts are ready (`infra/backup/`) but need a
+  bucket off the server; see `backup-restore.md`. Before the defense, take at
+  least one dump by hand:
+  `docker compose ... exec -T postgres pg_dump -Fc -U bimeet bimeet > bimeet.dump`
+  and copy it to your laptop with `scp`.
+- **Files off the server**: MinIO lives on the VM's disk. Moving to a Timeweb
+  S3 bucket means changing the S3 variables in `.env.prod`; the code already
+  supports it.

@@ -13,9 +13,9 @@
 
 - [infra/terraform/README.md](../infra/terraform/README.md): what Terraform creates, design decisions, commands.
 - Runbooks ([runbooks/](runbooks/)):
-  - [timeweb-launch.md](runbooks/timeweb-launch.md): first production launch from scratch (in Russian).
+  - [timeweb-launch.md](runbooks/timeweb-launch.md): first production launch from scratch.
   - [backup-restore.md](runbooks/backup-restore.md): Postgres backup and restore (not enabled yet).
-- [deploy.md](deploy.md): deployment, `.env.prod`, GitHub secrets, manual deploy, rollback (in Russian).
+- [deploy.md](deploy.md): deployment, `.env.prod`, GitHub secrets, manual deploy, rollback.
 
 ## Product and development
 
