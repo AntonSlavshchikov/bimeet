@@ -17,6 +17,7 @@ import (
 
 	"bimeet/internal/model"
 	"bimeet/internal/secret"
+	"bimeet/internal/storage"
 )
 
 type Repository struct {
@@ -91,7 +92,7 @@ func (r *Repository) ListForUser(ctx context.Context, userID uuid.UUID) ([]model
 
 func (r *Repository) attachLastMessages(ctx context.Context, summaries []model.ChatSummary, idxByEvent map[uuid.UUID]int, eventIDs []uuid.UUID, userID uuid.UUID) error {
 	rows, err := r.pool.Query(ctx,
-		`SELECT DISTINCT ON (m.event_id) m.event_id, m.user_id, u.name, m.body, m.image_url, m.created_at, m.deleted_at
+		`SELECT DISTINCT ON (m.event_id) m.event_id, m.user_id, u.name, m.body, m.image_key, m.created_at, m.deleted_at
 		 FROM event_messages m
 		 JOIN users u ON u.id = m.user_id
 		 WHERE m.event_id = ANY($1)
@@ -113,6 +114,7 @@ func (r *Repository) attachLastMessages(ctx context.Context, summaries []model.C
 		if err := rows.Scan(&eventID, &authorID, &lm.AuthorName, &lm.Body, &lm.ImageURL, &lm.CreatedAt, &deletedAt); err != nil {
 			return fmt.Errorf("scan last message: %w", err)
 		}
+		lm.ImageURL = storage.FileURL(lm.ImageURL)
 		lm.IsMine = authorID == userID
 		lm.Deleted = deletedAt != nil
 		lm.Body = r.cipher.DecryptBody(lm.Body, lm.Deleted)

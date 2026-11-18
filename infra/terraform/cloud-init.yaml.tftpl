@@ -1,0 +1,92 @@
+#cloud-config
+# Hardening + Docker setup for the Bimeet prod VM. Idempotent on reboot;
+# re-running Terraform does NOT re-run this (cloud-init only runs on first
+# boot) — changes here only reach a new server.
+
+users:
+  - name: deploy
+    groups: [sudo, docker]
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    ssh_authorized_keys:
+      - ${admin_ssh_public_key}
+
+# Root login and password auth disabled; key-only access for "deploy".
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-bimeet-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+
+  - path: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "5"
+        }
+      }
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - chrony
+  - ca-certificates
+  - curl
+  - gnupg
+
+runcmd:
+  # Docker Engine + Compose plugin from Docker's own apt repo (the distro
+  # repo's docker.io package lags far behind and lacks the compose plugin).
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - >
+    echo "deb [arch=$(dpkg --print-architecture)
+    signed-by=/etc/apt/keyrings/docker.asc]
+    https://download.docker.com/linux/ubuntu
+    $(. /etc/os-release && echo $VERSION_CODENAME) stable"
+    > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+  - systemctl enable --now docker
+
+  # ufw: default deny, only the ports a human or Traefik needs directly.
+  # Published container ports bypass ufw by talking to iptables/nftables
+  # directly — the cloud firewall (firewall.tf) is the real perimeter;
+  # ufw is defense in depth for anything accidentally bound on the host itself.
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+
+  - systemctl enable --now fail2ban
+
+  # Security-only unattended upgrades, no automatic reboot — a surprise
+  # reboot of the only prod VM is worse than a delayed kernel update.
+  # Ubuntu ships this line commented out; uncomment it and force "false"
+  # explicitly rather than relying on the (also commented-out) default.
+  - sed -i 's|^//\?\s*Unattended-Upgrade::Automatic-Reboot .*|Unattended-Upgrade::Automatic-Reboot "false";|' /etc/apt/apt.conf.d/50unattended-upgrades
+  - systemctl enable --now unattended-upgrades
+
+  - systemctl enable --now chrony
+  - timedatectl set-timezone UTC
+
+  - fallocate -l 2G /swapfile
+  - chmod 600 /swapfile
+  - mkswap /swapfile
+  - swapon /swapfile
+  - echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+  - mkdir -p /opt/bimeet
+  - chown deploy:deploy /opt/bimeet
+
+  - systemctl restart sshd

@@ -19,6 +19,7 @@ import (
 	cityhandler "bimeet/internal/handler/city"
 	collectionhandler "bimeet/internal/handler/collection"
 	eventhandler "bimeet/internal/handler/event"
+	fileshandler "bimeet/internal/handler/files"
 	itemhandler "bimeet/internal/handler/item"
 	messagehandler "bimeet/internal/handler/message"
 	notificationhandler "bimeet/internal/handler/notification"
@@ -185,6 +186,7 @@ func main() {
 		profilesvc.AvatarStorage
 		collectionsvc.Uploader
 		messagesvc.Uploader
+		fileshandler.Presigner
 	}
 	if cfg.S3Bucket != "" {
 		awsCfg, err := awsconfig.LoadDefaultConfig(ctx,
@@ -203,11 +205,35 @@ func main() {
 				o.UsePathStyle = true // required for MinIO
 			})
 		}
-		fileStorage = storage.NewS3(s3.NewFromConfig(awsCfg, s3Opts...), cfg.S3Bucket, cfg.S3PublicBaseURL)
+
+		// Presigned GET URLs must use an endpoint the end user's browser can
+		// reach, which is not always cfg.S3Endpoint — e.g. a backend talking
+		// to "http://minio:9000" on a private network, while the public
+		// endpoint is "https://s3.bimeet.pro". S3_PRESIGN_ENDPOINT covers
+		// that split; it defaults to S3Endpoint, which is correct once
+		// S3Endpoint itself is already a public address (e.g. Selectel's).
+		presignEndpoint := cfg.S3PresignEndpoint
+		if presignEndpoint == "" {
+			presignEndpoint = cfg.S3Endpoint
+		}
+		presignOpts := []func(*s3.Options){}
+		if presignEndpoint != "" {
+			presignOpts = append(presignOpts, func(o *s3.Options) {
+				o.BaseEndpoint = &presignEndpoint
+				o.UsePathStyle = true
+			})
+		}
+
+		fileStorage = storage.NewS3(
+			s3.NewFromConfig(awsCfg, s3Opts...),
+			s3.NewFromConfig(awsCfg, presignOpts...),
+			cfg.S3Bucket, cfg.S3PublicBaseURL, cfg.S3PresignTTL,
+		)
 	} else {
 		slog.Info("S3_BUCKET not set — file uploads disabled")
 		fileStorage = &storage.NoopStorage{}
 	}
+	filesHandler := fileshandler.New(fileStorage)
 
 	profileSvc := profilesvc.New(userRepo, fileStorage)
 	collectionSvc := collectionsvc.New(collectionRepo, eventRepo, notifyingRepo, fileStorage)
@@ -251,6 +277,7 @@ func main() {
 		profileH,
 		adminH,
 		pushH,
+		filesHandler,
 		userRepo,
 		refreshTokenRepo,
 		cfg.AdminEmails,

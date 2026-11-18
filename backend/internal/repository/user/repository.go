@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"bimeet/internal/model"
+	"bimeet/internal/storage"
 )
 
 type Repository struct {
@@ -19,13 +20,17 @@ func New(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const userColumns = `id, name, last_name, email, birth_date, city, avatar_url, created_at`
+const userColumns = `id, name, last_name, email, birth_date, city, avatar_key, created_at`
 
 func scanUser(row interface {
 	Scan(...any) error
 }) (model.User, error) {
 	var u model.User
 	err := row.Scan(&u.ID, &u.Name, &u.LastName, &u.Email, &u.BirthDate, &u.City, &u.AvatarURL, &u.CreatedAt)
+	// avatar_key holds an S3 object key, not a URL — AvatarURL is scanned
+	// straight into that field above and rewritten here to the stable
+	// /api/files/ path the frontend actually loads (see storage.FileURL).
+	u.AvatarURL = storage.FileURL(u.AvatarURL)
 	return u, err
 }
 
@@ -89,10 +94,10 @@ func (r *Repository) UpdateProfile(ctx context.Context, id uuid.UUID, req model.
 	return u, nil
 }
 
-func (r *Repository) UpdateAvatar(ctx context.Context, id uuid.UUID, url string) (model.User, error) {
+func (r *Repository) UpdateAvatar(ctx context.Context, id uuid.UUID, key string) (model.User, error) {
 	row := r.pool.QueryRow(ctx,
-		`UPDATE users SET avatar_url=$1 WHERE id=$2 RETURNING `+userColumns,
-		url, id,
+		`UPDATE users SET avatar_key=$1 WHERE id=$2 RETURNING `+userColumns,
+		key, id,
 	)
 	u, err := scanUser(row)
 	if err != nil {
@@ -103,7 +108,7 @@ func (r *Repository) UpdateAvatar(ctx context.Context, id uuid.UUID, url string)
 
 func (r *Repository) ClearAvatar(ctx context.Context, id uuid.UUID) (model.User, error) {
 	row := r.pool.QueryRow(ctx,
-		`UPDATE users SET avatar_url=NULL WHERE id=$1 RETURNING `+userColumns,
+		`UPDATE users SET avatar_key=NULL WHERE id=$1 RETURNING `+userColumns,
 		id,
 	)
 	u, err := scanUser(row)

@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -29,12 +30,14 @@ type Config struct {
 	SMTPFrom     string
 	FrontendURL  string
 	// S3-compatible storage (optional — if S3Bucket is empty, avatar uploads are disabled)
-	AWSRegion       string
-	AWSAccessKeyID  string
-	AWSSecretKey    string
-	S3Bucket        string
-	S3PublicBaseURL string
-	S3Endpoint      string // custom endpoint for MinIO / S3-compatible services
+	AWSRegion         string
+	AWSAccessKeyID    string
+	AWSSecretKey      string
+	S3Bucket          string
+	S3PublicBaseURL   string
+	S3Endpoint        string        // custom endpoint for MinIO / S3-compatible services; the backend's own route to the bucket, which may not be reachable from outside
+	S3PresignEndpoint string        // public endpoint presigned GET /api/files/ URLs are built against; defaults to S3Endpoint if empty — only needs setting when that's an internal-only address (e.g. MinIO reached as "http://minio:9000")
+	S3PresignTTL      time.Duration // how long a GET /api/files/ redirect's presigned URL is valid; re-minted on every request, so this only needs to outlive one redirect+fetch
 	// AdminEmails — whitelist of users (by email) allowed to access /api/admin/*
 	AdminEmails []string
 	// AppEnv — "development" (default) or "production". In production CORS is
@@ -145,6 +148,8 @@ func Load() Config {
 		S3Bucket:           os.Getenv("S3_BUCKET"),
 		S3PublicBaseURL:    os.Getenv("S3_PUBLIC_BASE_URL"),
 		S3Endpoint:         os.Getenv("S3_ENDPOINT"),
+		S3PresignEndpoint:  os.Getenv("S3_PRESIGN_ENDPOINT"),
+		S3PresignTTL:       parseDuration(os.Getenv("S3_PRESIGN_TTL"), 5*time.Minute),
 		AdminEmails:        parseAdminEmails(os.Getenv("ADMIN_EMAILS")),
 		AppEnv:             appEnv,
 		CORSAllowedOrigins: corsAllowedOrigins,
@@ -168,6 +173,19 @@ func parseBool(raw string) bool {
 	default:
 		return false
 	}
+}
+
+// parseDuration parses raw (Go duration syntax, e.g. "5m") or falls back to
+// def if raw is empty or invalid.
+func parseDuration(raw string, def time.Duration) time.Duration {
+	if raw == "" {
+		return def
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return def
+	}
+	return d
 }
 
 // IsProduction reports whether the service runs with APP_ENV=production.

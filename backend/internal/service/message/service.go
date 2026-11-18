@@ -133,14 +133,13 @@ func (s *Service) PostImage(ctx context.Context, eventID, userID uuid.UUID, capt
 		return model.Message{}, fmt.Errorf("seek file: %w", err)
 	}
 
-	key := fmt.Sprintf("chat/%s/%s-%d", eventID, userID, time.Now().UnixMilli())
-	imageURL, err := s.uploader.Upload(ctx, key, contentType, file)
-	if err != nil {
+	key := fmt.Sprintf("chat/%s/%s", eventID, uuid.New())
+	if _, err := s.uploader.Upload(ctx, key, contentType, file); err != nil {
 		return model.Message{}, fmt.Errorf("upload image: %w", err)
 	}
 
 	var replyToID *uuid.UUID
-	msg, err := s.repo.Create(ctx, eventID, userID, caption, replyToID, &imageURL)
+	msg, err := s.repo.Create(ctx, eventID, userID, caption, replyToID, &key)
 	if err != nil {
 		return model.Message{}, err
 	}

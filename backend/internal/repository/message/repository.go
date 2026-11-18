@@ -10,6 +10,7 @@ import (
 
 	"bimeet/internal/model"
 	"bimeet/internal/secret"
+	"bimeet/internal/storage"
 )
 
 type Repository struct {
@@ -21,7 +22,7 @@ func New(pool *pgxpool.Pool, cipher *secret.Cipher) *Repository {
 	return &Repository{pool: pool, cipher: cipher}
 }
 
-const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.image_url, m.created_at, m.deleted_at,
+const selectCols = `m.id, m.event_id, m.user_id, u.name, u.email, m.body, m.image_key, m.created_at, m.deleted_at,
 	r.id, ru.name, r.body, r.deleted_at`
 
 const fromJoins = `FROM event_messages m
@@ -48,6 +49,9 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UU
 	); err != nil {
 		return model.Message{}, err
 	}
+	// m.ImageURL is scanned from image_key above (an S3 object key, not a
+	// URL) and rewritten here to the stable /api/files/ path.
+	m.ImageURL = storage.FileURL(m.ImageURL)
 	m.IsMine = authorID == userID
 	m.Author.IsMe = m.IsMine
 	m.Deleted = deletedAt != nil
@@ -68,11 +72,11 @@ func (r *Repository) scanRow(row interface{ Scan(...any) error }, userID uuid.UU
 	return m, nil
 }
 
-func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID, imageURL *string) (model.Message, error) {
+func (r *Repository) Create(ctx context.Context, eventID, userID uuid.UUID, body string, replyToID *uuid.UUID, imageKey *string) (model.Message, error) {
 	var id uuid.UUID
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO event_messages (event_id, user_id, body, reply_to_id, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-		eventID, userID, r.cipher.Encrypt(body), replyToID, imageURL,
+		`INSERT INTO event_messages (event_id, user_id, body, reply_to_id, image_key) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		eventID, userID, r.cipher.Encrypt(body), replyToID, imageKey,
 	).Scan(&id)
 	if err != nil {
 		return model.Message{}, fmt.Errorf("insert message: %w", err)

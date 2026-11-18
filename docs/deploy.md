@@ -1,39 +1,41 @@
-# Деплой
+# Deployment
 
-## Обзор
+For a first launch on Timeweb Cloud from scratch, follow [runbooks/timeweb-launch.md](runbooks/timeweb-launch.md); this page is the general reference.
 
-| Сервис | Образ | Доступ |
+## Overview
+
+| Service | Image | Access |
 |---|---|---|
-| Traefik (reverse proxy) | `traefik:v3.3` | :80, :443 |
-| Backend (Go API) | `bimeet-backend` | внутренний :8080 |
+| Traefik (reverse proxy) | `traefik:v3.6` | :80, :443 |
+| Backend (Go API) | `bimeet-backend` | internal :8080 |
 | Frontend (React SPA) | `bimeet-frontend` | `app.bimeet.pro` |
 | Landing (Next.js static) | `bimeet-landing` | `bimeet.pro`, `www.bimeet.pro` |
-| PostgreSQL | `postgres:16-alpine` | внутренний |
-| MinIO (S3-совместимое хранилище) | `minio/minio` | `s3.bimeet.pro` |
+| PostgreSQL | `postgres:16-alpine` | internal |
+| MinIO (S3-compatible storage) | `minio/minio` | `s3.bimeet.pro` |
 
-Образы хранятся в GitHub Container Registry (GHCR). Полный pipeline запускается автоматически при публикации Git-тега. Каждый образ получает неизменяемый тег с SHA коммита, и в production разворачиваются ровно те образы, которые прошли проверки.
+Images are stored in GitHub Container Registry (GHCR). The full pipeline runs automatically when a Git tag is pushed. Every image gets an immutable tag with the commit SHA, and production runs exactly the images that passed the checks.
 
 ---
 
-## Маршрутизация
+## Routing
 
-Traefik принимает весь входящий трафик на портах 80 и 443 и маршрутизирует по доменам:
+Traefik accepts all incoming traffic on ports 80 and 443 and routes by domain:
 
-| Домен | Сервис | Описание |
+| Domain | Service | Description |
 |---|---|---|
-| `bimeet.pro`, `www.bimeet.pro` | landing | Лендинг |
-| `app.bimeet.pro` | frontend | SPA, `/api/*` → backend (через nginx) |
-| `s3.bimeet.pro` | minio | Публичные аватарки |
+| `bimeet.pro`, `www.bimeet.pro` | landing | Landing page |
+| `app.bimeet.pro` | frontend | SPA, `/api/*` → backend (through nginx) |
+| `s3.bimeet.pro` | minio | Uploaded files, reached through presigned links from `GET /api/files/<key>` |
 
-HTTP автоматически редиректится на HTTPS. SSL-сертификаты выпускаются через Let's Encrypt (HTTP challenge) и хранятся в Docker volume `acme_data`.
+HTTP is redirected to HTTPS automatically. TLS certificates are issued by Let's Encrypt (HTTP challenge) and stored in the `acme_data` Docker volume.
 
 ---
 
-## Первоначальная настройка
+## Initial setup
 
 ### 1. DNS
 
-Добавить A-записи у регистратора домена, указывающие на IP вашего VPS:
+Add A records at the domain's DNS provider pointing to the server IP:
 
 ```
 bimeet.pro      → <server-ip>
@@ -42,16 +44,16 @@ app.bimeet.pro  → <server-ip>
 s3.bimeet.pro   → <server-ip>
 ```
 
-### 2. Подготовка VPS
+### 2. Prepare the server
 
-Установить Docker и Docker Compose:
+On a server created by `infra/terraform`, cloud-init already installs Docker, ufw and the `deploy` user; skip to step 3. On any other server, install Docker and Docker Compose:
 
 ```bash
 curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 ```
 
-Открыть порты в firewall (нужны для Traefik и Let's Encrypt):
+Open the firewall ports (needed by Traefik and Let's Encrypt):
 
 ```bash
 sudo ufw allow 80
@@ -60,114 +62,117 @@ sudo ufw allow 22
 sudo ufw enable
 ```
 
-Создать рабочую директорию:
+Create the working directory:
 
 ```bash
 mkdir ~/bimeet && cd ~/bimeet
 ```
 
-Скопировать на VPS файл из репозитория:
+Copy from the repository to the server:
 - `docker-compose.prod.yml`
+- the `deploy/` directory
 
-### 3. Создать `.env.prod`
+### 3. Create `.env.prod`
 
 ```bash
 nano .env.prod
+chmod 600 .env.prod
 ```
 
-Обязательно заполнить:
+Required values:
 
 ```env
-# База данных
-DSN=postgres://bimeet:<пароль>@postgres:5432/bimeet?sslmode=disable
-POSTGRES_PASSWORD=<тот же пароль>
+# Database
+DSN=postgres://bimeet:<password>@postgres:5432/bimeet?sslmode=disable
+POSTGRES_PASSWORD=<same password>
 
 # JWT
-JWT_SECRET=<случайная строка 32+ символа>
+JWT_SECRET=<random string, 32+ characters>
 JWT_EXP_HOURS=72
 
-# URL приложения
+# Application URL
 FRONTEND_URL=https://app.bimeet.pro
-
-# GITHUB (для pull образов из GHCR)
-GITHUB_REPOSITORY_OWNER=<ваш github username>
 ```
 
-`IMAGE_TAG` хранить в `.env.prod` не требуется: GitHub Actions передаёт SHA проверенного коммита непосредственно при деплое.
+Generate secrets with `openssl rand -base64 32`. `IMAGE_TAG` and `IMAGE_REGISTRY` don't belong in `.env.prod`: GitHub Actions passes the tested commit SHA and the registry prefix at deploy time.
 
-Для S3 выбрать один из двух вариантов:
+For S3, pick one of two options:
 
-**Вариант A — MinIO (встроенный, рекомендуется):**
+**Option A — MinIO (built in, recommended):**
 ```env
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=<надёжный пароль>
+AWS_SECRET_ACCESS_KEY=<strong password>
 S3_BUCKET=avatars
 S3_ENDPOINT=http://minio:9000
-S3_PUBLIC_BASE_URL=https://s3.bimeet.pro/avatars
+# The browser gets files through GET /api/files/<key> → 302 to a presigned
+# URL. The link must be signed with an address the browser can reach, not
+# the internal minio:9000.
+S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro
 MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=<тот же пароль>
+MINIO_ROOT_PASSWORD=<same password>
 ```
 
-**Вариант B — AWS S3:**
+**Option B — external S3 (AWS or a provider's S3):**
 ```env
-AWS_REGION=us-east-1
+AWS_REGION=<region>
 AWS_ACCESS_KEY_ID=<key>
 AWS_SECRET_ACCESS_KEY=<secret>
 S3_BUCKET=<bucket>
-S3_PUBLIC_BASE_URL=https://<bucket>.s3.<region>.amazonaws.com
+S3_ENDPOINT=<provider endpoint, omit for AWS>
 ```
 
-### 4. Настроить GitHub Secrets
+`S3_PRESIGN_TTL` (Go duration, default `5m`) controls how long a presigned link lives. `S3_PUBLIC_BASE_URL` is no longer used for user-facing links.
 
-В репозитории: **Settings → Secrets and variables → Actions → New repository secret**
+### 4. GitHub Secrets
 
-| Секрет | Значение |
+In the repository: **Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret | Value |
 |---|---|
-| `SSH_HOST` | IP или домен VPS |
-| `SSH_USER` | имя пользователя на VPS (например `ubuntu`) |
-| `SSH_KEY` | приватный SSH-ключ (содержимое `~/.ssh/id_ed25519`) |
+| `SSH_HOST` | server IP or domain |
+| `SSH_USER` | user on the server (`deploy` on a Terraform-created server) |
+| `SSH_KEY` | private SSH key for CI (see step 5) |
 | `VITE_API_URL` | `https://app.bimeet.pro` |
 | `NEXT_PUBLIC_APP_URL` | `https://app.bimeet.pro` |
 
-### 5. Настроить SSH-ключ на VPS
+### 5. SSH key for CI
 
-На локальной машине:
+Use a dedicated key for CI so your personal key never ends up in GitHub. On your machine:
+
 ```bash
-ssh-keygen -t ed25519 -C "github-actions"
-cat ~/.ssh/id_ed25519.pub
+ssh-keygen -t ed25519 -f ~/.ssh/bimeet-ci -N "" -C bimeet-ci
+ssh-copy-id -i ~/.ssh/bimeet-ci.pub deploy@<server-ip>
 ```
 
-На VPS добавить публичный ключ в `~/.ssh/authorized_keys`.
-
-В GitHub Secrets добавить содержимое `~/.ssh/id_ed25519` как `SSH_KEY`.
+Add the contents of `~/.ssh/bimeet-ci` (the private key) to GitHub Secrets as `SSH_KEY`.
 
 ---
 
-## Автоматический деплой (CI/CD)
+## Automatic deployment (CI/CD)
 
-После настройки секретов pipeline запускается при публикации любого Git-тега:
+Once the secrets are set, the pipeline runs on every pushed Git tag:
 
-1. Проверяет линтерами backend и frontend
-2. Собирает три Docker-образа и публикует их в GHCR с тегом `<commit-sha>`
-3. Запускает unit-тесты backend/frontend и smoke-тесты собранных контейнеров
-4. По SSH разворачивает на VPS те же образы с тегом `<commit-sha>`
+1. Lints the backend and frontend.
+2. Builds three Docker images and pushes them to GHCR tagged `<commit-sha>`.
+3. Runs backend/frontend unit tests and smoke tests of the built containers.
+4. Deploys the same `<commit-sha>` images to the server over SSH (environment `prod`).
 
-Каждый этап зависит от предыдущего: deploy не запустится, если lint, build или test завершились с ошибкой.
+Each stage depends on the previous one: deploy doesn't start if lint, build or test failed.
 
-Статус деплоя: вкладка **Actions** в репозитории GitHub.
+Deployment status: the **Actions** tab of the GitHub repository.
 
 ---
 
-## Ручной деплой
+## Manual deployment
 
-Если нужно вручную повторно развернуть уже собранный и проверенный commit SHA:
+To redeploy a commit SHA that has already been built and tested:
 
 ```bash
-# На VPS
+# On the server
 cd ~/bimeet
 echo "<GITHUB_TOKEN>" | docker login ghcr.io -u <username> --password-stdin
-export GITHUB_REPOSITORY_OWNER=<username-в-нижнем-регистре>
+export IMAGE_REGISTRY=ghcr.io/<owner-in-lowercase>
 export IMAGE_TAG=<commit-sha>
 docker compose --env-file .env.prod -f docker-compose.prod.yml pull
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
@@ -175,9 +180,9 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 
 ---
 
-## Обновление приложения
+## Updating the application
 
-Создаём и отправляем Git-тег — CI/CD сделает остальное:
+Create and push a Git tag; CI/CD does the rest:
 
 ```bash
 git tag v1.2.3
@@ -186,44 +191,46 @@ git push origin v1.2.3
 
 ---
 
-## Откат
+## Rollback
 
-Для отката укажите SHA ранее проверенного образа и повторно поднимите сервисы:
+To roll back, set the SHA of a previously tested image and bring the services up again:
 
 ```bash
 cd ~/bimeet
-export GITHUB_REPOSITORY_OWNER=<username-в-нижнем-регистре>
-export IMAGE_TAG=<предыдущий-commit-sha>
+export IMAGE_REGISTRY=ghcr.io/<owner-in-lowercase>
+export IMAGE_TAG=<previous-commit-sha>
 docker compose --env-file .env.prod -f docker-compose.prod.yml pull
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 ```
 
+A rollback across a database migration (e.g. `026_file_keys`) also needs the database restored from a dump taken before the deploy; see [runbooks/backup-restore.md](runbooks/backup-restore.md).
+
 ---
 
-## Мониторинг
+## Monitoring
 
 ```bash
-# Статус всех сервисов
+# Status of all services
 docker compose -f docker-compose.prod.yml ps
 
-# Логи Traefik (SSL-сертификаты, маршрутизация)
+# Traefik logs (TLS certificates, routing)
 docker compose -f docker-compose.prod.yml logs -f traefik
 
-# Логи бэкенда (live)
+# Backend logs (live)
 docker compose -f docker-compose.prod.yml logs -f backend
 
-# Логи всех сервисов
+# Logs of all services
 docker compose -f docker-compose.prod.yml logs -f
 
-# Использование ресурсов
+# Resource usage
 docker stats
 ```
 
 ---
 
-## Локальная разработка
+## Local development
 
-Для локального запуска используется отдельный `backend/docker-compose.yml` (только инфраструктура: postgres, mailhog, minio):
+Local runs use a separate `backend/docker-compose.yml` (infrastructure only: postgres, mailhog, minio):
 
 ```bash
 cd backend
@@ -237,4 +244,4 @@ cd ../frontend
 npm run dev
 ```
 
-Переменные окружения для локальной разработки — в `backend/.env` (скопировать из `backend/.env.example`).
+Environment variables for local development live in `backend/.env` (copy from `backend/.env.example`).

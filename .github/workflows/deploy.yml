@@ -151,6 +151,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    environment: prod
     permissions:
       contents: read
       packages: read
@@ -180,7 +181,7 @@ jobs:
           script: |
             cd ~/bimeet
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u antonslavshchikov --password-stdin
-            export GITHUB_REPOSITORY_OWNER="${{ steps.owner.outputs.name }}"
+            export IMAGE_REGISTRY="ghcr.io/${{ steps.owner.outputs.name }}"
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
             docker compose --env-file .env.prod -f docker-compose.prod.yml pull
             docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
