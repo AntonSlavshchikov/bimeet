@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -637,4 +638,42 @@ type AdminEventRow struct {
 	OrganizerEmail string     `json:"organizer_email"`
 	DateStart      *time.Time `json:"date_start"`
 	CreatedAt      time.Time  `json:"created_at"`
+}
+
+// ─── Calls (1:1 WebRTC signaling) ─────────────────────────────────────────
+
+// CallSignalRequest is what a browser POSTs to /api/calls/signal. The
+// recipient is addressed by email: other participants' user IDs are never
+// sent to the frontend (see EventUser), emails already are. The server does
+// not interpret Payload (SDP or ICE candidates); it checks who may talk to
+// whom and forwards the message.
+type CallSignalRequest struct {
+	Type    string          `json:"type"`
+	CallID  uuid.UUID       `json:"call_id"`
+	To      string          `json:"to"` // recipient email
+	EventID uuid.UUID       `json:"event_id"`
+	Payload json.RawMessage `json:"payload,omitempty" swaggertype:"object"`
+}
+
+// CallSignal is what the recipient receives on its personal SSE stream.
+// FromEmail/FromName are filled in by the server, never taken from the
+// client; the recipient replies with to = FromEmail.
+type CallSignal struct {
+	Type      string          `json:"type"`
+	CallID    uuid.UUID       `json:"call_id"`
+	FromEmail string          `json:"from_email"`
+	FromName  string          `json:"from_name"`
+	EventID   uuid.UUID       `json:"event_id"`
+	Payload   json.RawMessage `json:"payload,omitempty" swaggertype:"object"`
+}
+
+// ICEServer mirrors the browser's RTCIceServer dictionary.
+type ICEServer struct {
+	URLs       []string `json:"urls"`
+	Username   string   `json:"username,omitempty"`
+	Credential string   `json:"credential,omitempty"`
+}
+
+type ICEServersResponse struct {
+	ICEServers []ICEServer `json:"ice_servers"`
 }
