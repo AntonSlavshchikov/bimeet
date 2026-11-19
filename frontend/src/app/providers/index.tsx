@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PWAUpdater } from '@/shared/pwa/PWAUpdater'
 import { AppBadgeSync } from '@/features/notifications/ui/AppBadgeSync'
+import { CallLayer } from '@/features/call'
 import type { ReactNode } from 'react'
 import '@/shared/i18n'
 
@@ -16,6 +17,7 @@ export default function Providers({ children }: { children: ReactNode }) {
       {children}
       <PWAUpdater />
       <AppBadgeSync />
+      <CallLayer />
     </QueryClientProvider>
   )
 }

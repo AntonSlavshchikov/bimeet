@@ -597,5 +597,32 @@
       "visibility_public": "Public",
       "visibility_private": "Private"
     }
+  },
+  "calls": {
+    "callPerson": "Call {{name}}",
+    "incomingTitle": "Incoming call",
+    "incomingFrom": "{{name}} is calling",
+    "accept": "Accept",
+    "decline": "Decline",
+    "calling": "Calling…",
+    "connecting": "Connecting…",
+    "panelLabel": "Call",
+    "mute": "Mute microphone",
+    "unmute": "Unmute microphone",
+    "cameraOn": "Turn camera on",
+    "cameraOff": "Turn camera off",
+    "hangup": "Hang up",
+    "close": "Close",
+    "end": {
+      "hangup": "Call ended",
+      "declined": "Call declined",
+      "busy": "The other person is busy",
+      "offline": "The other person is offline",
+      "noAnswer": "No answer",
+      "cancelled": "Call cancelled",
+      "mic": "No microphone access. Allow it in your browser settings",
+      "failed": "Connection lost",
+      "error": "Couldn't place the call"
+    }
   }
 }
