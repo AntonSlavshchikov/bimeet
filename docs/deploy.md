@@ -12,6 +12,7 @@ For a first launch on Timeweb Cloud from scratch, follow [runbooks/timeweb-launc
 | Landing (Next.js static) | `bimeet-landing` | `bimeet.pro`, `www.bimeet.pro` |
 | PostgreSQL | `postgres:16-alpine` | internal |
 | MinIO (S3-compatible storage) | `minio/minio` | `s3.bimeet.pro` |
+| coturn (STUN/TURN for calls) | `coturn/coturn:4.6.3` | host network: 3478 udp/tcp, 49160–49200 udp |
 
 Images are stored in GitHub Container Registry (GHCR). The full pipeline runs automatically when a Git tag is pushed. Every image gets an immutable tag with the commit SHA, and production runs exactly the images that passed the checks.
 
@@ -121,6 +122,18 @@ AWS_SECRET_ACCESS_KEY=<secret>
 S3_BUCKET=<bucket>
 S3_ENDPOINT=<provider endpoint, omit for AWS>
 ```
+
+**1:1 calls (coturn):**
+```env
+# Shared secret between the backend (mints TURN credentials) and coturn.
+TURN_SECRET=<openssl rand -hex 32>
+# What browsers connect to for STUN/TURN (port 3478). The server IP works;
+# a hostname needs its own A record.
+TURN_HOST=<server-ip>
+# The server's public IP, announced by coturn in relay candidates.
+TURN_EXTERNAL_IP=<server-ip>
+```
+`TURN_SECRET` and `TURN_EXTERNAL_IP` are required: `docker compose` stops with an error if they are missing. Without `TURN_HOST` the backend offers no STUN/TURN and calls work only inside one network. Ports to open: 3478/udp, 3478/tcp, 49160–49200/udp (already in `infra/terraform/firewall.tf` and cloud-init). Checking calls after a deploy: [runbooks/calls-check.md](runbooks/calls-check.md).
 
 `S3_PRESIGN_TTL` (Go duration, default `5m`) controls how long a presigned link lives. `S3_PUBLIC_BASE_URL` is no longer used for user-facing links.
 

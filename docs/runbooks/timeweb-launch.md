@@ -66,9 +66,14 @@ mkdir -p ~/bimeet && cd ~/bimeet
    option A (MinIO). Make sure to:
    - set `S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro`: without it file links
      point to the internal `minio:9000`;
+   - set the call variables (coturn won't start, and `docker compose` refuses
+     to run, without the first and last one):
+     `TURN_SECRET=<openssl rand -hex 32>`, `TURN_HOST=<server_ip>`,
+     `TURN_EXTERNAL_IP=<server_ip>`;
    - generate secrets instead of keeping the examples:
      ```bash
      openssl rand -base64 32   # JWT_SECRET, POSTGRES_PASSWORD, MINIO_ROOT_PASSWORD
+     openssl rand -hex 32      # TURN_SECRET
      ```
    - `chmod 600 .env.prod`.
 
