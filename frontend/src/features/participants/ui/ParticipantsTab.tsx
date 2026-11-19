@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link2, UserPlus, Users } from 'lucide-react'
 import type { Event } from '@/entities/event/model/types'
+import type { Participant } from '@/entities/user/model/types'
 import { useInviteParticipant, useUpdateParticipantStatus } from '@/features/participants/model/hooks'
 import {
   Button,
@@ -16,7 +17,13 @@ import {
 } from '@/shared/ui'
 import { cn } from '@/shared/lib/cn'
 
-export default function ParticipantsTab({ event }: { event: Event }) {
+interface ParticipantsTabProps {
+  event: Event
+  /** Extra per-row control (e.g. the call button), injected by the page so this feature doesn't import another one. */
+  rowAction?: (participant: Participant) => ReactNode
+}
+
+export default function ParticipantsTab({ event, rowAction }: ParticipantsTabProps) {
   const toast = useToast()
   const { t } = useTranslation()
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -174,7 +181,15 @@ export default function ParticipantsTab({ event }: { event: Event }) {
                 avatar={initials}
                 name={p.user.name}
                 note={note}
-                status={status}
+                status={(() => {
+                  const action = !p.user.is_me ? rowAction?.(p) : null
+                  return action ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      {status}
+                      {action}
+                    </span>
+                  ) : status
+                })()}
                 statusTone={p.is_organizer ? 'success' : statusTone}
               />
             )

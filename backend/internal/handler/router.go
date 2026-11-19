@@ -12,6 +12,7 @@ import (
 
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
+	callhandler "bimeet/internal/handler/call"
 	carpoolhandler "bimeet/internal/handler/carpool"
 	chatlisthandler "bimeet/internal/handler/chatlist"
 	cityhandler "bimeet/internal/handler/city"
@@ -44,6 +45,7 @@ func NewRouter(
 	admin *adminhandler.Handler,
 	push *pushhandler.Handler,
 	files *fileshandler.Handler,
+	call *callhandler.Handler,
 	userLookup middleware.UserLookup,
 	sessionValidator middleware.SessionValidator,
 	adminEmails []string,
@@ -167,6 +169,10 @@ func NewRouter(
 		// Cross-event chat list
 		r.Get("/api/chats", chatList.List)
 		r.Get("/api/chats/stream", stream.StreamChats)
+
+		// 1:1 calls: signaling in via POST, out via the /api/chats/stream SSE.
+		r.Post("/api/calls/signal", call.Signal)
+		r.Get("/api/calls/ice-servers", call.ICEServers)
 
 		// Notifications
 		r.Get("/api/notifications", notification.List)

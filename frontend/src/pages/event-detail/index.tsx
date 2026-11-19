@@ -21,6 +21,7 @@ import PollsTab from '@/features/polls/ui/PollsTab'
 import ItemsTab from '@/features/items/ui/ItemsTab'
 import CarpoolTab from '@/features/carpools/ui/CarpoolTab'
 import ChatTab from '@/features/chat/ui/ChatTab'
+import { CallButton } from '@/features/call'
 import { useChatUnread } from '@/features/chat/model/hooks'
 import EventInfoPanel from '@/widgets/event-detail/EventInfoPanel'
 import { formatDate, formatDateTime } from '@/shared/lib/formatDate'
@@ -193,7 +194,12 @@ export default function EventDetailPage() {
           ) : undefined}
         >
           <div className={cn(activeTab === 'chat' && 'flex flex-1 min-h-0 flex-col')}>
-            {activeTab === 'participants' && <ParticipantsTab event={event} />}
+            {activeTab === 'participants' && (
+              <ParticipantsTab
+                event={event}
+                rowAction={p => <CallButton peer={{ email: p.user.email, name: p.user.name }} eventId={event.id} />}
+              />
+            )}
             {activeTab === 'collections' && <CollectionsTab event={event} />}
             {activeTab === 'polls' && <PollsTab event={event} />}
             {activeTab === 'items' && <ItemsTab event={event} />}
