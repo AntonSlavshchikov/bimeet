@@ -599,6 +599,8 @@
     }
   },
   "calls": {
+    "expand": "Expand",
+    "collapse": "Collapse",
     "callPerson": "Call {{name}}",
     "incomingTitle": "Incoming call",
     "incomingFrom": "{{name}} is calling",
