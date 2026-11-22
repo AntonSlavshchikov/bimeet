@@ -25,14 +25,17 @@ terraform apply
 terraform output
 ```
 
-Creates: project, SSH key, public IP, server, firewall (22 only from your IP,
-80/443 from anywhere).
+Creates: project, SSH key, public IP, server, firewall (22 for key-only SSH,
+80/443, TURN ports).
 
 After `apply`, copy `terraform.tfstate` somewhere safe (not git): without it
 Terraform no longer knows what it created.
 
-Use your IPv4 for `admin_cidrs` (`curl -4 -s https://ifconfig.me`): the server
-has no IPv6, and without `-4` the service may return an IPv6 address.
+`admin_cidrs = ["0.0.0.0/0"]` is the working setting: the CI deploy connects
+over SSH from GitHub runners whose IPs change, and so does a mobile-internet
+IP. SSH stays safe through key-only login, no root and fail2ban. To narrow it
+to a static IP, use your IPv4 (`curl -4 -s https://ifconfig.me`): the server
+has no IPv6.
 
 If `plan` fails on the OS, the Moscow location code differs: fix `location`
 in `terraform.tfvars` and retry. The configurator ID (Ultra, `159`) is pinned

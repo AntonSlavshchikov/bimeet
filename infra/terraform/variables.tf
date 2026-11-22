@@ -42,7 +42,12 @@ variable "server" {
 }
 
 variable "admin_cidrs" {
-  description = "CIDR blocks allowed to reach SSH (port 22). Keep this to your own IP(s), never 0.0.0.0/0."
+  # Default setup is ["0.0.0.0/0"]: deploys come from GitHub Actions runners
+  # (no fixed IPs) and the admin works from mobile internet (dynamic IP), so
+  # an IP allowlist would lock both out. SSH is protected by keys instead:
+  # key-only login, no root, fail2ban (cloud-init). Narrow it if you get a
+  # static IP and stop deploying from CI.
+  description = "CIDR blocks allowed to reach SSH (port 22)."
   type        = list(string)
 
   validation {

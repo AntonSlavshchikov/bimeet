@@ -91,7 +91,7 @@ flowchart TB
         ip["twc_floating_ip<br/>msk-1"]
         server["twc_server bimeet-prod<br/>Ubuntu 24.04 · Ultra configurator 159 (ru-3)<br/>cloud-init · prevent_destroy"]
         fw["twc_firewall bimeet-prod"]
-        r1["rule: tcp 22<br/>admin_cidrs only"]
+        r1["rule: tcp 22<br/>admin_cidrs (0.0.0.0/0), key-only"]
         r2["rules: tcp 80, 443<br/>0.0.0.0/0"]
         r3["rule: icmp"]
         r4["rules: egress<br/>tcp / udp / icmp"]

@@ -11,12 +11,12 @@ Step-by-step first launch: [`docs/runbooks/timeweb-launch.md`](../../docs/runboo
 | File | Resources |
 |---|---|
 | `server.tf` | project `bimeet-prod`, SSH key, public IP, server (Ubuntu 24.04, 1 CPU / 2 GB / 15 GB NVMe, Ultra line, configurator 159) |
-| `firewall.tf` | cloud firewall: SSH only from `admin_cidrs`, 80/443 from anywhere, coturn 3478 udp/tcp and 49160–49200/udp from anywhere, ICMP, all outbound |
+| `firewall.tf` | cloud firewall: SSH from `admin_cidrs` (open by default, key-only auth), 80/443 from anywhere, coturn 3478 udp/tcp and 49160–49200/udp from anywhere, ICMP, all outbound |
 | `cloud-init.yaml.tftpl` | first boot: `deploy` user, key-only SSH, Docker + compose plugin, ufw, fail2ban, security-only unattended upgrades, chrony, 2 GB swap, Docker log rotation |
 | `outputs.tf` | `server_ip`, `server_id`, `ssh_command` |
 
 ```
-Internet ──► Timeweb firewall (22 admin / 80 / 443 / 3478 / 49160-49200 udp)
+Internet ──► Timeweb firewall (22 key-only / 80 / 443 / 3478 / 49160-49200 udp)
                 │
           public IP (floating, created first)
                 │
