@@ -11,7 +11,7 @@ For a first launch on Timeweb Cloud from scratch, follow [runbooks/timeweb-launc
 | Frontend (React SPA) | `bimeet-frontend` | `app.bimeet.pro` |
 | Landing (Next.js static) | `bimeet-landing` | `bimeet.pro`, `www.bimeet.pro` |
 | PostgreSQL | `postgres:16-alpine` | internal |
-| MinIO (S3-compatible storage) | `minio/minio` | `s3.bimeet.pro` |
+| MinIO (S3-compatible storage) | `local/minio` (Chainguard build, loaded by hand, see below) | `s3.bimeet.pro` |
 | coturn (STUN/TURN for calls) | `coturn/coturn:4.6.3` | host network: 3478 udp/tcp, 49160–49200 udp |
 
 Images are stored in GitHub Container Registry (GHCR). The full pipeline runs automatically when a Git tag is pushed. Every image gets an immutable tag with the commit SHA, and production runs exactly the images that passed the checks.
@@ -136,6 +136,21 @@ TURN_EXTERNAL_IP=<server-ip>
 `TURN_SECRET` and `TURN_EXTERNAL_IP` are required: `docker compose` stops with an error if they are missing. Without `TURN_HOST` the backend offers no STUN/TURN and calls work only inside one network. Ports to open: 3478/udp, 3478/tcp, 49160–49200/udp (already in `infra/terraform/firewall.tf` and cloud-init). Checking calls after a deploy: [runbooks/calls-check.md](runbooks/calls-check.md).
 
 `S3_PRESIGN_TTL` (Go duration, default `5m`) controls how long a presigned link lives. `S3_PUBLIC_BASE_URL` is no longer used for user-facing links.
+
+### MinIO images
+
+MinIO stopped publishing images: `minio/minio` and `minio/mc` are gone from Docker Hub and quay.io. Production uses Chainguard's builds, but `cgr.dev` returns 403 to the server, so load them from a workstation once per server (and again when updating MinIO):
+
+```bash
+docker pull --platform linux/amd64 cgr.dev/chainguard/minio:latest-dev
+docker pull --platform linux/amd64 cgr.dev/chainguard/minio-client:latest-dev
+docker tag cgr.dev/chainguard/minio:latest-dev local/minio:RELEASE.2026-11-16T00-11-40Z
+docker tag cgr.dev/chainguard/minio-client:latest-dev local/minio-client:chainguard-20261122
+docker save --platform linux/amd64 local/minio:RELEASE.2026-11-16T00-11-40Z local/minio-client:chainguard-20261122 \
+  | gzip | ssh deploy@<server-ip> 'gunzip | docker load'
+```
+
+The tags must match `docker-compose.prod.yml`; `pull_policy: never` there keeps `docker compose pull` from looking for them in a registry.
 
 ### 4. GitHub Secrets
 

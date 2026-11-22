@@ -679,16 +679,17 @@ func (r *Repository) GetDetail(ctx context.Context, eventID, userID uuid.UUID) (
 // ListForUserEnriched lists events with organizer info and participants for a given user.
 func (r *Repository) ListForUserEnriched(ctx context.Context, userID uuid.UUID) ([]model.EventListItem, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT DISTINCT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
+		`SELECT e.id, e.title, e.description, e.date_start, e.date_end, e.location,
 		        c.id, c.name, c.region, e.category, e.dress_code, e.status, e.is_public, e.max_guests,
 		        e.organizer_id, ou.name, ou.email,
 		        e.invite_token, e.last_activity_at, e.created_at,
-		        COALESCE(ep2.status, '') AS my_status
+		        COALESCE(ep.status, '') AS my_status
 		 FROM events e
 		 JOIN users ou ON ou.id = e.organizer_id
 		 LEFT JOIN cities c ON c.id = e.city_id
+		 -- UNIQUE (event_id, user_id): at most one row per event, so no DISTINCT
+		 -- (DISTINCT + ORDER BY (e.date_start IS NULL) is rejected by Postgres).
 		 LEFT JOIN event_participants ep ON ep.event_id = e.id AND ep.user_id = $1
-		 LEFT JOIN event_participants ep2 ON ep2.event_id = e.id AND ep2.user_id = $1
 		 WHERE e.organizer_id = $1 OR ep.user_id = $1
 		 ORDER BY (e.date_start IS NULL), e.date_start, e.last_activity_at DESC`,
 		userID,
