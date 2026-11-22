@@ -56,12 +56,12 @@ docker run -d \
   postgres:16-alpine >/dev/null
 
 for _ in {1..60}; do
-  if docker exec bimeet-ci-postgres pg_isready -U bimeet >/dev/null 2>&1; then
+  if docker exec bimeet-ci-postgres pg_isready -h 127.0.0.1 -U bimeet >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
-docker exec bimeet-ci-postgres pg_isready -U bimeet >/dev/null
+docker exec bimeet-ci-postgres pg_isready -h 127.0.0.1 -U bimeet >/dev/null
 
 docker run -d \
   --name bimeet-ci-backend \
