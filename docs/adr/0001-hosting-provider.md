@@ -55,6 +55,12 @@ Selectel and Timeweb prices are from the providers' control panels on 2026-11-16
 
 `terraform plan` against the real API succeeded: 12 resources to create. The API confirmed that `ru-3` is Moscow and configurator 31 is NVMe at 3.3 GHz.
 
+## Update 2026-11-22: Ultra line instead of Premium
+
+By launch time Timeweb had moved the Premium line in Moscow (`ru-3`) to pre-order, so it could no longer be ordered. The server uses the Ultra line in the same location instead: same size (1 CPU / 2 GB / 15 GB NVMe, 3.3 GHz), configurator 159 from `GET https://api.timeweb.cloud/api/v1/configurator/servers` (tag `ultra_msk_nvme`). The provider choice itself is unchanged.
+
+Provider 1.8.4 (latest at the time) doesn't accept `ultra` as `twc_configurator.preset_type`, so `infra/terraform/server.tf` pins configurator 159.
+
 ## References
 
 1. SecurityLab, 2026-10-11: <https://www.securitylab.ru/news/578584.php>

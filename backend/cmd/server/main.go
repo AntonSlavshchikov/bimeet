@@ -14,6 +14,7 @@ import (
 	"bimeet/internal/handler"
 	adminhandler "bimeet/internal/handler/admin"
 	authhandler "bimeet/internal/handler/auth"
+	callhandler "bimeet/internal/handler/call"
 	carpoolhandler "bimeet/internal/handler/carpool"
 	chatlisthandler "bimeet/internal/handler/chatlist"
 	cityhandler "bimeet/internal/handler/city"
@@ -48,6 +49,7 @@ import (
 	"bimeet/internal/secret"
 	adminsvc "bimeet/internal/service/admin"
 	authsvc "bimeet/internal/service/auth"
+	callsvc "bimeet/internal/service/call"
 	carpoolsvc "bimeet/internal/service/carpool"
 	chatlistsvc "bimeet/internal/service/chatlist"
 	citysvc "bimeet/internal/service/city"
@@ -252,6 +254,11 @@ func main() {
 	messageH := messagehandler.New(messageSvc)
 	chatListH := chatlisthandler.New(chatListSvc)
 	streamH := streamhandler.New(hub, eventRepo)
+	callH := callhandler.New(callsvc.New(eventRepo, userRepo, hub, callsvc.TURNConfig{
+		Host:   cfg.TURNHost,
+		Secret: cfg.TURNSecret,
+		TTL:    callsvc.DefaultTURNTTL,
+	}))
 	notificationH := notificationhandler.New(notificationSvc)
 	profileH := profilehandler.New(profileSvc)
 	adminH := adminhandler.New(adminSvc)
@@ -278,6 +285,7 @@ func main() {
 		adminH,
 		pushH,
 		filesHandler,
+		callH,
 		userRepo,
 		refreshTokenRepo,
 		cfg.AdminEmails,

@@ -135,6 +135,26 @@ services:
       - traefik.http.routers.landing.tls.certresolver=le
       - traefik.http.services.landing.loadbalancer.server.port=80
 
+  # STUN/TURN for 1:1 calls (docs/adr/0005-calls-p2p-webrtc.md).
+  # network_mode: host — TURN relays media on a range of UDP ports
+  # (49160-49200). Publishing a range through Docker's bridge creates one
+  # docker-proxy/iptables rule per port and adds NAT in front of a server
+  # whose whole job is NAT traversal; coturn also has to see the real public
+  # IP. With host networking it binds the host's ports directly. The cloud
+  # firewall (firewall.tf) and ufw (cloud-init) open exactly these ports.
+  coturn:
+    image: coturn/coturn:4.6.3
+    network_mode: host
+    command:
+      - -c
+      - /etc/coturn/turnserver.conf
+      - --static-auth-secret=${TURN_SECRET:?set TURN_SECRET in .env.prod}
+      - --external-ip=${TURN_EXTERNAL_IP:?set TURN_EXTERNAL_IP in .env.prod}
+    volumes:
+      - ./deploy/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    restart: unless-stopped
+    logging: *default-logging
+
   # ----------------------------------------------------------------------------
   # Observability stack (profile: observability).
   # Start with:  docker compose -f docker-compose.prod.yml --profile observability up -d

@@ -7,8 +7,8 @@ already responds.
 
 ## 0. Prerequisites
 
-- A Timeweb Cloud account with a positive balance (~1780 ₽/month for
-  1 CPU / 2 GB / 15 GB plus a public IP, billed hourly).
+- A Timeweb Cloud account with a positive balance (1 CPU / 2 GB / 15 GB
+  on the Ultra line plus a public IP, billed hourly; current price in the panel).
 - An API token: panel → "API и Terraform" → create a token.
 - Access to reg.ru, which hosts DNS for `bimeet.pro` (`ns1/ns2.reg.ru`). If the
   domain isn't yours, you need its owner: they change four A records in step 4.
@@ -25,17 +25,22 @@ terraform apply
 terraform output
 ```
 
-Creates: project, SSH key, public IP, server, firewall (22 only from your IP,
-80/443 from anywhere).
+Creates: project, SSH key, public IP, server, firewall (22 for key-only SSH,
+80/443, TURN ports).
 
 After `apply`, copy `terraform.tfstate` somewhere safe (not git): without it
 Terraform no longer knows what it created.
 
-Use your IPv4 for `admin_cidrs` (`curl -4 -s https://ifconfig.me`): the server
-has no IPv6, and without `-4` the service may return an IPv6 address.
+`admin_cidrs = ["0.0.0.0/0"]` is the working setting: the CI deploy connects
+over SSH from GitHub runners whose IPs change, and so does a mobile-internet
+IP. SSH stays safe through key-only login, no root and fail2ban. To narrow it
+to a static IP, use your IPv4 (`curl -4 -s https://ifconfig.me`): the server
+has no IPv6.
 
-If `plan` fails on the configurator or OS, the Moscow location code differs:
-fix `location` in `terraform.tfvars` and retry.
+If `plan` fails on the OS, the Moscow location code differs: fix `location`
+in `terraform.tfvars` and retry. The configurator ID (Ultra, `159`) is pinned
+in `server.tf`; if `apply` rejects it, see "Ultra line" in
+`infra/terraform/README.md`.
 
 If the API complains that this SSH key already exists, delete the key added
 by hand in the panel ("SSH keys") and run `apply` again.
@@ -66,9 +71,14 @@ mkdir -p ~/bimeet && cd ~/bimeet
    option A (MinIO). Make sure to:
    - set `S3_PRESIGN_ENDPOINT=https://s3.bimeet.pro`: without it file links
      point to the internal `minio:9000`;
+   - set the call variables (coturn won't start, and `docker compose` refuses
+     to run, without the first and last one):
+     `TURN_SECRET=<openssl rand -hex 32>`, `TURN_HOST=<server_ip>`,
+     `TURN_EXTERNAL_IP=<server_ip>`;
    - generate secrets instead of keeping the examples:
      ```bash
      openssl rand -base64 32   # JWT_SECRET, POSTGRES_PASSWORD, MINIO_ROOT_PASSWORD
+     openssl rand -hex 32      # TURN_SECRET
      ```
    - `chmod 600 .env.prod`.
 

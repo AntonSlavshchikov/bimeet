@@ -15,6 +15,7 @@ flowchart LR
         backend["backend<br/>Go, :8080"]
         postgres[("Postgres 16<br/>volume postgres_data")]
         minio[("MinIO<br/>volume minio_data")]
+        coturn["coturn<br/>host network, :3478 + UDP 49160-49200"]
     end
 
     user -- "bimeet.pro, www" --> traefik
@@ -26,9 +27,10 @@ flowchart LR
     frontend -- "/api/*" --> backend
     backend --> postgres
     backend -- "PutObject / presign" --> minio
+    user -- "STUN/TURN (calls)" --> coturn
 ```
 
-Every service is part of one `docker-compose.prod.yml` on a shared `app-net` network on a single VM; only Traefik's ports 80 and 443 are exposed, and Traefik also obtains the Let's Encrypt certificates. The backend is not published directly: the browser talks to `app.bimeet.pro`, and the frontend's nginx proxies `/api/*` to `backend:8080`. Data (Postgres and MinIO files) lives in Docker volumes on the same VM's disk, which is why an off-server backup is still an open question ([ADR 0003](adr/0003-minio-on-server.md)).
+Every service is part of one `docker-compose.prod.yml` on a shared `app-net` network on a single VM; only Traefik's ports 80 and 443 are exposed, plus coturn's STUN/TURN ports for calls (coturn runs on the host network), and Traefik also obtains the Let's Encrypt certificates. The backend is not published directly: the browser talks to `app.bimeet.pro`, and the frontend's nginx proxies `/api/*` to `backend:8080`. Data (Postgres and MinIO files) lives in Docker volumes on the same VM's disk, which is why an off-server backup is still an open question ([ADR 0003](adr/0003-minio-on-server.md)).
 
 ## 2. Deployment
 
@@ -87,19 +89,57 @@ flowchart TB
         project["twc_project<br/>bimeet-prod"]
         key["twc_ssh_key<br/>bimeet-prod-deploy"]
         ip["twc_floating_ip<br/>msk-1"]
-        server["twc_server bimeet-prod<br/>Ubuntu 24.04 · configurator ru-3<br/>cloud-init · prevent_destroy"]
+        server["twc_server bimeet-prod<br/>Ubuntu 24.04 · Ultra configurator 159 (ru-3)<br/>cloud-init · prevent_destroy"]
         fw["twc_firewall bimeet-prod"]
-        r1["rule: tcp 22<br/>admin_cidrs only"]
+        r1["rule: tcp 22<br/>admin_cidrs (0.0.0.0/0), key-only"]
         r2["rules: tcp 80, 443<br/>0.0.0.0/0"]
         r3["rule: icmp"]
         r4["rules: egress<br/>tcp / udp / icmp"]
+        r5["rules: TURN<br/>3478 udp+tcp, 49160-49200 udp"]
     end
     project --> server
     key --> server
     ip -- "floating_ip_id (before creation)" --> server
     fw -- "link type = server" --> server
-    fw --> r1 & r2 & r3 & r4
+    fw --> r1 & r2 & r3 & r4 & r5
     dns["DNS at reg.ru (outside Terraform)<br/>A: @, www, app, s3"] -. "→ server_ip" .-> ip
 ```
 
-Terraform creates 12 resources: a project, an SSH key, a floating IP, the server, and a cloud firewall with seven rules. The IP is created before the server and passed in through `floating_ip_id`, because cloud-init installs Docker on first boot and needs internet access right away. DNS stays with the registrar (reg.ru); four A records are set by hand to `server_ip` from `terraform output`.
+Terraform creates 15 resources: a project, an SSH key, a floating IP, the server, and a cloud firewall with ten rules (three of them for coturn, see section 5). The IP is created before the server and passed in through `floating_ip_id`, because cloud-init installs Docker on first boot and needs internet access right away. DNS stays with the registrar (reg.ru); four A records are set by hand to `server_ip` from `terraform output`.
+
+## 5. A 1:1 call
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Caller (browser)
+    participant API as backend
+    actor B as Callee (browser)
+    participant T as coturn (STUN/TURN)
+
+    Note over A,B: Both keep the personal SSE stream /api/chats/stream open
+    A->>API: GET /api/calls/ice-servers
+    API-->>A: STUN + TURN URLs, credentials valid 1 h
+    A->>API: POST /api/calls/signal call.invite (to = B's email)
+    API->>API: both are participants of the event? B online?
+    API-->>B: SSE call.invite (from_name, from_email)
+    B->>API: POST call.accept
+    API-->>A: SSE call.accept
+    A->>API: POST call.offer (SDP)
+    API-->>B: SSE call.offer
+    B->>API: POST call.answer (SDP)
+    API-->>A: SSE call.answer
+    A->>T: STUN: what is my public address?
+    B->>T: STUN: what is my public address?
+    A-)B: call.ice ⇄ call.ice (candidates, through the backend)
+    alt direct path found (host / srflx)
+        A-->>B: audio/video P2P (DTLS-SRTP)
+    else symmetric NAT or UDP blocked (relay)
+        A-->>T: media
+        T-->>B: media (coturn relays, can't decrypt)
+    end
+    B->>API: POST call.hangup
+    API-->>A: SSE call.hangup
+```
+
+The backend never sees media and keeps no call state: it checks that both people are participants of the same event and forwards the message into the other person's personal SSE stream. If the callee has no open stream, the caller gets `call.unavailable`; no answer within 30 s ends the call with `call.cancel`. The decision and its trade-offs: [ADR 0005](adr/0005-calls-p2p-webrtc.md). Checking it after a deploy: [runbooks/calls-check.md](runbooks/calls-check.md).

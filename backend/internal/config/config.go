@@ -53,6 +53,10 @@ type Config struct {
 	// ChatEncryptionKey — base64-encoded 32-byte key (AES-256) for encrypting chat
 	// message bodies at rest. Empty → messages stored as plaintext (dev).
 	ChatEncryptionKey string
+	// TURN (coturn) for 1:1 calls. Empty TURNHost → no STUN/TURN is offered
+	// (local dev: host candidates are enough for two tabs on one machine).
+	TURNHost   string // public host/IP of coturn, port 3478
+	TURNSecret string // shared with coturn static-auth-secret
 	// Observability.
 	LogLevel    string // debug/info/warn/error (default info)
 	LogFormat   string // "json"/"text"; empty resolves by AppEnv (json in prod, text in dev)
@@ -156,6 +160,8 @@ func Load() Config {
 		VAPIDPublicKey:     os.Getenv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey:    os.Getenv("VAPID_PRIVATE_KEY"),
 		ChatEncryptionKey:  os.Getenv("CHAT_ENCRYPTION_KEY"),
+		TURNHost:           os.Getenv("TURN_HOST"),
+		TURNSecret:         os.Getenv("TURN_SECRET"),
 		VAPIDSubject:       vapidSubject,
 		LogLevel:           logLevel,
 		LogFormat:          logFormat,
