@@ -89,7 +89,7 @@ flowchart TB
         project["twc_project<br/>bimeet-prod"]
         key["twc_ssh_key<br/>bimeet-prod-deploy"]
         ip["twc_floating_ip<br/>msk-1"]
-        server["twc_server bimeet-prod<br/>Ubuntu 24.04 · configurator ru-3<br/>cloud-init · prevent_destroy"]
+        server["twc_server bimeet-prod<br/>Ubuntu 24.04 · Ultra configurator 159 (ru-3)<br/>cloud-init · prevent_destroy"]
         fw["twc_firewall bimeet-prod"]
         r1["rule: tcp 22<br/>admin_cidrs only"]
         r2["rules: tcp 80, 443<br/>0.0.0.0/0"]

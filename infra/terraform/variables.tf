@@ -28,7 +28,7 @@ variable "availability_zone" {
 }
 
 variable "server" {
-  description = "Server size for a custom (configurator-based) premium NVMe server."
+  description = "Server size for a custom (configurator-based) Ultra NVMe server."
   type = object({
     cpu  = number
     ram  = number # MB
