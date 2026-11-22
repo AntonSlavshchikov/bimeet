@@ -179,6 +179,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            set -e  # a failed login/pull/up must fail the job, not pass silently
             cd ~/bimeet
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u antonslavshchikov --password-stdin
             export IMAGE_REGISTRY="ghcr.io/${{ steps.owner.outputs.name }}"

@@ -50,8 +50,17 @@ services:
       timeout: 5s
       retries: 10
 
+  # MinIO no longer publishes images (minio/minio and minio/mc are gone from
+  # Docker Hub and quay.io). We use Chainguard's builds, but cgr.dev answers
+  # 403 to the server, so the images are pulled on a workstation
+  # (--platform linux/amd64), re-tagged under local/ and loaded on the server:
+  #   docker save --platform linux/amd64 <images> | ssh deploy@<ip> docker load
+  # pull_policy: never keeps `docker compose pull` in CI from trying a
+  # registry for them. The -dev variants ship a shell and mc, which the
+  # healthcheck and minio-init need. See docs/deploy.md.
   minio:
-    image: minio/minio:latest
+    image: local/minio:RELEASE.2026-11-16T00-11-40Z
+    pull_policy: never
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
@@ -74,7 +83,8 @@ services:
       - traefik.http.services.minio.loadbalancer.server.port=9000
 
   minio-init:
-    image: minio/mc:latest
+    image: local/minio-client:chainguard-20261122
+    pull_policy: never
     depends_on:
       minio:
         condition: service_healthy
