@@ -599,6 +599,8 @@
     }
   },
   "calls": {
+    "expand": "Развернуть",
+    "collapse": "Свернуть",
     "callPerson": "Позвонить: {{name}}",
     "incomingTitle": "Входящий звонок",
     "incomingFrom": "Звонит {{name}}",

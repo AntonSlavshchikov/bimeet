@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from 'lucide-react'
+import { Maximize2, Mic, MicOff, Minimize2, Phone, PhoneOff, Video, VideoOff } from 'lucide-react'
 import { useAuth } from '@/features/auth/model/AuthContext'
 import { subscribeSSE } from '@/shared/api/sse'
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@/shared/ui'
@@ -83,6 +83,8 @@ function CallPanel() {
   const s = useCallStore()
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const localVideoRef = useRef<HTMLVideoElement>(null)
+  // Desktop only: the small corner panel can grow to almost the whole window.
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = s.remoteStream
@@ -91,6 +93,13 @@ function CallPanel() {
   useEffect(() => {
     if (localVideoRef.current) localVideoRef.current.srcObject = s.cameraOn ? s.localStream : null
   }, [s.localStream, s.cameraOn])
+
+  useEffect(() => {
+    if (!expanded) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setExpanded(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [expanded])
 
   if (s.phase === 'idle' || s.phase === 'ringing') return null
 
@@ -107,7 +116,12 @@ function CallPanel() {
     <div
       role="dialog"
       aria-label={t('calls.panelLabel')}
-      className="fixed inset-x-4 bottom-4 z-50 rounded-[14px] border border-line bg-surface p-4 shadow-xl min-[541px]:left-auto min-[541px]:w-[340px]"
+      className={cn(
+        'fixed z-50 rounded-[14px] border border-line bg-surface p-4 shadow-xl',
+        expanded
+          ? 'inset-6 flex flex-col'
+          : 'inset-x-4 bottom-4 min-[541px]:left-auto min-[541px]:w-[340px]',
+      )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -116,22 +130,50 @@ function CallPanel() {
             {s.phase === 'in-call' && s.startedAt ? <CallTimer startedAt={s.startedAt} /> : status}
           </div>
         </div>
-        {s.phase === 'ended' && (
-          <Button size="sm" variant="ghost" onClick={dismissEnded}>
-            {t('calls.close')}
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="hidden min-[541px]:inline-flex"
+            aria-label={expanded ? t('calls.collapse') : t('calls.expand')}
+            title={expanded ? t('calls.collapse') : t('calls.expand')}
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </Button>
-        )}
+          {s.phase === 'ended' && (
+            <Button size="sm" variant="ghost" onClick={dismissEnded}>
+              {t('calls.close')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Remote media: <video> also plays the remote audio. */}
-      <div className={cn('relative mt-3 overflow-hidden rounded-[10px] bg-bg-2', !(s.remoteVideo || s.cameraOn) && 'hidden')}>
-        <video ref={remoteVideoRef} autoPlay playsInline className={cn('aspect-video w-full', !s.remoteVideo && 'invisible')} />
+      <div
+        className={cn(
+          'relative mt-3 overflow-hidden rounded-[10px] bg-bg-2',
+          expanded && 'min-h-0 flex-1',
+          !(s.remoteVideo || s.cameraOn) && 'hidden',
+        )}
+        onDoubleClick={() => setExpanded((v) => !v)}
+      >
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className={cn(expanded ? 'h-full w-full object-contain' : 'aspect-video w-full', !s.remoteVideo && 'invisible')}
+        />
         <video
           ref={localVideoRef}
           autoPlay
           playsInline
           muted
-          className={cn('absolute bottom-2 right-2 w-24 rounded-md border border-line', !s.cameraOn && 'hidden')}
+          className={cn(
+            'absolute bottom-2 right-2 rounded-md border border-line',
+            expanded ? 'w-48' : 'w-24',
+            !s.cameraOn && 'hidden',
+          )}
         />
       </div>
 
