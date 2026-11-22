@@ -165,7 +165,7 @@ func TestInviteCarriesCallerNameAndIsRateLimited(t *testing.T) {
 	})
 
 	require.NoError(t, s.Signal(context.Background(), alice, req(TypeInvite)))
-	assert.ErrorIs(t, s.Signal(context.Background(), alice, req(TypeInvite)), ErrRateLimited)
+	require.ErrorIs(t, s.Signal(context.Background(), alice, req(TypeInvite)), ErrRateLimited)
 
 	s.now = func() time.Time { return t0.Add(InviteInterval) }
 	require.NoError(t, s.Signal(context.Background(), alice, req(TypeInvite)))
