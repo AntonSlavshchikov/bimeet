@@ -7,8 +7,8 @@ already responds.
 
 ## 0. Prerequisites
 
-- A Timeweb Cloud account with a positive balance (~2520 ₽/month for
-  1 CPU / 2 GB / 15 GB on the Ultra line plus a public IP, billed hourly).
+- A Timeweb Cloud account with a positive balance (1 CPU / 2 GB / 15 GB
+  on the Ultra line plus a public IP, billed hourly; current price in the panel).
 - An API token: panel → "API и Terraform" → create a token.
 - Access to reg.ru, which hosts DNS for `bimeet.pro` (`ns1/ns2.reg.ru`). If the
   domain isn't yours, you need its owner: they change four A records in step 4.

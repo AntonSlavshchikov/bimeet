@@ -38,7 +38,7 @@ Selectel and Timeweb prices are from the providers' control panels on 2026-11-16
 ### Why Yandex Cloud was dropped
 
 - **Physical risk to data centers (realised in October 2026).** Within four days drones put three Yandex data centers out of action: Sasovo, Ryazan region (7–8 October, fully stopped; zone `ru-central1-b`), Kaluga (9 October, partly disabled) and Vladimir (10–11 October, fully stopped; zone `ru-central1-a`) [1][2]. Yandex Cloud stated in its alerts channel: "Оставшуюся конфигурацию ресурсов считаем неустойчивой. Режим работы платформы является аварийным" ("we consider the remaining resource configuration unstable; the platform is in emergency mode") and advised customers to use their own disaster recovery plans [3]. Customer services such as Dodo Pizza, Lamoda and the state system VetIS were disrupted [3]. Quota management for compute and disks was switched to manual mode with limits on expansion [1]; reports that capacity for new customers was paused came from an unnamed source and were denied by Yandex [2]. Yandex Cloud also agreed with Selectel, K2Cloud and VK Cloud to speed up moving customers [2]. For a project with a single VM and no off-site backup ([0003](0003-minio-on-server.md)), the zone a startup would pick by default (`ru-central1-a`) was exactly the one that went down.
-- **Price.** About 1860 ₽/month for a 50% CPU share against 1780 ₽ at Timeweb for a full core (see the table). No longer true after the switch to the Ultra line (~2520 ₽), see the update below.
+- **Price.** About 1860 ₽/month for a 50% CPU share against 1780 ₽ at Timeweb for a full core (see the table).
 - **Trust.** The author does not trust Yandex as a provider for this project. This is a subjective driver, recorded as stated.
 
 ### Why Selectel was dropped (specifically)
@@ -57,14 +57,7 @@ Selectel and Timeweb prices are from the providers' control panels on 2026-11-16
 
 ## Update 2026-11-22: Ultra line instead of Premium
 
-Premium in Moscow (`ru-3`) became pre-order only, so it can't be ordered; Ultra is the line available there. Same size (1 CPU / 2 GB / 15 GB NVMe, 3.3 GHz). Configurator data from `GET https://api.timeweb.cloud/api/v1/configurator/servers` on 2026-11-22:
-
-| Line | Configurator | CPU ₽/core | RAM ₽/GB | Disk ₽/GB | 1 CPU / 2 GB / 15 GB |
-|---|---|---|---|---|---|
-| Premium (`msk_nvme`) | 31 | 420 | 400 | 24 | 1580 ₽ |
-| **Ultra (`ultra_msk_nvme`)** | **159** | 640 | 600 | 32 | **2320 ₽** |
-
-With the public IP (200 ₽, panel price from 2026-11-16) the server costs **about 2520 ₽/month** instead of 1780 ₽. That is now above the Yandex Cloud estimate (~1860 ₽ for a 50% core), so **price no longer argues against Yandex**; the choice of Timeweb rests on the other drivers: the October 2026 data center outages at Yandex, trust, one Terraform provider and the Moscow region without a queue. Selectel (6087.61 ₽ for the originally planned size) stays the most expensive option.
+By launch time Timeweb had moved the Premium line in Moscow (`ru-3`) to pre-order, so it could no longer be ordered. The server uses the Ultra line in the same location instead: same size (1 CPU / 2 GB / 15 GB NVMe, 3.3 GHz), configurator 159 from `GET https://api.timeweb.cloud/api/v1/configurator/servers` (tag `ultra_msk_nvme`). The provider choice itself is unchanged.
 
 Provider 1.8.4 (latest at the time) doesn't accept `ultra` as `twc_configurator.preset_type`, so `infra/terraform/server.tf` pins configurator 159.
 
@@ -78,7 +71,7 @@ Provider 1.8.4 (latest at the time) doesn't accept `ultra` as `twc_configurator.
 ## Consequences
 
 **Positive**
-- Cheaper than Selectel for a comparable size (also on the Ultra line); one bill with no separate router charge.
+- Cheaper than Selectel for a comparable size; one bill with no separate router charge.
 - Simpler Terraform: one provider, 12 resources, no networks, routers or service users.
 - Data (Postgres and MinIO files) physically in Moscow.
 - Hourly billing: the server is created shortly before the defense and paid only from then on.
