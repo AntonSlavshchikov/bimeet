@@ -57,15 +57,15 @@ func NewRouter(
 	r := chi.NewRouter()
 
 	// Global middleware. Order matters:
-	//   - RealIP before tracing/logging so spans, logs and the rate limiter see
-	//     the real client address.
+	//   - ClientIP before tracing/logging so spans, logs and the rate limiter see
+	//     the real client address (only from our proxies' X-Forwarded-For).
 	//   - otelchi starts the request span (named by chi route) and writes the
 	//     X-Trace-Id response header; Observability then derives the request
 	//     logger from that span's trace_id.
 	//   - Logging wraps (and stays outside) Recoverer so the request-summary line
 	//     captures the 500 a recovered panic produces.
 	r.Use(chimw.RequestID)
-	r.Use(chimw.RealIP)
+	r.Use(middleware.ClientIP)
 	r.Use(otelchi.Middleware(serviceName,
 		otelchi.WithChiRoutes(r),
 		otelchi.WithRequestMethodInSpanName(true),
