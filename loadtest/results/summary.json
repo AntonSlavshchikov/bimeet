@@ -122,10 +122,6 @@
             "rate": 13092.428794849173
         }
     },
-    "setup_data": {
-        "eventId": "d5cb8d47-4996-4b0b-b901-e7987fbb7da3",
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3OTU5NzI3OTEsImlhdCI6MTc5NTcxMzU5MSwic2lkIjoiOWRiODRlZmItYjI1Ni00ZjNlLWJjOTgtZGRjNGUwOGE2MzY2Iiwic3ViIjoiYzYxZWNkMjktNjg1ZS00NjMzLWI5MDMtODZmODMwYmQxOGZmIn0.EkcI5fMkjGYQZGBFEYSiwtCblb43-09ggg4mFqxMRWc"
-    },
     "root_group": {
         "groups": {},
         "checks": {

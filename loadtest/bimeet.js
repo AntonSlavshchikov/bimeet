@@ -12,6 +12,7 @@
 import http from 'k6/http'
 import { check, sleep } from 'k6'
 import { Counter } from 'k6/metrics'
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js'
 
 const BASE = __ENV.BASE_URL || 'https://app.bimeet.pro'
 const EMAIL = __ENV.BIMEET_EMAIL
@@ -93,6 +94,15 @@ export function browse({ token, eventId }) {
   const r3 = http.get(`${BASE}/api/events/${eventId}/messages`, { ...h, tags: { name: 'messages' } })
   check(r3, { 'messages 200': (r) => r.status === 200 })
   sleep(Math.random() * 2 + 1)
+}
+
+// k6 puts setup() return values (our token) into the summary and into
+// --summary-export. Write the summary without them.
+export function handleSummary(data) {
+  delete data.setup_data
+  const out = { stdout: textSummary(data) }
+  if (__ENV.SUMMARY_JSON) out[__ENV.SUMMARY_JSON] = JSON.stringify(data, null, 2)
+  return out
 }
 
 export function sse({ token }) {
