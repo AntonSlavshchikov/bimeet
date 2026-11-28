@@ -6,10 +6,11 @@
 brew install k6
 HOST=deploy@<server_ip> loadtest/server-stats.sh > loadtest/results/server-stats.csv &
 BIMEET_EMAIL=<test account> BIMEET_CODE=<login code> \
-  k6 run --out json=loadtest/results/raw.json --summary-export=loadtest/results/summary.json loadtest/bimeet.js
+  SUMMARY_JSON=loadtest/results/summary.json \
+  k6 run --out json=loadtest/results/raw.json loadtest/bimeet.js
 ```
 
-The test account needs at least one event. Credentials come from the environment; the token is never printed.
+The test account needs at least one event. Credentials come from the environment. The token is never printed, and `handleSummary` drops `setup_data` (which holds it) from the summary; don't use `--summary-export`, which writes it out.
 
 ## Scenarios
 
