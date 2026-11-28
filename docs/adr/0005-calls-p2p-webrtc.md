@@ -10,7 +10,6 @@ Participants of an event need to talk to each other by voice (video optional) wi
 
 Constraints:
 - the whole product runs on one VM with 1 CPU / 2 GB RAM ([0001](0001-hosting-provider.md));
-- a few weeks until the Capstone defense;
 - realtime already exists as Server-Sent Events: an in-process hub with a personal stream per user (`/api/chats/stream`). There is no WebSocket.
 
 ## Decision drivers
